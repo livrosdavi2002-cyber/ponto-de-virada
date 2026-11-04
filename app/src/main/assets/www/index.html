@@ -331,7 +331,7 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
     <div class="place">Histórias em que você decide</div>
     <h1>Última <span>Escolha</span></h1>
     <p>Escolha uma fase. Use fone de ouvido: o som faz parte do jogo.</p>
-    <div class="progresso"><span id="progTotal"></span><span class="grp2"><button id="btnVozHub" type="button">Narração: ligada</button><button id="btnConq" type="button">Conquistas</button></span></div>
+    <div class="progresso"><span id="progTotal"></span><span class="grp2"><button id="btnVozHub" type="button">Narração: ligada</button><button id="btnTrocaVoz" type="button" hidden>Trocar voz</button><button id="btnConq" type="button">Conquistas</button></span></div>
     <div class="liberar" id="liberar" hidden></div>
     <div class="lista" id="lista"></div>
   </div>
@@ -544,7 +544,27 @@ function calar() {
 }
 window.vozInicio = () => { if (AC && !mudo) OUT.gain.setTargetAtTime(.4, AC.currentTime, .25); };
 window.vozFim = () => { if (AC && !mudo) OUT.gain.setTargetAtTime(.9, AC.currentTime, .5); };
-window.vozPronta = ok => { if (!ok && vozLigada) aviso("Voz em português não encontrada no celular"); };
+window.vozPronta = ok => { if (!ok && vozLigada) aviso("Voz em português não encontrada no celular"); carregarVozes(); };
+/* escolha da voz: o app já começa com a mais natural; o botão troca entre as vozes em português do celular */
+let listaVozes = [], nomeVoz = null;
+function carregarVozes() {
+  if (!vozNativa() || !Android.vozes) return;
+  try { listaVozes = JSON.parse(Android.vozes()) || []; } catch (e) { listaVozes = []; }
+  let salva = null; try { salva = localStorage.getItem("pv_voznome"); } catch (e) {}
+  if (salva && listaVozes.some(v => v.nome === salva)) { nomeVoz = salva; Android.usarVoz(salva); }
+  else nomeVoz = listaVozes[0] ? listaVozes[0].nome : null;
+  $("btnTrocaVoz").hidden = listaVozes.length < 2;
+}
+function trocarVoz() {
+  if (!listaVozes.length) return aviso("Só há uma voz em português neste celular");
+  let i = listaVozes.findIndex(v => v.nome === nomeVoz); i = (i + 1) % listaVozes.length;
+  const v = listaVozes[i]; nomeVoz = v.nome; Android.usarVoz(v.nome);
+  try { localStorage.setItem("pv_voznome", v.nome); } catch (e) {}
+  if (!vozLigada) { vozLigada = true; try { localStorage.setItem("pv_voz", "true"); } catch (e) {} desenharVoz(); }
+  aviso("Voz " + (i + 1) + " de " + listaVozes.length + (v.internet ? " · natural (usa internet)" : " · offline") + (v.br ? "" : " · português de Portugal"));
+  try { Android.falar("Esta é a voz que vai contar a sua história. Não abra a porta."); } catch (e) {}
+}
+$("btnTrocaVoz").addEventListener("click", trocarVoz);
 function desenharVoz() {
   $("btnVoz").classList.toggle("off", !vozLigada); $("btnVoz").setAttribute("aria-pressed", String(vozLigada));
   $("btnVozHub").textContent = "Narração: " + (vozLigada ? "ligada" : "desligada");

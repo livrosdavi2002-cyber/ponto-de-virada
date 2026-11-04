@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 import android.os.Vibrator;
 import android.view.DisplayCutout;
 import android.view.View;
@@ -22,6 +23,12 @@ import android.webkit.WebViewClient;
 
 import androidx.webkit.WebViewAssetLoader;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
@@ -32,6 +39,7 @@ public class MainActivity extends Activity {
     private boolean carregou = false;
     private TextToSpeech voz;
     private boolean vozPronta = false;
+    private final List<Voice> vozesPt = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle estado) {
@@ -101,8 +109,19 @@ public class MainActivity extends Activity {
             int r = voz.setLanguage(new Locale("pt", "BR"));
             if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) r = voz.setLanguage(new Locale("pt"));
             vozPronta = r != TextToSpeech.LANG_MISSING_DATA && r != TextToSpeech.LANG_NOT_SUPPORTED;
-            voz.setSpeechRate(0.95f);
-            voz.setPitch(0.86f);
+            // tom e velocidade naturais: mudar o tom deixa a voz mais robótica
+            voz.setSpeechRate(1.0f);
+            voz.setPitch(1.0f);
+            // escolhe a voz em português mais natural instalada (as "network"/neurais do Google primeiro)
+            try {
+                for (Voice v : voz.getVoices()) {
+                    if (!"pt".equals(v.getLocale().getLanguage())) continue;
+                    if (v.getFeatures() != null && v.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
+                    vozesPt.add(v);
+                }
+                Collections.sort(vozesPt, (a, b) -> Integer.compare(nota(b), nota(a)));
+                if (!vozesPt.isEmpty()) voz.setVoice(vozesPt.get(0));
+            } catch (Exception e) { /* aparelho sem lista de vozes: usa a padrão */ }
             voz.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                 @Override public void onStart(String id) { js("window.vozInicio && vozInicio()"); }
                 @Override public void onDone(String id) { js("window.vozFim && vozFim()"); }
@@ -110,6 +129,13 @@ public class MainActivity extends Activity {
             });
             js("window.vozPronta && vozPronta(" + vozPronta + ")");
         });
+    }
+
+    private static int nota(Voice v) {
+        int n = v.getQuality();
+        if ("BR".equalsIgnoreCase(v.getLocale().getCountry())) n += 1000;
+        if (v.isNetworkConnectionRequired() || v.getName().contains("network")) n += 300;
+        return n;
     }
 
     private void js(String codigo) {
@@ -194,6 +220,27 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void calar() { if (voz != null) voz.stop(); }
+
+        @JavascriptInterface
+        public String vozes() {
+            JSONArray a = new JSONArray();
+            try {
+                for (Voice v : vozesPt) {
+                    JSONObject o = new JSONObject();
+                    o.put("nome", v.getName());
+                    o.put("internet", v.isNetworkConnectionRequired() || v.getName().contains("network"));
+                    o.put("br", "BR".equalsIgnoreCase(v.getLocale().getCountry()));
+                    a.put(o);
+                }
+            } catch (Exception e) { }
+            return a.toString();
+        }
+
+        @JavascriptInterface
+        public void usarVoz(String nome) {
+            if (voz == null) return;
+            for (Voice v : vozesPt) if (v.getName().equals(nome)) { voz.setVoice(v); return; }
+        }
 
         @JavascriptInterface
         public void vibrar(int ms) {
