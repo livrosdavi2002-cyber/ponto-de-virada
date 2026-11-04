@@ -200,8 +200,18 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
 .choice .novo { flex: none; font-family: var(--f-mono); font-size: 9px; letter-spacing: .14em; color: var(--night); background: var(--acc); border-radius: 999px; padding: 3px 7px; font-weight: 600; }
 .choice.lembranca { border-style: dashed; border-color: #ffd24d; }
 .choice.lembranca .k { border-color: #ffd24d; color: #ffd24d; }
-.story.trancada { opacity: .55; cursor: not-allowed; }
+.story.trancada { position: relative; cursor: pointer; border-style: dashed; background: rgba(11,14,20,.75); }
 .story.trancada h3 { color: var(--ink-dim); }
+.story.trancada .gancho { color: var(--ink-dim); filter: blur(2.5px); user-select: none; }
+.story.trancada .cadeado { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--c); color: var(--c); background: rgba(11,14,20,.9); }
+.story.trancada .cadeado svg { width: 18px; height: 18px; }
+.story.trancada .como { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; color: var(--ink); line-height: 1.5; }
+.story.trancada .como b { color: var(--c); font-weight: 600; }
+.story.trancada.shake { animation: shake .35s; }
+.liberar { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 4px; background: rgba(20,25,36,.85); }
+.liberar .l1 { font-family: var(--f-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--acc); }
+.liberar .l2 { font-size: 16px; line-height: 1.35; color: var(--ink); }
+.liberar .l2 b { color: var(--acc); font-weight: 500; }
 .story .barra { height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .story .barra i { display: block; height: 100%; background: var(--c); }
 .progresso { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); display: flex; justify-content: space-between; gap: 10px; align-items: center; }
@@ -317,6 +327,7 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
     <h1>Ponto de <span>Virada</span></h1>
     <p>Escolha uma fase. Use fone de ouvido: o som faz parte do jogo.</p>
     <div class="progresso"><span id="progTotal"></span><button id="btnConq" type="button">Conquistas</button></div>
+    <div class="liberar" id="liberar" hidden></div>
     <div class="lista" id="lista"></div>
   </div>
 </div>
@@ -1334,12 +1345,15 @@ function abrirHub() {
   $("progTotal").textContent = tf + " de " + totalPossivel() + " finais · " + conqFeitas.size + "/" + CONQ.length + " conquistas";
   html += Object.entries(FASES).map(([k, F]) => {
     const tranca = tf < (F.libera || 0), feitos = descobertos[k].size, tot = finaisDe(k).length;
-    if (tranca) return `
-    <button class="story trancada" type="button" id="fase-${k}" style="--c:${F.cor}" disabled>
-      <span class="g"><span>${F.genero}</span><span>Trancada</span></span>
+    if (tranca) { const falta = F.libera - tf; return `
+    <button class="story trancada" type="button" id="fase-${k}" data-tranca="${k}" style="--c:${F.cor}" aria-label="${F.titulo}, trancada">
+      <span class="cadeado"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+      <span class="g"><span>${F.genero} · bloqueada</span></span>
       <h3>${F.titulo}</h3>
-      <span class="mec">Descubra ${F.libera} finais para liberar · faltam ${F.libera - tf}</span>
-    </button>`;
+      <span class="gancho">${F.gancho}</span>
+      <span class="barra"><i style="width:${Math.min(100, tf / F.libera * 100)}%"></i></span>
+      <span class="como">Para liberar: descubra <b>${F.libera} finais</b> no total, em qualquer fase. Falta${falta > 1 ? "m" : ""} <b>${falta}</b>.</span>
+    </button>`; }
     return `
     <button class="story" type="button" id="fase-${k}" data-k="${k}" style="--c:${F.cor}">
       <span class="g"><span>${F.genero}${vis[k].size ? "" : " · nova"}</span><span>${feitos}/${tot} finais</span></span>
@@ -1349,6 +1363,14 @@ function abrirHub() {
       <span class="mec">${F.mec}</span>
     </button>`; }).join("");
   $("lista").innerHTML = html;
+  const prox = Object.values(FASES).filter(F => tf < (F.libera || 0)).sort((a, b) => a.libera - b.libera)[0];
+  $("liberar").hidden = !prox;
+  if (prox) $("liberar").innerHTML = `<span class="l1">Como liberar fases novas</span><span class="l2">Cada final que você descobre conta, em qualquer fase. Descubra <b>${prox.libera - tf} ${prox.libera - tf > 1 ? "finais" : "final"}</b> para liberar <b>${prox.titulo}</b>. Dica: depois de um final, use “Voltar à última escolha” para testar outro caminho.</span>`;
+  $("lista").querySelectorAll("[data-tranca]").forEach(b => b.addEventListener("click", () => {
+    const F = FASES[b.dataset.tranca], falta = F.libera - totalFinais();
+    tocar("erro"); vibrar(40); b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
+    aviso("Falta" + (falta > 1 ? "m " : " ") + falta + (falta > 1 ? " finais" : " final") + " para liberar " + F.titulo);
+  }));
   $("lista").querySelectorAll("[data-k]").forEach(b => b.addEventListener("click", () => iniciarFase(b.dataset.k)));
   const c = $("fase-continuar");
   if (c) c.addEventListener("click", () => { const p = pendente; pendente = null; iniciarFase(p.S, p); });
