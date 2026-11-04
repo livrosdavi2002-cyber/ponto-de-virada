@@ -250,6 +250,15 @@ body.modo-sob .vignette { opacity: 0; }
 .sob-acoes .sb-acao { min-height: 46px; padding: 7px 10px; }
 .sob-acoes .sb-acao.mini { min-height: 40px; }
 .sob .sob-in > * { flex-shrink: 0; }
+.pn-item .di { width: 36px; height: 36px; flex: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.4)); }
+.pn-can .di { width: 26px; height: 26px; position: absolute; right: 8px; top: 8px; }
+.pn-req { display: flex; flex-wrap: wrap; gap: 4px 8px; font-family: var(--f-mono); font-size: 10.5px; }
+.pn-req .tem { color: #9bd86b; } .pn-req .falta { color: #e2483d; }
+.pn-grande { margin-top: 6px; font-family: var(--f-display); font-weight: 800; font-size: 20px; letter-spacing: .03em; text-transform: uppercase; color: var(--night); background: #ffd24d; border: 0; border-radius: 14px; padding: 14px; }
+.pn-grande:disabled { background: #2a3140; color: var(--ink-dim); }
+.sb-acao.dourado { border-color: #ffd24d; background: rgba(255,210,77,.08); }
+.sb-acao.casa { border-color: #9bd86b; }
+.sb-acao.casa .ic { color: #9bd86b; }
 .sb-acao small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .sb-acao.mini small { -webkit-line-clamp: 1; white-space: nowrap; text-overflow: ellipsis; display: block; }
 .sob-barra { pointer-events: auto; position: fixed; top: calc(var(--st) + 12px); left: max(16px, var(--sl)); right: max(16px, var(--sr)); display: flex; justify-content: space-between; align-items: center; font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
@@ -1731,5 +1740,6 @@ start({});
 <script src="sobrevivencia.js"></script>
 <script src="modos.js"></script>
 <script src="acoes.js"></script>
+<script src="mundo.js"></script>
 </body>
 </html>

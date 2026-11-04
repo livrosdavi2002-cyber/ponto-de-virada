@@ -35,7 +35,7 @@ function plantinha(x, y, s, cor = "#5a8a3a") {
 }
 function desenhaAcao(t, c) {
   const ch = SOB.modo === "cherno";
-  (ch ? chernoBase : sobBase)(t, { semEu: true, noite: c.acao === "dormir" && t > 1.2 });
+  if (typeof desenhaFundoAtual === "function") desenhaFundoAtual(t, { semEu: true, noite: c.acao === "dormir" && t > 1.2 }); else (ch ? chernoBase : sobBase)(t, { semEu: true, noite: c.acao === "dormir" && t > 1.2 });
   const chao = H * .6, y = chao + H * .045, h = H * .2, x = W * .45;
   const aro = "rgba(175,190,215,.28)";
   switch (c.acao) {
