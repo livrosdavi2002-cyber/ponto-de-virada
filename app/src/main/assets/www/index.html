@@ -215,6 +215,10 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
 .story .barra { height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .story .barra i { display: block; height: 100%; background: var(--c); }
 .progresso { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.progresso .grp2 { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.top button.off { opacity: .45; text-decoration: line-through; }
+.top, .top button, .rec { white-space: nowrap; }
+@media (max-width: 400px) { .top { letter-spacing: .05em; font-size: 10px; } .top .grp { gap: 4px; } .top button { padding: 6px 8px; } }
 .progresso button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--acc); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; cursor: pointer; }
 .conqs { display: grid; gap: 8px; }
 .conq { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
@@ -313,6 +317,7 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
     <div class="grp">
       <button id="btnMenu" type="button">Menu</button>
       <button id="btnSom" type="button" aria-pressed="true">Som</button>
+      <button id="btnVoz" type="button" aria-pressed="true">Voz</button>
       <button id="openEndings" type="button">Finais <span id="endCount">0/0</span></button>
     </div>
   </div>
@@ -326,7 +331,7 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
     <div class="place">Histórias em que você decide</div>
     <h1>Última <span>Escolha</span></h1>
     <p>Escolha uma fase. Use fone de ouvido: o som faz parte do jogo.</p>
-    <div class="progresso"><span id="progTotal"></span><button id="btnConq" type="button">Conquistas</button></div>
+    <div class="progresso"><span id="progTotal"></span><span class="grp2"><button id="btnVozHub" type="button">Narração: ligada</button><button id="btnConq" type="button">Conquistas</button></span></div>
     <div class="liberar" id="liberar" hidden></div>
     <div class="lista" id="lista"></div>
   </div>
@@ -514,6 +519,44 @@ const SONS = {
   religar() { tom(40, 1.2, { tipo: "sawtooth", vol: .1, ate: 220, lp: 1200, wet: .4 }); ruido(.1, { f: 1200, vol: .4, quando: 1.2 }); },
 };
 function tocar(nome) { if (AC && !mudo && SONS[nome]) SONS[nome](); if (nome === "clique") vibrar(12); }
+
+/* ---------- narração (voz lendo as cenas) ---------- */
+let vozLigada = (() => { try { return JSON.parse(localStorage.getItem("pv_voz") ?? "true"); } catch (e) { return true; } })();
+const vozNativa = () => !!(window.Android && Android.falar);
+function textoPuro(html) {
+  const d = document.createElement("div"); d.innerHTML = html;
+  return d.textContent.replace(/·/g, ",").replace(/−\s?(\d+)\s?m\b/g, "menos $1 metros").replace(/\s+/g, " ").trim();
+}
+function narrar(html) {
+  if (!vozLigada) return;
+  const t = textoPuro(html);
+  if (vozNativa()) { try { Android.falar(t); } catch (e) {} return; }
+  if (window.speechSynthesis) {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t); u.lang = "pt-BR"; u.rate = .95; u.pitch = .85;
+    u.onstart = () => vozInicio(); u.onend = () => vozFim(); speechSynthesis.speak(u);
+  }
+}
+function calar() {
+  if (vozNativa()) { try { Android.calar(); } catch (e) {} }
+  else if (window.speechSynthesis) speechSynthesis.cancel();
+  vozFim();
+}
+window.vozInicio = () => { if (AC && !mudo) OUT.gain.setTargetAtTime(.4, AC.currentTime, .25); };
+window.vozFim = () => { if (AC && !mudo) OUT.gain.setTargetAtTime(.9, AC.currentTime, .5); };
+window.vozPronta = ok => { if (!ok && vozLigada) aviso("Voz em português não encontrada no celular"); };
+function desenharVoz() {
+  $("btnVoz").classList.toggle("off", !vozLigada); $("btnVoz").setAttribute("aria-pressed", String(vozLigada));
+  $("btnVozHub").textContent = "Narração: " + (vozLigada ? "ligada" : "desligada");
+}
+function alternarVoz() {
+  vozLigada = !vozLigada; try { localStorage.setItem("pv_voz", JSON.stringify(vozLigada)); } catch (e) {}
+  desenharVoz(); aviso(vozLigada ? "Narração ligada" : "Narração desligada");
+  if (!vozLigada) calar(); else if (NOS && NOS[atual] && $("hub").hidden) narrar(NOS[atual].texto);
+}
+$("btnVoz").addEventListener("click", alternarVoz);
+$("btnVozHub").addEventListener("click", alternarVoz);
+desenharVoz();
 
 $("btnSom").addEventListener("click", () => {
   mudo = !mudo;
@@ -1051,10 +1094,12 @@ function tempoDeLeitura(c) {
   const tmp = document.createElement("div"); tmp.innerHTML = c.texto;
   const palavras = tmp.textContent.trim().split(/\s+/).length;
   const opcoes = (c.escolhas || []).reduce((n, o) => n + o.t.split(/\s+/).length, 0);
-  return Math.round(Math.max(c.tempo * 1.6, c.tempo + palavras * .2 + opcoes * .25 + 2));
+  let s = Math.max(c.tempo * 1.6, c.tempo + palavras * .2 + opcoes * .25 + 2);
+  if (vozLigada) s = Math.max(s, tmp.textContent.length / 13 + 5); // dá tempo de ouvir a narração
+  return Math.round(s);
 }
 function mostrar(id) {
-  tok++; pararTudo(); ameaca = null;
+  tok++; pararTudo(); ameaca = null; calar();
   const F = FASES[S];
   let c = NOS[id];
   if (c.custo && !c.fim) gastar(c.custo);
@@ -1092,7 +1137,7 @@ function mostrar(id) {
       "<div class='place'>" + c.hora + " · " + c.lugar + "</div>" +
       "<div class='text' id='txt'></div>";
     const meuF = tok;
-    const escreveFim = () => { if (meuF !== tok) return; typing = escrever($("txt"), c.texto, () => {
+    const escreveFim = () => { if (meuF !== tok) return; narrar(TAG[c.tipo] + ". " + c.titulo + ". " + c.texto); typing = escrever($("txt"), c.texto, () => {
       const p = document.createElement("div"); p.className = "path";
       const falta = finaisDe(S).length - descobertos[S].size;
       const prox = Object.entries(FASES).find(([k, F]) => F.libera > totalFinais() - (novo ? 1 : 0) && F.libera <= totalFinais());
@@ -1115,7 +1160,7 @@ function mostrar(id) {
     (c.dica ? "<div class='dica'>" + c.dica + "</div>" : "") +
     "<div class='hint' id='hint'>Toque no texto para pular</div>";
   const meu = tok;
-  const comecaTexto = () => { if (meu !== tok) return; if (fx.susto) depois(500 + Math.random() * 900, () => { if (meu === tok) dispararSusto(); }); typing = escrever($("txt"), c.texto, () => {
+  const comecaTexto = () => { if (meu !== tok) return; if (fx.susto) depois(500 + Math.random() * 900, () => { if (meu === tok) dispararSusto(); }); narrar(c.texto); typing = escrever($("txt"), c.texto, () => {
     if (meu !== tok) return;
     const h = $("hint"); if (h) h.remove();
     if (c.acao) iniciarAcao(c.acao);
@@ -1367,7 +1412,7 @@ $("closeEndings").addEventListener("click", () => { $("drawer").hidden = true; }
 let pendente = null;
 function abrirHub() {
   tok++; pararTudo(); if (typing) typing.stop();
-  cineAtual = null; ameaca = null; document.body.classList.remove("cine"); salvarJogo();
+  cineAtual = null; ameaca = null; calar(); document.body.classList.remove("cine"); salvarJogo();
   $("choices").innerHTML = ""; $("scene").innerHTML = ""; $("hud").innerHTML = "";
   corDestaque("#f2a33a");
   setVer(["cidade", "acesa"]); setAmb({ drone: .5 });
@@ -1437,7 +1482,7 @@ window.voltarAndroid = () => {
   if ($("hub").hidden) { $("btnMenu").click(); return true; }
   return false;
 };
-window.pausarAndroid = p => { if (AC) p ? AC.suspend() : AC.resume(); ultFrame = 0; };
+window.pausarAndroid = p => { if (AC) p ? AC.suspend() : AC.resume(); ultFrame = 0; if (p) calar(); };
 window.margensAndroid = (t, b, l, r) => {
   const st = document.documentElement.style;
   st.setProperty("--sat", t + "px"); st.setProperty("--sab", b + "px"); st.setProperty("--sal", l + "px"); st.setProperty("--sar", r + "px");

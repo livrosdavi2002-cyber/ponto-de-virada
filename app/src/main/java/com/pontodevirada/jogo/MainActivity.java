@@ -5,6 +5,8 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.os.Vibrator;
 import android.view.DisplayCutout;
 import android.view.View;
@@ -20,12 +22,16 @@ import android.webkit.WebViewClient;
 
 import androidx.webkit.WebViewAssetLoader;
 
+import java.util.Locale;
+
 public class MainActivity extends Activity {
 
     private static final String INICIO = "https://appassets.androidplatform.net/assets/www/index.html";
     private WebView web;
     private int[] margens = {0, 0, 0, 0};
     private boolean carregou = false;
+    private TextToSpeech voz;
+    private boolean vozPronta = false;
 
     @Override
     protected void onCreate(Bundle estado) {
@@ -81,10 +87,33 @@ public class MainActivity extends Activity {
         });
 
         setContentView(web);
+        iniciarVoz();
         telaCheia();
 
         if (estado != null) web.restoreState(estado);
         else web.loadUrl(INICIO);
+    }
+
+    /* Narração: voz do próprio Android (Google TTS), em português do Brasil */
+    private void iniciarVoz() {
+        voz = new TextToSpeech(this, status -> {
+            if (status != TextToSpeech.SUCCESS) return;
+            int r = voz.setLanguage(new Locale("pt", "BR"));
+            if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) r = voz.setLanguage(new Locale("pt"));
+            vozPronta = r != TextToSpeech.LANG_MISSING_DATA && r != TextToSpeech.LANG_NOT_SUPPORTED;
+            voz.setSpeechRate(0.95f);
+            voz.setPitch(0.86f);
+            voz.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override public void onStart(String id) { js("window.vozInicio && vozInicio()"); }
+                @Override public void onDone(String id) { js("window.vozFim && vozFim()"); }
+                @Override public void onError(String id) { js("window.vozFim && vozFim()"); }
+            });
+            js("window.vozPronta && vozPronta(" + vozPronta + ")");
+        });
+    }
+
+    private void js(String codigo) {
+        runOnUiThread(() -> { if (web != null) web.evaluateJavascript(codigo, null); });
     }
 
     private void enviarMargens() {
@@ -128,6 +157,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         web.evaluateJavascript("window.pausarAndroid && pausarAndroid(true)", null);
+        if (voz != null) voz.stop();
         web.onPause();
         super.onPause();
     }
@@ -147,12 +177,24 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (voz != null) voz.shutdown();
         if (web != null) web.destroy();
         super.onDestroy();
     }
 
     /* Ponte JavaScript → Android: vibração nas batidas e impactos */
     public class Ponte {
+        @JavascriptInterface
+        public boolean vozDisponivel() { return vozPronta; }
+
+        @JavascriptInterface
+        public void falar(String texto) {
+            if (voz != null && vozPronta) voz.speak(texto, TextToSpeech.QUEUE_FLUSH, null, "cena");
+        }
+
+        @JavascriptInterface
+        public void calar() { if (voz != null) voz.stop(); }
+
         @JavascriptInterface
         public void vibrar(int ms) {
             Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
