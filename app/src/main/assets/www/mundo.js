@@ -520,7 +520,7 @@ function sobDesenhar(t) {
       else if (c.tipo === "acao" && c.acao === "viajar") desenhaViagem((performance.now() - c.t0) / 1000, { ...c, dias: 0 });
       else if (c.tipo === "acao") desenhaAcao((performance.now() - c.t0) / 1000, c);
       else if (c.tipo === "lugar") (ch ? chernoLugar : sobLugar)(t, c);
-      else if (c.tipo === "visita") { if (L().especialLugar) { desenhaEspecial(t, { noite: c.noite }); const chao = H * .6, k = cvSuave(cvSeg(t, .3, 3)); pessoa(cvMix(W * 1.1, W * .72, k), chao + H * .02, H * .22, { fase: t * 4, anda: k < 1 ? .8 : 0, dir: -1, mochila: true }); } else (ch ? chernoVisita : sobVisita)(t, c); }
+      else if (c.tipo === "visita") { if (L().especialLugar && !ehCasa()) { desenhaEspecial(t, { noite: c.noite }); const chao = H * .6, k = cvSuave(cvSeg(t, .3, 3)); pessoa(cvMix(W * 1.1, W * .72, k), chao + H * .02, H * .22, { fase: t * 4, anda: k < 1 ? .8 : 0, dir: -1, mochila: true }); } else (ch ? chernoVisita : sobVisita)(t, c); }
       else desenhaFundoAtual(t, c);
       if (SOB.clima === "neblina") sobNevoa(t, .12);
     }

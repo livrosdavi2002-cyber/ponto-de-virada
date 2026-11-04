@@ -586,7 +586,7 @@ function sobVisitante(noite, depois) {
 }
 function sobMercador() {
   sobLigarCena({ tipo: "visita", quem: "mercador" }); tocar("campainha");
-  const ofertas = [...M().mercador].sort(() => Math.random() - .5).slice(0, 3);
+  const ofertas = [...M().mercador].sort(() => Math.random() - .5).slice(0, 3); sobCena.ofertas = ofertas.map(o => o[0]);
   const mostrar = msg => {
     sobTexto(msg || (M().radiacao ? "Um comerciante de máscara e sobretudo para na porta. \"Iodo, filtros, comida. Aceito artefatos.\"" : "Um mercador chega puxando uma carroça, com um lampião pendurado. \"Tenho o que você precisa.\""), !msg);
     sobBotoes([...ofertas.map(([da, n, paga, custo]) => ({ t: `${n} ${ITENS[da].nome}`, sub: `Paga ${custo} ${ITENS[paga].nome.toLowerCase()} · tem ${qtd(paga)}`, icone: ITENS[da].ic, desat: qtd(paga) < custo, on: () => { sobMuda(paga, -custo); sobMuda(da, n); SOB.st.comprou++; tocar("item"); sobChecarObjetivos(); sobHud(); sobFazer("comprar", 1500, () => { sobLigarCena({ tipo: "visita", quem: "mercador" }); mostrar("Negócio fechado. \"Mais alguma coisa?\""); }); } })),

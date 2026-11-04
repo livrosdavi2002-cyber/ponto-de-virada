@@ -151,7 +151,7 @@ const CENAS_NOVAS = {
 const _desenhaEspecial = desenhaEspecial;
 desenhaEspecial = function (t, p) {
   const l = L(), ch = SOB.modo === "cherno";
-  if (ehCasa() && !p.fora && !p.noite) return desenhaInterior(t, p);
+  if (ehCasa() && !p.fora) return desenhaInterior(t, p);
   if (!CENAS_NOVAS[l.cena]) return _desenhaEspecial(t, p);
   const f = fundoLugar(t, p.noite), chao = H * .6;
   for (let i = 0; i < 6; i++) (ch ? pinheiroVermelho : (x, b, h) => arvore(x, b, h, "#14181a", .24))(W * (i / 5) + cvRnd(i) * 30, chao - H * .02, H * (.14 + cvRnd(i) * .1), i);
@@ -167,7 +167,7 @@ const FORA = ["plantar", "colher", "regar", "cacar", "vigiar", "saquear", "compr
 const _desenhaFundoAtual = desenhaFundoAtual;
 desenhaFundoAtual = function (t, p) {
   const ac = sobCena && sobCena.tipo === "acao" ? sobCena.acao : null;
-  if (ehCasa() && !p.noite && !FORA.includes(ac) && sobCena.tipo !== "visita") return desenhaInterior(t, p);
+  if (ehCasa() && !FORA.includes(ac)) return desenhaInterior(t, p);
   if (L().especialLugar) return desenhaEspecial(t, { ...p, fora: true });
   return _desenhaFundoAtual(t, p);
 };
@@ -183,16 +183,16 @@ function estiloCasa() {
 }
 function desenhaItemCena(id, x, y, s, rot = 0) { const img = imgItem(id); if (!img) return; ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.drawImage(img, -s / 2, -s / 2, s, s); ctx.restore(); }
 function desenhaInterior(t, p) {
-  const est = estiloCasa(), ch = SOB.modo === "cherno", chao = H * .6, f = Math.min(.95, SOB.gasta / Math.max(3, energiaMax()) * .9), noiteFora = f > .55;
+  const est = estiloCasa(), ch = SOB.modo === "cherno", chao = H * .6, f = p.noite ? 1 : Math.min(.95, SOB.gasta / Math.max(3, energiaMax()) * .9), noiteFora = f > .55, noite = !!p.noite;
   const P = { apartamento: ["#2a2a32", "#33333c", "#1c1a1a"], sovietico: ["#3a3424", "#4a4230", "#22201a"], cabana: ["#3a2614", "#4a3018", "#22160c"], fazenda: ["#4a3a28", "#5a4a32", "#2a2014"], cela: ["#2a2c2e", "#34373a", "#1a1b1c"], bunker: ["#262a26", "#2e332e", "#161816"] }[est];
   // parede
   ctx.fillStyle = P[0]; ctx.fillRect(0, 0, W, chao);
   if (est === "cabana") { for (let i = 0; i < 12; i++) { const y = i * chao / 12; ctx.fillStyle = i % 2 ? P[0] : P[1]; ctx.fillRect(0, y, W, chao / 12); ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(0, y + chao / 12 - 2, W, 2); ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.arc(6 + (i % 2) * 6, y + chao / 24, chao / 28, 0, 7); ctx.arc(W - 6 - (i % 2) * 6, y + chao / 24, chao / 28, 0, 7); ctx.fill(); } }
   else if (est === "apartamento" || est === "sovietico") { ctx.fillStyle = P[1]; for (let x = 0; x < W; x += 26) for (let y = 0; y < chao; y += 26) { ctx.globalAlpha = .35; ctx.beginPath(); ctx.arc(x + ((y / 26) % 2) * 13, y, 3, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.fillRect(0, chao * .72, W, 4); }
-  else if (est === "cela" || est === "bunker") { ctx.fillStyle = P[1]; for (let y = 0; y < chao; y += 22) for (let x = (y / 22) % 2 * 20; x < W; x += 40) ctx.fillRect(x, y, 38, 20); if (est === "bunker") { ctx.fillStyle = "#3a4038"; ctx.fillRect(0, H * .03, W, 8); ctx.fillRect(W * .9, 0, 8, chao); } }
+  else if (est === "cela" || est === "bunker") { ctx.fillStyle = P[1]; for (let y = 0; y < chao; y += 22) for (let x = (y / 22) % 2 * 20; x < W; x += 40) ctx.fillRect(x, y, 38, 20); if (est === "bunker") { ctx.fillStyle = "#3a4038"; ctx.fillRect(0, H * .03, W, 8); ctx.fillRect(W * .8, 0, 8, H * .1); } }
   else { ctx.fillStyle = P[1]; for (let x = 0; x < W; x += 18) ctx.fillRect(x, 0, 9, chao); }
   // janela com o lado de fora (hora do dia) e tábuas da defesa
-  const jx = est === "cela" ? W * .62 : W * .58, jy = H * .1, jw = est === "cela" ? W * .2 : W * .32, jh = est === "cela" ? H * .1 : H * .2;
+  const jx = est === "cela" ? W * .58 : W * .54, jy = H * .1, jw = est === "cela" ? W * .18 : W * .27, jh = est === "cela" ? H * .1 : H * .2;
   ctx.save(); ctx.beginPath(); ctx.rect(jx, jy, jw, jh); ctx.clip();
   const H0 = H; ctx.translate(jx - W * .1, jy - H * .02); ctx.scale(.55, .55);
   if (ch) chernoCeu(f, SOB.clima === "emissao"); else sobCeu(f);
@@ -210,8 +210,7 @@ function desenhaInterior(t, p) {
   ctx.strokeStyle = "rgba(255,255,255,.03)"; for (let x = 0; x < W; x += 30) { ctx.beginPath(); ctx.moveTo(x, chao); ctx.lineTo(x - 20, H); ctx.stroke(); }
   if (est === "apartamento" || est === "sovietico") { ctx.fillStyle = est === "sovietico" ? "#5a2a20" : "#3a2a3a"; ctx.beginPath(); ctx.ellipse(W * .48, chao + H * .05, W * .28, H * .03, 0, 0, 7); ctx.fill(); }
   // decoração do estilo
-  if (est === "apartamento") { ctx.fillStyle = "#1a1a1e"; ctx.fillRect(W * .04, chao - H * .2, W * .1, H * .2); ctx.fillStyle = "#2a2a30"; ctx.fillRect(W * .045, chao - H * .19, W * .09, H * .06); ctx.fillStyle = "rgba(255,255,255,.1)"; ctx.fillRect(W * .12, chao - H * .15, 3, H * .03); /* geladeira */
-    ctx.fillStyle = "#1e1e22"; ctx.fillRect(W * .74, chao - H * .055, W * .12, H * .055); ctx.fillStyle = "#0c0c0e"; ctx.fillRect(W * .755, chao - H * .05, W * .09, H * .04); /* tv */ }
+  if (est === "apartamento") { ctx.fillStyle = "#1a1a1e"; ctx.fillRect(W * .04, chao - H * .2, W * .1, H * .2); ctx.fillStyle = "#2a2a30"; ctx.fillRect(W * .045, chao - H * .19, W * .09, H * .06); ctx.fillStyle = "rgba(255,255,255,.1)"; ctx.fillRect(W * .12, chao - H * .15, 3, H * .03); /* geladeira */ }
   if (est === "sovietico") { ctx.fillStyle = "#7a2a20"; ctx.fillRect(W * .06, H * .1, W * .2, H * .14); ctx.strokeStyle = "#c8a040"; ctx.lineWidth = 1; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(W * .16, H * .17, 6 + i * 6, 0, 7); ctx.stroke(); } /* tapete na parede */
     ctx.fillStyle = "#e0d8c0"; ctx.fillRect(W * .3, H * .12, W * .08, H * .09); ctx.fillStyle = "#8a2a20"; ctx.font = `800 9px "JetBrains Mono", monospace`; ctx.fillText("1986", W * .31, H * .15); ctx.fillText("АПР", W * .31, H * .18); }
   if (est === "cabana") { const lx = W * .06; ctx.fillStyle = "#3a3028"; ctx.fillRect(lx, chao - H * .2, W * .18, H * .2); ctx.fillStyle = "#1a1410"; ctx.fillRect(lx + W * .03, chao - H * .1, W * .12, H * .1); fogueira(lx + W * .09, chao - H * .01, t, .45);
@@ -219,11 +218,13 @@ function desenhaInterior(t, p) {
     for (let i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? "#5a3a1a" : "#6a4a2a"; ctx.beginPath(); ctx.arc(W * .27 + (i % 3) * 10, chao - 6 - Math.floor(i / 3) * 10, 5, 0, 7); ctx.fill(); } /* lenha */ }
   if (est === "fazenda") { ctx.fillStyle = "#2a2a2a"; ctx.fillRect(W * .04, chao - H * .14, W * .16, H * .14); ctx.fillStyle = "#1a1a1a"; ctx.fillRect(W * .06, chao - H * .16, W * .12, H * .02); fogueira(W * .12, chao - H * .03, t, .25); ctx.fillStyle = "#3a3a3a"; ctx.fillRect(W * .1, 0, 8, chao - H * .16);
     for (let i = 0; i < 5; i++) { ctx.fillStyle = "#e0c592"; ctx.beginPath(); ctx.arc(W * .3, H * .08 + i * 9, 4, 0, 7); ctx.fill(); } ctx.strokeStyle = "#7aa04a"; ctx.beginPath(); ctx.moveTo(W * .3, H * .04); ctx.lineTo(W * .3, H * .08); ctx.stroke(); /* trança de cebolas */ }
-  if (est === "cela") { ctx.fillStyle = "#3a3e44"; ctx.fillRect(W * .04, chao - H * .12, W * .26, 6); ctx.fillRect(W * .04, chao - H * .04, W * .26, 6); ctx.fillRect(W * .04, chao - H * .12, 4, H * .12); ctx.fillRect(W * .29, chao - H * .12, 4, H * .12); ctx.strokeStyle = "#555"; ctx.lineWidth = 3; for (let i = 0; i < 10; i++) { ctx.beginPath(); ctx.moveTo(W * (.88 + (i % 2) * .05), 0); ctx.lineTo(W * (.88 + (i % 2) * .05), chao); ctx.stroke(); } }
+  if (est === "cela") { ctx.fillStyle = "#3a3e44"; ctx.fillRect(W * .04, chao - H * .12, W * .26, 6); ctx.fillRect(W * .04, chao - H * .04, W * .26, 6); ctx.fillRect(W * .04, chao - H * .12, 4, H * .12); ctx.fillRect(W * .29, chao - H * .12, 4, H * .12); }
   if (est === "bunker") { for (let i = 0; i < 3; i++) { ctx.fillStyle = "#1a2a1a"; ctx.fillRect(W * (.04 + i * .1), H * .14, W * .08, H * .12); for (let k = 0; k < 4; k++) { ctx.fillStyle = cvRnd(Math.floor(t * 3) + i * 4 + k) < .5 ? "rgba(120,255,120,.8)" : "rgba(255,80,60,.6)"; ctx.fillRect(W * (.05 + i * .1) + k * 6, H * .16, 3, 3); } }
     ctx.fillStyle = "#2a3a2a"; ctx.fillRect(W * .04, H * .28, W * .28, H * .04); }
+  // porta para o corredor / lado de fora
+  const porta = desenhaPorta(t, p, est, f, chao);
   // luz da casa
-  const lamp = .8 + .2 * Math.sin(t * 7) * Math.sin(t * 2.3);
+  const lamp = (noite ? .55 : .8) + .2 * Math.sin(t * 7) * Math.sin(t * 2.3);
   ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(W * .45, 0); ctx.lineTo(W * .45, H * .08); ctx.stroke();
   ctx.fillStyle = `rgba(255,210,140,${lamp})`; ctx.beginPath(); ctx.arc(W * .45, H * .09, 5, 0, 7); ctx.fill(); luzCor(W * .45, H * .2, H * .45, .22 * lamp, "255,200,130");
   // prateleira de comida (os itens que você tem)
@@ -232,29 +233,145 @@ function desenhaInterior(t, p) {
   ctx.fillStyle = "#4a3220"; ctx.fillRect(sx, sy, sw, 5); ctx.fillRect(sx, sy + H * .085, sw, 5);
   comidas.forEach((k, i) => desenhaItemCena(k, sx + 12 + (i % 5) * (sw - 20) / 5, sy - 10 + Math.floor(i / 5) * H * .085 + 1, 22));
   // armas na parede
-  ["espingarda", "rifle", "besta", "faca"].filter(k => qtd(k)).forEach((k, i) => desenhaItemCena(k, W * (.6 + i * .09), chao - H * .17 - (i % 2) * 12, 36, -.25));
+  ["espingarda", "rifle", "besta", "faca"].filter(k => qtd(k)).forEach((k, i) => desenhaItemCena(k, W * (.55 + i * .075), chao - H * .17 - (i % 2) * 12, 34, -.25));
   // mesa com cura e ferramentas
-  const mx = W * .55, my = chao - H * .07;
-  ctx.fillStyle = "#4a3220"; ctx.fillRect(mx, my, W * .3, 6); ctx.fillRect(mx + 6, my, 5, H * .07); ctx.fillRect(mx + W * .3 - 11, my, 5, H * .07);
+  const mx = W * .52, my = chao - H * .07, mw2 = W * .28;
+  ctx.fillStyle = "#4a3220"; ctx.fillRect(mx, my, mw2, 6); ctx.fillRect(mx + 6, my, 5, H * .07); ctx.fillRect(mx + mw2 - 11, my, 5, H * .07);
   const mesa = ["kit", "remedio", "bandagem", "iodo", "geiger", "vodka", "artefato", "pecas", "filtro"].filter(k => qtd(k)).slice(0, 5);
-  mesa.forEach((k, i) => desenhaItemCena(k, mx + 14 + i * (W * .3 - 20) / 5, my - 9, 20));
-  if (qtd("artefato")) luzCor(mx + 14 + mesa.indexOf("artefato") * (W * .3 - 20) / 5, my - 9, 30, .5 + .3 * Math.sin(t * 3), "160,255,230");
+  mesa.forEach((k, i) => desenhaItemCena(k, mx + 14 + i * (mw2 - 20) / 5, my - 9, 20));
+  if (qtd("artefato")) luzCor(mx + 14 + mesa.indexOf("artefato") * (mw2 - 20) / 5, my - 9, 30, .5 + .3 * Math.sin(t * 3), "160,255,230");
   // chão: madeira, munição, sucata, sementes
   for (let i = 0; i < Math.min(5, Math.ceil(qtd("material") / 3)); i++) { ctx.fillStyle = i % 2 ? "#6a4a2a" : "#5a3c22"; ctx.fillRect(W * .04, chao + H * .02 - i * 5, W * .16, 4); }
-  if (qtd("municao")) desenhaItemCena("municao", W * .9, chao + H * .02, 22);
-  if (qtd("sucata")) desenhaItemCena("sucata", W * .82, chao + H * .03, 20);
+  if (qtd("municao")) desenhaItemCena("municao", W * .78, chao + H * .035, 22);
+  if (qtd("sucata")) desenhaItemCena("sucata", W * .7, chao + H * .04, 20);
   const sem = Object.keys(SOB.inv).filter(k => ITENS[k] && ITENS[k].tipo === "semente" && SOB.inv[k] > 0).slice(0, 3);
   sem.forEach((k, i) => desenhaItemCena(k, W * (.24 + i * .05), chao + H * .025, 18, (i - 1) * .2));
   // vasos da horta perto da janela (cidade e Pripyat)
   if ((est === "apartamento" || est === "sovietico") && (SOB.horta || []).length) SOB.horta.forEach((h, i) => { const vx = jx + 10 + i * 30; ctx.fillStyle = "#8a4a2a"; ctx.fillRect(vx, jy + jh + 2, 18, 12); if (h) plantinha(vx + 9, jy + jh + 2, h.dias <= 0 ? .9 : .5); });
   // companheiros sentados e você
   SOB.grupo.forEach((g, i) => pessoa(W * (.12 + i * .09), chao + H * .045, H * .17, { sentado: true, cor: "#08090c", aro: "rgba(255,200,130,.25)", cabeca: Math.sin(t * .4 + i) > .6 ? 1 : 0 }));
-  if (!p.semEu) pessoa(W * .45, chao + H * .045, H * .2, { cabeca: Math.sin(t * .5) > .7 ? -1 : 0, aro: "rgba(255,200,130,.3)" });
+  if (!p.semEu) { if (porta.segurando) pessoa(porta.dx - H * .035 + Math.sin(t * 30) * 2, chao + H * .045, H * .2, { dir: 1, inclina: .14 }); else pessoa(W * .45, chao + H * .045, H * .2, { dir: porta.quem ? 1 : undefined, cabeca: porta.quem ? 0 : Math.sin(t * .5) > .7 ? -1 : 0, aro: "rgba(255,200,130,.3)" }); }
   if (ch && SOB.rad > 30) particulasRad(t, Math.round(SOB.rad / 8));
+  if (noite) { ctx.fillStyle = "rgba(3,5,12,.42)"; ctx.fillRect(0, 0, W, H); luzCor(W * .45, H * .2, H * .35, .12 * lamp, "255,200,130"); if (porta.quem === "horda" && !porta.segura) { ctx.fillStyle = `rgba(160,20,10,${.08 + .06 * Math.sin(t * 6)})`; ctx.fillRect(0, 0, W, H); } }
 }
 // o interior também vale para as casas nos lugares originais
 const _sobBase = sobBase, _chernoBase = chernoBase;
-sobBase = function (t, p) { if (SOB && ehCasa() && !p.noite && !(sobCena && sobCena.tipo === "visita") && !(sobCena && sobCena.tipo === "acao" && FORA.includes(sobCena.acao))) return desenhaInterior(t, p); return _sobBase(t, p); };
-chernoBase = function (t, p) { if (SOB && ehCasa() && !p.noite && !(sobCena && sobCena.tipo === "visita") && !(sobCena && sobCena.tipo === "acao" && FORA.includes(sobCena.acao))) return desenhaInterior(t, p); return _chernoBase(t, p); };
+sobBase = function (t, p) { if (SOB && ehCasa() && !(sobCena && sobCena.tipo === "acao" && FORA.includes(sobCena.acao))) return desenhaInterior(t, p); return _sobBase(t, p); };
+chernoBase = function (t, p) { if (SOB && ehCasa() && !(sobCena && sobCena.tipo === "acao" && FORA.includes(sobCena.acao))) return desenhaInterior(t, p); return _chernoBase(t, p); };
 // pré-carrega os desenhos dos itens para a cena
 Object.keys(ITENS).forEach(k => imgItem(k));
+
+/* ---------- porta da casa: sempre mostra um pedaço do corredor / lado de fora ---------- */
+function ceuSimples(f, ch) { // cor do céu visto pela porta
+  const dia = ch ? [120, 130, 110] : [140, 165, 185], tarde = [190, 120, 80], noite = [10, 14, 24];
+  const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
+  return `rgb(${(f < .5 ? mix(dia, tarde, f * 2) : mix(tarde, noite, Math.min(1, (f - .5) * 2.2))).join(",")})`;
+}
+function desenhaPorta(t, p, est, f, chao) {
+  const ch = SOB.modo === "cherno", c = sobCena || {}, noite = !!p.noite;
+  const dw = W * .15, dx = W * .83, dh = H * .28, dy = chao - dh;
+  const quem = c.tipo === "visita" ? c.quem : c.porta || null, segura = c.segura !== false;
+  const fora = ["cabana", "fazenda"].includes(est);
+  // quanto a porta está aberta
+  let abre = noite ? .3 : .68;
+  if (c.tipo === "acao" && c.acao === "dormir") abre = cvMix(.68, 0, cvSeg(t, .2, 1));
+  if (c.tipo === "visita") abre = cvMix(.15, 1, cvSuave(cvSeg(t, 1.2, 2.2)));
+  if (quem === "horda") abre = segura ? .3 + Math.abs(Math.sin(t * 9)) * .05 : .7 + Math.sin(t * 13) * .06;
+  if (quem === "barulho") abre = .2 + Math.sin(t * 1.3) * .03;
+  if (c.segurando) abre = .22 + Math.abs(Math.sin(t * 11)) * .06;
+  // o que se vê pela porta
+  ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
+  if (fora) {
+    ctx.fillStyle = ceuSimples(f, ch); ctx.fillRect(dx, dy, dw, dh);
+    if (f > .7) { ctx.fillStyle = "rgba(230,230,210,.8)"; ctx.beginPath(); ctx.arc(dx + dw * .7, dy + dh * .15, 5, 0, 7); ctx.fill(); }
+    for (let i = 0; i < 4; i++) (ch ? pinheiroVermelho : (x, b, h) => arvore(x, b, h, f > .7 ? "#06080a" : "#14181a", .3))(dx + dw * (i / 3) - 6, dy + dh * .78, dh * (.35 + cvRnd(i) * .25), i + 3);
+    ctx.fillStyle = est === "fazenda" ? "#2a2616" : "#1a1e14"; ctx.fillRect(dx, dy + dh * .78, dw, dh);
+    ctx.fillStyle = "#3a2a18"; ctx.fillRect(dx, dy + dh * .93, dw, dh * .07); // degrau da varanda
+  } else if (est === "cela") {
+    ctx.fillStyle = "#1c1e20"; ctx.fillRect(dx, dy, dw, dh); ctx.fillStyle = "#2a2c2e"; ctx.fillRect(dx, dy + dh * .75, dw, dh);
+    ctx.strokeStyle = "#3a3e44"; ctx.lineWidth = 2; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(dx + i * dw / 5, dy + dh * .15); ctx.lineTo(dx + i * dw / 5, dy + dh * .75); ctx.stroke(); }
+    const pis = cvRnd(Math.floor(t * 4)) < .15 ? .2 : 1; luzCor(dx + dw * .5, dy + dh * .08, dw, .35 * pis, "230,240,255");
+  } else if (est === "bunker") {
+    ctx.fillStyle = "#0c0e0c"; ctx.fillRect(dx, dy, dw, dh); ctx.fillStyle = "#1a1e1a"; ctx.beginPath(); ctx.moveTo(dx, dy + dh); ctx.lineTo(dx + dw * .3, dy + dh * .5); ctx.lineTo(dx + dw * .7, dy + dh * .5); ctx.lineTo(dx + dw, dy + dh); ctx.fill();
+    ctx.strokeStyle = "#2a302a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(dx, dy + dh * .15); ctx.lineTo(dx + dw * .35, dy + dh * .38); ctx.stroke();
+    luzCor(dx + dw * .5, dy + dh * .4, dw * .7, .3 + .2 * Math.sin(t * 3), "255,40,30");
+  } else { // corredor do prédio
+    ctx.fillStyle = est === "sovietico" ? "#3a3a2c" : "#22222a"; ctx.fillRect(dx, dy, dw, dh);
+    if (est === "sovietico") { ctx.fillStyle = "#2a3a2c"; ctx.fillRect(dx, dy + dh * .45, dw, dh); }
+    ctx.fillStyle = "#141416"; ctx.beginPath(); ctx.moveTo(dx, dy + dh); ctx.lineTo(dx + dw * .2, dy + dh * .78); ctx.lineTo(dx + dw * .8, dy + dh * .78); ctx.lineTo(dx + dw, dy + dh); ctx.fill();
+    ctx.fillStyle = est === "sovietico" ? "#4a2a20" : "#2e2620"; ctx.fillRect(dx + dw * .3, dy + dh * .3, dw * .4, dh * .48); // porta do vizinho
+    ctx.fillStyle = "rgba(200,190,160,.5)"; ctx.font = `700 ${Math.max(7, dw * .12)}px "JetBrains Mono", monospace`; ctx.fillText(est === "sovietico" ? "47" : "303", dx + dw * .38, dy + dh * .4);
+    const pis = cvRnd(Math.floor(t * 5)) < .12 ? .15 : 1; ctx.fillStyle = `rgba(255,240,200,${.7 * pis})`; ctx.fillRect(dx + dw * .4, dy + 3, dw * .2, 3); luzCor(dx + dw * .5, dy + dh * .1, dw * .9, .25 * pis, "255,235,190");
+  }
+  if (noite) { ctx.fillStyle = "rgba(2,3,8,.3)"; ctx.fillRect(dx, dy, dw, dh); }
+  if (quem === "horda") { const pis = cvRnd(Math.floor(t * 7)) < .3 ? .3 : 1; luzCor(dx + dw * .5, dy + dh * .3, dw * 1.1, .45 * pis, ch ? "190,255,140" : "255,120,90"); }
+  // quem aparece na porta
+  const pe = chao + H * .045, k = cvSuave(cvSeg(t, .2, 2)), meio = dx + dw * .55;
+  if (quem === "pessoa" || quem === "mercador" || quem === "bandidos") {
+    const sc = .62 + .38 * k, y = pe - (1 - k) * dh * .2, n = quem === "bandidos" ? 3 : 1;
+    for (let i = n - 1; i >= 0; i--) pessoa(meio + (i - (n - 1) / 2) * dw * .32, y - i * 3, H * .2 * sc * (1 - i * .06), { fase: t * 4 + i, anda: k < 1 ? .8 : 0, dir: -1, mochila: quem !== "bandidos", capacete: ch, luz: noite || (quem === "bandidos" && i === 1), luzRgb: "255,230,200",
+      cor: quem === "bandidos" ? "#030303" : "#07080b", aro: quem === "bandidos" ? "rgba(226,72,61,.35)" : quem === "mercador" ? "rgba(255,200,110,.35)" : "rgba(200,210,230,.25)" });
+    if (quem === "pessoa" && c.crianca) pessoa(meio + dw * .3, y, H * .12 * sc, { fase: t * 4 + 1, anda: k < 1 ? .8 : 0, dir: -1 });
+    if (quem === "mercador") { luzCor(meio - dw * .3, y - H * .1 * sc, dw * .8, .5, "255,200,110"); ctx.fillStyle = "rgba(255,210,120,.95)"; ctx.fillRect(meio - dw * .32, y - H * .11 * sc, 5, 7); }
+  } else if (quem === "horda") {
+    const n = segura ? 3 : 4;
+    for (let i = 0; i < n; i++) { const z = .55 + i * .15, bx = dx + dw * (.25 + ((i * .37) % 1) * .6) + Math.sin(t * 2 + i) * 3;
+      if (ch) monstro(bx, pe - (1 - z) * dh * .3, H * .13 * z, { quatro: true, dir: -1, olhosRgb: "190,255,120", cor: "#0b0d08" });
+      else zumbi(bx, pe - (1 - z) * dh * .3, H * .2 * z, { dir: -1, olhos: .6 }); }
+  } else if (quem === "barulho") {
+    const x = dx + ((t * .25) % 1.4) * dw - dw * .2; ctx.fillStyle = "rgba(0,0,0,.7)"; ctx.beginPath(); ctx.ellipse(x, dy + dh * .55, dw * .12, dh * .3, 0, 0, 7); ctx.fill();
+  } else if (noite && (t % 16) < 4) { // à noite, às vezes algo passa lá fora
+    const k2 = (t % 16) / 4, x = dx - dw * .3 + k2 * dw * 1.6;
+    if (ch) monstro(x, pe - dh * .12, H * .09, { quatro: true, dir: 1, olhosRgb: "190,255,120", cor: "#050604" }); else zumbi(x, pe - dh * .12, H * .14, { dir: 1, olhos: .3 });
+  }
+  ctx.restore();
+  // a folha da porta (dobradiça à esquerda, abre para dentro)
+  const x1 = dx + dw * (1 - abre * .88), alt = Math.sin(abre * PI / 2) * dh * .05;
+  const cores = { apartamento: "#3a2c22", sovietico: "#5a2e22", cabana: "#4a3018", fazenda: "#5a3a22", cela: null, bunker: "#3a403a" };
+  if (est === "cela") { ctx.strokeStyle = "#6a6e74"; ctx.lineWidth = 3; for (let i = 0; i <= 5; i++) { const x = cvMix(dx, x1, i / 5); ctx.beginPath(); ctx.moveTo(x, dy - alt * i / 5); ctx.lineTo(x, chao + alt * i / 5); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(dx, dy + dh * .5); ctx.lineTo(x1, dy + dh * .5); ctx.stroke(); }
+  else {
+    ctx.fillStyle = cores[est]; ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(x1, dy - alt); ctx.lineTo(x1, chao + alt); ctx.lineTo(dx, chao); ctx.fill();
+    const lw = x1 - dx;
+    if (lw > 6) {
+      if (est === "cabana" || est === "fazenda") { ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 1; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(dx + lw * i / 4, dy); ctx.lineTo(dx + lw * i / 4, chao); ctx.stroke(); } ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(dx, dy + dh * .2); ctx.lineTo(x1, dy + dh * .8); ctx.stroke(); }
+      else if (est === "sovietico") { ctx.fillStyle = "rgba(200,160,90,.6)"; for (let r = 0; r < 5; r++) for (let q = 0; q < 2; q++) { ctx.beginPath(); ctx.arc(dx + lw * (.3 + q * .4), dy + dh * (.15 + r * .17), 1.6, 0, 7); ctx.fill(); } }
+      else if (est === "bunker") { ctx.strokeStyle = "#6a706a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(dx + lw * .5, dy + dh * .45, Math.min(lw * .3, 10), 0, 7); ctx.stroke(); }
+      else { ctx.fillStyle = "rgba(255,255,255,.08)"; ctx.fillRect(dx + lw * .15, dy + dh * .1, lw * .7, dh * .3); ctx.fillRect(dx + lw * .15, dy + dh * .5, lw * .7, dh * .38); ctx.fillStyle = "#c8a860"; ctx.fillRect(dx + lw * .4, dy + dh * .07, lw * .2, 4); }
+      ctx.fillStyle = "#c8b080"; ctx.beginPath(); ctx.arc(x1 - Math.min(6, lw * .2), dy + dh * .55, 2.5, 0, 7); ctx.fill(); // maçaneta
+    }
+  }
+  // batente
+  ctx.strokeStyle = est === "cela" ? "#4a4e54" : "#1a120a"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(dx, chao); ctx.lineTo(dx, dy); ctx.lineTo(dx + dw, dy); ctx.lineTo(dx + dw, chao); ctx.stroke();
+  // horda: barricada na porta, mãos pela fresta e vultos na janela
+  if (quem === "horda") {
+    if (segura || c.segurando) for (let i = 0; i < 3; i++) { ctx.save(); ctx.translate(dx + dw * .5, dy + dh * (.25 + i * .25) + Math.sin(t * 9 + i) * 1.5); ctx.rotate(i % 2 ? .18 : -.15); ctx.fillStyle = i % 2 ? "#6a4a2a" : "#5a3c22"; ctx.fillRect(-dw * .7, -4, dw * 1.4, 8); ctx.restore(); }
+    else { ctx.strokeStyle = "#0a0c08"; ctx.lineWidth = 4; ctx.lineCap = "round"; for (let i = 0; i < 3; i++) { const yy = dy + dh * (.35 + i * .14), r = Math.sin(t * 6 + i) * 6; ctx.beginPath(); ctx.moveTo(x1 + 4, yy); ctx.lineTo(x1 - 14 - r, yy + 4); ctx.stroke(); } ctx.lineCap = "butt"; }
+    const jx = est === "cela" ? W * .58 : W * .54, jw = est === "cela" ? W * .18 : W * .27, jy = H * .1, jh = est === "cela" ? H * .1 : H * .2;
+    for (let i = 0; i < 3; i++) { const hx = jx + jw * (.2 + i * .3) + Math.sin(t * 1.5 + i) * 5, hy = jy + jh * .75; ctx.fillStyle = "rgba(4,5,4,.85)"; ctx.beginPath(); ctx.arc(hx, hy, jh * .16, 0, 7); ctx.fill(); ctx.fillRect(hx - jh * .2, hy + jh * .1, jh * .4, jh * .2);
+      ctx.fillStyle = ch ? "rgba(190,255,120,.7)" : "rgba(230,220,200,.45)"; ctx.fillRect(hx - 4, hy - 2, 2, 2); ctx.fillRect(hx + 2, hy - 2, 2, 2); }
+  }
+  // luz que entra pela porta
+  const ab = dx + dw - x1; if (ab > 3) { const g = ctx.createLinearGradient(0, chao, 0, chao + H * .08); const rgb = fora && !noite ? "255,230,190" : est === "bunker" ? "255,60,40" : "220,225,240"; g.addColorStop(0, `rgba(${rgb},${noite ? .05 : .12})`); g.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x1, chao); ctx.lineTo(dx + dw, chao); ctx.lineTo(dx + dw - W * .04, chao + H * .08); ctx.lineTo(x1 - W * .22, chao + H * .08); ctx.fill(); }
+  return { dx, dw, quem, segura, segurando: !!c.segurando, ofertas: c.ofertas };
+}
+// mercador: coloca a mercadoria num pano na entrada
+const _desenhaInterior = desenhaInterior;
+desenhaInterior = function (t, p) {
+  _desenhaInterior(t, p);
+  const c = sobCena || {};
+  if (c.tipo === "visita" && c.quem === "mercador" && t > 2.2) {
+    const k = cvSuave(cvSeg(t, 2.2, 3)), cx = W * .74, y = H * .6 + H * .035;
+    ctx.fillStyle = `rgba(110,40,30,${.9 * k})`; ctx.beginPath(); ctx.ellipse(cx, y, W * .1, H * .014, 0, 0, 7); ctx.fill();
+    (c.ofertas || (SOB.modo === "cherno" ? ["iodo", "filtro", "vodka"] : ["enlatado", "municao", "kit"])).slice(0, 3).forEach((id, i) => { ctx.globalAlpha = k; desenhaItemCena(id, cx + (i - 1) * W * .06, y - 8 - (1 - k) * 10, 20); ctx.globalAlpha = 1; });
+  }
+};
+const _sobVisitaC = sobVisita, _chernoVisitaC = chernoVisita;
+sobVisita = function (t, p) { if (SOB && ehCasa()) return desenhaInterior(t, { noite: p.noite }); return _sobVisitaC(t, p); };
+chernoVisita = function (t, p) { if (SOB && ehCasa()) return desenhaInterior(t, { noite: p.noite }); return _chernoVisitaC(t, p); };
+const _sobHordaC = sobHorda;
+sobHorda = function (pos) { _sobHordaC(pos); if (SOB && ehCasa()) { const segura = document.querySelectorAll("#sobAcoes .sb-acao").length <= 1; sobLigarCena({ tipo: "base", noite: true, porta: "horda", segura }); } };
+const _sobBarulhoC = sobBarulho;
+sobBarulho = function (pos) { _sobBarulhoC(pos); if (SOB && ehCasa()) sobLigarCena({ tipo: "base", noite: true, porta: "barulho" }); };
+const _sobMiniTocarC = sobMiniTocar;
+sobMiniTocar = function (n, limite, fim) { if (sobCena && sobCena.porta === "horda") sobCena.segurando = true; return _sobMiniTocarC(n, limite, ok => { if (sobCena) sobCena.segurando = false; fim(ok); }); };
