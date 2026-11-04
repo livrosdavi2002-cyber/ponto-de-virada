@@ -13,7 +13,8 @@
 @font-face{font-family:"Newsreader";font-weight:400;font-style:italic;font-display:swap;src:url(fonts/newsreader-latin-400-italic.woff2) format("woff2")}
 @font-face{font-family:"JetBrains Mono";font-weight:400;font-display:swap;src:url(fonts/jetbrains-mono-latin-400-normal.woff2) format("woff2")}
 @font-face{font-family:"JetBrains Mono";font-weight:600;font-display:swap;src:url(fonts/jetbrains-mono-latin-600-normal.woff2) format("woff2")}
-:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+:root{--sat:0px;--sab:0px;--sal:0px;--sar:0px;--st:max(env(safe-area-inset-top,0px),var(--sat));--sb:max(env(safe-area-inset-bottom,0px),var(--sab));--sl:max(env(safe-area-inset-left,0px),var(--sal));--sr:max(env(safe-area-inset-right,0px),var(--sar))}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 body{margin:0;font-size:14px;font-family:system-ui,sans-serif;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
 img{max-width:100%}[hidden]{display:none!important}
 
@@ -24,6 +25,7 @@ img{max-width:100%}[hidden]{display:none!important}
   --ink: #e9e4d8;
   --ink-dim: #9a968c;
   --acc: #f2a33a;
+  --acc-rgb: 242,163,58;
   --signal: #e2483d;
   --line: #2a3140;
   --f-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
@@ -36,15 +38,16 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 #bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
 .vignette {
   position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background: linear-gradient(to bottom, transparent 35%, color-mix(in srgb, var(--night) 70%, transparent) 60%, var(--night) 92%);
+  background: linear-gradient(to bottom, transparent 35%, rgba(11,14,20,.7) 60%, var(--night) 92%);
 }
 .app {
   position: relative; z-index: 2; height: 100%;
   max-width: 560px; margin: 0 auto;
   display: flex; flex-direction: column;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 14px 18px; box-sizing: border-box;
+  padding-left: max(16px, var(--sl));
+  padding-right: max(16px, var(--sr));
+  padding-top: calc(var(--st) + 12px);
+  padding-bottom: calc(var(--sb) + 16px); box-sizing: border-box;
 }
 .top {
   display: flex; justify-content: space-between; align-items: center; gap: 8px;
@@ -53,10 +56,10 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .top .grp { display: flex; gap: 6px; }
 .top button {
   font: inherit; letter-spacing: inherit; text-transform: inherit;
-  background: color-mix(in srgb, var(--night) 60%, transparent); border: 1px solid var(--line); color: var(--ink-dim);
+  background: rgba(11,14,20,.6); border: 1px solid var(--line); color: var(--ink-dim);
   padding: 6px 10px; border-radius: 999px; cursor: pointer;
 }
-.top button:hover, .top button:focus-visible { color: var(--ink); border-color: var(--ink-dim); outline: none; }
+.top button:focus-visible { color: var(--ink); border-color: var(--ink-dim); outline: none; }
 .rec { display: inline-flex; align-items: center; gap: 7px; }
 .rec i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); animation: blink 1.6s infinite; }
 @keyframes blink { 50% { opacity: .2; } }
@@ -65,7 +68,7 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .chip {
   font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
   border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; color: var(--ink-dim);
-  background: color-mix(in srgb, var(--night) 60%, transparent);
+  background: rgba(11,14,20,.6);
 }
 .meter { display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 11px; color: var(--ink); letter-spacing: .08em; }
 .meter .bar { width: 110px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
@@ -73,11 +76,13 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .meter.baixo { color: var(--signal); }
 .meter.baixo .bar i { background: var(--signal); }
 
-.scene { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; padding-block: 18px; }
+.scene { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; padding-block: 14px; scrollbar-width: none; }
+.scene::-webkit-scrollbar { display: none; }
+.scene > :first-child { margin-top: auto; }
 .clock {
   font-family: var(--f-display); font-weight: 800;
   font-size: clamp(60px, 21vw, 108px); line-height: .85; letter-spacing: -.01em; color: var(--acc);
-  text-shadow: 0 0 28px color-mix(in srgb, var(--acc) 45%, transparent);
+  text-shadow: 0 0 28px rgba(var(--acc-rgb),.45);
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .place { font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); margin-top: 10px; }
@@ -94,13 +99,12 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .timer.urgente i { background: var(--signal); }
 .choice {
   display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
-  background: color-mix(in srgb, var(--night-2) 88%, transparent);
+  background: rgba(20,25,36,.9);
   border: 1px solid var(--line); color: var(--ink);
   padding: 14px 16px; border-radius: 14px;
   font-family: var(--f-body); font-size: 18px; line-height: 1.25;
   opacity: 0; transform: translateY(10px);
   transition: opacity .35s ease, transform .35s ease, border-color .2s, background .2s;
-  backdrop-filter: blur(6px);
 }
 .choice.show { opacity: 1; transform: none; }
 .choice .k {
@@ -111,11 +115,11 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .choice .lbl { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .choice .req { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
 .choice .custo { flex: none; font-family: var(--f-mono); font-size: 11px; color: var(--ink-dim); }
-.choice:hover:not(:disabled), .choice:focus-visible { border-color: var(--acc); outline: none; background: color-mix(in srgb, var(--acc) 10%, var(--night-2)); }
+.choice:focus-visible { border-color: var(--acc); outline: none; background: rgba(var(--acc-rgb),.14); }
 .choice:disabled { cursor: not-allowed; }
 .choice.show:disabled { opacity: .4; }
 .choice:disabled .k { border-color: var(--line); color: var(--ink-dim); }
-.choice.picked { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 22%, var(--night-2)); }
+.choice.picked { border-color: var(--acc); background: rgba(var(--acc-rgb),.26); }
 .choice.faded { opacity: .25 !important; }
 
 /* Ações especiais */
@@ -123,11 +127,11 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .acao-l { font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--acc); }
 .big {
   position: relative; overflow: hidden; width: 100%; height: 76px; border-radius: 16px; cursor: pointer;
-  border: 1.5px solid var(--acc); background: color-mix(in srgb, var(--night-2) 85%, transparent); color: var(--ink);
+  border: 1.5px solid var(--acc); background: rgba(20,25,36,.88); color: var(--ink);
   font-family: var(--f-display); font-weight: 800; font-size: 30px; letter-spacing: .04em; text-transform: uppercase;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none;
 }
-.big .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: color-mix(in srgb, var(--acc) 40%, transparent); }
+.big .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: rgba(var(--acc-rgb),.4); }
 .big span { position: relative; }
 .big:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .big.bate { animation: bate .12s; }
@@ -136,22 +140,22 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .slots b {
   width: 46px; height: 56px; display: grid; place-items: center; border-radius: 10px;
   border: 1px solid var(--line); font-family: var(--f-display); font-weight: 800; font-size: 34px; color: var(--acc);
-  background: color-mix(in srgb, var(--night) 70%, transparent);
+  background: rgba(11,14,20,.7);
 }
 .pad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .pad button {
   height: 50px; border-radius: 12px; border: 1px solid var(--line); cursor: pointer;
-  background: color-mix(in srgb, var(--night-2) 88%, transparent); color: var(--ink);
+  background: rgba(20,25,36,.9); color: var(--ink);
   font-family: var(--f-mono); font-size: 18px;
 }
-.pad button:active { background: color-mix(in srgb, var(--acc) 25%, var(--night-2)); }
+.pad button:active { background: rgba(var(--acc-rgb),.3); }
 .pad button:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
 .shake { animation: shake .35s; }
 @keyframes shake { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
 
 .toast {
   position: fixed; z-index: 4; left: 50%; transform: translate(-50%, -8px);
-  top: calc(env(safe-area-inset-top, 0px) + 54px);
+  top: calc(var(--st) + 54px);
   font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em;
   background: var(--night-2); color: var(--ink); border: 1px solid var(--acc);
   padding: 8px 14px; border-radius: 999px; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none;
@@ -174,29 +178,29 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .overlay {
   position: fixed; inset: 0; z-index: 5;
   display: flex; justify-content: center;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-top: calc(env(safe-area-inset-top, 0px) + 28px);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+  padding-left: max(16px, var(--sl));
+  padding-right: max(16px, var(--sr));
+  padding-top: calc(var(--st) + 24px);
+  padding-bottom: calc(var(--sb) + 24px);
   overflow-y: auto; box-sizing: border-box;
 }
-.drawer { background: color-mix(in srgb, var(--night) 94%, transparent); }
-.hub { background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--night) 75%, transparent) 35%, var(--night) 70%); }
+.drawer { background: rgba(11,14,20,.95); }
+.hub { background: linear-gradient(to bottom, transparent 0%, rgba(11,14,20,.78) 35%, var(--night) 70%); }
 .inner { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 16px; margin-top: auto; }
 .hub h1 {
   font-family: var(--f-display); font-weight: 800; margin: 0;
   font-size: clamp(58px, 18vw, 100px); line-height: .85; text-transform: uppercase;
 }
-.hub h1 span { color: var(--acc); text-shadow: 0 0 30px color-mix(in srgb, var(--acc) 40%, transparent); }
+.hub h1 span { color: var(--acc); text-shadow: 0 0 30px rgba(var(--acc-rgb),.4); }
 .hub p, .drawer p { margin: 0; color: var(--ink-dim); font-size: 18px; }
 .lista { display: grid; gap: 12px; }
 .story {
   text-align: left; cursor: pointer; display: grid; gap: 6px;
-  background: color-mix(in srgb, var(--night-2) 85%, transparent); color: var(--ink);
+  background: rgba(20,25,36,.88); color: var(--ink);
   border: 1px solid var(--line); border-radius: 16px; padding: 16px;
   font-family: var(--f-body);
 }
-.story:hover, .story:focus-visible { border-color: var(--c); outline: none; }
+.story:focus-visible { border-color: var(--c); outline: none; }
 .story .g { font-family: var(--f-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-dim); display: flex; justify-content: space-between; gap: 8px; }
 .story h3 { margin: 0; font-family: var(--f-display); font-weight: 800; font-size: 36px; line-height: .95; text-transform: uppercase; color: var(--c); }
 .story .gancho { font-size: 17px; line-height: 1.35; color: var(--ink); }
@@ -214,9 +218,30 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 }
 .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
-@media (prefers-reduced-motion: reduce) {
-  .choice { transition: none; }
-  .rec i, .caret { animation: none; }
+@media (hover: hover) {
+  .top button:hover { color: var(--ink); border-color: var(--ink-dim); }
+  .choice:hover:not(:disabled) { border-color: var(--acc); background: rgba(var(--acc-rgb),.14); }
+  .story:hover { border-color: var(--c); }
+}
+.choice:active:not(:disabled) { transform: scale(.98); }
+/* telas baixas (celulares pequenos) */
+@media (max-height: 720px) {
+  .clock { font-size: clamp(50px, 17vw, 84px); }
+  .text { font-size: 18px; margin-top: 12px; min-height: 0; }
+  .choice { font-size: 16px; padding: 11px 14px; }
+  .choices { gap: 8px; }
+  .big { height: 64px; font-size: 26px; }
+  .pad button { height: 44px; }
+  .slots b { height: 48px; font-size: 30px; }
+  .story h3 { font-size: 30px; }
+  .story .gancho { font-size: 15px; }
+  .hub h1 { font-size: clamp(48px, 15vw, 80px); }
+}
+@media (max-height: 600px) {
+  .text { font-size: 16.5px; line-height: 1.38; }
+  .place { margin-top: 6px; }
+  .choice { font-size: 15px; padding: 9px 12px; }
+  .choice .k { width: 26px; height: 26px; font-size: 15px; }
 }
 </style>
 </head>
@@ -681,7 +706,13 @@ const FASES = {
 
 const TAG = { bom: "Final bom", ruim: "Final ruim", estranho: "Final estranho" };
 const $ = id => document.getElementById(id);
-const reduz = matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* No Android, "remover animações"/economia de bateria ligam o prefers-reduced-motion e o jogo ficava parado.
+   Animação faz parte do jogo, então ela fica sempre ligada. */
+const reduz = false;
+function corDestaque(hex) {
+  const n = parseInt(hex.slice(1), 16), r = document.documentElement.style;
+  r.setProperty("--acc", hex); r.setProperty("--acc-rgb", (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255));
+}
 const finaisDe = k => Object.keys(FASES[k].nos).filter(n => FASES[k].nos[n].fim);
 
 /* ============================================================
@@ -833,21 +864,24 @@ $("btnSom").addEventListener("click", () => {
 const cv = $("bg"), ctx = cv.getContext("2d");
 let W = 0, H = 0, DPR = 1, predios = [], tetos = [], gotas = [], neve = [], bolhas = [], fendaPts = [];
 let ver = new Set(), tCena = performance.now(), acesas = .5, tremores = [];
+let DPR_MAX = Math.min(devicePixelRatio || 1, 1.5), ultFrame = 0, kv = 1, lento = 0, mW = 0, mH = 0;
 const ponteiro = { x: 0, y: 0, t: -1e9 }, luz = { x: 0, y: 0 };
 const ncv = document.createElement("canvas"); ncv.width = 48; ncv.height = 36;
 const nctx = ncv.getContext("2d"), nimg = nctx.createImageData(48, 36);
 
 function setVer(lista) { ver = new Set(lista); tCena = performance.now(); }
 function montar() {
-  DPR = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
-  cv.width = W * DPR; cv.height = H * DPR;
+  DPR = DPR_MAX; W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  if (Math.abs(W - mW) < 2 && Math.abs(H - mH) < 140 && predios.length) return; /* barra do sistema aparecendo: só ajusta o canvas */
+  mW = W; mH = H;
   predios = []; tetos = []; let x = -10;
   while (x < W + 20) {
     const w = 40 + Math.random() * 70, h = H * (.22 + Math.random() * .4), jan = [];
     for (let yy = H - h + 12; yy < H - 10; yy += 14)
-      for (let xx = x + 8; xx < x + w - 10; xx += 11) jan.push({ x: xx, y: yy, r: Math.random() });
+      for (let xx = x + 8; xx < x + w - 10; xx += 11) jan.push({ x: xx, y: yy - H, r: Math.random() });
     predios.push({ x, w, h, jan });
-    tetos.push({ x: x + 8 + Math.random() * (w - 16), y: H - h - 3, ph: Math.random() * 6.28, f: .6 + Math.random() * 1.4 });
+    tetos.push({ x: x + 8 + Math.random() * (w - 16), y: -h - 3, ph: Math.random() * 6.28, f: .6 + Math.random() * 1.4 });
     x += w + 4 + Math.random() * 10;
   }
   gotas = Array.from({ length: Math.round(W * H / 5000) }, () => ({ x: Math.random() * W * 1.3, y: Math.random() * H, v: 9 + Math.random() * 7, l: 8 + Math.random() * 12 }));
@@ -866,7 +900,7 @@ function ceu(manha) {
 function cidade() {
   for (const p of predios) {
     ctx.fillStyle = "#0f131b"; ctx.fillRect(p.x, H - p.h, p.w, p.h);
-    for (const j of p.jan) { ctx.fillStyle = j.r < acesas ? "rgba(242,163,58,.62)" : "#161b26"; ctx.fillRect(j.x, j.y, 4, 6); }
+    for (const j of p.jan) { ctx.fillStyle = j.r < acesas ? "rgba(242,163,58,.62)" : "#161b26"; ctx.fillRect(j.x, H + j.y, 4, 6); }
   }
 }
 function corredor(t) {
@@ -940,14 +974,14 @@ function lanternas(t, modo) {
     if (modo === "todas") a = Math.min(1, t * 2) * (.85 + .15 * Math.sin(t * 6 + te.ph));
     else if (modo === "sync") a = Math.sin(t * 2.2) > -.2 ? .95 : .1;
     else a = Math.sin(t * te.f + te.ph) > .35 ? .9 : 0;
-    if (a > .05) luzVermelha(te.x, te.y, 18, a);
+    if (a > .05) luzVermelha(te.x, H + te.y, 18, a);
   }
 }
 function chuva() {
   ctx.strokeStyle = "rgba(190,200,220,.22)"; ctx.lineWidth = 1; ctx.beginPath();
   for (const g of gotas) {
     ctx.moveTo(g.x, g.y); ctx.lineTo(g.x - g.l * .3, g.y + g.l);
-    g.y += g.v; g.x -= g.v * .3;
+    g.y += g.v * kv; g.x -= g.v * .3 * kv;
     if (g.y > H) { g.y = -20; g.x = Math.random() * W * 1.3; }
   }
   ctx.stroke();
@@ -1046,14 +1080,14 @@ function mar(t, manha) {
     ctx.beginPath(); ctx.moveTo(x - 20, 0); ctx.lineTo(x + 20, 0); ctx.lineTo(x + 90, H); ctx.lineTo(x - 70, H); ctx.fill();
   }
   ctx.fillStyle = "rgba(200,235,240,.35)";
-  for (const n of neve) { ctx.fillRect(n.x, n.y, n.s, n.s); n.y += n.v; n.x += Math.sin(t + n.y * .01) * .15; if (n.y > H) { n.y = -4; n.x = Math.random() * W; } }
+  for (const n of neve) { ctx.fillRect(n.x, n.y, n.s, n.s); n.y += n.v * kv; n.x += Math.sin(t + n.y * .01) * .15 * kv; if (n.y > H) { n.y = -4; n.x = Math.random() * W; } }
 }
 function bolhasDesenho(muitas) {
   ctx.strokeStyle = "rgba(190,240,250,.45)"; ctx.lineWidth = 1;
   const n = muitas ? bolhas.length : 12;
   for (let i = 0; i < n; i++) {
     const b = bolhas[i]; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.stroke();
-    b.y -= b.v * (muitas ? 1.6 : 1); b.x += Math.sin(b.y * .03) * .4;
+    b.y -= b.v * (muitas ? 1.6 : 1) * kv; b.x += Math.sin(b.y * .03) * .4 * kv;
     if (b.y < -10) { b.y = H + 10; b.x = muitas ? W * .3 + Math.random() * W * .4 : Math.random() * W; }
   }
 }
@@ -1104,9 +1138,11 @@ function fenda(t) {
   ctx.fillStyle = "#000304"; ctx.beginPath(); ctx.moveTo(0, H);
   fendaPts.forEach(([x, y]) => ctx.lineTo(x, y)); ctx.lineTo(W, H); ctx.fill();
   const p = .5 + .5 * Math.sin(t * 1.6);
-  ctx.save(); ctx.shadowColor = "rgba(79,207,217,.9)"; ctx.shadowBlur = 24;
-  ctx.strokeStyle = `rgba(110,225,235,${.5 + .5 * p})`; ctx.lineWidth = 3;
-  ctx.beginPath(); fendaPts.forEach(([x, y], i) => i ? ctx.lineTo(x, y + 4) : ctx.moveTo(x, y + 4)); ctx.stroke();
+  ctx.save(); ctx.lineJoin = "round";
+  ctx.beginPath(); fendaPts.forEach(([x, y], i) => i ? ctx.lineTo(x, y + 4) : ctx.moveTo(x, y + 4));
+  ctx.strokeStyle = `rgba(79,207,217,${.12 + .12 * p})`; ctx.lineWidth = 22; ctx.stroke();
+  ctx.strokeStyle = `rgba(79,207,217,${.2 + .2 * p})`; ctx.lineWidth = 9; ctx.stroke();
+  ctx.strokeStyle = `rgba(110,225,235,${.5 + .5 * p})`; ctx.lineWidth = 3; ctx.stroke();
   ctx.restore();
   ctx.strokeStyle = `rgba(79,207,217,${.15 + .25 * p})`; ctx.lineWidth = 2;
   for (let i = 0; i < 5; i++) {
@@ -1120,15 +1156,22 @@ function escuro(now) {
   const t = now / 1000;
   const tx = recente ? ponteiro.x : W / 2 + Math.sin(t * .9) * W * .15;
   const ty = recente ? ponteiro.y : H * .3 + Math.cos(t * 1.3) * 24;
-  luz.x += (tx - luz.x) * .18; luz.y += (ty - luz.y) * .18;
+  const kl = Math.min(1, .18 * kv); luz.x += (tx - luz.x) * kl; luz.y += (ty - luz.y) * kl;
   const g = ctx.createRadialGradient(luz.x, luz.y, 8, luz.x, luz.y, Math.min(W, H) * .32);
   g.addColorStop(0, "rgba(5,7,10,0)"); g.addColorStop(1, "rgba(5,7,10,.97)");
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
 addEventListener("pointermove", e => { ponteiro.x = e.clientX; ponteiro.y = e.clientY; ponteiro.t = performance.now(); }, { passive: true });
 addEventListener("pointerdown", e => { ponteiro.x = e.clientX; ponteiro.y = e.clientY; ponteiro.t = performance.now(); }, { passive: true });
+const toqueLuz = e => { const p = e.touches[0]; if (p) { ponteiro.x = p.clientX; ponteiro.y = p.clientY; ponteiro.t = performance.now(); } };
+addEventListener("touchstart", toqueLuz, { passive: true });
+addEventListener("touchmove", toqueLuz, { passive: true });
 
 function frame(now) {
+  const dt = ultFrame ? Math.min(now - ultFrame, 100) : 16.7; ultFrame = now; kv = dt / 16.7;
+  /* qualidade adaptativa: se o celular não aguenta, baixa a resolução do fundo */
+  if (dt > 30) lento++; else if (lento > 0) lento -= .25;
+  if (lento > 45 && DPR_MAX > 1) { DPR_MAX = 1; lento = 0; montar(); }
   const t = (now - tCena) / 1000, v = k => ver.has(k), manha = v("manha");
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
   ctx.save();
@@ -1144,7 +1187,7 @@ function frame(now) {
   if (manha) alvo = .02;
   if (v("luzVolta")) alvo = t < 1.2 ? (Math.random() < .5 ? .65 : .02) : .65;
   if (v("apagao")) alvo = t < 1 ? .55 : t < 1.5 ? (Math.random() < .5 ? .55 : .01) : .02;
-  acesas = (v("apagao") || (v("luzVolta") && t < 1.2)) ? alvo : acesas + (alvo - acesas) * .05;
+  acesas = (v("apagao") || (v("luzVolta") && t < 1.2)) ? alvo : acesas + (alvo - acesas) * Math.min(1, .05 * kv);
 
   if (v("mar")) mar(t, manha); else ceu(manha);
   if (v("cidade")) cidade();
@@ -1175,7 +1218,7 @@ function frame(now) {
   if (v("alarme")) { ctx.fillStyle = `rgba(226,40,40,${Math.sin(t * 7) > 0 ? .2 : .04})`; ctx.fillRect(0, 0, W, H); }
   requestAnimationFrame(frame);
 }
-addEventListener("resize", montar);
+let rzT; addEventListener("resize", () => { clearTimeout(rzT); rzT = setTimeout(montar, 120); });
 montar(); setVer(["cidade", "acesa"]); requestAnimationFrame(frame);
 
 /* ============================================================
@@ -1459,7 +1502,7 @@ let pendente = null;
 function abrirHub() {
   tok++; pararTudo(); if (typing) typing.stop();
   $("choices").innerHTML = ""; $("scene").innerHTML = ""; $("hud").innerHTML = "";
-  document.documentElement.style.setProperty("--acc", "#f2a33a");
+  corDestaque("#f2a33a");
   setVer(["cidade", "acesa"]); setAmb({ drone: .5 });
   let html = "";
   if (pendente) {
@@ -1483,7 +1526,7 @@ function abrirHub() {
 function iniciarFase(k, salvo) {
   try { initAudio(); } catch (e) {}
   S = k; const F = FASES[k]; NOS = F.nos;
-  document.documentElement.style.setProperty("--acc", F.cor);
+  corDestaque(F.cor);
   caminho = salvo?.caminho || []; inv = salvo?.inv || [];
   medidor = F.medidor ? (salvo?.medidor ?? F.medidor.ini) : null;
   $("hub").hidden = true; $("drawer").hidden = true;
@@ -1503,7 +1546,11 @@ window.voltarAndroid = () => {
   if ($("hub").hidden) { $("btnMenu").click(); return true; }
   return false;
 };
-window.pausarAndroid = p => { if (AC) p ? AC.suspend() : AC.resume(); };
+window.pausarAndroid = p => { if (AC) p ? AC.suspend() : AC.resume(); ultFrame = 0; };
+window.margensAndroid = (t, b, l, r) => {
+  const st = document.documentElement.style;
+  st.setProperty("--sat", t + "px"); st.setProperty("--sab", b + "px"); st.setProperty("--sal", l + "px"); st.setProperty("--sar", r + "px");
+};
 start({});
 </script>
 </body>

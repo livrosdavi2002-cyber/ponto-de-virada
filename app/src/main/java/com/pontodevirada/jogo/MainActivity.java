@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.view.DisplayCutout;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -23,6 +24,8 @@ public class MainActivity extends Activity {
 
     private static final String INICIO = "https://appassets.androidplatform.net/assets/www/index.html";
     private WebView web;
+    private int[] margens = {0, 0, 0, 0};
+    private boolean carregou = false;
 
     @Override
     protected void onCreate(Bundle estado) {
@@ -45,6 +48,10 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setAllowFileAccess(false);
         s.setSupportZoom(false);
+        // ignora o "tamanho da fonte" do Android, que estourava o layout do jogo
+        s.setTextZoom(100);
+        s.setUseWideViewPort(true);
+        s.setLoadWithOverviewMode(false);
 
         web.addJavascriptInterface(new Ponte(), "Android");
         web.setWebViewClient(new WebViewClient() {
@@ -52,6 +59,25 @@ public class MainActivity extends Activity {
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
                 return carregador.shouldInterceptRequest(req.getUrl());
             }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                carregou = true;
+                enviarMargens();
+            }
+        });
+
+        // a WebView costuma informar 0 no env(safe-area-inset-*); manda as margens do recorte da câmera pro jogo
+        getWindow().getDecorView().setOnApplyWindowInsetsListener((v, insets) -> {
+            int t = 0, b = 0, l = 0, r = 0;
+            if (Build.VERSION.SDK_INT >= 28) {
+                DisplayCutout dc = insets.getDisplayCutout();
+                if (dc != null) { t = dc.getSafeInsetTop(); b = dc.getSafeInsetBottom(); l = dc.getSafeInsetLeft(); r = dc.getSafeInsetRight(); }
+            }
+            float d = getResources().getDisplayMetrics().density;
+            margens = new int[]{Math.round(t / d), Math.round(b / d), Math.round(l / d), Math.round(r / d)};
+            enviarMargens();
+            return v.onApplyWindowInsets(insets);
         });
 
         setContentView(web);
@@ -59,6 +85,11 @@ public class MainActivity extends Activity {
 
         if (estado != null) web.restoreState(estado);
         else web.loadUrl(INICIO);
+    }
+
+    private void enviarMargens() {
+        if (web == null || !carregou) return;
+        web.evaluateJavascript("window.margensAndroid && margensAndroid(" + margens[0] + "," + margens[1] + "," + margens[2] + "," + margens[3] + ")", null);
     }
 
     private void telaCheia() {
