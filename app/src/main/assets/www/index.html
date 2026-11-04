@@ -1,0 +1,1510 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0e14">
+<title>Ponto de Virada</title>
+<style>
+@font-face{font-family:"Big Shoulders Display";font-weight:500;font-display:swap;src:url(fonts/big-shoulders-display-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Big Shoulders Display";font-weight:800;font-display:swap;src:url(fonts/big-shoulders-display-latin-800-normal.woff2) format("woff2")}
+@font-face{font-family:"Newsreader";font-weight:400;font-display:swap;src:url(fonts/newsreader-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Newsreader";font-weight:500;font-display:swap;src:url(fonts/newsreader-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Newsreader";font-weight:400;font-style:italic;font-display:swap;src:url(fonts/newsreader-latin-400-italic.woff2) format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:400;font-display:swap;src:url(fonts/jetbrains-mono-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:600;font-display:swap;src:url(fonts/jetbrains-mono-latin-600-normal.woff2) format("woff2")}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+body{margin:0;font-size:14px;font-family:system-ui,sans-serif;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+img{max-width:100%}[hidden]{display:none!important}
+
+/* Layout: tela vertical de "vídeo" — cena animada no fundo, hora/profundidade em destaque, narração, ações ao alcance do polegar */
+:root {
+  --night: #0b0e14;
+  --night-2: #141924;
+  --ink: #e9e4d8;
+  --ink-dim: #9a968c;
+  --acc: #f2a33a;
+  --signal: #e2483d;
+  --line: #2a3140;
+  --f-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --f-body: "Newsreader", Georgia, "Times New Roman", serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--night); color: var(--ink); font-family: var(--f-body); overflow: hidden; -webkit-tap-highlight-color: transparent; }
+#bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.vignette {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to bottom, transparent 35%, color-mix(in srgb, var(--night) 70%, transparent) 60%, var(--night) 92%);
+}
+.app {
+  position: relative; z-index: 2; height: 100%;
+  max-width: 560px; margin: 0 auto;
+  display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 14px 18px; box-sizing: border-box;
+}
+.top {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim);
+}
+.top .grp { display: flex; gap: 6px; }
+.top button {
+  font: inherit; letter-spacing: inherit; text-transform: inherit;
+  background: color-mix(in srgb, var(--night) 60%, transparent); border: 1px solid var(--line); color: var(--ink-dim);
+  padding: 6px 10px; border-radius: 999px; cursor: pointer;
+}
+.top button:hover, .top button:focus-visible { color: var(--ink); border-color: var(--ink-dim); outline: none; }
+.rec { display: inline-flex; align-items: center; gap: 7px; }
+.rec i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); animation: blink 1.6s infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+
+.hud { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; min-height: 22px; align-items: center; }
+.chip {
+  font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; color: var(--ink-dim);
+  background: color-mix(in srgb, var(--night) 60%, transparent);
+}
+.meter { display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 11px; color: var(--ink); letter-spacing: .08em; }
+.meter .bar { width: 110px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter .bar i { display: block; height: 100%; background: var(--acc); transition: width .6s ease; }
+.meter.baixo { color: var(--signal); }
+.meter.baixo .bar i { background: var(--signal); }
+
+.scene { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; padding-block: 18px; }
+.clock {
+  font-family: var(--f-display); font-weight: 800;
+  font-size: clamp(60px, 21vw, 108px); line-height: .85; letter-spacing: -.01em; color: var(--acc);
+  text-shadow: 0 0 28px color-mix(in srgb, var(--acc) 45%, transparent);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.place { font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); margin-top: 10px; }
+.text { font-size: 21px; line-height: 1.45; margin-top: 18px; max-width: 34ch; min-height: 4.4em; text-shadow: 0 1px 12px var(--night); }
+.text em { color: var(--acc); font-style: italic; }
+.text .msg { font-family: var(--f-mono); font-size: .78em; color: var(--signal); letter-spacing: .04em; }
+.caret { display: inline-block; width: .5ch; background: var(--acc); animation: blink 1s infinite; margin-left: 2px; }
+.hint, .dica { font-family: var(--f-mono); font-size: 11px; color: var(--ink-dim); margin-top: 12px; letter-spacing: .08em; }
+.dica { color: var(--acc); }
+
+.choices { display: grid; gap: 10px; }
+.timer { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.timer i { display: block; height: 100%; width: 100%; background: var(--acc); }
+.timer.urgente i { background: var(--signal); }
+.choice {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
+  background: color-mix(in srgb, var(--night-2) 88%, transparent);
+  border: 1px solid var(--line); color: var(--ink);
+  padding: 14px 16px; border-radius: 14px;
+  font-family: var(--f-body); font-size: 18px; line-height: 1.25;
+  opacity: 0; transform: translateY(10px);
+  transition: opacity .35s ease, transform .35s ease, border-color .2s, background .2s;
+  backdrop-filter: blur(6px);
+}
+.choice.show { opacity: 1; transform: none; }
+.choice .k {
+  flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid var(--acc); color: var(--acc);
+  font-family: var(--f-display); font-weight: 800; font-size: 17px;
+}
+.choice .lbl { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.choice .req { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
+.choice .custo { flex: none; font-family: var(--f-mono); font-size: 11px; color: var(--ink-dim); }
+.choice:hover:not(:disabled), .choice:focus-visible { border-color: var(--acc); outline: none; background: color-mix(in srgb, var(--acc) 10%, var(--night-2)); }
+.choice:disabled { cursor: not-allowed; }
+.choice.show:disabled { opacity: .4; }
+.choice:disabled .k { border-color: var(--line); color: var(--ink-dim); }
+.choice.picked { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 22%, var(--night-2)); }
+.choice.faded { opacity: .25 !important; }
+
+/* Ações especiais */
+.acao { display: grid; gap: 12px; }
+.acao-l { font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--acc); }
+.big {
+  position: relative; overflow: hidden; width: 100%; height: 76px; border-radius: 16px; cursor: pointer;
+  border: 1.5px solid var(--acc); background: color-mix(in srgb, var(--night-2) 85%, transparent); color: var(--ink);
+  font-family: var(--f-display); font-weight: 800; font-size: 30px; letter-spacing: .04em; text-transform: uppercase;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none;
+}
+.big .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: color-mix(in srgb, var(--acc) 40%, transparent); }
+.big span { position: relative; }
+.big:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.big.bate { animation: bate .12s; }
+@keyframes bate { 50% { transform: scale(.97); } }
+.slots { display: flex; gap: 8px; justify-content: center; }
+.slots b {
+  width: 46px; height: 56px; display: grid; place-items: center; border-radius: 10px;
+  border: 1px solid var(--line); font-family: var(--f-display); font-weight: 800; font-size: 34px; color: var(--acc);
+  background: color-mix(in srgb, var(--night) 70%, transparent);
+}
+.pad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pad button {
+  height: 50px; border-radius: 12px; border: 1px solid var(--line); cursor: pointer;
+  background: color-mix(in srgb, var(--night-2) 88%, transparent); color: var(--ink);
+  font-family: var(--f-mono); font-size: 18px;
+}
+.pad button:active { background: color-mix(in srgb, var(--acc) 25%, var(--night-2)); }
+.pad button:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
+.shake { animation: shake .35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+
+.toast {
+  position: fixed; z-index: 4; left: 50%; transform: translate(-50%, -8px);
+  top: calc(env(safe-area-inset-top, 0px) + 54px);
+  font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em;
+  background: var(--night-2); color: var(--ink); border: 1px solid var(--acc);
+  padding: 8px 14px; border-radius: 999px; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none;
+  max-width: calc(100% - 32px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+.end-tag {
+  display: inline-block; align-self: flex-start;
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 999px; border: 1px solid currentColor; margin-bottom: 14px;
+}
+.end-tag.bom { color: var(--acc); }
+.end-tag.ruim { color: var(--signal); }
+.end-tag.estranho { color: var(--ink-dim); }
+.end-title { font-family: var(--f-display); font-weight: 800; font-size: clamp(46px, 14vw, 78px); line-height: .9; text-transform: uppercase; text-wrap: balance; }
+.path { margin-top: 16px; font-family: var(--f-mono); font-size: 11px; color: var(--ink-dim); line-height: 1.7; letter-spacing: .04em; }
+.path b { color: var(--ink); font-weight: 600; }
+
+.overlay {
+  position: fixed; inset: 0; z-index: 5;
+  display: flex; justify-content: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: calc(env(safe-area-inset-top, 0px) + 28px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+  overflow-y: auto; box-sizing: border-box;
+}
+.drawer { background: color-mix(in srgb, var(--night) 94%, transparent); }
+.hub { background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--night) 75%, transparent) 35%, var(--night) 70%); }
+.inner { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 16px; margin-top: auto; }
+.hub h1 {
+  font-family: var(--f-display); font-weight: 800; margin: 0;
+  font-size: clamp(58px, 18vw, 100px); line-height: .85; text-transform: uppercase;
+}
+.hub h1 span { color: var(--acc); text-shadow: 0 0 30px color-mix(in srgb, var(--acc) 40%, transparent); }
+.hub p, .drawer p { margin: 0; color: var(--ink-dim); font-size: 18px; }
+.lista { display: grid; gap: 12px; }
+.story {
+  text-align: left; cursor: pointer; display: grid; gap: 6px;
+  background: color-mix(in srgb, var(--night-2) 85%, transparent); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 16px; padding: 16px;
+  font-family: var(--f-body);
+}
+.story:hover, .story:focus-visible { border-color: var(--c); outline: none; }
+.story .g { font-family: var(--f-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-dim); display: flex; justify-content: space-between; gap: 8px; }
+.story h3 { margin: 0; font-family: var(--f-display); font-weight: 800; font-size: 36px; line-height: .95; text-transform: uppercase; color: var(--c); }
+.story .gancho { font-size: 17px; line-height: 1.35; color: var(--ink); }
+.story .mec { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
+.continuar { border-style: dashed; }
+.drawer h2 { font-family: var(--f-display); font-weight: 800; font-size: 44px; margin: 0; text-transform: uppercase; color: var(--acc); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.slot { border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-height: 64px; display: flex; flex-direction: column; gap: 6px; }
+.slot .n { font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; color: var(--ink-dim); }
+.slot .t { font-family: var(--f-display); font-weight: 800; font-size: 22px; text-transform: uppercase; line-height: 1; }
+.slot.locked .t { color: var(--line); }
+.btn {
+  align-self: flex-start; font-family: var(--f-mono); font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+  background: var(--acc); color: var(--night); border: 0; padding: 14px 22px; border-radius: 999px; cursor: pointer; font-weight: 600;
+}
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .choice { transition: none; }
+  .rec i, .caret { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="vignette"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<main class="app">
+  <div class="top">
+    <span class="rec"><i></i><span id="sceneNo">Cena 01</span></span>
+    <div class="grp">
+      <button id="btnMenu" type="button">Menu</button>
+      <button id="btnSom" type="button" aria-pressed="true">Som</button>
+      <button id="openEndings" type="button">Finais <span id="endCount">0/0</span></button>
+    </div>
+  </div>
+  <div class="hud" id="hud"></div>
+  <section class="scene" id="scene" aria-live="polite"></section>
+  <div class="choices" id="choices"></div>
+</main>
+
+<div class="overlay hub" id="hub">
+  <div class="inner">
+    <div class="place">Histórias em que você decide</div>
+    <h1>Ponto de <span>Virada</span></h1>
+    <p>Escolha uma fase. Use fone de ouvido: o som faz parte do jogo.</p>
+    <div class="lista" id="lista"></div>
+  </div>
+</div>
+
+<div class="overlay drawer" id="drawer" hidden>
+  <div class="inner" style="margin-top:0">
+    <h2 id="drawerTitle">Finais</h2>
+    <p>Cada escolha leva a um lugar diferente. Volte e tente outros caminhos.</p>
+    <div class="grid" id="endGrid"></div>
+    <button class="btn" id="closeEndings" type="button">Voltar</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   COMO CRIAR UMA HISTÓRIA
+   Cada cena (nó) pode ter:
+     hora, lugar, texto            → o que aparece na tela
+     escolhas: [op(texto, destino, {req, custo})]
+         req   = item necessário (a opção aparece trancada sem ele)
+         custo = gasta do medidor (ex.: oxigênio); negativo recupera
+     tempo: 8, aoAcabar: "destino" → escolha com contagem regressiva
+     acao: {tipo: "segurar" | "tocar" | "codigo", ...} → minijogo
+     ganha: "Item"                 → item vai para o inventário
+     custo: 10                     → gasta do medidor ao entrar
+     dica: "texto"                 → instrução extra
+     fx: {ver: [...], sons: [...], amb: {...}} → animação e som
+   Finais: fim: true, tipo: "bom" | "ruim" | "estranho", titulo
+   ============================================================ */
+const op = (t, ir, x = {}) => ({ t, ir, ...x });
+
+/* -------------------- FASE 1: A NOITE DO APAGÃO -------------------- */
+const APAGAO = {
+  inicio: {
+    hora: "22:47", lugar: "Apto 1207 · 12º andar",
+    texto: "A cidade inteira apaga de uma vez. Da janela, nenhuma luz até o horizonte. Seu celular vibra. Número desconhecido: <span class='msg'>NÃO ABRA A PORTA.</span>",
+    escolhas: [op("Responder a mensagem", "responder"), op("Olhar pelo olho mágico", "olho"), op("Descer pela escada", "escada")],
+    fx: { ver: ["cidade", "apagao"], sons: ["apagao", "vibrar"], amb: { drone: 1, vento: .3 } },
+  },
+  responder: {
+    hora: "22:51", lugar: "Apto 1207",
+    texto: "Você digita <span class='msg'>quem é?</span> A resposta chega na hora: <span class='msg'>sou você. daqui a 3 horas.</span> Depois, uma foto: você no terraço do prédio, segurando uma <em>lanterna vermelha</em>.",
+    escolhas: [op("Subir para o terraço", "terraco"), op("Desligar o celular e dormir", "f_sono")],
+    fx: { ver: ["cidade"], sons: ["vibrarJa"], amb: { drone: 1, vento: .3 } },
+  },
+  olho: {
+    hora: "22:53", lugar: "Porta do 1207",
+    texto: "No corredor, uma luz vermelha pisca devagar. Alguém está parado na frente da sua porta, de costas. Bate três vezes. Silêncio. Bate de novo.",
+    tempo: 10, aoAcabar: "silencio",
+    escolhas: [op("Abrir a porta", "abrir"), op("Ficar em silêncio", "silencio")],
+    fx: { ver: ["corredor"], sons: ["batidas", "coracao"], amb: { drone: 1 } },
+  },
+  escada: {
+    hora: "22:55", lugar: "Escada de emergência",
+    texto: "A escada está escura. Três andares abaixo, passos sobem no mesmo ritmo que os seus. Quando você para, eles param.",
+    dica: "Arraste o dedo pela tela para mover a lanterna",
+    escolhas: [op("Gritar: \"Tem alguém aí?\"", "chamar"), op("Mudar de ideia e subir", "terraco")],
+    fx: { ver: ["escada", "escuro"], sons: ["passos"], amb: { drone: 1, vento: .1 } },
+  },
+  abrir: {
+    hora: "22:56", lugar: "Porta do 1207",
+    texto: "É a Dona Célia, do 1204. Ela segura uma <em>lanterna vermelha</em>. \"Você recebeu a mensagem também, né? Todo mundo do prédio recebeu. Menos eu.\"",
+    escolhas: [op("Deixar ela entrar", "entrar"), op("Mostrar a mensagem pra ela", "f_porta")],
+    fx: { ver: ["corredor"], sons: ["rangido"], amb: { drone: 1 } },
+  },
+  silencio: {
+    hora: "23:10", lugar: "Apto 1207", ganha: "Mapa do prédio",
+    texto: "As batidas param. Por baixo da porta alguém desliza um papel: um mapa do prédio, o terraço circulado, e uma hora escrita à mão. <em>01:47</em>.",
+    escolhas: [op("Ir ao terraço agora", "terraco"), op("Esperar dar 01:47", "esperar")],
+    fx: { ver: ["corredor"], sons: ["papel", "coracao"], amb: { drone: 1 } },
+  },
+  chamar: {
+    hora: "22:58", lugar: "Escada · 9º andar",
+    texto: "Ninguém responde. Mas a lanterna do seu celular acende sozinha e aponta para a porta do 3º andar. Ela está entreaberta.",
+    dica: "Arraste o dedo pela tela para mover a lanterna",
+    escolhas: [op("Descer até o 3º andar", "andar3"), op("Ignorar e subir pro terraço", "terraco")],
+    fx: { ver: ["escada", "escuro"], sons: ["eco"], amb: { drone: 1, vento: .1 } },
+  },
+  terraco: {
+    hora: "23:20", lugar: "Terraço",
+    texto: "O vento é forte. No parapeito, uma <em>lanterna vermelha</em> acesa, igual à da foto. Do lado, um rádio antigo chia uma sequência: <span class='msg'>4 … 7 … 4 … 7</span>",
+    escolhas: [op("Pegar a lanterna", "lanterna"), op("Mexer no rádio", "radio"), op("Sintonizar uma frequência no rádio", "sintonia")],
+    fx: { ver: ["cidade", "chuva", "lanterna"], sons: ["radioLonge"], amb: { drone: .6, vento: 1, chuva: 1, estatica: .2 } },
+  },
+  sintonia: {
+    hora: "23:22", lugar: "Terraço · rádio",
+    texto: "O rádio tem um teclado numérico gasto. O chiado repete a mesma sequência, como se esperasse uma resposta.",
+    acao: { tipo: "codigo", rotulo: "Digite a frequência", resposta: "4747", tentativas: 3, ok: "f_frequencia", falha: "radio" },
+    fx: { ver: ["cidade", "chuva"], sons: ["radioLonge"], amb: { drone: .6, vento: .6, chuva: .6, estatica: .9 } },
+  },
+  entrar: {
+    hora: "23:02", lugar: "Apto 1207",
+    texto: "Dona Célia tranca a porta e apaga a lanterna. \"Eles contam as luzes\", ela sussurra. Lá fora, algo enorme passa entre os prédios, varrendo as janelas com um feixe branco.",
+    tempo: 8, aoAcabar: "f_escondido",
+    escolhas: [op("Se esconder com ela", "f_escondido"), op("Acender a lanterna na janela", "f_rede")],
+    fx: { ver: ["cidade", "feixe"], sons: ["feixe", "coracao"], amb: { drone: 1, vento: .4 } },
+  },
+  esperar: {
+    hora: "01:47", lugar: "Apto 1207",
+    texto: "O prédio inteiro estremece. Pela janela, lanternas vermelhas acendem ao mesmo tempo em todos os terraços da cidade. Em todos, menos no seu.",
+    escolhas: [op("Correr para o terraço", "porta_terraco"), op("Fechar a cortina", "f_sozinho")],
+    fx: { ver: ["cidade", "lanternasTodas"], sons: ["tremor"], amb: { drone: 1, vento: .3 } },
+  },
+  porta_terraco: {
+    hora: "01:48", lugar: "Porta do terraço",
+    texto: "A porta do terraço está emperrada. Do outro lado, a luz vermelha das lanternas vaza pelas frestas.",
+    acao: { tipo: "tocar", rotulo: "Toque rápido para forçar a porta!", n: 15, limite: 5, ok: "terraco_tarde", falha: "f_sozinho" },
+    fx: { ver: ["corredor"], sons: ["coracao"], amb: { drone: 1 } },
+  },
+  terraco_tarde: {
+    hora: "01:49", lugar: "Terraço",
+    texto: "A porta cede. Em todos os prédios, lanternas vermelhas apontam para cá. No chão, uma escotilha de ferro com o cadeado aberto.",
+    escolhas: [
+      op("Usar o mapa: a escotilha leva à casa de máquinas", "f_escuro", { req: "Mapa do prédio" }),
+      op("Acenar com os braços", "f_sozinho"),
+      op("Descer pela escotilha às cegas", "escada"),
+    ],
+    fx: { ver: ["cidade", "lanternasTodas", "chuva"], amb: { drone: .8, vento: 1, chuva: .8 } },
+  },
+  andar3: {
+    hora: "23:04", lugar: "3º andar",
+    texto: "O corredor está vazio, todas as portas abertas, todas as TVs ligadas mostrando a mesma imagem ao vivo: o seu apartamento. Tem alguém sentado no seu sofá.",
+    escolhas: [op("Voltar correndo pro 1207", "f_outro"), op("Puxar o fio das TVs", "radio")],
+    fx: { ver: ["tv"], amb: { drone: .6, estatica: 1 } },
+  },
+  lanterna: {
+    hora: "23:24", lugar: "Terraço", ganha: "Lanterna vermelha",
+    texto: "A lanterna pisca sozinha na sua mão: curto, longo, curto. Bem longe, no topo de outro prédio, alguém responde com a mesma luz.",
+    tempo: 8, aoAcabar: "f_escondido",
+    escolhas: [op("Responder o sinal", "f_rede"), op("Apagar a lanterna e deitar no chão", "f_escondido")],
+    fx: { ver: ["cidade", "chuva", "lanternas"], sons: ["morse"], amb: { drone: .6, vento: .8, chuva: .8 } },
+  },
+  radio: {
+    hora: "23:31", lugar: "Terraço",
+    texto: "A estática some e uma voz fala. É a <em>sua</em> voz. \"Se você está ouvindo, ainda dá tempo. Não deixe a luz voltar.\"",
+    escolhas: [op("Descer e desligar o disjuntor geral", "f_escuro"), op("Achar que é trote e ignorar", "f_luz")],
+    fx: { ver: ["cidade", "chuva"], sons: ["radio"], amb: { drone: .7, vento: .6, chuva: .6, estatica: .8 } },
+  },
+  f_sono: { fim: true, tipo: "estranho", titulo: "O Sono", hora: "07:12", lugar: "Apto 1207",
+    texto: "De manhã a luz voltou e ninguém fala do apagão. No seu celular há uma foto nova, tirada às 01:47: você, dormindo.",
+    fx: { ver: ["cidade", "manha"], sons: ["fimEstranho"], amb: { drone: .3 } } },
+  f_porta: { fim: true, tipo: "ruim", titulo: "A Porta Errada", hora: "22:57", lugar: "Porta do 1207",
+    texto: "Ela lê a mensagem e o rosto muda. \"Então foi você que abriu\", sussurra. A lanterna dela se apaga, e ela junto.",
+    fx: { ver: ["corredor", "vermelho"], sons: ["fimRuim"], amb: { drone: 1 } } },
+  f_escondido: { fim: true, tipo: "estranho", titulo: "Ninguém Viu", hora: "05:40", lugar: "Algum lugar escuro",
+    texto: "Você fica imóvel até o sol nascer. O feixe passou três vezes e não te achou. Você sobreviveu, mas nunca vai saber o que era.",
+    fx: { ver: ["cidade", "feixe"], sons: ["fimEstranho", "feixe"], amb: { drone: .8, vento: .3 } } },
+  f_rede: { fim: true, tipo: "bom", titulo: "A Rede", hora: "01:47", lugar: "Céu da cidade",
+    texto: "Uma luz responde. Depois outra. Em minutos a cidade inteira pisca em vermelho, junta. O feixe branco recua e some no horizonte.",
+    fx: { ver: ["cidade", "lanternasSync"], sons: ["fimBom"], amb: { drone: .4, vento: .3 } } },
+  f_sozinho: { fim: true, tipo: "ruim", titulo: "Fora da Lista", hora: "01:50", lugar: "Apto 1207",
+    texto: "As lanternas se apagam uma a uma. De manhã, o prédio está vazio. Só você ficou para trás.",
+    fx: { ver: ["cidade", "vermelho"], sons: ["fimRuim"], amb: { drone: 1 } } },
+  f_outro: { fim: true, tipo: "ruim", titulo: "O Outro", hora: "23:06", lugar: "Apto 1207",
+    texto: "A porta está aberta. No sofá, alguém igual a você sorri e diz: \"Demorou. Agora é a minha vez lá fora.\"",
+    fx: { ver: ["tv", "vermelho"], sons: ["fimRuim"], amb: { drone: 1, estatica: .5 } } },
+  f_escuro: { fim: true, tipo: "bom", titulo: "Escuro Total", hora: "02:30", lugar: "Casa de máquinas",
+    texto: "Você baixa a chave geral. O rádio cala. Às 02:30 a cidade volta a ter luz. Menos o seu prédio. E é por isso que todos aqui estão vivos.",
+    fx: { ver: ["cidade", "luzVolta"], sons: ["religar", "fimBom"], amb: { drone: .4 } } },
+  f_luz: { fim: true, tipo: "estranho", titulo: "A Luz Volta", hora: "02:30", lugar: "Terraço",
+    texto: "A luz volta de uma vez. Todas as janelas acendem. Em todas elas, alguém está parado, olhando direto para você.",
+    fx: { ver: ["cidade", "luzVolta"], sons: ["religar", "fimEstranho"], amb: { drone: .8 } } },
+  f_frequencia: { fim: true, tipo: "bom", titulo: "A Frequência", hora: "23:23", lugar: "Terraço · rádio",
+    texto: "O chiado vira silêncio. Depois, uma voz calma: \"Código aceito. Desligando a varredura.\" O feixe branco apaga, e as luzes da cidade voltam devagar, uma por uma.",
+    fx: { ver: ["cidade", "luzVolta"], sons: ["sucesso", "fimBom"], amb: { drone: .3, vento: .3 } } },
+};
+
+/* -------------------- FASE 2: ÚLTIMO ÔNIBUS -------------------- */
+const ONIBUS = {
+  inicio: {
+    hora: "23:58", lugar: "Ponto · Estrada da Serra",
+    texto: "Você perdeu o ônibus das 23h30. O celular está com 3% de bateria. Então, faróis na curva: um ônibus antigo, letreiro piscando <span class='msg'>LINHA 13 · VIA SERRA</span>. Essa linha foi extinta em 1998.",
+    tempo: 12, aoAcabar: "entra",
+    escolhas: [op("Entrar no ônibus", "entra"), op("Deixar passar e pedir um carro", "celular")],
+    fx: { ver: ["estrada", "farois", "chuva"], sons: ["freio"], amb: { drone: .6, chuva: 1, motor: .5 } },
+  },
+  celular: {
+    hora: "23:59", lugar: "Ponto · Estrada da Serra",
+    texto: "Você abre o app. Um único motorista aceita: <span class='msg'>chego em 1 min</span>. A foto do perfil é o mesmo ônibus. Atrás de você, a porta abre sozinha com um chiado.",
+    escolhas: [op("Entrar de uma vez", "entra"), op("Correr pela estrada", "corre")],
+    fx: { ver: ["estrada", "farois", "chuva"], sons: ["vibrarJa", "porta"], amb: { drone: .7, chuva: 1, motor: .5 } },
+  },
+  corre: {
+    hora: "00:01", lugar: "Acostamento",
+    texto: "Você corre. Os faróis vêm atrás, sem pressa, sempre na mesma distância. Lá na frente, a luz de um posto de gasolina.",
+    acao: { tipo: "tocar", rotulo: "Toque rápido para correr!", n: 16, limite: 5, ok: "posto", falha: "f_passageiro" },
+    fx: { ver: ["estrada", "rapido", "chuva", "farolAtras"], sons: ["correndo"], amb: { drone: .8, chuva: 1, motor: .7 } },
+  },
+  posto: {
+    hora: "00:04", lugar: "Posto Serra Alta", ganha: "Moeda de 1998",
+    texto: "Atrás do balcão, um senhor de boné te olha sem surpresa. \"Viu a 13, né? Pega isso.\" Ele empurra uma <em>moeda antiga</em> pelo balcão.",
+    escolhas: [op("Perguntar o que é a Linha 13", "historia"), op("Voltar ao ponto e entrar no ônibus", "entra")],
+    fx: { ver: ["posto", "chuva"], sons: ["item"], amb: { drone: .4, chuva: .7 } },
+  },
+  historia: {
+    hora: "00:07", lugar: "Posto Serra Alta",
+    texto: "\"Em 98 a 13 caiu da ponte, na serra. Toda noite de chuva ela volta pra buscar quem tá sozinho. Quem paga a passagem desce na cidade. Quem não paga... vira passageiro.\"",
+    escolhas: [op("Esperar amanhecer no posto", "f_jornal"), op("Pegar a 13 e pagar com a moeda", "entra")],
+    fx: { ver: ["posto", "chuva"], amb: { drone: .6, chuva: .7 } },
+  },
+  entra: {
+    hora: "00:10", lugar: "Linha 13 · dentro",
+    texto: "Luz fluorescente piscando. Seis passageiros de roupa molhada, todos olhando pra frente. O cobrador estende a mão sem virar o rosto: \"Passagem.\"",
+    tempo: 10, aoAcabar: "sem",
+    escolhas: [
+      op("Pagar com a moeda de 1998", "paga", { req: "Moeda de 1998" }),
+      op("Dizer que não tem dinheiro", "sem"),
+      op("Passar direto e sentar no fundo", "fundo"),
+    ],
+    fx: { ver: ["interior"], sons: ["porta"], amb: { drone: .8, motor: 1, chuva: .3 } },
+  },
+  paga: {
+    hora: "00:12", lugar: "Linha 13 · catraca",
+    texto: "O cobrador olha a moeda e, pela primeira vez, vira o rosto. Ele sorri. \"Faz tempo que ninguém paga certo.\" Aponta o banco da frente, colado no motorista.",
+    escolhas: [op("Sentar na frente", "frente")],
+    fx: { ver: ["interior"], sons: ["sucesso"], amb: { drone: .6, motor: 1 } },
+  },
+  frente: {
+    hora: "00:31", lugar: "Linha 13 · banco da frente",
+    texto: "O motorista fala sem tirar os olhos da estrada: \"Na ponte, não olha pela janela. Aconteça o que acontecer.\" Lá na frente, a ponte aparece no meio da neblina.",
+    escolhas: [op("Fechar os olhos", "ponte")],
+    fx: { ver: ["estrada", "rapido", "chuva"], amb: { drone: .9, motor: 1, chuva: .6 } },
+  },
+  ponte: {
+    hora: "00:33", lugar: "Ponte do Rio Fundo",
+    texto: "Você fecha os olhos. Alguém bate no vidro do seu lado. Depois chama seu nome, com a voz da sua mãe.",
+    acao: { tipo: "segurar", rotulo: "Segure para manter os olhos fechados", dur: 4, limite: 9, ok: "f_cidade", falha: "f_reflexo" },
+    fx: { ver: ["interior", "escuro"], sons: ["batidaVidro", "coracao"], amb: { drone: 1, motor: .8, chuva: 1 } },
+  },
+  sem: {
+    hora: "00:14", lugar: "Linha 13 · catraca",
+    texto: "\"Sem passagem, sem descida\", diz o cobrador. As portas se fecham. Uma passageira de uniforme escolar antigo sussurra: \"Puxa a cordinha antes da ponte. É o único jeito.\"",
+    escolhas: [op("Puxar a cordinha agora", "cordinha"), op("Esperar a ponte", "ponte_sem")],
+    fx: { ver: ["interior"], sons: ["porta"], amb: { drone: .9, motor: 1 } },
+  },
+  cordinha: {
+    hora: "23:58", lugar: "Ponto · Estrada da Serra",
+    texto: "A campainha toca. O ônibus freia forte. As portas abrem para a mesma parada, no mesmo minuto: 23:58. No ponto, alguém espera. É você, olhando o ônibus chegar.",
+    escolhas: [op("Gritar para você mesmo não entrar", "f_laco"), op("Ficar quieto", "f_passageiro")],
+    fx: { ver: ["estrada", "chuva"], sons: ["campainha", "freio"], amb: { drone: 1, chuva: 1, motor: .4 } },
+  },
+  ponte_sem: {
+    hora: "00:33", lugar: "Ponte do Rio Fundo",
+    texto: "A ponte. O ônibus acelera em vez de frear. A garota grita: \"AGORA!\"",
+    acao: { tipo: "tocar", rotulo: "Toque rápido para puxar a cordinha!", n: 12, limite: 4, ok: "f_pulo", falha: "f_passageiro" },
+    fx: { ver: ["interior", "vermelho"], sons: ["coracao"], amb: { drone: 1, motor: 1, chuva: .6 } },
+  },
+  fundo: {
+    hora: "00:16", lugar: "Linha 13 · fundo", ganha: "Bilhete nº 7",
+    texto: "No fundo está escuro. Seu celular, com 2%, ilumina o banco ao lado: um bilhete. <span class='msg'>LINHA 13 · 14/03/1998 · PASSAGEIRO Nº 7</span>. Você conta as cabeças. Com você, são sete.",
+    dica: "Arraste o dedo pela tela para iluminar",
+    escolhas: [op("Rasgar o bilhete", "rasga"), op("Levar o bilhete ao motorista", "motorista")],
+    fx: { ver: ["interior", "escuro"], sons: ["papel"], amb: { drone: 1, motor: .8 } },
+  },
+  rasga: {
+    hora: "00:17", lugar: "Linha 13 · fundo",
+    texto: "O ônibus freia de uma vez. Todos os passageiros viram a cabeça pra você ao mesmo tempo. As luzes apagam.",
+    tempo: 6, aoAcabar: "f_passageiro",
+    escolhas: [op("Correr para a porta de trás", "porta_tras"), op("Ficar parado", "f_passageiro")],
+    fx: { ver: ["interior", "escuro", "vermelho"], sons: ["freio", "coracao"], amb: { drone: 1 } },
+  },
+  porta_tras: {
+    hora: "00:17", lugar: "Porta de trás",
+    texto: "A porta está travada. Mãos frias tocam seu ombro.",
+    acao: { tipo: "tocar", rotulo: "Toque rápido para forçar a porta!", n: 14, limite: 5, ok: "f_pulo", falha: "f_passageiro" },
+    fx: { ver: ["interior", "escuro", "vermelho"], sons: ["coracao"], amb: { drone: 1, chuva: .6 } },
+  },
+  motorista: {
+    hora: "00:20", lugar: "Linha 13 · cabine",
+    texto: "Você mostra o bilhete. O motorista freia devagar. \"Sete... Então é você que faltava.\" Ele se levanta e te oferece o volante.",
+    escolhas: [op("Assumir o volante", "f_motorista"), op("Devolver o bilhete e pedir pra descer", "ponte")],
+    fx: { ver: ["estrada", "chuva"], amb: { drone: .9, motor: .6, chuva: .6 } },
+  },
+  f_cidade: { fim: true, tipo: "bom", titulo: "Ponto Final", hora: "05:12", lugar: "Rodoviária",
+    texto: "Quando você abre os olhos, o ônibus para na rodoviária. Você desce. Ao virar, não há ônibus nenhum, só uma poça d'água. E a moeda de volta no seu bolso.",
+    fx: { ver: ["estrada", "manha"], sons: ["fimBom"], amb: { drone: .3 } } },
+  f_pulo: { fim: true, tipo: "bom", titulo: "Fora da Linha", hora: "05:40", lugar: "Margem do rio",
+    texto: "A porta abre e você cai na água gelada. Acorda na margem, de dia, encharcado. Na ponte, nenhum sinal de ônibus. Só uma placa nova: \"Em memória dos passageiros da Linha 13\".",
+    fx: { ver: ["estrada", "manha"], sons: ["fimBom"], amb: { drone: .3, chuva: .2 } } },
+  f_jornal: { fim: true, tipo: "estranho", titulo: "Jornal de 98", hora: "06:00", lugar: "Posto Serra Alta",
+    texto: "Você espera o sol nascer tomando café ruim. Às 6h passa um ônibus normal. Antes de subir, você vê o jornal velho pendurado no posto. Na manchete de 1998, a sua foto.",
+    fx: { ver: ["posto", "manha"], sons: ["fimEstranho"], amb: { drone: .4 } } },
+  f_reflexo: { fim: true, tipo: "ruim", titulo: "O Reflexo", hora: "00:34", lugar: "Ponte do Rio Fundo",
+    texto: "Você abre os olhos. A água sobe até o vidro. Lá embaixo, outro ônibus 13 afunda com as luzes acesas. Numa das janelas, olhando pra cima, está você.",
+    fx: { ver: ["interior", "vermelho"], sons: ["fimRuim"], amb: { drone: 1 } } },
+  f_passageiro: { fim: true, tipo: "ruim", titulo: "Passageiro nº 7", hora: "23:58", lugar: "Linha 13",
+    texto: "Sua roupa está molhada. Você olha para a frente, como os outros. Na próxima noite de chuva, o ônibus para num ponto da serra, e você estende a mão: \"Passagem.\"",
+    fx: { ver: ["interior", "vermelho"], sons: ["fimRuim"], amb: { drone: 1, motor: .6 } } },
+  f_laco: { fim: true, tipo: "estranho", titulo: "O Laço", hora: "23:58", lugar: "Ponto · Estrada da Serra",
+    texto: "Você grita. O outro você recua e pega o celular. As portas se fecham com você dentro. O relógio do painel volta para 23:58. De novo.",
+    fx: { ver: ["estrada", "chuva"], sons: ["fimEstranho"], amb: { drone: 1, chuva: 1 } } },
+  f_motorista: { fim: true, tipo: "estranho", titulo: "Novo Motorista", hora: "00:21", lugar: "Linha 13 · cabine",
+    texto: "O volante está frio. O antigo motorista senta no banco da frente e, pela primeira vez em 28 anos, fecha os olhos. A estrada é sua agora. Toda noite de chuva.",
+    fx: { ver: ["estrada", "rapido", "chuva"], sons: ["fimEstranho"], amb: { drone: .8, motor: 1, chuva: .8 } } },
+};
+
+/* -------------------- FASE 3: ABISMO -------------------- */
+const ABISMO = {
+  inicio: {
+    hora: "−410 m", lugar: "Mini-submarino Tatuí-3",
+    texto: "A Estação Abissal parou de responder há três dias. Você foi a única pessoa que aceitou descer. O sonar mostra a estação logo à frente. E algo grande se movendo entre vocês.",
+    escolhas: [op("Disparar um pulso de sonar", "sonar", { custo: 5 }), op("Desligar tudo e flutuar no escuro", "escuro"), op("Acelerar até a estação", "acelera", { custo: 10 })],
+    fx: { ver: ["mar", "criaturaLonge"], sons: ["bolhas"], amb: { drone: .6, agua: 1 } },
+  },
+  sonar: {
+    hora: "−412 m", lugar: "Tatuí-3 · sonar",
+    texto: "PING. O eco volta deformado. A forma tem 40 metros e parou no mesmo instante. Ela também ouviu.",
+    tempo: 8, aoAcabar: "ataque",
+    escolhas: [op("Mergulhar mais fundo", "fenda", { custo: 10 }), op("Seguir para a estação", "doca", { custo: 5 })],
+    fx: { ver: ["mar", "sonar", "criaturaLonge"], sons: ["sonar"], amb: { drone: .8, agua: 1 } },
+  },
+  escuro: {
+    hora: "−410 m", lugar: "Tatuí-3 · desligado",
+    texto: "Tudo apaga. Só a lanterna de mão. Algo passa por cima do submarino, devagar, e o casco range.",
+    dica: "Arraste o dedo pela tela para iluminar",
+    escolhas: [op("Iluminar o vulto", "olho"), op("Prender a respiração e esperar", "espera")],
+    fx: { ver: ["mar", "criatura", "escuro"], sons: ["casco", "criaturaSom"], amb: { drone: .9, agua: .7 } },
+  },
+  espera: {
+    hora: "−410 m", lugar: "Tatuí-3 · desligado",
+    texto: "A sombra para bem em cima de você. Qualquer barulho e ela vai perceber.",
+    acao: { tipo: "segurar", rotulo: "Segure para prender a respiração", dur: 5, limite: 10, ok: "passou", falha: "ataque" },
+    fx: { ver: ["mar", "criatura", "escuro"], sons: ["coracao"], amb: { drone: 1, agua: .5 } },
+  },
+  passou: {
+    hora: "−410 m", lugar: "Tatuí-3", custo: 15,
+    texto: "O vulto segue em frente. Você ganhou tempo, mas o filtro de ar falhou enquanto o sistema estava desligado.",
+    escolhas: [op("Religar e ir pra estação", "doca", { custo: 5 })],
+    fx: { ver: ["mar", "criaturaLonge"], sons: ["religar"], amb: { drone: .6, agua: 1 } },
+  },
+  olho: {
+    hora: "−410 m", lugar: "Diante do vidro",
+    texto: "A luz bate num olho do tamanho da escotilha. Ele pisca. Ao redor, cicatrizes que parecem letras: <span class='msg'>E.A. 07</span>. É o código da estação.",
+    escolhas: [op("Seguir o bicho", "fenda", { custo: 10 }), op("Fugir para a estação", "doca", { custo: 10 }), op("Encostar a mão no vidro", "f_vinculo")],
+    fx: { ver: ["mar", "olho"], sons: ["criaturaSom"], amb: { drone: 1, agua: .6 } },
+  },
+  acelera: {
+    hora: "−430 m", lugar: "Tatuí-3 · motor máximo",
+    texto: "O motor grita. O vulto vira na sua direção. Pelo vidro, uma boca se abre, cheia de luzes, como uma cidade vista do avião.",
+    tempo: 6, aoAcabar: "ataque",
+    escolhas: [op("Desviar para baixo", "fenda", { custo: 10 }), op("Soltar o sinalizador", "flare")],
+    fx: { ver: ["mar", "criatura", "bolhasMuitas"], sons: ["criaturaSom", "bolhas"], amb: { drone: 1, agua: 1 } },
+  },
+  flare: {
+    hora: "−430 m", lugar: "Tatuí-3",
+    texto: "O sinalizador explode em vermelho. A criatura recua, ofuscada, e você vê a doca da estação aberta, logo abaixo.",
+    escolhas: [op("Entrar na doca", "doca")],
+    fx: { ver: ["mar", "estacao", "vermelho"], sons: ["flare"], amb: { drone: .7, agua: 1 } },
+  },
+  ataque: {
+    hora: "−440 m", lugar: "Tatuí-3 · ALERTA", custo: 10,
+    texto: "IMPACTO. O casco trinca. Alarme. Água entrando pela solda do painel esquerdo.",
+    acao: { tipo: "tocar", rotulo: "Toque rápido para bombear a água!", n: 18, limite: 6, ok: "doca", falha: "f_casco" },
+    fx: { ver: ["mar", "bolhasMuitas", "alarme"], sons: ["impacto", "alarme"], amb: { drone: 1, agua: 1 } },
+  },
+  fenda: {
+    hora: "−780 m", lugar: "Fenda azul",
+    texto: "Uma fenda no fundo do mar brilha em azul. Dentro dela, cabos da estação descem como raízes, pulsando no mesmo ritmo da criatura.",
+    escolhas: [op("Seguir os cabos", "nucleo", { custo: 15 }), op("Voltar para a estação", "doca", { custo: 10 })],
+    fx: { ver: ["mar", "fenda"], sons: ["criaturaSom"], amb: { drone: 1, agua: .8 } },
+  },
+  nucleo: {
+    hora: "−812 m", lugar: "Câmara de vidro",
+    texto: "No fim dos cabos, uma câmara de vidro. Dentro, a equipe da estação, viva, dormindo, ligada à criatura por fios de luz. Um painel pisca: <span class='msg'>CÓDIGO DE ACESSO?</span>",
+    escolhas: [op("Digitar o código no painel", "painel"), op("Subir para avisar a superfície", "f_relatorio", { custo: 20 })],
+    fx: { ver: ["mar", "fenda", "estacao"], amb: { drone: .8, agua: .8 } },
+  },
+  painel: {
+    hora: "−812 m", lugar: "Câmara de vidro · painel",
+    texto: "Duas casas para o código. Se errar, o sistema trava.",
+    acao: { tipo: "codigo", rotulo: "Digite o código de acesso", resposta: "07", tentativas: 2, ok: "f_resgate", falha: "f_despertar" },
+    fx: { ver: ["mar", "fenda"], amb: { drone: .8, agua: .6 } },
+  },
+  doca: {
+    hora: "−450 m", lugar: "Estação Abissal · doca", ganha: "Cartão E.A. 07",
+    texto: "Você acopla na estação. Luzes de emergência e ninguém. No quadro, um bilhete: <span class='msg'>NÃO É UM ANIMAL. É A ESTAÇÃO QUE ELE PROTEGE.</span> No chão, um cartão de acesso.",
+    escolhas: [op("Ir à sala de controle", "controle"), op("Pegar ar no armário de emergência", "ar")],
+    fx: { ver: ["mar", "estacao"], sons: ["porta", "item"], amb: { drone: .6, agua: .5 } },
+  },
+  ar: {
+    hora: "−450 m", lugar: "Estação · armário", custo: -40,
+    texto: "Dois cilindros cheios. Você respira fundo pela primeira vez em horas. Pelo vidro, a criatura está parada lá fora, observando.",
+    escolhas: [op("Ir à sala de controle", "controle")],
+    fx: { ver: ["mar", "criaturaLonge", "estacao"], sons: ["porta"], amb: { drone: .5, agua: .5 } },
+  },
+  controle: {
+    hora: "−450 m", lugar: "Estação · sala de controle",
+    texto: "Dois botões grandes: <span class='msg'>ALERTA À SUPERFÍCIE</span> e <span class='msg'>CORTAR ENERGIA DA FENDA</span>. Ao lado, uma porta lacrada com leitor de cartão.",
+    escolhas: [
+      op("Usar o cartão na porta lacrada", "lacrada", { req: "Cartão E.A. 07" }),
+      op("Cortar a energia da fenda", "f_despertar"),
+      op("Enviar alerta à superfície", "f_relatorio"),
+    ],
+    fx: { ver: ["mar", "estacao"], amb: { drone: .7, agua: .4 } },
+  },
+  lacrada: {
+    hora: "−460 m", lugar: "Estação · ala lacrada", custo: 5,
+    texto: "Atrás da porta, a equipe inteira dorme em cápsulas, ligada por fios de luz ao vidro. A criatura encosta o olho do lado de fora, esperando. O painel pede o código da estação.",
+    acao: { tipo: "codigo", rotulo: "Digite o código da estação", resposta: "07", tentativas: 2, ok: "f_resgate", falha: "f_despertar" },
+    fx: { ver: ["mar", "olho"], amb: { drone: .8, agua: .5 } },
+  },
+  f_resgate: { fim: true, tipo: "bom", titulo: "Resgate", hora: "−0 m", lugar: "Superfície",
+    texto: "As cápsulas abrem. A equipe acorda tossindo. A criatura empurra a estação inteira devagar até a superfície, como quem devolve algo que guardou com cuidado.",
+    fx: { ver: ["mar", "criaturaLonge", "manha"], sons: ["fimBom"], amb: { drone: .3, agua: .4 } } },
+  f_relatorio: { fim: true, tipo: "estranho", titulo: "Relatório", hora: "−0 m", lugar: "Navio de apoio",
+    texto: "Na superfície, ninguém acredita. Seis meses depois, uma nova estação é construída no mesmo lugar. No primeiro dia, o sonar mostra uma forma de 40 metros. Esperando.",
+    fx: { ver: ["mar", "sonar"], sons: ["sonar", "fimEstranho"], amb: { drone: .6, agua: .5 } } },
+  f_despertar: { fim: true, tipo: "ruim", titulo: "Despertar", hora: "−812 m", lugar: "Fenda azul",
+    texto: "A luz da fenda apaga. A criatura solta um som que faz o casco vibrar. Lá embaixo, no escuro, algo muito maior abre os olhos. Ela não estava atacando. Estava vigiando.",
+    fx: { ver: ["mar", "alarme"], sons: ["criaturaSom", "fimRuim"], amb: { drone: 1, agua: 1 } } },
+  f_casco: { fim: true, tipo: "ruim", titulo: "Pressão", hora: "−440 m", lugar: "Tatuí-3",
+    texto: "A água vence a bomba. A última coisa que você vê é o olho enorme do lado de fora, parado, como se lamentasse.",
+    fx: { ver: ["mar", "bolhasMuitas", "vermelho"], sons: ["fimRuim"], amb: { drone: 1, agua: 1 } } },
+  f_ar: { fim: true, tipo: "ruim", titulo: "Sem Ar", hora: "−???", lugar: "Tatuí-3",
+    texto: "O medidor chega a zero. A cabine fica em silêncio. Lá fora, uma luz azul se aproxima devagar e encosta no vidro.",
+    fx: { ver: ["mar", "criaturaLonge", "vermelho"], sons: ["fimRuim"], amb: { drone: .8, agua: .6 } } },
+  f_vinculo: { fim: true, tipo: "estranho", titulo: "Vínculo", hora: "−410 m", lugar: "Diante do vidro",
+    texto: "Você encosta a mão. O olho se aproxima até tocar o vidro do outro lado. Você entende sem palavras: ela não quer te fazer mal. Ela quer que alguém fique. E você fica.",
+    fx: { ver: ["mar", "olho"], sons: ["fimEstranho"], amb: { drone: .5, agua: .6 } } },
+};
+
+const FASES = {
+  apagao: { titulo: "A Noite do Apagão", genero: "Suspense", cor: "#f2a33a",
+    gancho: "A cidade apaga e uma mensagem chega no seu celular: não abra a porta.",
+    mec: "Código secreto · tempo · tocar rápido", nos: APAGAO, hub: ["cidade", "acesa"] },
+  onibus: { titulo: "Último Ônibus", genero: "Lenda urbana", cor: "#9bd86b",
+    gancho: "Uma linha de ônibus extinta em 1998 para no seu ponto, numa noite de chuva.",
+    mec: "Itens · segurar · tocar rápido", nos: ONIBUS, hub: ["estrada", "farois", "chuva"] },
+  abismo: { titulo: "Abismo", genero: "Ficção científica", cor: "#4fcfd9",
+    gancho: "Você desce sozinho a 410 metros para descobrir por que uma estação parou de responder.",
+    mec: "Oxigênio limitado · código · segurar", nos: ABISMO, hub: ["mar", "criaturaLonge"],
+    medidor: { nome: "O₂", ini: 50, fim: "f_ar" } },
+};
+
+const TAG = { bom: "Final bom", ruim: "Final ruim", estranho: "Final estranho" };
+const $ = id => document.getElementById(id);
+const reduz = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const finaisDe = k => Object.keys(FASES[k].nos).filter(n => FASES[k].nos[n].fim);
+
+/* ============================================================
+   ÁUDIO (sintetizado ao vivo, sem arquivos)
+   ============================================================ */
+let AC = null, OUT, REV, NB, AMB = {}, mudo = false, timers = [];
+
+function initAudio() {
+  if (AC) { AC.resume(); return; }
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  OUT = AC.createGain(); OUT.gain.value = mudo ? 0 : .9; OUT.connect(AC.destination);
+  REV = AC.createConvolver();
+  const len = AC.sampleRate * 2.6, ir = AC.createBuffer(2, len, AC.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+  REV.buffer = ir; const rg = AC.createGain(); rg.gain.value = .4; REV.connect(rg).connect(OUT);
+  NB = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+  const nd = NB.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+
+  const canal = (max, wet) => { const g = AC.createGain(); g.gain.value = 0; g.connect(OUT); if (wet) { const s = AC.createGain(); s.gain.value = wet; g.connect(s).connect(REV); } return { g, max }; };
+  const filtro = (tipo, f, q = 1) => { const b = AC.createBiquadFilter(); b.type = tipo; b.frequency.value = f; b.Q.value = q; return b; };
+
+  AMB.drone = canal(.12, .3);
+  const lp = filtro("lowpass", 170); lp.connect(AMB.drone.g);
+  [55, 55.7, 82.4].forEach((f, i) => { const o = AC.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; const g = AC.createGain(); g.gain.value = i === 2 ? .3 : 1; o.connect(g).connect(lp); o.start(); });
+
+  AMB.vento = canal(.35, 0);
+  const bp = filtro("bandpass", 450, .6), lfo = AC.createOscillator(), lg = AC.createGain();
+  lfo.frequency.value = .13; lg.gain.value = 260; lfo.connect(lg).connect(bp.frequency); lfo.start();
+  ruidoLoop().connect(bp).connect(AMB.vento.g);
+
+  AMB.chuva = canal(.09, 0);
+  ruidoLoop().connect(filtro("highpass", 2200)).connect(AMB.chuva.g);
+
+  AMB.estatica = canal(.07, 0);
+  ruidoLoop().connect(filtro("bandpass", 1700, .8)).connect(AMB.estatica.g);
+
+  AMB.motor = canal(.13, 0);
+  const ml = filtro("lowpass", 140); ml.connect(AMB.motor.g);
+  const mo = AC.createOscillator(); mo.type = "sawtooth"; mo.frequency.value = 38; mo.connect(ml); mo.start();
+  const mw = AC.createOscillator(), mwg = AC.createGain(); mw.frequency.value = .4; mwg.gain.value = 3; mw.connect(mwg).connect(mo.frequency); mw.start();
+  ruidoLoop().connect(filtro("lowpass", 300)).connect(AMB.motor.g);
+
+  AMB.agua = canal(.5, .4);
+  const al = filtro("lowpass", 220), alfo = AC.createOscillator(), alg = AC.createGain();
+  alfo.frequency.value = .07; alg.gain.value = 90; alfo.connect(alg).connect(al.frequency); alfo.start();
+  ruidoLoop().connect(al).connect(AMB.agua.g);
+
+  document.addEventListener("visibilitychange", () => { document.hidden ? AC.suspend() : AC.resume(); });
+}
+function ruidoLoop() { const s = AC.createBufferSource(); s.buffer = NB; s.loop = true; s.start(0, Math.random()); return s; }
+function envolver(g, t, vol, atk, dur) {
+  g.gain.setValueAtTime(.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + atk);
+  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+}
+function saida(g, wet) { g.connect(OUT); if (wet) { const s = AC.createGain(); s.gain.value = wet; g.connect(s).connect(REV); } }
+function tom(f, dur, o = {}) {
+  if (!AC) return;
+  const { tipo = "sine", vol = .2, ate = null, quando = 0, atk = .005, wet = .3, lp = null } = o;
+  const t = AC.currentTime + quando, osc = AC.createOscillator(), g = AC.createGain();
+  osc.type = tipo; osc.frequency.setValueAtTime(f, t);
+  if (ate) osc.frequency.exponentialRampToValueAtTime(ate, t + dur);
+  let n = osc; if (lp) { const fl = AC.createBiquadFilter(); fl.type = "lowpass"; fl.frequency.value = lp; osc.connect(fl); n = fl; }
+  n.connect(g); envolver(g, t, vol, atk, dur); saida(g, wet);
+  osc.start(t); osc.stop(t + dur + .05);
+}
+function ruido(dur, o = {}) {
+  if (!AC) return;
+  const { filtro = "lowpass", f = 800, q = 1, vol = .3, quando = 0, ate = null, atk = .005, wet = .3 } = o;
+  const t = AC.currentTime + quando, s = AC.createBufferSource(), fl = AC.createBiquadFilter(), g = AC.createGain();
+  s.buffer = NB; s.loop = true; fl.type = filtro; fl.Q.value = q; fl.frequency.setValueAtTime(f, t);
+  if (ate) { fl.frequency.exponentialRampToValueAtTime(ate, t + dur / 2); fl.frequency.exponentialRampToValueAtTime(f, t + dur); }
+  s.connect(fl).connect(g); envolver(g, t, vol, atk, dur); saida(g, wet);
+  s.start(t, Math.random()); s.stop(t + dur + .05);
+}
+function depois(ms, fn) { timers.push(setTimeout(fn, ms)); }
+function repetir(fn, ms, inicio = 0, max = Infinity) {
+  let n = 0;
+  depois(inicio * 1000, () => { fn(); n++; const id = setInterval(() => { if (++n > max) return clearInterval(id); fn(); }, ms); timers.push(id); });
+}
+function pararTudo() { timers.forEach(id => { clearTimeout(id); clearInterval(id); }); timers = []; }
+function setAmb(cfg) { if (!AC) return; for (const k in AMB) AMB[k].g.gain.setTargetAtTime((cfg[k] || 0) * AMB[k].max, AC.currentTime, .7); }
+function vibrar(ms) { try { if (window.Android && Android.vibrar) Android.vibrar(Math.round(ms)); else if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+function tremer(ini, dur) {
+  const a = performance.now() + ini * 1000; tremores.push([a, a + dur * 1000]);
+  setTimeout(() => vibrar(Math.min(dur * 1000, 600)), ini * 1000);
+}
+
+const SONS = {
+  apagao() { tom(190, 1.4, { tipo: "sawtooth", vol: .12, ate: 28, quando: 1.0, wet: .5, lp: 1400 }); ruido(.12, { f: 900, vol: .5, quando: 1.0 }); ruido(.9, { f: 110, vol: .7, quando: 1.05, wet: .6 }); },
+  vibrar(q = 2.4) { for (let s = 0; s < 2; s++) for (let i = 0; i < 2; i++) tom(68, .22, { tipo: "square", vol: .07, quando: q + s * 1.1 + i * .32, wet: .05, lp: 400 }); },
+  vibrarJa() { SONS.vibrar(1.0); },
+  batidas() {
+    const seq = q => [0, .3, .6].forEach(d => { ruido(.09, { f: 200, vol: 1, quando: q + d, wet: .4 }); tom(80, .14, { vol: .45, ate: 48, quando: q + d, wet: .4 }); tremer(q + d, .12); });
+    seq(.6); seq(3.6);
+  },
+  batidaVidro() { repetir(() => { ruido(.05, { filtro: "bandpass", f: 1800, q: 3, vol: .5, wet: .5 }); ruido(.05, { filtro: "bandpass", f: 1800, q: 3, vol: .5, wet: .5, quando: .22 }); }, 2200, .8); },
+  coracao() { repetir(() => { tom(56, .16, { vol: .5, ate: 40, wet: .1 }); tom(50, .16, { vol: .35, ate: 38, quando: .22, wet: .1 }); }, 1000, 1.5); },
+  passos() { repetir(() => ruido(.07, { f: 350, vol: .5, wet: .8 }), 580, .8, 9); },
+  correndo() { repetir(() => ruido(.05, { f: 500, vol: .4, wet: .2 }), 280, .2); },
+  rangido() { tom(110, 1.1, { tipo: "sawtooth", vol: .06, ate: 175, lp: 900, wet: .5, atk: .25 }); },
+  papel() { ruido(.7, { filtro: "highpass", f: 3000, vol: .09, quando: 1.2, atk: .15 }); },
+  eco() { ruido(.1, { f: 300, vol: .6, quando: .3, wet: 1 }); tom(2200, .03, { tipo: "square", vol: .05, quando: 2.2, wet: .1 }); },
+  bipes(v) {
+    let q = 0;
+    for (let i = 0; i < 4; i++) { tom(880, .09, { vol: v, quando: q, wet: .4 }); q += .2; }
+    q += .5;
+    for (let i = 0; i < 7; i++) { tom(1175, .07, { vol: v, quando: q, wet: .4 }); q += .16; }
+  },
+  radioLonge() { repetir(() => SONS.bipes(.03), 5200, 1.5); },
+  radio() { repetir(() => SONS.bipes(.07), 5200, .6); tom(140, 3, { tipo: "triangle", vol: .03, atk: 1, wet: .8 }); },
+  feixe() { ruido(3.2, { filtro: "bandpass", f: 180, ate: 1400, q: 2, vol: .5, atk: 1.2, wet: .6 }); tom(38, 3.2, { vol: .3, atk: 1 }); },
+  tremor() { ruido(3, { f: 90, vol: 1, atk: .4, wet: .3 }); tom(32, 3, { vol: .4, atk: .5 }); tremer(.2, 2.6); },
+  morse() { repetir(() => { let q = 0; [.08, .26, .08].forEach(d => { tom(1100, d, { vol: .07, quando: q, wet: .3 }); q += d + .12; }); }, 2600, .5); },
+  freio() { tom(2100, 1.3, { tipo: "sawtooth", vol: .025, ate: 1500, lp: 3500, wet: .3, atk: .1 }); ruido(1.3, { filtro: "highpass", f: 2500, vol: .06, atk: .1 }); },
+  porta() { ruido(.7, { filtro: "highpass", f: 1400, vol: .25, atk: .02, wet: .3 }); ruido(.12, { f: 160, vol: .7, quando: .6 }); },
+  campainha() { tom(1320, .3, { vol: .1, wet: .4 }); tom(990, .5, { vol: .1, quando: .28, wet: .4 }); },
+  sonar() { repetir(() => { tom(1250, 2.4, { vol: .12, wet: 1 }); tom(1250, .4, { vol: .03, quando: 1.1, wet: 1 }); }, 3000, 0); },
+  bolhas() { repetir(() => { for (let i = 0; i < 3; i++) tom(300 + Math.random() * 300, .09, { vol: .04, ate: 900 + Math.random() * 600, quando: Math.random() * .6, wet: .5 }); }, 1700, .3); },
+  criaturaSom() { tom(46, 4, { tipo: "sawtooth", vol: .12, ate: 34, lp: 220, atk: 1.4, wet: .9 }); tom(69, 3.5, { tipo: "sawtooth", vol: .05, ate: 52, lp: 300, atk: 1.6, quando: .5, wet: .9 }); },
+  casco() { tom(85, 2.2, { tipo: "sawtooth", vol: .08, ate: 62, lp: 700, wet: .9, atk: .4 }); ruido(2, { filtro: "bandpass", f: 300, ate: 900, q: 6, vol: .2, atk: .5, wet: .8 }); },
+  impacto() { ruido(.5, { f: 120, vol: 1, wet: .6 }); tom(45, .8, { vol: .6, ate: 30 }); tremer(0, .6); },
+  alarme() { repetir(() => { tom(660, .25, { tipo: "square", vol: .04, lp: 2000, wet: .3 }); tom(440, .25, { tipo: "square", vol: .04, lp: 2000, quando: .3, wet: .3 }); }, 1000, .4); },
+  flare() { ruido(1.5, { filtro: "highpass", f: 2000, vol: .3, atk: .02, wet: .6 }); tom(90, .4, { vol: .4, ate: 40 }); },
+  clique() { tom(520, .06, { tipo: "triangle", vol: .08, wet: .1 }); },
+  tick() { ruido(.012, { filtro: "highpass", f: 4000, vol: .03, wet: 0 }); },
+  tique() { tom(1700, .03, { vol: .05, wet: 0 }); },
+  toque() { ruido(.06, { f: 260, vol: .6, wet: .2 }); tom(90, .08, { vol: .3, ate: 60 }); },
+  item() { tom(880, .2, { vol: .07, wet: .5 }); tom(1320, .35, { vol: .07, quando: .12, wet: .5 }); },
+  sucesso() { tom(660, .2, { tipo: "triangle", vol: .08, wet: .4 }); tom(990, .4, { tipo: "triangle", vol: .08, quando: .15, wet: .5 }); },
+  erro() { tom(130, .3, { tipo: "square", vol: .05, lp: 800, wet: .2 }); },
+  fimBom() { [220, 277.2, 329.6, 440].forEach((f, i) => tom(f, 4.5, { vol: .06, atk: 1.2, quando: .4 + i * .18, wet: .8 })); },
+  fimRuim() { tom(98, 3, { tipo: "sawtooth", vol: .08, lp: 400, wet: .6 }); tom(103.8, 3, { tipo: "sawtooth", vol: .08, lp: 400, wet: .6 }); ruido(2, { f: 100, vol: .8, wet: .4 }); tremer(0, .5); },
+  fimEstranho() { tom(660, 3.5, { vol: .06, ate: 330, atk: .6, wet: .9 }); tom(990, 3.5, { vol: .03, ate: 520, atk: .8, quando: .3, wet: .9 }); },
+  religar() { tom(40, 1.2, { tipo: "sawtooth", vol: .1, ate: 220, lp: 1200, wet: .4 }); ruido(.1, { f: 1200, vol: .4, quando: 1.2 }); },
+};
+function tocar(nome) { if (AC && !mudo && SONS[nome]) SONS[nome](); if (nome === "clique") vibrar(12); }
+
+$("btnSom").addEventListener("click", () => {
+  mudo = !mudo;
+  $("btnSom").textContent = mudo ? "Mudo" : "Som";
+  $("btnSom").setAttribute("aria-pressed", String(!mudo));
+  if (AC) OUT.gain.setTargetAtTime(mudo ? 0 : .9, AC.currentTime, .1);
+});
+
+/* ============================================================
+   CENAS ANIMADAS (canvas)
+   ============================================================ */
+const cv = $("bg"), ctx = cv.getContext("2d");
+let W = 0, H = 0, DPR = 1, predios = [], tetos = [], gotas = [], neve = [], bolhas = [], fendaPts = [];
+let ver = new Set(), tCena = performance.now(), acesas = .5, tremores = [];
+const ponteiro = { x: 0, y: 0, t: -1e9 }, luz = { x: 0, y: 0 };
+const ncv = document.createElement("canvas"); ncv.width = 48; ncv.height = 36;
+const nctx = ncv.getContext("2d"), nimg = nctx.createImageData(48, 36);
+
+function setVer(lista) { ver = new Set(lista); tCena = performance.now(); }
+function montar() {
+  DPR = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  predios = []; tetos = []; let x = -10;
+  while (x < W + 20) {
+    const w = 40 + Math.random() * 70, h = H * (.22 + Math.random() * .4), jan = [];
+    for (let yy = H - h + 12; yy < H - 10; yy += 14)
+      for (let xx = x + 8; xx < x + w - 10; xx += 11) jan.push({ x: xx, y: yy, r: Math.random() });
+    predios.push({ x, w, h, jan });
+    tetos.push({ x: x + 8 + Math.random() * (w - 16), y: H - h - 3, ph: Math.random() * 6.28, f: .6 + Math.random() * 1.4 });
+    x += w + 4 + Math.random() * 10;
+  }
+  gotas = Array.from({ length: Math.round(W * H / 5000) }, () => ({ x: Math.random() * W * 1.3, y: Math.random() * H, v: 9 + Math.random() * 7, l: 8 + Math.random() * 12 }));
+  neve = Array.from({ length: Math.round(W * H / 6000) }, () => ({ x: Math.random() * W, y: Math.random() * H, v: .15 + Math.random() * .4, s: Math.random() * 1.8 + .4 }));
+  bolhas = Array.from({ length: 40 }, () => ({ x: Math.random() * W, y: H + Math.random() * H, v: 1 + Math.random() * 2.5, r: 1.5 + Math.random() * 4 }));
+  fendaPts = []; for (let i = 0; i <= 14; i++) fendaPts.push([i / 14 * W, H * .62 + (Math.random() - .5) * H * .05]);
+  luz.x = W / 2; luz.y = H * .3;
+}
+
+function ceu(manha) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  if (manha) { g.addColorStop(0, "#2b3546"); g.addColorStop(1, "#7a7277"); }
+  else { g.addColorStop(0, "#05070b"); g.addColorStop(.7, "#111724"); g.addColorStop(1, "#151b28"); }
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+function cidade() {
+  for (const p of predios) {
+    ctx.fillStyle = "#0f131b"; ctx.fillRect(p.x, H - p.h, p.w, p.h);
+    for (const j of p.jan) { ctx.fillStyle = j.r < acesas ? "rgba(242,163,58,.62)" : "#161b26"; ctx.fillRect(j.x, j.y, 4, 6); }
+  }
+}
+function corredor(t) {
+  const dw = Math.min(W * .42, 200), dh = dw * 2.1, x = W / 2 - dw / 2, y = Math.max(40, H * .08), gy = y + dh, p = .5 + .5 * Math.sin(t * 2.4);
+  ctx.fillStyle = "#0c0f16"; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = "#171c27"; ctx.lineWidth = 1;
+  for (let i = -6; i <= 6; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * dw * .2, gy); ctx.lineTo(W / 2 + i * W * .35, H); ctx.stroke(); }
+  const g = ctx.createRadialGradient(W / 2, gy, 0, W / 2, gy, dw * 1.6);
+  g.addColorStop(0, `rgba(226,72,61,${.3 + .35 * p})`); g.addColorStop(1, "rgba(226,72,61,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, y, W, H - y);
+  ctx.fillStyle = "#1a1f2b"; ctx.fillRect(x - 10, y - 10, dw + 20, dh + 10);
+  ctx.fillStyle = "#11151e"; ctx.fillRect(x, y, dw, dh);
+  ctx.strokeStyle = "#1e2432"; ctx.lineWidth = 2;
+  ctx.strokeRect(x + 14, y + 14, dw - 28, dh * .42); ctx.strokeRect(x + 14, y + dh * .5, dw - 28, dh * .44);
+  ctx.fillStyle = `rgba(255,95,75,${.45 + .55 * p})`; ctx.fillRect(x, gy - 3, dw, 3);
+  ctx.beginPath(); ctx.arc(W / 2, y + dh * .3, 4, 0, 7); ctx.fillStyle = `rgba(226,72,61,${.25 + .55 * p})`; ctx.fill();
+  ctx.fillStyle = "#3a4150"; ctx.beginPath(); ctx.arc(x + dw - 18, y + dh * .55, 5, 0, 7); ctx.fill();
+}
+function escada() {
+  ctx.fillStyle = "#0c0f15"; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = "#3a4357"; ctx.lineWidth = 2;
+  const cx = W / 2;
+  for (let i = 0; i < 18; i++) {
+    const y = H * .05 + i * i * 1.5 + i * 12, w = 40 + i * 15;
+    const lance = Math.floor(i / 6), dir = lance % 2 ? 1 : -1, off = dir * ((i % 6) * 9 - 22);
+    ctx.beginPath(); ctx.moveTo(cx - w / 2 + off, y); ctx.lineTo(cx + w / 2 + off, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + w / 2 + off, y); ctx.lineTo(cx + w / 2 + off, y - 10 - i); ctx.stroke();
+  }
+  ctx.fillStyle = "#e2483d"; ctx.font = `600 ${Math.min(W * .05, 22)}px "JetBrains Mono", monospace`;
+  ctx.fillText("9", cx - W * .3, H * .22); ctx.fillText("3", cx + W * .22, H * .5);
+}
+function tvs(t) {
+  ctx.fillStyle = "#07090d"; ctx.fillRect(0, 0, W, H);
+  const d = nimg.data;
+  for (let i = 0; i < d.length; i += 4) { const v = Math.random() * 190 | 0; d[i] = v; d[i + 1] = v; d[i + 2] = v + 10; d[i + 3] = 255; }
+  nctx.putImageData(nimg, 0, 0);
+  const area = Math.min(W * .92, 480), gap = 10, tw = (area - gap * 2) / 3, th = tw * .75, x0 = (W - area) / 2, y0 = Math.max(80, H * .1);
+  ctx.imageSmoothingEnabled = false;
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+    const x = x0 + c * (tw + gap), y = y0 + r * (th + gap);
+    ctx.fillStyle = "#020305"; ctx.fillRect(x - 3, y - 3, tw + 6, th + 6);
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, tw, th); ctx.clip();
+    ctx.globalAlpha = .5; ctx.drawImage(ncv, x, y, tw, th); ctx.globalAlpha = 1;
+    ctx.fillStyle = "rgba(70,110,200,.12)"; ctx.fillRect(x, y, tw, th);
+    ctx.fillStyle = "rgba(5,6,10,.75)"; ctx.fillRect(x + tw * .12, y + th * .62, tw * .76, th * .3);
+    ctx.fillStyle = "rgba(4,5,8,.92)";
+    ctx.beginPath(); ctx.arc(x + tw / 2, y + th * .42, th * .11, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + tw / 2, y + th * .8, tw * .2, th * .22, 0, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle = `rgba(255,255,255,${.03 + .03 * Math.random()})`; ctx.fillRect(0, (t * 60) % H, W, 3);
+}
+function feixe(t) {
+  const ox = W / 2 + Math.sin(t * .45) * W * .7, oy = -H * .3, bx = ox + Math.sin(t * .45 + .6) * W * .3, s = W * .18;
+  const g = ctx.createLinearGradient(ox, oy, bx, H);
+  g.addColorStop(0, "rgba(230,235,245,0)"); g.addColorStop(.45, "rgba(230,235,245,.17)"); g.addColorStop(1, "rgba(230,235,245,.05)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(ox - 6, oy); ctx.lineTo(ox + 6, oy); ctx.lineTo(bx + s, H); ctx.lineTo(bx - s, H); ctx.fill();
+}
+function luzCor(x, y, r, a, rgb = "255,90,70") {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+function luzVermelha(x, y, r, a) {
+  luzCor(x, y, r, a);
+  ctx.fillStyle = `rgba(255,190,170,${a})`; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 7); ctx.fill();
+}
+function lanternas(t, modo) {
+  for (const te of tetos) {
+    let a;
+    if (modo === "todas") a = Math.min(1, t * 2) * (.85 + .15 * Math.sin(t * 6 + te.ph));
+    else if (modo === "sync") a = Math.sin(t * 2.2) > -.2 ? .95 : .1;
+    else a = Math.sin(t * te.f + te.ph) > .35 ? .9 : 0;
+    if (a > .05) luzVermelha(te.x, te.y, 18, a);
+  }
+}
+function chuva() {
+  ctx.strokeStyle = "rgba(190,200,220,.22)"; ctx.lineWidth = 1; ctx.beginPath();
+  for (const g of gotas) {
+    ctx.moveTo(g.x, g.y); ctx.lineTo(g.x - g.l * .3, g.y + g.l);
+    g.y += g.v; g.x -= g.v * .3;
+    if (g.y > H) { g.y = -20; g.x = Math.random() * W * 1.3; }
+  }
+  ctx.stroke();
+}
+
+/* --- Ônibus --- */
+const HZ = () => H * .36;
+function estrada(t, vel, manha) {
+  const hy = HZ();
+  ctx.fillStyle = manha ? "#3a3d42" : "#07090c"; ctx.fillRect(0, hy, W, H - hy);
+  // serra no horizonte
+  ctx.fillStyle = manha ? "#4a4f5a" : "#0b0e14"; ctx.beginPath(); ctx.moveTo(0, hy);
+  for (let i = 0; i <= 10; i++) ctx.lineTo(i / 10 * W, hy - 18 - Math.abs(Math.sin(i * 1.7)) * 40);
+  ctx.lineTo(W, hy); ctx.fill();
+  ctx.fillStyle = manha ? "#2c2f35" : "#12151b";
+  ctx.beginPath(); ctx.moveTo(W / 2 - 6, hy); ctx.lineTo(W / 2 + 6, hy); ctx.lineTo(W * 1.1, H); ctx.lineTo(-W * .1, H); ctx.fill();
+  ctx.fillStyle = "rgba(230,220,180,.55)";
+  for (let i = 0; i < 12; i++) {
+    const z = ((i / 12) + t * vel * .25) % 1, p = z * z, y = hy + (H - hy) * p;
+    const w = 2 + p * 14, h = 1 + (H - hy) * .12 * p; ctx.fillRect(W / 2 - w / 2, y, w, h);
+  }
+  for (let i = 0; i < 6; i++) {
+    const z = ((i / 6) + t * vel * .12) % 1, p = z * z, x = W / 2 + W * .7 * p + 10, y = hy + (H - hy) * p, h = 10 + p * H * .6;
+    ctx.fillStyle = "#1a1e27"; ctx.fillRect(x, y - h, 2 + p * 6, h);
+  }
+  if (!vel) { // abrigo do ponto
+    ctx.fillStyle = "#151922"; ctx.fillRect(W * .04, H * .5, W * .2, 6); ctx.fillRect(W * .05, H * .5, 4, H * .22); ctx.fillRect(W * .22, H * .5, 4, H * .22);
+    ctx.fillStyle = "rgba(155,216,107,.8)"; ctx.font = `800 ${Math.min(W * .045, 18)}px "Big Shoulders Display", sans-serif`; ctx.fillText("PONTO", W * .07, H * .49);
+  }
+}
+function farois(t) {
+  const s = Math.min(1, t / 9), hy = HZ(), dx = 4 + s * W * .2, y = hy + 4 + s * H * .14, r = 4 + s * 70;
+  [-1, 1].forEach(k => { luzCor(W / 2 + k * dx, y, r * 1.8, .45, "255,240,200"); ctx.fillStyle = "rgba(255,250,230,.95)"; ctx.beginPath(); ctx.arc(W / 2 + k * dx, y, 2 + s * 9, 0, 7); ctx.fill(); });
+  if (s > .25) {
+    const fs = 6 + s * 24, a = Math.random() < .08 ? .15 : .9;
+    ctx.fillStyle = `rgba(155,216,107,${a})`; ctx.font = `800 ${fs}px "Big Shoulders Display", sans-serif`; ctx.textAlign = "center";
+    ctx.fillText("LINHA 13 · VIA SERRA", W / 2, y - r * .7); ctx.textAlign = "start";
+  }
+}
+function farolAtras(t) {
+  const a = .25 + .1 * Math.sin(t * 3), g = ctx.createLinearGradient(0, H, 0, H * .4);
+  g.addColorStop(0, `rgba(255,240,200,${a})`); g.addColorStop(1, "rgba(255,240,200,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+function interior(t) {
+  ctx.fillStyle = "#0d110e"; ctx.fillRect(0, 0, W, H);
+  const vx = W / 2, vy = H * .3;
+  ctx.fillStyle = "#050706";
+  ctx.beginPath(); ctx.moveTo(0, H * .04); ctx.lineTo(vx - 50, vy - 40); ctx.lineTo(vx - 50, vy + 6); ctx.lineTo(0, H * .5); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(W, H * .04); ctx.lineTo(vx + 50, vy - 40); ctx.lineTo(vx + 50, vy + 6); ctx.lineTo(W, H * .5); ctx.fill();
+  // luzes passando pela janela
+  const ph = (t * .7) % 1;
+  luzCor(W * (1 - ph) * .4, H * .2, 60, .18, "255,230,170"); luzCor(W - W * ph * .4, H * .22, 60, .18, "255,230,170");
+  ctx.fillStyle = "#151b17";
+  ctx.beginPath(); ctx.moveTo(vx - 22, vy + 6); ctx.lineTo(vx + 22, vy + 6); ctx.lineTo(W * .72, H); ctx.lineTo(W * .28, H); ctx.fill();
+  for (let i = 0; i < 7; i++) {
+    const s = Math.pow((i + 1) / 7, 1.6), y = vy + 6 + (H * .9 - vy) * s, w = 24 + s * W * .26, h = 10 + s * H * .16;
+    const xl = vx - 24 - s * W * .2 - w, xr = vx + 24 + s * W * .2;
+    ctx.fillStyle = "#1d2620"; ctx.fillRect(xl, y - h, w, h); ctx.fillRect(xr, y - h, w, h);
+    if ([1, 2, 4].includes(i)) { ctx.fillStyle = "#070908"; ctx.beginPath(); ctx.arc(xl + w * .5, y - h - h * .25, h * .32, 0, 7); ctx.fill(); }
+    if ([0, 3, 5].includes(i)) { ctx.fillStyle = "#070908"; ctx.beginPath(); ctx.arc(xr + w * .5, y - h - h * .25, h * .32, 0, 7); ctx.fill(); }
+  }
+  const flick = Math.random() < .07 ? .15 : 1;
+  ctx.fillStyle = `rgba(190,255,190,${.35 * flick})`;
+  ctx.beginPath(); ctx.moveTo(vx - 6, vy - 40); ctx.lineTo(vx + 6, vy - 40); ctx.lineTo(vx + 26, 0); ctx.lineTo(vx - 26, 0); ctx.fill();
+  ctx.fillStyle = `rgba(140,220,140,${.05 * flick})`; ctx.fillRect(0, 0, W, H);
+}
+function posto(t, manha) {
+  const hy = H * .42;
+  ctx.fillStyle = manha ? "#3a3d42" : "#08090c"; ctx.fillRect(0, hy, W, H - hy);
+  const cx = W * .1, cw = W * .8, cy = H * .14;
+  ctx.fillStyle = "#171a21"; ctx.fillRect(cx, cy, cw, H * .05);
+  ctx.fillRect(cx + cw * .15, cy, 8, hy - cy); ctx.fillRect(cx + cw * .85 - 8, cy, 8, hy - cy);
+  [0, 1].forEach(i => {
+    const fl = Math.random() < (i ? .12 : .03) ? .1 : 1;
+    const tx = cx + cw * (.2 + i * .4);
+    ctx.fillStyle = `rgba(215,255,220,${.9 * fl})`; ctx.fillRect(tx, cy + H * .05, cw * .2, 4);
+    const g = ctx.createLinearGradient(0, cy, 0, hy); g.addColorStop(0, `rgba(190,255,200,${.18 * fl})`); g.addColorStop(1, "rgba(190,255,200,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(tx, cy + H * .05); ctx.lineTo(tx + cw * .2, cy + H * .05); ctx.lineTo(tx + cw * .3, hy); ctx.lineTo(tx - cw * .1, hy); ctx.fill();
+  });
+  ctx.fillStyle = "#1e232c"; ctx.fillRect(W * .35, hy - H * .12, W * .07, H * .12); ctx.fillRect(W * .58, hy - H * .12, W * .07, H * .12);
+  const a = Math.random() < .1 ? .2 : .95;
+  ctx.fillStyle = `rgba(155,216,107,${a})`; ctx.font = `800 ${Math.min(W * .08, 38)}px "Big Shoulders Display", sans-serif`;
+  ctx.fillText("POSTO  24H", cx, cy - 10);
+}
+
+/* --- Abismo --- */
+function mar(t, manha) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  if (manha) { g.addColorStop(0, "#2c6b7a"); g.addColorStop(1, "#06222c"); }
+  else { g.addColorStop(0, "#04161d"); g.addColorStop(1, "#010407"); }
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 5; i++) {
+    const x = W * (i / 4) + Math.sin(t * .2 + i) * 40;
+    ctx.fillStyle = "rgba(120,210,230,.035)";
+    ctx.beginPath(); ctx.moveTo(x - 20, 0); ctx.lineTo(x + 20, 0); ctx.lineTo(x + 90, H); ctx.lineTo(x - 70, H); ctx.fill();
+  }
+  ctx.fillStyle = "rgba(200,235,240,.35)";
+  for (const n of neve) { ctx.fillRect(n.x, n.y, n.s, n.s); n.y += n.v; n.x += Math.sin(t + n.y * .01) * .15; if (n.y > H) { n.y = -4; n.x = Math.random() * W; } }
+}
+function bolhasDesenho(muitas) {
+  ctx.strokeStyle = "rgba(190,240,250,.45)"; ctx.lineWidth = 1;
+  const n = muitas ? bolhas.length : 12;
+  for (let i = 0; i < n; i++) {
+    const b = bolhas[i]; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.stroke();
+    b.y -= b.v * (muitas ? 1.6 : 1); b.x += Math.sin(b.y * .03) * .4;
+    if (b.y < -10) { b.y = H + 10; b.x = muitas ? W * .3 + Math.random() * W * .4 : Math.random() * W; }
+  }
+}
+function sonarDesenho(t) {
+  const cx = W / 2, cy = H * .55, fr = (t % 3) / 3, r = fr * Math.max(W, H) * .9;
+  ctx.strokeStyle = `rgba(79,207,217,${.6 * (1 - fr)})`; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke();
+  ctx.strokeStyle = "rgba(79,207,217,.12)"; ctx.lineWidth = 1;
+  for (let k = 1; k <= 3; k++) { ctx.beginPath(); ctx.arc(cx, cy, k * Math.min(W, H) * .18, 0, 7); ctx.stroke(); }
+  const bx = W * .72, by = H * .22, d = Math.hypot(bx - cx, by - cy), a = Math.max(0, 1 - Math.abs(r - d) / 60);
+  luzCor(bx, by, 30, a * .9, "79,207,217");
+  ctx.fillStyle = `rgba(150,240,245,${a})`; ctx.fillRect(bx - 22, by - 3, 44, 6);
+}
+function criatura(t, longe) {
+  const s = longe ? .45 : 1, span = W * 2.4, x = -W * .7 + ((t * (longe ? 14 : 26)) % span), y = H * (longe ? .2 : .26);
+  const rx = W * .55 * s + 60 * s, ry = H * .07 * s + 14;
+  ctx.fillStyle = longe ? "rgba(0,4,7,.6)" : "rgba(0,2,4,.88)";
+  ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x - rx * .9, y); ctx.lineTo(x - rx * 1.5, y - ry * 1.4); ctx.lineTo(x - rx * 1.4, y + ry * 1.2); ctx.fill();
+  for (let i = 0; i < 12; i++) {
+    const px = x - rx * .8 + i * rx * .14, a = (.4 + .6 * Math.sin(t * 3 + i)) * (longe ? .5 : .9);
+    ctx.fillStyle = `rgba(79,220,230,${Math.max(0, a)})`; ctx.beginPath(); ctx.arc(px, y + ry * .35, 2 * s + 1, 0, 7); ctx.fill();
+  }
+}
+function olho(t) {
+  const cx = W / 2, cy = H * .3, rx = Math.min(W * .4, 190), ry = rx * .55, ph = t % 4.6;
+  const sy = ph > 4.35 ? Math.abs(1 - 2 * (ph - 4.35) / .25) : 1;
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(1, Math.max(.04, sy));
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+  g.addColorStop(0, "rgba(200,190,110,.55)"); g.addColorStop(1, "rgba(30,30,20,.0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = "rgba(79,207,217,.6)"; ctx.beginPath(); ctx.arc(Math.sin(t * .5) * rx * .1, 0, ry * .75, 0, 7); ctx.fill();
+  ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(Math.sin(t * .5) * rx * .1, 0, ry * .12, ry * .62, 0, 0, 7); ctx.fill();
+  ctx.restore();
+}
+function estacao(t) {
+  const w = Math.min(W * .75, 380), x = W / 2 - w / 2, y = H * .16, h = H * .22;
+  ctx.fillStyle = "#06141a"; ctx.fillRect(x, y, w, h);
+  ctx.fillRect(x + w * .45, y - H * .08, 6, H * .08);
+  for (let i = 0; i < 6; i++) {
+    const on = Math.sin(t * 1.3 + i * 2) > -.6;
+    ctx.fillStyle = on ? "rgba(240,180,90,.75)" : "#0b1e26";
+    ctx.beginPath(); ctx.arc(x + w * (.12 + i * .15), y + h * .4, Math.min(10, w * .03), 0, 7); ctx.fill();
+  }
+  luzCor(x + w * .45 + 3, y - H * .08, 26, .5 + .5 * Math.sin(t * 4), "226,72,61");
+}
+function fenda(t) {
+  ctx.fillStyle = "#000304"; ctx.beginPath(); ctx.moveTo(0, H);
+  fendaPts.forEach(([x, y]) => ctx.lineTo(x, y)); ctx.lineTo(W, H); ctx.fill();
+  const p = .5 + .5 * Math.sin(t * 1.6);
+  ctx.save(); ctx.shadowColor = "rgba(79,207,217,.9)"; ctx.shadowBlur = 24;
+  ctx.strokeStyle = `rgba(110,225,235,${.5 + .5 * p})`; ctx.lineWidth = 3;
+  ctx.beginPath(); fendaPts.forEach(([x, y], i) => i ? ctx.lineTo(x, y + 4) : ctx.moveTo(x, y + 4)); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle = `rgba(79,207,217,${.15 + .25 * p})`; ctx.lineWidth = 2;
+  for (let i = 0; i < 5; i++) {
+    const [ex, ey] = fendaPts[2 + i * 2];
+    ctx.beginPath(); ctx.moveTo(W * (.2 + i * .15), 0); ctx.bezierCurveTo(W * (.1 + i * .2), H * .3, ex + 30, ey - H * .2, ex, ey); ctx.stroke();
+  }
+}
+
+function escuro(now) {
+  const recente = now - ponteiro.t < 5000;
+  const t = now / 1000;
+  const tx = recente ? ponteiro.x : W / 2 + Math.sin(t * .9) * W * .15;
+  const ty = recente ? ponteiro.y : H * .3 + Math.cos(t * 1.3) * 24;
+  luz.x += (tx - luz.x) * .18; luz.y += (ty - luz.y) * .18;
+  const g = ctx.createRadialGradient(luz.x, luz.y, 8, luz.x, luz.y, Math.min(W, H) * .32);
+  g.addColorStop(0, "rgba(5,7,10,0)"); g.addColorStop(1, "rgba(5,7,10,.97)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+addEventListener("pointermove", e => { ponteiro.x = e.clientX; ponteiro.y = e.clientY; ponteiro.t = performance.now(); }, { passive: true });
+addEventListener("pointerdown", e => { ponteiro.x = e.clientX; ponteiro.y = e.clientY; ponteiro.t = performance.now(); }, { passive: true });
+
+function frame(now) {
+  const t = (now - tCena) / 1000, v = k => ver.has(k), manha = v("manha");
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  if (!reduz) {
+    const z = 1 + Math.min(t, 25) * .0035;
+    ctx.translate(W / 2, H * .35); ctx.scale(z, z); ctx.translate(-W / 2, -H * .35);
+    tremores = tremores.filter(([a, b]) => now < b);
+    if (tremores.some(([a]) => now >= a)) ctx.translate((Math.random() - .5) * 7, (Math.random() - .5) * 7);
+    if (v("rapido")) ctx.translate((Math.random() - .5) * 2, (Math.random() - .5) * 2);
+  }
+  let alvo = .06;
+  if (v("acesa")) alvo = .5;
+  if (manha) alvo = .02;
+  if (v("luzVolta")) alvo = t < 1.2 ? (Math.random() < .5 ? .65 : .02) : .65;
+  if (v("apagao")) alvo = t < 1 ? .55 : t < 1.5 ? (Math.random() < .5 ? .55 : .01) : .02;
+  acesas = (v("apagao") || (v("luzVolta") && t < 1.2)) ? alvo : acesas + (alvo - acesas) * .05;
+
+  if (v("mar")) mar(t, manha); else ceu(manha);
+  if (v("cidade")) cidade();
+  if (v("estrada")) estrada(t, v("rapido") ? 2.4 : (v("farois") || v("posto")) ? 0 : 1, manha);
+  if (v("posto")) posto(t, manha);
+  if (v("farois")) farois(t);
+  if (v("interior")) interior(t);
+  if (v("fenda")) fenda(t);
+  if (v("estacao")) estacao(t);
+  if (v("criaturaLonge")) criatura(t, true);
+  if (v("criatura")) criatura(t, false);
+  if (v("olho")) olho(t);
+  if (v("sonar")) sonarDesenho(t);
+  if (v("mar")) bolhasDesenho(v("bolhasMuitas"));
+  if (v("corredor")) corredor(t);
+  if (v("escada")) escada();
+  if (v("tv")) tvs(t);
+  if (v("feixe")) feixe(t);
+  if (v("lanternas")) lanternas(t, "pisca");
+  if (v("lanternasTodas")) lanternas(t, "todas");
+  if (v("lanternasSync")) lanternas(t, "sync");
+  if (v("lanterna")) luzVermelha(W * .5, H * .62, 70, .55 + .2 * Math.sin(t * 3));
+  if (v("chuva")) chuva();
+  ctx.restore();
+  if (v("escuro")) escuro(now);
+  if (v("farolAtras")) farolAtras(t);
+  if (v("vermelho")) { ctx.fillStyle = `rgba(226,72,61,${.08 + .06 * Math.sin(t * 3)})`; ctx.fillRect(0, 0, W, H); }
+  if (v("alarme")) { ctx.fillStyle = `rgba(226,40,40,${Math.sin(t * 7) > 0 ? .2 : .04})`; ctx.fillRect(0, 0, W, H); }
+  requestAnimationFrame(frame);
+}
+addEventListener("resize", montar);
+montar(); setVer(["cidade", "acesa"]); requestAnimationFrame(frame);
+
+/* ============================================================
+   JOGO
+   ============================================================ */
+let S = null, NOS = null, atual = "inicio", caminho = [], inv = [], medidor = null;
+let typing = null, tok = 0, descobertos = carregar();
+
+function carregar() {
+  let d = {};
+  try { d = JSON.parse(localStorage.getItem("pv_finais") || "{}"); } catch (e) {}
+  try { const velho = JSON.parse(localStorage.getItem("apagao_finais") || "[]"); if (velho.length) d.apagao = [...new Set([...(d.apagao || []), ...velho])]; } catch (e) {}
+  for (const k in FASES) d[k] = new Set(d[k] || []);
+  return d;
+}
+function salvar() {
+  const o = {}; for (const k in descobertos) o[k] = [...descobertos[k]];
+  try { localStorage.setItem("pv_finais", JSON.stringify(o)); } catch (e) {}
+}
+function contador() { if (S) $("endCount").textContent = descobertos[S].size + "/" + finaisDe(S).length; }
+
+let toastT;
+function aviso(txt) {
+  const el = $("toast"); el.textContent = txt; el.classList.add("on");
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 2200);
+}
+function hud() {
+  const F = FASES[S]; let h = "";
+  if (F.medidor) {
+    const baixo = medidor < 30;
+    h += `<div class="meter ${baixo ? "baixo" : ""}"><span>${F.medidor.nome}</span><span class="bar"><i style="width:${Math.max(0, medidor)}%"></i></span><span>${Math.max(0, medidor)}%</span></div>`;
+  }
+  h += inv.map(i => `<span class="chip">${i}</span>`).join("");
+  $("hud").innerHTML = h;
+}
+function gastar(n) {
+  const F = FASES[S]; if (!F.medidor || !n) return;
+  medidor = Math.max(0, Math.min(100, medidor - n));
+  aviso((n > 0 ? "−" : "+") + Math.abs(n) + "% " + F.medidor.nome);
+  hud();
+}
+
+function escrever(el, html, pronto) {
+  if (typing) typing.stop();
+  if (reduz) { el.innerHTML = html; pronto(); return { stop() {}, skip() {} }; }
+  const tmp = document.createElement("div"); tmp.innerHTML = html;
+  const total = tmp.textContent.length;
+  let n = 0, timer, fim = false;
+  function render(qtd) {
+    let resto = qtd; const clone = tmp.cloneNode(true);
+    (function corta(node) {
+      for (const c of [...node.childNodes]) {
+        if (c.nodeType === 3) {
+          if (resto <= 0) c.remove();
+          else if (c.length > resto) { c.textContent = c.textContent.slice(0, resto); resto = 0; }
+          else resto -= c.length;
+        } else { if (resto <= 0) c.remove(); else corta(c); }
+      }
+    })(clone);
+    el.innerHTML = clone.innerHTML + (qtd < total ? "<span class='caret'>&nbsp;</span>" : "");
+  }
+  function passo() { n += 2; render(n); if (n % 6 === 0) tocar("tick"); if (n >= total) acabar(); else timer = setTimeout(passo, 24); }
+  function acabar() { if (fim) return; fim = true; clearTimeout(timer); el.innerHTML = html; pronto(); }
+  timer = setTimeout(passo, 450);
+  return { stop() { fim = true; clearTimeout(timer); }, skip: acabar };
+}
+
+function mostrar(id) {
+  tok++; pararTudo();
+  const F = FASES[S];
+  let c = NOS[id];
+  if (c.custo && !c.fim) gastar(c.custo);
+  if (F.medidor && medidor <= 0 && id !== F.medidor.fim) { id = F.medidor.fim; c = NOS[id]; }
+  atual = id;
+  if (c.ganha && !inv.includes(c.ganha)) { inv.push(c.ganha); aviso("+ " + c.ganha); tocar("item"); vibrar(40); }
+  hud();
+
+  const cena = $("scene");
+  $("choices").innerHTML = "";
+  $("sceneNo").textContent = c.fim ? "Fim" : "Cena " + String(caminho.length + 1).padStart(2, "0");
+  const fx = c.fx || {};
+  const lista = [...(fx.ver || ["cidade"])];
+  const baixo = F.medidor && medidor < 30 && !c.fim;
+  if (baixo && !lista.includes("vermelho")) lista.push("vermelho");
+  setVer(lista);
+  setAmb(fx.amb || { drone: 1 });
+  (fx.sons || []).forEach(tocar);
+  if (baixo && !(fx.sons || []).includes("coracao")) tocar("coracao");
+
+  if (c.fim) {
+    descobertos[S].add(id); salvar(); contador();
+    const trilha = caminho.map(p => "<b>" + p.escolha + "</b>").join(" → ");
+    cena.innerHTML =
+      "<span class='end-tag " + c.tipo + "'>" + TAG[c.tipo] + "</span>" +
+      "<div class='end-title'>" + c.titulo + "</div>" +
+      "<div class='place'>" + c.hora + " · " + c.lugar + "</div>" +
+      "<div class='text' id='txt'></div>";
+    typing = escrever($("txt"), c.texto, () => {
+      const p = document.createElement("div"); p.className = "path";
+      p.innerHTML = "Seu caminho: " + trilha + "<br>Finais desta fase: " + descobertos[S].size + " de " + finaisDe(S).length;
+      cena.appendChild(p);
+      botoes([op("Jogar de novo", "__reiniciar"), op("Ver finais", "__finais"), op("Escolher outra fase", "__menu")]);
+    });
+    return;
+  }
+  cena.innerHTML =
+    "<div class='clock'>" + c.hora + "</div>" +
+    "<div class='place'>" + c.lugar + "</div>" +
+    "<div class='text' id='txt'></div>" +
+    (c.dica ? "<div class='dica'>" + c.dica + "</div>" : "") +
+    "<div class='hint' id='hint'>Toque no texto para pular</div>";
+  const meu = tok;
+  typing = escrever($("txt"), c.texto, () => {
+    if (meu !== tok) return;
+    const h = $("hint"); if (h) h.remove();
+    if (c.acao) iniciarAcao(c.acao);
+    else { botoes(c.escolhas); if (c.tempo) cronometro(c.tempo, () => { caminho.push({ escolha: "Hesitou" }); tocar("erro"); mostrar(c.aoAcabar); }); }
+  });
+}
+
+function botoes(lista) {
+  const box = $("choices"); box.innerHTML = "";
+  lista.forEach((o, i) => {
+    const b = document.createElement("button");
+    const falta = o.req && !inv.includes(o.req);
+    b.type = "button"; b.className = "choice"; b.id = "op-" + i; b.disabled = !!falta;
+    const custo = o.custo && FASES[S]?.medidor ? `<span class="custo">${o.custo > 0 ? "−" : "+"}${Math.abs(o.custo)}% ${FASES[S].medidor.nome}</span>` : "";
+    const req = o.req ? `<span class="req">${falta ? "Precisa: " : "Usar: "}${o.req}</span>` : "";
+    b.innerHTML = `<span class="k">${"ABCD"[i]}</span><span class="lbl"><span>${o.t}</span>${req}</span>${custo}`;
+    b.addEventListener("click", ev => { ev.stopPropagation(); escolher(o, b); });
+    box.appendChild(b);
+    setTimeout(() => b.classList.add("show"), reduz ? 0 : 90 * i + 30);
+  });
+}
+
+function escolher(o, el) {
+  tocar("clique");
+  if (o.ir === "__reiniciar") return iniciarFase(S);
+  if (o.ir === "__finais") return abrirFinais();
+  if (o.ir === "__menu") return abrirHub();
+  tok++;
+  [...$("choices").querySelectorAll(".choice")].forEach(b => b.classList.add(b === el ? "picked" : "faded"));
+  const tm = $("choices").querySelector(".timer"); if (tm) tm.remove();
+  caminho.push({ escolha: o.t });
+  if (o.custo) gastar(o.custo);
+  setTimeout(() => mostrar(o.ir), reduz ? 0 : 380);
+}
+
+/* contagem regressiva visível */
+function cronometro(seg, aoFim, onTick) {
+  const meu = tok, box = $("choices");
+  const bar = document.createElement("div"); bar.className = "timer"; bar.innerHTML = "<i></i>";
+  box.prepend(bar);
+  const t0 = performance.now(); let ultimo = -1;
+  (function loop(now) {
+    if (meu !== tok) return;
+    const rest = seg - (now - t0) / 1000, fr = Math.max(0, rest / seg);
+    bar.firstChild.style.width = fr * 100 + "%";
+    bar.classList.toggle("urgente", rest < 3);
+    const s = Math.ceil(rest); if (s !== ultimo) { ultimo = s; if (rest < 4) tocar("tique"); }
+    if (onTick) onTick(now);
+    if (rest <= 0) { tok++; aoFim(); return; }
+    requestAnimationFrame(loop);
+  })(t0);
+}
+
+/* minijogos */
+function iniciarAcao(a) {
+  const box = $("choices"); box.innerHTML = "";
+  const meu = tok;
+  const wrap = document.createElement("div"); wrap.className = "acao";
+  wrap.innerHTML = `<div class="acao-l">${a.rotulo}</div>`;
+  box.appendChild(wrap);
+  const acabar = ok => {
+    if (meu !== tok) return; tok++;
+    tocar(ok ? "sucesso" : "erro");
+    caminho.push({ escolha: ok ? "Conseguiu" : "Falhou" });
+    aviso(ok ? "Conseguiu!" : "Não deu…");
+    setTimeout(() => mostrar(ok ? a.ok : a.falha), 600);
+  };
+
+  if (a.tipo === "segurar") {
+    const b = document.createElement("button"); b.type = "button"; b.className = "big"; b.id = "acao-segurar";
+    b.innerHTML = `<i class="fill"></i><span>Segure</span>`; wrap.appendChild(b);
+    let seg = false, prog = 0, ult = performance.now();
+    const on = e => { e.preventDefault(); seg = true; try { b.setPointerCapture(e.pointerId); } catch (_) {} };
+    const off = () => { seg = false; };
+    b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); b.addEventListener("lostpointercapture", off);
+    b.addEventListener("contextmenu", e => e.preventDefault());
+    b.addEventListener("keydown", e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); seg = true; } });
+    b.addEventListener("keyup", e => { if (e.key === " " || e.key === "Enter") seg = false; });
+    cronometro(a.limite, () => acabar(false), now => {
+      const dt = (now - ult) / 1000; ult = now;
+      prog = Math.max(0, Math.min(1, prog + (seg ? dt / a.dur : -dt / (a.dur * 1.5))));
+      b.firstChild.style.width = prog * 100 + "%";
+      b.lastChild.textContent = seg ? Math.round(prog * 100) + "%" : prog > 0 ? "Não solte!" : "Segure";
+      if (prog >= 1) acabar(true);
+    });
+    b.focus({ preventScroll: true });
+  }
+
+  if (a.tipo === "tocar") {
+    const b = document.createElement("button"); b.type = "button"; b.className = "big"; b.id = "acao-tocar";
+    b.innerHTML = `<i class="fill"></i><span>0 / ${a.n}</span>`; wrap.appendChild(b);
+    let n = 0;
+    const bater = e => {
+      if (e) e.preventDefault();
+      if (meu !== tok) return;
+      n++; tocar("toque"); tremer(0, .08);
+      b.firstChild.style.width = (n / a.n) * 100 + "%"; b.lastChild.textContent = n + " / " + a.n;
+      b.classList.remove("bate"); void b.offsetWidth; b.classList.add("bate");
+      if (n >= a.n) acabar(true);
+    };
+    b.addEventListener("pointerdown", bater);
+    b.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) bater(e); });
+    b.addEventListener("click", e => e.preventDefault());
+    cronometro(a.limite, () => acabar(false));
+    b.focus({ preventScroll: true });
+  }
+
+  if (a.tipo === "codigo") {
+    let dig = "", tent = a.tentativas;
+    const slots = document.createElement("div"); slots.className = "slots";
+    const info = document.createElement("div"); info.className = "hint"; info.style.textAlign = "center";
+    const pad = document.createElement("div"); pad.className = "pad";
+    const desenhar = () => {
+      slots.innerHTML = [...a.resposta].map((_, i) => `<b>${dig[i] || ""}</b>`).join("");
+      info.textContent = tent + (tent === 1 ? " tentativa restante" : " tentativas restantes");
+    };
+    const conferir = () => {
+      if (dig === a.resposta) return acabar(true);
+      tent--; tocar("erro"); slots.classList.remove("shake"); void slots.offsetWidth; slots.classList.add("shake");
+      dig = ""; desenhar(); if (tent <= 0) acabar(false);
+    };
+    const apertar = k => {
+      if (meu !== tok) return;
+      if (k === "⌫") dig = dig.slice(0, -1);
+      else if (dig.length < a.resposta.length) { dig += k; tocar("tique"); }
+      desenhar();
+      if (dig.length === a.resposta.length) setTimeout(conferir, 250);
+    };
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].forEach((k, i) => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = k; b.id = "tecla-" + i;
+      if (!k) b.style.visibility = "hidden"; else b.addEventListener("click", e => { e.stopPropagation(); apertar(k); });
+      if (k === "⌫") b.setAttribute("aria-label", "Apagar");
+      pad.appendChild(b);
+    });
+    wrap.append(slots, pad, info); desenhar();
+    const tecla = e => { if (meu !== tok) return document.removeEventListener("keydown", tecla); if (/^\d$/.test(e.key)) apertar(e.key); else if (e.key === "Backspace") apertar("⌫"); };
+    document.addEventListener("keydown", tecla);
+  }
+}
+
+$("scene").addEventListener("click", () => typing && typing.skip());
+document.addEventListener("keydown", e => {
+  if (!$("hub").hidden || !$("drawer").hidden) return;
+  if (document.activeElement && document.activeElement.classList.contains("big")) return;
+  if ($("choices").querySelector(".pad")) return;
+  const k = e.key.toLowerCase();
+  const i = "abcd".indexOf(k) >= 0 ? "abcd".indexOf(k) : "1234".indexOf(e.key);
+  if (i >= 0) { const b = $("op-" + i); if (b && !b.disabled) b.click(); }
+  else if (e.key === " " && typing) { e.preventDefault(); typing.skip(); }
+});
+
+function abrirFinais() {
+  const L = finaisDe(S);
+  $("drawerTitle").textContent = "Finais · " + FASES[S].titulo;
+  $("endGrid").innerHTML = L.map((k, i) => {
+    const f = NOS[k], ok = descobertos[S].has(k);
+    return "<div class='slot " + (ok ? "" : "locked") + "'><span class='n'>" +
+      String(i + 1).padStart(2, "0") + " · " + (ok ? TAG[f.tipo] : "Bloqueado") +
+      "</span><span class='t'>" + (ok ? f.titulo : "???") + "</span></div>";
+  }).join("");
+  $("drawer").hidden = false; $("closeEndings").focus();
+}
+$("openEndings").addEventListener("click", abrirFinais);
+$("closeEndings").addEventListener("click", () => { $("drawer").hidden = true; });
+
+/* ---------- menu de fases ---------- */
+let pendente = null;
+function abrirHub() {
+  tok++; pararTudo(); if (typing) typing.stop();
+  $("choices").innerHTML = ""; $("scene").innerHTML = ""; $("hud").innerHTML = "";
+  document.documentElement.style.setProperty("--acc", "#f2a33a");
+  setVer(["cidade", "acesa"]); setAmb({ drone: .5 });
+  let html = "";
+  if (pendente) {
+    const F = FASES[pendente.S];
+    html += `<button class="story continuar" type="button" id="fase-continuar" style="--c:${F.cor}">
+      <span class="g"><span>Continuar</span><span>${F.genero}</span></span><h3>${F.titulo}</h3></button>`;
+  }
+  html += Object.entries(FASES).map(([k, F]) => `
+    <button class="story" type="button" id="fase-${k}" data-k="${k}" style="--c:${F.cor}">
+      <span class="g"><span>${F.genero}</span><span>${descobertos[k].size}/${finaisDe(k).length} finais</span></span>
+      <h3>${F.titulo}</h3>
+      <span class="gancho">${F.gancho}</span>
+      <span class="mec">${F.mec}</span>
+    </button>`).join("");
+  $("lista").innerHTML = html;
+  $("lista").querySelectorAll("[data-k]").forEach(b => b.addEventListener("click", () => iniciarFase(b.dataset.k)));
+  const c = $("fase-continuar");
+  if (c) c.addEventListener("click", () => { const p = pendente; pendente = null; iniciarFase(p.S, p); });
+  $("hub").hidden = false; $("drawer").hidden = true;
+}
+function iniciarFase(k, salvo) {
+  try { initAudio(); } catch (e) {}
+  S = k; const F = FASES[k]; NOS = F.nos;
+  document.documentElement.style.setProperty("--acc", F.cor);
+  caminho = salvo?.caminho || []; inv = salvo?.inv || [];
+  medidor = F.medidor ? (salvo?.medidor ?? F.medidor.ini) : null;
+  $("hub").hidden = true; $("drawer").hidden = true;
+  contador();
+  mostrar(salvo?.atual && NOS[salvo.atual] ? salvo.atual : "inicio");
+}
+$("btnMenu").addEventListener("click", () => { if (S && NOS[atual] && !NOS[atual].fim) pendente = { S, atual, caminho, inv, medidor }; abrirHub(); });
+
+/* ---------- início ---------- */
+function start(data) {
+  if (data && data.S && FASES[data.S] && FASES[data.S].nos[data.atual]) pendente = data;
+  abrirHub();
+}
+/* ganchos do app Android */
+window.voltarAndroid = () => {
+  if (!$("drawer").hidden) { $("drawer").hidden = true; return true; }
+  if ($("hub").hidden) { $("btnMenu").click(); return true; }
+  return false;
+};
+window.pausarAndroid = p => { if (AC) p ? AC.suspend() : AC.resume(); };
+start({});
+</script>
+</body>
+</html>
