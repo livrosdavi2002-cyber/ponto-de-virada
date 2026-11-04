@@ -18,48 +18,69 @@ const cvRnd = i => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return 
 function pessoa(x, y, h, o = {}) {
   const { fase = 0, anda = 0, dir = 1, cor = "#04060a", aro = "rgba(175,190,215,.28)", luz = false, luzRgb = "255,240,200",
     sentado = false, subir = 0, capacete = false, inclina = 0, escalar = 0, vermelha = false, cabeca = 0, mochila = false } = o;
-  const s = h / 100;
+  const s = h / 100, agora = performance.now() / 1000;
+  // sombra no chão
+  if (!sentado && !escalar && h > 14) { ctx.fillStyle = "rgba(0,0,0,.38)"; ctx.beginPath(); ctx.ellipse(x, y + 1, h * (.15 + anda * .06), h * .025, 0, 0, 7); ctx.fill(); }
   ctx.save(); ctx.translate(x, y); ctx.scale(dir * s, s); ctx.rotate(inclina);
   const sw = Math.sin(fase) * anda, bob = anda ? Math.abs(Math.cos(fase)) * 3 * anda : 0;
-  const hipY = sentado ? -42 : -50 - bob, shY = hipY - 32, cabY = shY - 11;
-  const membros = new Path2D(), tronco = new Path2D();
-  const linha = (x0, y0, a1, l1, a2, l2) => {
+  const resp = anda || escalar ? 0 : Math.sin(agora * 1.7 + x * .013) * 1.1; // respiração parada
+  const hipY = sentado ? -42 : -50 - bob, shY = hipY - 32 + resp, cabY = shY - 13 + resp * .3;
+  const pernas = new Path2D(), bracos = new Path2D(), pes = [], maos = [];
+  const linha = (P, x0, y0, a1, l1, a2, l2) => {
     const x1 = x0 + Math.sin(a1) * l1, y1 = y0 + Math.cos(a1) * l1, x2 = x1 + Math.sin(a2) * l2, y2 = y1 + Math.cos(a2) * l2;
-    membros.moveTo(x0, y0); membros.lineTo(x1, y1); membros.lineTo(x2, y2); return [x2, y2];
+    P.moveTo(x0, y0); P.lineTo(x1, y1); P.lineTo(x2, y2); return [x2, y2, a2];
   };
-  // pernas
   [1, -1].forEach(k => {
-    if (sentado) { linha(0, hipY, 1.5, 24, .08, 25); return; }
+    if (sentado) { pes.push(linha(pernas, 0, hipY, 1.5, 24, .08, 25)); return; }
     const w = sw * k;
     let a1 = w * .55, dobra = .12 + Math.max(0, -w) * .9;
     if (escalar) { const e = Math.sin(fase + (k > 0 ? 0 : PI)); a1 = .35 + .35 * Math.max(0, e); dobra = .4 + .9 * Math.max(0, e); }
     else if (subir) { a1 = w > 0 ? w * .9 + .15 : w * .4; dobra = .15 + Math.max(0, w) * 1.1; }
-    linha(0, hipY, a1, 25, a1 - dobra, 26);
+    pes.push(linha(pernas, 0, hipY, a1, 25, a1 - dobra, 25));
   });
-  tronco.moveTo(0, hipY); tronco.lineTo(2 + inclina * 10, shY);
-  // braços
   let mao = null;
+  const ox = 2 + inclina * 10;
   [1, -1].forEach(k => {
-    if (escalar) { const e = Math.sin(fase + (k > 0 ? PI : 0)); const a = 2.75 + .28 * e; linha(2, shY + 2, a, 17, a + .15, 17); return; }
-    if (luz && k > 0) { mao = linha(2, shY + 2, 1.15, 17, 1.5, 16); return; }
-    const a = -sw * k * .6;
-    linha(2, shY + 2, a, 17, a + .35, 16);
+    if (escalar) { const e = Math.sin(fase + (k > 0 ? PI : 0)); const a = 2.75 + .28 * e; maos.push(linha(bracos, ox, shY + 3, a, 17, a + .15, 16)); return; }
+    if (luz && k > 0) { mao = linha(bracos, ox, shY + 3, 1.15, 17, 1.5, 15); maos.push(mao); return; }
+    const a = -sw * k * .6 + (anda ? 0 : .06 * k);
+    maos.push(linha(bracos, ox, shY + 3, a, 17, a + .35, 15));
   });
-  // cone de luz da lanterna
   if (mao) {
     const g = ctx.createLinearGradient(mao[0], mao[1], mao[0] + 230, mao[1] + 25);
     g.addColorStop(0, `rgba(${luzRgb},.42)`); g.addColorStop(1, `rgba(${luzRgb},0)`);
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(mao[0], mao[1]); ctx.lineTo(mao[0] + 240, mao[1] - 55); ctx.lineTo(mao[0] + 240, mao[1] + 95); ctx.fill();
+    // poeira dentro do feixe
+    ctx.fillStyle = `rgba(${luzRgb},.5)`;
+    for (let i = 0; i < 7; i++) { const d = ((agora * 18 + i * 37) % 200) + 20, yy = mao[1] + Math.sin(agora + i * 2.1) * d * .25; ctx.fillRect(mao[0] + d, yy, 1.6, 1.6); }
   }
-  if (mochila) { tronco.moveTo(-9, shY + 6); tronco.lineTo(-11, hipY - 4); }
+  // tronco como jaqueta (mais largo no ombro), pescoço, cabeça com cabelo e nariz
+  const tronco = new Path2D();
+  tronco.moveTo(-6.5, hipY + 2); tronco.lineTo(6.5, hipY + 2); tronco.lineTo(ox + 8.5, shY + 4); tronco.lineTo(ox - 7.5, shY + 3); tronco.closePath();
+  if (mochila) { tronco.moveTo(ox - 8, shY + 6); tronco.lineTo(ox - 15, shY + 9); tronco.lineTo(ox - 14, hipY - 2); tronco.lineTo(-6, hipY - 2); tronco.closePath(); }
+  const hx = ox + 1 + cabeca * 2;
+  const cab = new Path2D();
+  cab.arc(hx, cabY, 9.5, 0, 7);
+  cab.moveTo(hx + 9, cabY - 1); cab.lineTo(hx + 12.5, cabY + 2.5); cab.lineTo(hx + 8.5, cabY + 4); // nariz
+  cab.ellipse(hx - 2.5, cabY - 3.5, 9.5, 7.5, -.35, 0, 7); // cabelo
+  const desenha = (c2, extra) => {
+    ctx.strokeStyle = c2; ctx.fillStyle = c2;
+    ctx.lineWidth = 7.5 + extra; ctx.stroke(pernas);
+    ctx.lineWidth = 6 + extra; ctx.stroke(bracos);
+    ctx.lineWidth = 4 + extra; ctx.stroke(tronco); ctx.fill(tronco);
+    ctx.lineWidth = 5 + extra; ctx.beginPath(); ctx.moveTo(ox, shY + 3); ctx.lineTo(hx - 1, cabY + 6); ctx.stroke();
+    if (extra) { ctx.lineWidth = extra; ctx.stroke(cab); } ctx.fill(cab);
+    pes.forEach(([fx, fy, a]) => { ctx.lineWidth = 5 + extra; ctx.beginPath(); ctx.moveTo(fx - 2, fy); ctx.lineTo(fx + 7 + Math.sin(a) * 2, fy + Math.cos(a) * .5); ctx.stroke(); });
+    maos.forEach(([mx, my]) => { ctx.beginPath(); ctx.arc(mx, my, 3.6 + extra / 2, 0, 7); ctx.fill(); });
+  };
   ctx.lineCap = "round"; ctx.lineJoin = "round";
-  ctx.strokeStyle = aro; ctx.lineWidth = 9.5; ctx.stroke(membros); ctx.lineWidth = 15; ctx.stroke(tronco);
-  ctx.beginPath(); ctx.arc(2 + cabeca * 2, cabY, 11.5, 0, 7); ctx.fillStyle = aro; ctx.fill();
-  ctx.strokeStyle = cor; ctx.lineWidth = 6.5; ctx.stroke(membros); ctx.lineWidth = 12; ctx.stroke(tronco);
-  ctx.fillStyle = cor; ctx.beginPath(); ctx.arc(2 + cabeca * 2, cabY, 9.5, 0, 7); ctx.fill();
+  desenha(aro, 3); desenha(cor, 0);
+  // costura da jaqueta e zíper pegando a luz
+  ctx.strokeStyle = "rgba(255,255,255,.06)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ox + 1, shY + 6); ctx.lineTo(1, hipY + 1); ctx.stroke();
   if (capacete) {
-    ctx.beginPath(); ctx.arc(2, cabY - 2, 11, PI, 0); ctx.fill(); ctx.fillRect(-11, cabY - 3, 27, 3);
-    luzCor(14, cabY - 4, 34, .7, "255,236,170");
+    ctx.fillStyle = cor; ctx.beginPath(); ctx.arc(hx, cabY - 2, 11, PI, 0); ctx.fill(); ctx.fillRect(hx - 13, cabY - 3, 27, 3);
+    ctx.fillStyle = "rgba(255,236,170,.9)"; ctx.fillRect(hx + 8, cabY - 7, 4, 4);
+    luzCor(hx + 12, cabY - 5, 34, .7, "255,236,170");
   }
   ctx.restore();
   if (vermelha) luzVermelha(x + dir * h * .2, y - h * .5, h * .5, .7);

@@ -6,9 +6,11 @@
    alto, magro, braços compridos, cabeça inclinada, olhos que brilham */
 function monstro(x, y, h, o = {}) {
   const { fase = 0, anda = 0, dir = 1, olhos = .6, cor = "#010102", aro = "rgba(200,200,220,.16)", olhosRgb = "255,235,210", quatro = false, touca = false, cabeca = .35 } = o;
-  const s = h / 100;
+  const s = h / 100, agora = performance.now() / 1000;
+  if (h > 20) { ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(x, y + 1, h * (quatro ? .3 : .14), h * .025, 0, 0, 7); ctx.fill(); }
   ctx.save(); ctx.translate(x, y); ctx.scale(dir * s, s);
-  const sw = Math.sin(fase) * anda, tre = Math.sin(fase * 7.3) * .6;
+  const sw = Math.sin(fase) * anda, tre = Math.sin(fase * 7.3) * .6 + Math.sin(agora * 23) * .15;
+  const peito = Math.sin(agora * 1.3) * 1.5;
   const p = new Path2D(), t = new Path2D();
   const seg2 = (x0, y0, a1, l1, a2, l2) => { const x1 = x0 + Math.sin(a1) * l1, y1 = y0 + Math.cos(a1) * l1, x2 = x1 + Math.sin(a2) * l2, y2 = y1 + Math.cos(a2) * l2; p.moveTo(x0, y0); p.lineTo(x1, y1); p.lineTo(x2, y2); return [x2, y2]; };
   let hx, hy;
@@ -19,17 +21,26 @@ function monstro(x, y, h, o = {}) {
   } else {
     const hip = -60, sh = -100;
     [1, -1].forEach(k => { const w = sw * k; seg2(0, hip, w * .45, 31, w * .45 - .1 - Math.max(0, -w) * .7, 31); });
-    t.moveTo(0, hip); t.quadraticCurveTo(4, (hip + sh) / 2, 10, sh);
-    [1, -1].forEach(k => { const a = -sw * k * .25 + .12 + tre * .02; const m = seg2(10, sh + 3, a, 33, a - .05, 33); p.moveTo(m[0], m[1]); p.lineTo(m[0] + 3, m[1] + 9); p.moveTo(m[0], m[1]); p.lineTo(m[0] - 3, m[1] + 10); });
+    t.moveTo(0, hip); t.quadraticCurveTo(4 - peito, (hip + sh) / 2, 10, sh);
+    [1, -1].forEach(k => { const a = -sw * k * .25 + .12 + tre * .02; const m = seg2(10, sh + 3, a, 33, a - .05, 33); for (let d = -1; d <= 1; d++) { p.moveTo(m[0], m[1]); p.lineTo(m[0] + d * 4, m[1] + 12 + Math.abs(d) * -2); } });
     hx = 18; hy = sh - 10;
   }
   ctx.lineCap = "round"; ctx.lineJoin = "round";
   ctx.strokeStyle = aro; ctx.lineWidth = 7; ctx.stroke(p); ctx.lineWidth = 11; ctx.stroke(t);
   ctx.strokeStyle = cor; ctx.lineWidth = 4.5; ctx.stroke(p); ctx.lineWidth = 8.5; ctx.stroke(t);
+  if (!quatro) { // costelas aparecendo
+    ctx.strokeStyle = aro; ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) { const yy = -88 + i * 6; ctx.beginPath(); ctx.moveTo(3 - peito * .3, yy); ctx.quadraticCurveTo(7, yy + 2, 10, yy - 1); ctx.stroke(); }
+  }
   ctx.save(); ctx.translate(hx, hy); ctx.rotate(cabeca + tre * .03);
   ctx.fillStyle = aro; ctx.beginPath(); ctx.ellipse(0, 0, 9, 14, 0, 0, 7); ctx.fill();
   ctx.fillStyle = cor; ctx.beginPath(); ctx.ellipse(0, 0, 7.5, 12.5, 0, 0, 7); ctx.fill();
-  if (touca) { ctx.fillStyle = "rgba(220,225,215,.55)"; ctx.fillRect(-9, -14, 18, 6); }
+  if (touca) { ctx.fillStyle = "rgba(220,225,215,.55)"; ctx.fillRect(-9, -14, 18, 6); ctx.fillStyle = "rgba(200,40,40,.6)"; ctx.fillRect(-2, -13, 4, 4); }
+  else { // cabelo comprido e ralo caindo
+    ctx.strokeStyle = cor; ctx.lineWidth = 1.4;
+    for (let i = 0; i < 7; i++) { const bx = -6 + i * 1.6; ctx.beginPath(); ctx.moveTo(bx, -10); ctx.quadraticCurveTo(bx - 4 + Math.sin(agora * 1.5 + i) * 2, 8, bx - 2 + Math.sin(agora + i) * 3, 22 + i % 3 * 4); ctx.stroke(); }
+  }
+  ctx.fillStyle = "rgba(0,0,0,.9)"; ctx.beginPath(); ctx.ellipse(2, 6, 3.5, 2 + Math.abs(Math.sin(agora * 2)) * 1.5, 0, 0, 7); ctx.fill(); // boca
   if (olhos > .02) {
     luzCor(3, -2, 26, olhos * .55, olhosRgb);
     ctx.fillStyle = `rgba(${olhosRgb},${olhos})`; ctx.beginPath(); ctx.arc(-1, -3, 1.9, 0, 7); ctx.arc(6, -2, 1.9, 0, 7); ctx.fill();
@@ -263,6 +274,30 @@ Object.assign(CINE, {
     pessoa(p.sai ? x : W * .1 + k * W * .25, chao + 6, H * .24, { fase: passo(k * W, H * .24), anda: k > 0 && k < 1 ? .9 : 0, dir: 1, luz: !manha });
   } },
 });
+
+/* ---------- poeira no ar e granulado de filme ---------- */
+const poeira = Array.from({ length: 28 }, (_, i) => ({ x: Math.random(), y: Math.random(), v: .004 + Math.random() * .01, r: .6 + Math.random() * 1.4, f: Math.random() * 6 }));
+const grao = document.createElement("canvas"); grao.width = grao.height = 96;
+const gctx = grao.getContext("2d"), gimg = gctx.createImageData(96, 96);
+let gPadrao = null, gQuadro = 0;
+function detalhesFilme(now) {
+  const t = now / 1000;
+  for (const p of poeira) {
+    p.y -= p.v * .016; p.x += Math.sin(t * .4 + p.f) * .0004;
+    if (p.y < -.02) { p.y = 1.02; p.x = Math.random(); }
+    const a = .08 + .12 * (.5 + .5 * Math.sin(t * 1.3 + p.f));
+    ctx.fillStyle = `rgba(220,225,235,${a})`; ctx.beginPath(); ctx.arc(p.x * W, p.y * H, p.r, 0, 7); ctx.fill();
+  }
+  if (++gQuadro % 3 === 0 || !gPadrao) {
+    const d = gimg.data;
+    for (let i = 0; i < d.length; i += 4) { const v = Math.random() * 255 | 0; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+    gctx.putImageData(gimg, 0, 0); gPadrao = ctx.createPattern(grao, "repeat");
+  }
+  ctx.save(); ctx.globalAlpha = .045; ctx.fillStyle = gPadrao; ctx.translate(Math.random() * 96, Math.random() * 96); ctx.fillRect(-96, -96, W + 192, H + 192); ctx.restore();
+  // vinheta de lente nos cantos
+  const v = ctx.createRadialGradient(W / 2, H * .4, Math.min(W, H) * .35, W / 2, H * .4, Math.max(W, H) * .75);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.45)"); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+}
 
 /* ---------- ameaça (minijogos esconder/avançar), susto e eventos ---------- */
 let ameaca = null, susto = 0, evento = null, proxEvento = 0;

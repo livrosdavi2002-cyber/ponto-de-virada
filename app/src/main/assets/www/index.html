@@ -378,9 +378,9 @@ function initAudio() {
   const canal = (max, wet) => { const g = AC.createGain(); g.gain.value = 0; g.connect(OUT); if (wet) { const s = AC.createGain(); s.gain.value = wet; g.connect(s).connect(REV); } return { g, max }; };
   const filtro = (tipo, f, q = 1) => { const b = AC.createBiquadFilter(); b.type = tipo; b.frequency.value = f; b.Q.value = q; return b; };
 
-  AMB.drone = canal(.12, .3);
+  AMB.drone = canal(.08, .3);
   const lp = filtro("lowpass", 170); lp.connect(AMB.drone.g);
-  [55, 55.7, 82.4].forEach((f, i) => { const o = AC.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; const g = AC.createGain(); g.gain.value = i === 2 ? .3 : 1; o.connect(g).connect(lp); o.start(); });
+  [55, 55.12, 82.4].forEach((f, i) => { const o = AC.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; const g = AC.createGain(); g.gain.value = i === 2 ? .3 : 1; o.connect(g).connect(lp); o.start(); });
 
   AMB.vento = canal(.35, 0);
   const bp = filtro("bandpass", 450, .6), lfo = AC.createOscillator(), lg = AC.createGain();
@@ -404,8 +404,9 @@ function initAudio() {
   [60, 120, 180].forEach((f, i) => { const o = AC.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; const g = AC.createGain(); g.gain.value = [1, .5, .25][i]; o.connect(g).connect(zl); o.start(); });
 
   AMB.fogo = canal(.14, 0);
-  const fb = filtro("bandpass", 900, .4); ruidoLoop().connect(fb).connect(AMB.fogo.g);
-  const fl = AC.createOscillator(), flg = AC.createGain(); fl.frequency.value = 7; flg.gain.value = .5; fl.connect(flg).connect(AMB.fogo.g.gain); fl.start();
+  const fb = filtro("bandpass", 1100, .5), estalo = AC.createGain(); estalo.gain.value = .55;
+  ruidoLoop().connect(fb).connect(estalo).connect(AMB.fogo.g);
+  const fl = AC.createOscillator(), flg = AC.createGain(); fl.type = "triangle"; fl.frequency.value = 2.3; flg.gain.value = .25; fl.connect(flg).connect(estalo.gain); fl.start();
 
   AMB.agua = canal(.5, .4);
   const al = filtro("lowpass", 220), alfo = AC.createOscillator(), alg = AC.createGain();
@@ -854,6 +855,7 @@ function frame(now) {
   const cin = cineAtual;
   if (cin) {
     const tc = (now - cin.t0) / 1000 * cin.vel;
+    if (!reduz) ctx.translate(Math.sin(now / 1300) * 2.2, Math.cos(now / 1700) * 1.6); // câmera na mão
     cin.def.f(tc, cin.p, now);
     if (cin.fim && tc >= cin.dur) { const f = cin.fim; cin.fim = null; f(); }
     if (v("mar")) bolhasDesenho(v("bolhasMuitas"));
@@ -886,6 +888,7 @@ function frame(now) {
   if (v("farolAtras")) farolAtras(t);
   if (v("vermelho")) { ctx.fillStyle = `rgba(226,72,61,${.08 + .06 * Math.sin(t * 3)})`; ctx.fillRect(0, 0, W, H); }
   if (v("alarme")) { ctx.fillStyle = `rgba(226,40,40,${Math.sin(t * 7) > 0 ? .2 : .04})`; ctx.fillRect(0, 0, W, H); }
+  detalhesFilme(now);
   desenhaAmeaca(now);
   desenhaEvento(now, !!(S && FASES[S].terror && $("hub").hidden && $("drawer").hidden && !ameaca && !(cineAtual && cineAtual.fim) && !reduz));
   desenhaSusto(now);
@@ -1017,6 +1020,13 @@ function escrever(el, html, pronto) {
   return { stop() { fim = true; clearTimeout(timer); }, skip: acabar };
 }
 
+/* o tempo das escolhas cresce com o tamanho do texto e o número de opções */
+function tempoDeLeitura(c) {
+  const tmp = document.createElement("div"); tmp.innerHTML = c.texto;
+  const palavras = tmp.textContent.trim().split(/\s+/).length;
+  const opcoes = (c.escolhas || []).reduce((n, o) => n + o.t.split(/\s+/).length, 0);
+  return Math.round(Math.max(c.tempo * 1.6, c.tempo + palavras * .2 + opcoes * .25 + 2));
+}
 function mostrar(id) {
   tok++; pararTudo(); ameaca = null;
   const F = FASES[S];
@@ -1083,7 +1093,7 @@ function mostrar(id) {
     if (meu !== tok) return;
     const h = $("hint"); if (h) h.remove();
     if (c.acao) iniciarAcao(c.acao);
-    else { botoes(c.escolhas); if (c.tempo) cronometro(c.tempo, () => { caminho.push({ escolha: "Hesitou" }); tocar("erro"); mostrar(c.aoAcabar); }); }
+    else { botoes(c.escolhas); if (c.tempo) cronometro(tempoDeLeitura(c), () => { caminho.push({ escolha: "Hesitou" }); tocar("erro"); mostrar(c.aoAcabar); }); }
   }); };
   if (c.cine) cinePara(c, jaVista, comecaTexto); else comecaTexto();
 }
