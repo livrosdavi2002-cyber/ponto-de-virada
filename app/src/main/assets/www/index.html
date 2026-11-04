@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0b0e14">
-<title>Ponto de Virada</title>
+<title>Última Escolha</title>
 <style>
 @font-face{font-family:"Big Shoulders Display";font-weight:500;font-display:swap;src:url(fonts/big-shoulders-display-latin-500-normal.woff2) format("woff2")}
 @font-face{font-family:"Big Shoulders Display";font-weight:800;font-display:swap;src:url(fonts/big-shoulders-display-latin-800-normal.woff2) format("woff2")}
@@ -324,7 +324,7 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
 <div class="overlay hub" id="hub">
   <div class="inner">
     <div class="place">Histórias em que você decide</div>
-    <h1>Ponto de <span>Virada</span></h1>
+    <h1>Última <span>Escolha</span></h1>
     <p>Escolha uma fase. Use fone de ouvido: o som faz parte do jogo.</p>
     <div class="progresso"><span id="progTotal"></span><button id="btnConq" type="button">Conquistas</button></div>
     <div class="liberar" id="liberar" hidden></div>
@@ -347,6 +347,7 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
 <script src="cinema.js"></script>
 <script src="cinema2.js"></script>
 <script src="historias2.js"></script>
+<script src="corposeco.js"></script>
 <script>
 const TAG = { bom: "Final bom", ruim: "Final ruim", estranho: "Final estranho", secreto: "Final secreto" };
 const $ = id => document.getElementById(id);
@@ -1237,7 +1238,7 @@ function iniciarAcao(a) {
     const b = document.createElement("button"); b.type = "button"; b.className = "big"; b.id = "acao-" + a.tipo;
     b.innerHTML = `<i class="fill"></i><span></span>`; wrap.appendChild(b);
     const info = document.createElement("div"); info.className = "hint"; info.style.textAlign = "center"; wrap.appendChild(info);
-    ameaca = { tipo: a.tipo, estado: "anda", ate: performance.now() + 1600 + Math.random() * 1200, passo: Math.random() * 6, escondido: false, prog: 0, andando: 0, touca: !!a.touca, quatro: !!a.quatro, pes: !!a.pes };
+    ameaca = { tipo: a.tipo, estado: "anda", ate: performance.now() + 1600 + Math.random() * 1200, passo: Math.random() * 6, escondido: false, prog: 0, andando: 0, touca: !!a.touca, quatro: !!a.quatro, pes: !!a.pes, cor: a.cor, aro: a.aro, olhosRgb: a.olhosRgb };
     const ciclo = now => {
       const A = ameaca; if (!A || now < A.ate) return;
       if (A.estado === "anda") { A.estado = "aviso"; A.ate = now + (a.aviso || 750); tocar("aviso"); vibrar(70); }

@@ -364,13 +364,13 @@ function desenhaAmeaca(now) {
       return;
     }
     if (olhando) { const g = ctx.createLinearGradient(x, chao - H * .3, W / 2, H); g.addColorStop(0, "rgba(255,235,210,.3)"); g.addColorStop(1, "rgba(255,235,210,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 6, chao - H * .32); ctx.lineTo(x + 6, chao - H * .32); ctx.lineTo(W * .9, H); ctx.lineTo(W * .1, H); ctx.fill(); }
-    monstro(x, chao, H * .42, { fase: a.passo * 2, anda: a.estado === "anda" ? .6 : .05, dir: olhando ? -1 : dir, olhos: olhando ? 1 : aviso ? .5 + .5 * Math.sin(t * 30) : .25, touca: a.touca, cabeca: olhando ? 0 : .5, quatro: a.quatro });
+    monstro(x, chao, H * .42, { fase: a.passo * 2, anda: a.estado === "anda" ? .6 : .05, dir: olhando ? -1 : dir, olhos: olhando ? 1 : aviso ? .5 + .5 * Math.sin(t * 30) : .25, touca: a.touca, cabeca: olhando ? 0 : .5, quatro: a.quatro, cor: a.cor, aro: a.aro, olhosRgb: a.olhosRgb });
     if (a.escondido) frestas(.85);
     if (olhando && !a.escondido) { ctx.fillStyle = "rgba(226,72,61,.25)"; ctx.fillRect(0, 0, W, H); }
   }
   if (a.tipo === "avancar") {
     const mx = W * .78, olhando = a.estado === "olha", aviso = a.estado === "aviso";
-    monstro(mx, chao - H * .02, H * .34, { dir: olhando ? -1 : 1, olhos: olhando ? 1 : aviso ? .4 : 0, cabeca: olhando ? 0 : aviso ? .9 + Math.sin(t * 25) * .2 : 1.1, touca: a.touca, quatro: a.quatro });
+    monstro(mx, chao - H * .02, H * .34, { dir: olhando ? -1 : 1, olhos: olhando ? 1 : aviso ? .4 : 0, cabeca: olhando ? 0 : aviso ? .9 + Math.sin(t * 25) * .2 : 1.1, touca: a.touca, quatro: a.quatro, cor: a.cor, aro: a.aro, olhosRgb: a.olhosRgb });
     const px = cvMix(W * .06, W * .62, a.prog);
     pessoa(px, chao + 6, H * .24, { fase: a.prog * 30, anda: a.andando > now ? .7 : 0, inclina: .15 });
     if (olhando) { const g = ctx.createRadialGradient(mx, chao - H * .3, 10, mx, chao - H * .3, W); g.addColorStop(0, "rgba(255,235,210,.18)"); g.addColorStop(1, "rgba(255,235,210,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
@@ -392,12 +392,12 @@ function desenhaSusto(now) {
 }
 function desenhaEvento(now, ativo) {
   if (!ativo) { evento = null; return; }
-  if (!proxEvento) proxEvento = now + 7000 + Math.random() * 6000;
+  if (!proxEvento) proxEvento = now + 15000 + Math.random() * 10000;
   if (!evento && now > proxEvento) {
-    const tipos = ["sombra", "piscar", "olhos", "sombra", "piscar"];
+    const tipos = ["piscar", "olhos", "olhos"];
     evento = { tipo: tipos[Math.floor(Math.random() * tipos.length)], t0: now, lado: Math.random() < .5 ? -1 : 1, y: H * (.2 + Math.random() * .3) };
     if (evento.tipo !== "piscar" && Math.random() < .6) tocar("sussurro");
-    proxEvento = now + 9000 + Math.random() * 10000;
+    proxEvento = now + 20000 + Math.random() * 15000;
   }
   if (!evento) return;
   const d = (now - evento.t0) / 1000;

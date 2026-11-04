@@ -1,4 +1,4 @@
-# Ponto de Virada · como gerar e instalar no Android
+# Última Escolha · como gerar e instalar no Android
 
 O projeto já está pronto. Só falta compilar o APK (o arquivo de instalação do Android).
 Escolha um dos dois caminhos.
@@ -19,7 +19,7 @@ Escolha um dos dois caminhos.
    - Se aparecer um botão pedindo para ativar os workflows, clique nele.
    - Se a pasta `.github` não subiu: em **Actions**, clique em **set up a workflow yourself**,
      cole o conteúdo do arquivo `.github/workflows/gerar-apk.yml` e salve.
-6. Quando ficar verde, clique na execução e, em **Artifacts**, baixe **PontoDeVirada-APK**.
+6. Quando ficar verde, clique na execução e, em **Artifacts**, baixe **UltimaEscolha-APK**.
    Dentro do zip está o `app-debug.apk`.
 
 ## Caminho B · Pelo Android Studio no PC
