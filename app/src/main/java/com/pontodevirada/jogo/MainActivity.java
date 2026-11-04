@@ -110,7 +110,7 @@ public class MainActivity extends Activity {
             if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) r = voz.setLanguage(new Locale("pt"));
             vozPronta = r != TextToSpeech.LANG_MISSING_DATA && r != TextToSpeech.LANG_NOT_SUPPORTED;
             // tom e velocidade naturais: mudar o tom deixa a voz mais robótica
-            voz.setSpeechRate(1.0f);
+            voz.setSpeechRate(1.12f);
             voz.setPitch(1.0f);
             // escolhe a voz em português mais natural instalada (as "network"/neurais do Google primeiro)
             try {
@@ -124,7 +124,7 @@ public class MainActivity extends Activity {
             } catch (Exception e) { /* aparelho sem lista de vozes: usa a padrão */ }
             voz.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                 @Override public void onStart(String id) { js("window.vozInicio && vozInicio()"); }
-                @Override public void onDone(String id) { js("window.vozFim && vozFim()"); }
+                @Override public void onDone(String id) { if ("fim".equals(id)) js("window.vozFim && vozFim()"); }
                 @Override public void onError(String id) { js("window.vozFim && vozFim()"); }
             });
             js("window.vozPronta && vozPronta(" + vozPronta + ")");
@@ -215,7 +215,17 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void falar(String texto) {
-            if (voz != null && vozPronta) voz.speak(texto, TextToSpeech.QUEUE_FLUSH, null, "cena");
+            if (voz == null || !vozPronta) return;
+            // fala frase por frase, com uma pausa curta entre elas: soa bem mais natural
+            String[] frases = texto.replace("…", "... ").split("(?<=[.!?:;])\\s+");
+            voz.stop();
+            for (int i = 0; i < frases.length; i++) {
+                String f = frases[i].trim();
+                if (f.isEmpty()) continue;
+                boolean ultima = i == frases.length - 1;
+                voz.speak(f, TextToSpeech.QUEUE_ADD, null, ultima ? "fim" : "f" + i);
+                if (!ultima) voz.playSilentUtterance(f.endsWith(",") ? 120 : 260, TextToSpeech.QUEUE_ADD, "p" + i);
+            }
         }
 
         @JavascriptInterface
