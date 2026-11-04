@@ -171,6 +171,47 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .end-tag.bom { color: var(--acc); }
 .end-tag.ruim { color: var(--signal); }
 .end-tag.estranho { color: var(--ink-dim); }
+.end-tag.secreto { color: #ffd24d; text-shadow: 0 0 12px rgba(255,210,77,.6); }
+.slot .t.secreto { color: #ffd24d; }
+
+/* cinemática: faixas de cinema, sem texto nem opções até a cena acabar */
+.faixa { position: fixed; left: 0; right: 0; height: 9vh; background: #000; z-index: 3; pointer-events: none; transition: transform .7s ease; }
+.faixa.cima { top: 0; transform: translateY(-100%); }
+.faixa.baixo { bottom: 0; transform: translateY(100%); }
+body.cine .faixa { transform: none; }
+.vignette { transition: opacity .8s ease; }
+body.cine .vignette { opacity: .2; }
+body.cine #choices, body.cine #hud, body.cine .text, body.cine .hint, body.cine .dica, body.cine .top .grp { opacity: 0; pointer-events: none; }
+body.cine .scene > :first-child { margin-top: auto; }
+#choices, #hud, .text, .hint, .dica, .top .grp { transition: opacity .5s ease; }
+.pular {
+  position: fixed; z-index: 4; right: max(16px, var(--sr)); bottom: calc(9vh + 14px);
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink); background: rgba(11,14,20,.6); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px;
+  opacity: 0; pointer-events: none; transition: opacity .4s;
+}
+body.cine .pular { opacity: 1; pointer-events: auto; }
+.cine-leg { position: fixed; z-index: 4; left: 0; right: 0; bottom: calc(9vh + 56px); text-align: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); opacity: 0; transition: opacity .5s; pointer-events: none; }
+body.cine .cine-leg { opacity: 1; }
+body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
+
+.choice .novo { flex: none; font-family: var(--f-mono); font-size: 9px; letter-spacing: .14em; color: var(--night); background: var(--acc); border-radius: 999px; padding: 3px 7px; font-weight: 600; }
+.choice.lembranca { border-style: dashed; border-color: #ffd24d; }
+.choice.lembranca .k { border-color: #ffd24d; color: #ffd24d; }
+.story.trancada { opacity: .55; cursor: not-allowed; }
+.story.trancada h3 { color: var(--ink-dim); }
+.story .barra { height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.story .barra i { display: block; height: 100%; background: var(--c); }
+.progresso { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.progresso button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--acc); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+.conqs { display: grid; gap: 8px; }
+.conq { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.conq b { font-family: var(--f-display); font-weight: 800; font-size: 20px; text-transform: uppercase; line-height: 1; }
+.conq span { font-size: 14px; color: var(--ink-dim); }
+.conq i { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-style: normal; border: 1px solid var(--line); color: var(--line); font-family: var(--f-display); font-weight: 800; }
+.conq.ok i { border-color: #ffd24d; color: #ffd24d; }
+.conq:not(.ok) b { color: var(--ink-dim); }
+.drawer h3 { font-family: var(--f-display); font-weight: 800; font-size: 28px; margin: 8px 0 0; text-transform: uppercase; color: var(--ink); }
 .end-title { font-family: var(--f-display); font-weight: 800; font-size: clamp(46px, 14vw, 78px); line-height: .9; text-transform: uppercase; text-wrap: balance; }
 .path { margin-top: 16px; font-family: var(--f-mono); font-size: 11px; color: var(--ink-dim); line-height: 1.7; letter-spacing: .04em; }
 .path b { color: var(--ink); font-weight: 600; }
@@ -250,6 +291,9 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 <canvas id="bg" aria-hidden="true"></canvas>
 <div class="vignette"></div>
 <div class="toast" id="toast" role="status"></div>
+<div class="faixa cima"></div><div class="faixa baixo"></div>
+<div class="cine-leg" id="cineLeg"></div>
+<button class="pular" id="pular" type="button">Pular ▸▸</button>
 
 <main class="app">
   <div class="top">
@@ -270,6 +314,7 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
     <div class="place">Histórias em que você decide</div>
     <h1>Ponto de <span>Virada</span></h1>
     <p>Escolha uma fase. Use fone de ouvido: o som faz parte do jogo.</p>
+    <div class="progresso"><span id="progTotal"></span><button id="btnConq" type="button">Conquistas</button></div>
     <div class="lista" id="lista"></div>
   </div>
 </div>
@@ -277,434 +322,18 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 <div class="overlay drawer" id="drawer" hidden>
   <div class="inner" style="margin-top:0">
     <h2 id="drawerTitle">Finais</h2>
-    <p>Cada escolha leva a um lugar diferente. Volte e tente outros caminhos.</p>
+    <p id="drawerSub">Cada escolha leva a um lugar diferente. Volte e tente outros caminhos.</p>
     <div class="grid" id="endGrid"></div>
+    <h3>Conquistas</h3>
+    <div class="conqs" id="conqs"></div>
     <button class="btn" id="closeEndings" type="button">Voltar</button>
   </div>
 </div>
 
+<script src="historias.js"></script>
+<script src="cinema.js"></script>
 <script>
-/* ============================================================
-   COMO CRIAR UMA HISTÓRIA
-   Cada cena (nó) pode ter:
-     hora, lugar, texto            → o que aparece na tela
-     escolhas: [op(texto, destino, {req, custo})]
-         req   = item necessário (a opção aparece trancada sem ele)
-         custo = gasta do medidor (ex.: oxigênio); negativo recupera
-     tempo: 8, aoAcabar: "destino" → escolha com contagem regressiva
-     acao: {tipo: "segurar" | "tocar" | "codigo", ...} → minijogo
-     ganha: "Item"                 → item vai para o inventário
-     custo: 10                     → gasta do medidor ao entrar
-     dica: "texto"                 → instrução extra
-     fx: {ver: [...], sons: [...], amb: {...}} → animação e som
-   Finais: fim: true, tipo: "bom" | "ruim" | "estranho", titulo
-   ============================================================ */
-const op = (t, ir, x = {}) => ({ t, ir, ...x });
-
-/* -------------------- FASE 1: A NOITE DO APAGÃO -------------------- */
-const APAGAO = {
-  inicio: {
-    hora: "22:47", lugar: "Apto 1207 · 12º andar",
-    texto: "A cidade inteira apaga de uma vez. Da janela, nenhuma luz até o horizonte. Seu celular vibra. Número desconhecido: <span class='msg'>NÃO ABRA A PORTA.</span>",
-    escolhas: [op("Responder a mensagem", "responder"), op("Olhar pelo olho mágico", "olho"), op("Descer pela escada", "escada")],
-    fx: { ver: ["cidade", "apagao"], sons: ["apagao", "vibrar"], amb: { drone: 1, vento: .3 } },
-  },
-  responder: {
-    hora: "22:51", lugar: "Apto 1207",
-    texto: "Você digita <span class='msg'>quem é?</span> A resposta chega na hora: <span class='msg'>sou você. daqui a 3 horas.</span> Depois, uma foto: você no terraço do prédio, segurando uma <em>lanterna vermelha</em>.",
-    escolhas: [op("Subir para o terraço", "terraco"), op("Desligar o celular e dormir", "f_sono")],
-    fx: { ver: ["cidade"], sons: ["vibrarJa"], amb: { drone: 1, vento: .3 } },
-  },
-  olho: {
-    hora: "22:53", lugar: "Porta do 1207",
-    texto: "No corredor, uma luz vermelha pisca devagar. Alguém está parado na frente da sua porta, de costas. Bate três vezes. Silêncio. Bate de novo.",
-    tempo: 10, aoAcabar: "silencio",
-    escolhas: [op("Abrir a porta", "abrir"), op("Ficar em silêncio", "silencio")],
-    fx: { ver: ["corredor"], sons: ["batidas", "coracao"], amb: { drone: 1 } },
-  },
-  escada: {
-    hora: "22:55", lugar: "Escada de emergência",
-    texto: "A escada está escura. Três andares abaixo, passos sobem no mesmo ritmo que os seus. Quando você para, eles param.",
-    dica: "Arraste o dedo pela tela para mover a lanterna",
-    escolhas: [op("Gritar: \"Tem alguém aí?\"", "chamar"), op("Mudar de ideia e subir", "terraco")],
-    fx: { ver: ["escada", "escuro"], sons: ["passos"], amb: { drone: 1, vento: .1 } },
-  },
-  abrir: {
-    hora: "22:56", lugar: "Porta do 1207",
-    texto: "É a Dona Célia, do 1204. Ela segura uma <em>lanterna vermelha</em>. \"Você recebeu a mensagem também, né? Todo mundo do prédio recebeu. Menos eu.\"",
-    escolhas: [op("Deixar ela entrar", "entrar"), op("Mostrar a mensagem pra ela", "f_porta")],
-    fx: { ver: ["corredor"], sons: ["rangido"], amb: { drone: 1 } },
-  },
-  silencio: {
-    hora: "23:10", lugar: "Apto 1207", ganha: "Mapa do prédio",
-    texto: "As batidas param. Por baixo da porta alguém desliza um papel: um mapa do prédio, o terraço circulado, e uma hora escrita à mão. <em>01:47</em>.",
-    escolhas: [op("Ir ao terraço agora", "terraco"), op("Esperar dar 01:47", "esperar")],
-    fx: { ver: ["corredor"], sons: ["papel", "coracao"], amb: { drone: 1 } },
-  },
-  chamar: {
-    hora: "22:58", lugar: "Escada · 9º andar",
-    texto: "Ninguém responde. Mas a lanterna do seu celular acende sozinha e aponta para a porta do 3º andar. Ela está entreaberta.",
-    dica: "Arraste o dedo pela tela para mover a lanterna",
-    escolhas: [op("Descer até o 3º andar", "andar3"), op("Ignorar e subir pro terraço", "terraco")],
-    fx: { ver: ["escada", "escuro"], sons: ["eco"], amb: { drone: 1, vento: .1 } },
-  },
-  terraco: {
-    hora: "23:20", lugar: "Terraço",
-    texto: "O vento é forte. No parapeito, uma <em>lanterna vermelha</em> acesa, igual à da foto. Do lado, um rádio antigo chia uma sequência: <span class='msg'>4 … 7 … 4 … 7</span>",
-    escolhas: [op("Pegar a lanterna", "lanterna"), op("Mexer no rádio", "radio"), op("Sintonizar uma frequência no rádio", "sintonia")],
-    fx: { ver: ["cidade", "chuva", "lanterna"], sons: ["radioLonge"], amb: { drone: .6, vento: 1, chuva: 1, estatica: .2 } },
-  },
-  sintonia: {
-    hora: "23:22", lugar: "Terraço · rádio",
-    texto: "O rádio tem um teclado numérico gasto. O chiado repete a mesma sequência, como se esperasse uma resposta.",
-    acao: { tipo: "codigo", rotulo: "Digite a frequência", resposta: "4747", tentativas: 3, ok: "f_frequencia", falha: "radio" },
-    fx: { ver: ["cidade", "chuva"], sons: ["radioLonge"], amb: { drone: .6, vento: .6, chuva: .6, estatica: .9 } },
-  },
-  entrar: {
-    hora: "23:02", lugar: "Apto 1207",
-    texto: "Dona Célia tranca a porta e apaga a lanterna. \"Eles contam as luzes\", ela sussurra. Lá fora, algo enorme passa entre os prédios, varrendo as janelas com um feixe branco.",
-    tempo: 8, aoAcabar: "f_escondido",
-    escolhas: [op("Se esconder com ela", "f_escondido"), op("Acender a lanterna na janela", "f_rede")],
-    fx: { ver: ["cidade", "feixe"], sons: ["feixe", "coracao"], amb: { drone: 1, vento: .4 } },
-  },
-  esperar: {
-    hora: "01:47", lugar: "Apto 1207",
-    texto: "O prédio inteiro estremece. Pela janela, lanternas vermelhas acendem ao mesmo tempo em todos os terraços da cidade. Em todos, menos no seu.",
-    escolhas: [op("Correr para o terraço", "porta_terraco"), op("Fechar a cortina", "f_sozinho")],
-    fx: { ver: ["cidade", "lanternasTodas"], sons: ["tremor"], amb: { drone: 1, vento: .3 } },
-  },
-  porta_terraco: {
-    hora: "01:48", lugar: "Porta do terraço",
-    texto: "A porta do terraço está emperrada. Do outro lado, a luz vermelha das lanternas vaza pelas frestas.",
-    acao: { tipo: "tocar", rotulo: "Toque rápido para forçar a porta!", n: 15, limite: 5, ok: "terraco_tarde", falha: "f_sozinho" },
-    fx: { ver: ["corredor"], sons: ["coracao"], amb: { drone: 1 } },
-  },
-  terraco_tarde: {
-    hora: "01:49", lugar: "Terraço",
-    texto: "A porta cede. Em todos os prédios, lanternas vermelhas apontam para cá. No chão, uma escotilha de ferro com o cadeado aberto.",
-    escolhas: [
-      op("Usar o mapa: a escotilha leva à casa de máquinas", "f_escuro", { req: "Mapa do prédio" }),
-      op("Acenar com os braços", "f_sozinho"),
-      op("Descer pela escotilha às cegas", "escada"),
-    ],
-    fx: { ver: ["cidade", "lanternasTodas", "chuva"], amb: { drone: .8, vento: 1, chuva: .8 } },
-  },
-  andar3: {
-    hora: "23:04", lugar: "3º andar",
-    texto: "O corredor está vazio, todas as portas abertas, todas as TVs ligadas mostrando a mesma imagem ao vivo: o seu apartamento. Tem alguém sentado no seu sofá.",
-    escolhas: [op("Voltar correndo pro 1207", "f_outro"), op("Puxar o fio das TVs", "radio")],
-    fx: { ver: ["tv"], amb: { drone: .6, estatica: 1 } },
-  },
-  lanterna: {
-    hora: "23:24", lugar: "Terraço", ganha: "Lanterna vermelha",
-    texto: "A lanterna pisca sozinha na sua mão: curto, longo, curto. Bem longe, no topo de outro prédio, alguém responde com a mesma luz.",
-    tempo: 8, aoAcabar: "f_escondido",
-    escolhas: [op("Responder o sinal", "f_rede"), op("Apagar a lanterna e deitar no chão", "f_escondido")],
-    fx: { ver: ["cidade", "chuva", "lanternas"], sons: ["morse"], amb: { drone: .6, vento: .8, chuva: .8 } },
-  },
-  radio: {
-    hora: "23:31", lugar: "Terraço",
-    texto: "A estática some e uma voz fala. É a <em>sua</em> voz. \"Se você está ouvindo, ainda dá tempo. Não deixe a luz voltar.\"",
-    escolhas: [op("Descer e desligar o disjuntor geral", "f_escuro"), op("Achar que é trote e ignorar", "f_luz")],
-    fx: { ver: ["cidade", "chuva"], sons: ["radio"], amb: { drone: .7, vento: .6, chuva: .6, estatica: .8 } },
-  },
-  f_sono: { fim: true, tipo: "estranho", titulo: "O Sono", hora: "07:12", lugar: "Apto 1207",
-    texto: "De manhã a luz voltou e ninguém fala do apagão. No seu celular há uma foto nova, tirada às 01:47: você, dormindo.",
-    fx: { ver: ["cidade", "manha"], sons: ["fimEstranho"], amb: { drone: .3 } } },
-  f_porta: { fim: true, tipo: "ruim", titulo: "A Porta Errada", hora: "22:57", lugar: "Porta do 1207",
-    texto: "Ela lê a mensagem e o rosto muda. \"Então foi você que abriu\", sussurra. A lanterna dela se apaga, e ela junto.",
-    fx: { ver: ["corredor", "vermelho"], sons: ["fimRuim"], amb: { drone: 1 } } },
-  f_escondido: { fim: true, tipo: "estranho", titulo: "Ninguém Viu", hora: "05:40", lugar: "Algum lugar escuro",
-    texto: "Você fica imóvel até o sol nascer. O feixe passou três vezes e não te achou. Você sobreviveu, mas nunca vai saber o que era.",
-    fx: { ver: ["cidade", "feixe"], sons: ["fimEstranho", "feixe"], amb: { drone: .8, vento: .3 } } },
-  f_rede: { fim: true, tipo: "bom", titulo: "A Rede", hora: "01:47", lugar: "Céu da cidade",
-    texto: "Uma luz responde. Depois outra. Em minutos a cidade inteira pisca em vermelho, junta. O feixe branco recua e some no horizonte.",
-    fx: { ver: ["cidade", "lanternasSync"], sons: ["fimBom"], amb: { drone: .4, vento: .3 } } },
-  f_sozinho: { fim: true, tipo: "ruim", titulo: "Fora da Lista", hora: "01:50", lugar: "Apto 1207",
-    texto: "As lanternas se apagam uma a uma. De manhã, o prédio está vazio. Só você ficou para trás.",
-    fx: { ver: ["cidade", "vermelho"], sons: ["fimRuim"], amb: { drone: 1 } } },
-  f_outro: { fim: true, tipo: "ruim", titulo: "O Outro", hora: "23:06", lugar: "Apto 1207",
-    texto: "A porta está aberta. No sofá, alguém igual a você sorri e diz: \"Demorou. Agora é a minha vez lá fora.\"",
-    fx: { ver: ["tv", "vermelho"], sons: ["fimRuim"], amb: { drone: 1, estatica: .5 } } },
-  f_escuro: { fim: true, tipo: "bom", titulo: "Escuro Total", hora: "02:30", lugar: "Casa de máquinas",
-    texto: "Você baixa a chave geral. O rádio cala. Às 02:30 a cidade volta a ter luz. Menos o seu prédio. E é por isso que todos aqui estão vivos.",
-    fx: { ver: ["cidade", "luzVolta"], sons: ["religar", "fimBom"], amb: { drone: .4 } } },
-  f_luz: { fim: true, tipo: "estranho", titulo: "A Luz Volta", hora: "02:30", lugar: "Terraço",
-    texto: "A luz volta de uma vez. Todas as janelas acendem. Em todas elas, alguém está parado, olhando direto para você.",
-    fx: { ver: ["cidade", "luzVolta"], sons: ["religar", "fimEstranho"], amb: { drone: .8 } } },
-  f_frequencia: { fim: true, tipo: "bom", titulo: "A Frequência", hora: "23:23", lugar: "Terraço · rádio",
-    texto: "O chiado vira silêncio. Depois, uma voz calma: \"Código aceito. Desligando a varredura.\" O feixe branco apaga, e as luzes da cidade voltam devagar, uma por uma.",
-    fx: { ver: ["cidade", "luzVolta"], sons: ["sucesso", "fimBom"], amb: { drone: .3, vento: .3 } } },
-};
-
-/* -------------------- FASE 2: ÚLTIMO ÔNIBUS -------------------- */
-const ONIBUS = {
-  inicio: {
-    hora: "23:58", lugar: "Ponto · Estrada da Serra",
-    texto: "Você perdeu o ônibus das 23h30. O celular está com 3% de bateria. Então, faróis na curva: um ônibus antigo, letreiro piscando <span class='msg'>LINHA 13 · VIA SERRA</span>. Essa linha foi extinta em 1998.",
-    tempo: 12, aoAcabar: "entra",
-    escolhas: [op("Entrar no ônibus", "entra"), op("Deixar passar e pedir um carro", "celular")],
-    fx: { ver: ["estrada", "farois", "chuva"], sons: ["freio"], amb: { drone: .6, chuva: 1, motor: .5 } },
-  },
-  celular: {
-    hora: "23:59", lugar: "Ponto · Estrada da Serra",
-    texto: "Você abre o app. Um único motorista aceita: <span class='msg'>chego em 1 min</span>. A foto do perfil é o mesmo ônibus. Atrás de você, a porta abre sozinha com um chiado.",
-    escolhas: [op("Entrar de uma vez", "entra"), op("Correr pela estrada", "corre")],
-    fx: { ver: ["estrada", "farois", "chuva"], sons: ["vibrarJa", "porta"], amb: { drone: .7, chuva: 1, motor: .5 } },
-  },
-  corre: {
-    hora: "00:01", lugar: "Acostamento",
-    texto: "Você corre. Os faróis vêm atrás, sem pressa, sempre na mesma distância. Lá na frente, a luz de um posto de gasolina.",
-    acao: { tipo: "tocar", rotulo: "Toque rápido para correr!", n: 16, limite: 5, ok: "posto", falha: "f_passageiro" },
-    fx: { ver: ["estrada", "rapido", "chuva", "farolAtras"], sons: ["correndo"], amb: { drone: .8, chuva: 1, motor: .7 } },
-  },
-  posto: {
-    hora: "00:04", lugar: "Posto Serra Alta", ganha: "Moeda de 1998",
-    texto: "Atrás do balcão, um senhor de boné te olha sem surpresa. \"Viu a 13, né? Pega isso.\" Ele empurra uma <em>moeda antiga</em> pelo balcão.",
-    escolhas: [op("Perguntar o que é a Linha 13", "historia"), op("Voltar ao ponto e entrar no ônibus", "entra")],
-    fx: { ver: ["posto", "chuva"], sons: ["item"], amb: { drone: .4, chuva: .7 } },
-  },
-  historia: {
-    hora: "00:07", lugar: "Posto Serra Alta",
-    texto: "\"Em 98 a 13 caiu da ponte, na serra. Toda noite de chuva ela volta pra buscar quem tá sozinho. Quem paga a passagem desce na cidade. Quem não paga... vira passageiro.\"",
-    escolhas: [op("Esperar amanhecer no posto", "f_jornal"), op("Pegar a 13 e pagar com a moeda", "entra")],
-    fx: { ver: ["posto", "chuva"], amb: { drone: .6, chuva: .7 } },
-  },
-  entra: {
-    hora: "00:10", lugar: "Linha 13 · dentro",
-    texto: "Luz fluorescente piscando. Seis passageiros de roupa molhada, todos olhando pra frente. O cobrador estende a mão sem virar o rosto: \"Passagem.\"",
-    tempo: 10, aoAcabar: "sem",
-    escolhas: [
-      op("Pagar com a moeda de 1998", "paga", { req: "Moeda de 1998" }),
-      op("Dizer que não tem dinheiro", "sem"),
-      op("Passar direto e sentar no fundo", "fundo"),
-    ],
-    fx: { ver: ["interior"], sons: ["porta"], amb: { drone: .8, motor: 1, chuva: .3 } },
-  },
-  paga: {
-    hora: "00:12", lugar: "Linha 13 · catraca",
-    texto: "O cobrador olha a moeda e, pela primeira vez, vira o rosto. Ele sorri. \"Faz tempo que ninguém paga certo.\" Aponta o banco da frente, colado no motorista.",
-    escolhas: [op("Sentar na frente", "frente")],
-    fx: { ver: ["interior"], sons: ["sucesso"], amb: { drone: .6, motor: 1 } },
-  },
-  frente: {
-    hora: "00:31", lugar: "Linha 13 · banco da frente",
-    texto: "O motorista fala sem tirar os olhos da estrada: \"Na ponte, não olha pela janela. Aconteça o que acontecer.\" Lá na frente, a ponte aparece no meio da neblina.",
-    escolhas: [op("Fechar os olhos", "ponte")],
-    fx: { ver: ["estrada", "rapido", "chuva"], amb: { drone: .9, motor: 1, chuva: .6 } },
-  },
-  ponte: {
-    hora: "00:33", lugar: "Ponte do Rio Fundo",
-    texto: "Você fecha os olhos. Alguém bate no vidro do seu lado. Depois chama seu nome, com a voz da sua mãe.",
-    acao: { tipo: "segurar", rotulo: "Segure para manter os olhos fechados", dur: 4, limite: 9, ok: "f_cidade", falha: "f_reflexo" },
-    fx: { ver: ["interior", "escuro"], sons: ["batidaVidro", "coracao"], amb: { drone: 1, motor: .8, chuva: 1 } },
-  },
-  sem: {
-    hora: "00:14", lugar: "Linha 13 · catraca",
-    texto: "\"Sem passagem, sem descida\", diz o cobrador. As portas se fecham. Uma passageira de uniforme escolar antigo sussurra: \"Puxa a cordinha antes da ponte. É o único jeito.\"",
-    escolhas: [op("Puxar a cordinha agora", "cordinha"), op("Esperar a ponte", "ponte_sem")],
-    fx: { ver: ["interior"], sons: ["porta"], amb: { drone: .9, motor: 1 } },
-  },
-  cordinha: {
-    hora: "23:58", lugar: "Ponto · Estrada da Serra",
-    texto: "A campainha toca. O ônibus freia forte. As portas abrem para a mesma parada, no mesmo minuto: 23:58. No ponto, alguém espera. É você, olhando o ônibus chegar.",
-    escolhas: [op("Gritar para você mesmo não entrar", "f_laco"), op("Ficar quieto", "f_passageiro")],
-    fx: { ver: ["estrada", "chuva"], sons: ["campainha", "freio"], amb: { drone: 1, chuva: 1, motor: .4 } },
-  },
-  ponte_sem: {
-    hora: "00:33", lugar: "Ponte do Rio Fundo",
-    texto: "A ponte. O ônibus acelera em vez de frear. A garota grita: \"AGORA!\"",
-    acao: { tipo: "tocar", rotulo: "Toque rápido para puxar a cordinha!", n: 12, limite: 4, ok: "f_pulo", falha: "f_passageiro" },
-    fx: { ver: ["interior", "vermelho"], sons: ["coracao"], amb: { drone: 1, motor: 1, chuva: .6 } },
-  },
-  fundo: {
-    hora: "00:16", lugar: "Linha 13 · fundo", ganha: "Bilhete nº 7",
-    texto: "No fundo está escuro. Seu celular, com 2%, ilumina o banco ao lado: um bilhete. <span class='msg'>LINHA 13 · 14/03/1998 · PASSAGEIRO Nº 7</span>. Você conta as cabeças. Com você, são sete.",
-    dica: "Arraste o dedo pela tela para iluminar",
-    escolhas: [op("Rasgar o bilhete", "rasga"), op("Levar o bilhete ao motorista", "motorista")],
-    fx: { ver: ["interior", "escuro"], sons: ["papel"], amb: { drone: 1, motor: .8 } },
-  },
-  rasga: {
-    hora: "00:17", lugar: "Linha 13 · fundo",
-    texto: "O ônibus freia de uma vez. Todos os passageiros viram a cabeça pra você ao mesmo tempo. As luzes apagam.",
-    tempo: 6, aoAcabar: "f_passageiro",
-    escolhas: [op("Correr para a porta de trás", "porta_tras"), op("Ficar parado", "f_passageiro")],
-    fx: { ver: ["interior", "escuro", "vermelho"], sons: ["freio", "coracao"], amb: { drone: 1 } },
-  },
-  porta_tras: {
-    hora: "00:17", lugar: "Porta de trás",
-    texto: "A porta está travada. Mãos frias tocam seu ombro.",
-    acao: { tipo: "tocar", rotulo: "Toque rápido para forçar a porta!", n: 14, limite: 5, ok: "f_pulo", falha: "f_passageiro" },
-    fx: { ver: ["interior", "escuro", "vermelho"], sons: ["coracao"], amb: { drone: 1, chuva: .6 } },
-  },
-  motorista: {
-    hora: "00:20", lugar: "Linha 13 · cabine",
-    texto: "Você mostra o bilhete. O motorista freia devagar. \"Sete... Então é você que faltava.\" Ele se levanta e te oferece o volante.",
-    escolhas: [op("Assumir o volante", "f_motorista"), op("Devolver o bilhete e pedir pra descer", "ponte")],
-    fx: { ver: ["estrada", "chuva"], amb: { drone: .9, motor: .6, chuva: .6 } },
-  },
-  f_cidade: { fim: true, tipo: "bom", titulo: "Ponto Final", hora: "05:12", lugar: "Rodoviária",
-    texto: "Quando você abre os olhos, o ônibus para na rodoviária. Você desce. Ao virar, não há ônibus nenhum, só uma poça d'água. E a moeda de volta no seu bolso.",
-    fx: { ver: ["estrada", "manha"], sons: ["fimBom"], amb: { drone: .3 } } },
-  f_pulo: { fim: true, tipo: "bom", titulo: "Fora da Linha", hora: "05:40", lugar: "Margem do rio",
-    texto: "A porta abre e você cai na água gelada. Acorda na margem, de dia, encharcado. Na ponte, nenhum sinal de ônibus. Só uma placa nova: \"Em memória dos passageiros da Linha 13\".",
-    fx: { ver: ["estrada", "manha"], sons: ["fimBom"], amb: { drone: .3, chuva: .2 } } },
-  f_jornal: { fim: true, tipo: "estranho", titulo: "Jornal de 98", hora: "06:00", lugar: "Posto Serra Alta",
-    texto: "Você espera o sol nascer tomando café ruim. Às 6h passa um ônibus normal. Antes de subir, você vê o jornal velho pendurado no posto. Na manchete de 1998, a sua foto.",
-    fx: { ver: ["posto", "manha"], sons: ["fimEstranho"], amb: { drone: .4 } } },
-  f_reflexo: { fim: true, tipo: "ruim", titulo: "O Reflexo", hora: "00:34", lugar: "Ponte do Rio Fundo",
-    texto: "Você abre os olhos. A água sobe até o vidro. Lá embaixo, outro ônibus 13 afunda com as luzes acesas. Numa das janelas, olhando pra cima, está você.",
-    fx: { ver: ["interior", "vermelho"], sons: ["fimRuim"], amb: { drone: 1 } } },
-  f_passageiro: { fim: true, tipo: "ruim", titulo: "Passageiro nº 7", hora: "23:58", lugar: "Linha 13",
-    texto: "Sua roupa está molhada. Você olha para a frente, como os outros. Na próxima noite de chuva, o ônibus para num ponto da serra, e você estende a mão: \"Passagem.\"",
-    fx: { ver: ["interior", "vermelho"], sons: ["fimRuim"], amb: { drone: 1, motor: .6 } } },
-  f_laco: { fim: true, tipo: "estranho", titulo: "O Laço", hora: "23:58", lugar: "Ponto · Estrada da Serra",
-    texto: "Você grita. O outro você recua e pega o celular. As portas se fecham com você dentro. O relógio do painel volta para 23:58. De novo.",
-    fx: { ver: ["estrada", "chuva"], sons: ["fimEstranho"], amb: { drone: 1, chuva: 1 } } },
-  f_motorista: { fim: true, tipo: "estranho", titulo: "Novo Motorista", hora: "00:21", lugar: "Linha 13 · cabine",
-    texto: "O volante está frio. O antigo motorista senta no banco da frente e, pela primeira vez em 28 anos, fecha os olhos. A estrada é sua agora. Toda noite de chuva.",
-    fx: { ver: ["estrada", "rapido", "chuva"], sons: ["fimEstranho"], amb: { drone: .8, motor: 1, chuva: .8 } } },
-};
-
-/* -------------------- FASE 3: ABISMO -------------------- */
-const ABISMO = {
-  inicio: {
-    hora: "−410 m", lugar: "Mini-submarino Tatuí-3",
-    texto: "A Estação Abissal parou de responder há três dias. Você foi a única pessoa que aceitou descer. O sonar mostra a estação logo à frente. E algo grande se movendo entre vocês.",
-    escolhas: [op("Disparar um pulso de sonar", "sonar", { custo: 5 }), op("Desligar tudo e flutuar no escuro", "escuro"), op("Acelerar até a estação", "acelera", { custo: 10 })],
-    fx: { ver: ["mar", "criaturaLonge"], sons: ["bolhas"], amb: { drone: .6, agua: 1 } },
-  },
-  sonar: {
-    hora: "−412 m", lugar: "Tatuí-3 · sonar",
-    texto: "PING. O eco volta deformado. A forma tem 40 metros e parou no mesmo instante. Ela também ouviu.",
-    tempo: 8, aoAcabar: "ataque",
-    escolhas: [op("Mergulhar mais fundo", "fenda", { custo: 10 }), op("Seguir para a estação", "doca", { custo: 5 })],
-    fx: { ver: ["mar", "sonar", "criaturaLonge"], sons: ["sonar"], amb: { drone: .8, agua: 1 } },
-  },
-  escuro: {
-    hora: "−410 m", lugar: "Tatuí-3 · desligado",
-    texto: "Tudo apaga. Só a lanterna de mão. Algo passa por cima do submarino, devagar, e o casco range.",
-    dica: "Arraste o dedo pela tela para iluminar",
-    escolhas: [op("Iluminar o vulto", "olho"), op("Prender a respiração e esperar", "espera")],
-    fx: { ver: ["mar", "criatura", "escuro"], sons: ["casco", "criaturaSom"], amb: { drone: .9, agua: .7 } },
-  },
-  espera: {
-    hora: "−410 m", lugar: "Tatuí-3 · desligado",
-    texto: "A sombra para bem em cima de você. Qualquer barulho e ela vai perceber.",
-    acao: { tipo: "segurar", rotulo: "Segure para prender a respiração", dur: 5, limite: 10, ok: "passou", falha: "ataque" },
-    fx: { ver: ["mar", "criatura", "escuro"], sons: ["coracao"], amb: { drone: 1, agua: .5 } },
-  },
-  passou: {
-    hora: "−410 m", lugar: "Tatuí-3", custo: 15,
-    texto: "O vulto segue em frente. Você ganhou tempo, mas o filtro de ar falhou enquanto o sistema estava desligado.",
-    escolhas: [op("Religar e ir pra estação", "doca", { custo: 5 })],
-    fx: { ver: ["mar", "criaturaLonge"], sons: ["religar"], amb: { drone: .6, agua: 1 } },
-  },
-  olho: {
-    hora: "−410 m", lugar: "Diante do vidro",
-    texto: "A luz bate num olho do tamanho da escotilha. Ele pisca. Ao redor, cicatrizes que parecem letras: <span class='msg'>E.A. 07</span>. É o código da estação.",
-    escolhas: [op("Seguir o bicho", "fenda", { custo: 10 }), op("Fugir para a estação", "doca", { custo: 10 }), op("Encostar a mão no vidro", "f_vinculo")],
-    fx: { ver: ["mar", "olho"], sons: ["criaturaSom"], amb: { drone: 1, agua: .6 } },
-  },
-  acelera: {
-    hora: "−430 m", lugar: "Tatuí-3 · motor máximo",
-    texto: "O motor grita. O vulto vira na sua direção. Pelo vidro, uma boca se abre, cheia de luzes, como uma cidade vista do avião.",
-    tempo: 6, aoAcabar: "ataque",
-    escolhas: [op("Desviar para baixo", "fenda", { custo: 10 }), op("Soltar o sinalizador", "flare")],
-    fx: { ver: ["mar", "criatura", "bolhasMuitas"], sons: ["criaturaSom", "bolhas"], amb: { drone: 1, agua: 1 } },
-  },
-  flare: {
-    hora: "−430 m", lugar: "Tatuí-3",
-    texto: "O sinalizador explode em vermelho. A criatura recua, ofuscada, e você vê a doca da estação aberta, logo abaixo.",
-    escolhas: [op("Entrar na doca", "doca")],
-    fx: { ver: ["mar", "estacao", "vermelho"], sons: ["flare"], amb: { drone: .7, agua: 1 } },
-  },
-  ataque: {
-    hora: "−440 m", lugar: "Tatuí-3 · ALERTA", custo: 10,
-    texto: "IMPACTO. O casco trinca. Alarme. Água entrando pela solda do painel esquerdo.",
-    acao: { tipo: "tocar", rotulo: "Toque rápido para bombear a água!", n: 18, limite: 6, ok: "doca", falha: "f_casco" },
-    fx: { ver: ["mar", "bolhasMuitas", "alarme"], sons: ["impacto", "alarme"], amb: { drone: 1, agua: 1 } },
-  },
-  fenda: {
-    hora: "−780 m", lugar: "Fenda azul",
-    texto: "Uma fenda no fundo do mar brilha em azul. Dentro dela, cabos da estação descem como raízes, pulsando no mesmo ritmo da criatura.",
-    escolhas: [op("Seguir os cabos", "nucleo", { custo: 15 }), op("Voltar para a estação", "doca", { custo: 10 })],
-    fx: { ver: ["mar", "fenda"], sons: ["criaturaSom"], amb: { drone: 1, agua: .8 } },
-  },
-  nucleo: {
-    hora: "−812 m", lugar: "Câmara de vidro",
-    texto: "No fim dos cabos, uma câmara de vidro. Dentro, a equipe da estação, viva, dormindo, ligada à criatura por fios de luz. Um painel pisca: <span class='msg'>CÓDIGO DE ACESSO?</span>",
-    escolhas: [op("Digitar o código no painel", "painel"), op("Subir para avisar a superfície", "f_relatorio", { custo: 20 })],
-    fx: { ver: ["mar", "fenda", "estacao"], amb: { drone: .8, agua: .8 } },
-  },
-  painel: {
-    hora: "−812 m", lugar: "Câmara de vidro · painel",
-    texto: "Duas casas para o código. Se errar, o sistema trava.",
-    acao: { tipo: "codigo", rotulo: "Digite o código de acesso", resposta: "07", tentativas: 2, ok: "f_resgate", falha: "f_despertar" },
-    fx: { ver: ["mar", "fenda"], amb: { drone: .8, agua: .6 } },
-  },
-  doca: {
-    hora: "−450 m", lugar: "Estação Abissal · doca", ganha: "Cartão E.A. 07",
-    texto: "Você acopla na estação. Luzes de emergência e ninguém. No quadro, um bilhete: <span class='msg'>NÃO É UM ANIMAL. É A ESTAÇÃO QUE ELE PROTEGE.</span> No chão, um cartão de acesso.",
-    escolhas: [op("Ir à sala de controle", "controle"), op("Pegar ar no armário de emergência", "ar")],
-    fx: { ver: ["mar", "estacao"], sons: ["porta", "item"], amb: { drone: .6, agua: .5 } },
-  },
-  ar: {
-    hora: "−450 m", lugar: "Estação · armário", custo: -40,
-    texto: "Dois cilindros cheios. Você respira fundo pela primeira vez em horas. Pelo vidro, a criatura está parada lá fora, observando.",
-    escolhas: [op("Ir à sala de controle", "controle")],
-    fx: { ver: ["mar", "criaturaLonge", "estacao"], sons: ["porta"], amb: { drone: .5, agua: .5 } },
-  },
-  controle: {
-    hora: "−450 m", lugar: "Estação · sala de controle",
-    texto: "Dois botões grandes: <span class='msg'>ALERTA À SUPERFÍCIE</span> e <span class='msg'>CORTAR ENERGIA DA FENDA</span>. Ao lado, uma porta lacrada com leitor de cartão.",
-    escolhas: [
-      op("Usar o cartão na porta lacrada", "lacrada", { req: "Cartão E.A. 07" }),
-      op("Cortar a energia da fenda", "f_despertar"),
-      op("Enviar alerta à superfície", "f_relatorio"),
-    ],
-    fx: { ver: ["mar", "estacao"], amb: { drone: .7, agua: .4 } },
-  },
-  lacrada: {
-    hora: "−460 m", lugar: "Estação · ala lacrada", custo: 5,
-    texto: "Atrás da porta, a equipe inteira dorme em cápsulas, ligada por fios de luz ao vidro. A criatura encosta o olho do lado de fora, esperando. O painel pede o código da estação.",
-    acao: { tipo: "codigo", rotulo: "Digite o código da estação", resposta: "07", tentativas: 2, ok: "f_resgate", falha: "f_despertar" },
-    fx: { ver: ["mar", "olho"], amb: { drone: .8, agua: .5 } },
-  },
-  f_resgate: { fim: true, tipo: "bom", titulo: "Resgate", hora: "−0 m", lugar: "Superfície",
-    texto: "As cápsulas abrem. A equipe acorda tossindo. A criatura empurra a estação inteira devagar até a superfície, como quem devolve algo que guardou com cuidado.",
-    fx: { ver: ["mar", "criaturaLonge", "manha"], sons: ["fimBom"], amb: { drone: .3, agua: .4 } } },
-  f_relatorio: { fim: true, tipo: "estranho", titulo: "Relatório", hora: "−0 m", lugar: "Navio de apoio",
-    texto: "Na superfície, ninguém acredita. Seis meses depois, uma nova estação é construída no mesmo lugar. No primeiro dia, o sonar mostra uma forma de 40 metros. Esperando.",
-    fx: { ver: ["mar", "sonar"], sons: ["sonar", "fimEstranho"], amb: { drone: .6, agua: .5 } } },
-  f_despertar: { fim: true, tipo: "ruim", titulo: "Despertar", hora: "−812 m", lugar: "Fenda azul",
-    texto: "A luz da fenda apaga. A criatura solta um som que faz o casco vibrar. Lá embaixo, no escuro, algo muito maior abre os olhos. Ela não estava atacando. Estava vigiando.",
-    fx: { ver: ["mar", "alarme"], sons: ["criaturaSom", "fimRuim"], amb: { drone: 1, agua: 1 } } },
-  f_casco: { fim: true, tipo: "ruim", titulo: "Pressão", hora: "−440 m", lugar: "Tatuí-3",
-    texto: "A água vence a bomba. A última coisa que você vê é o olho enorme do lado de fora, parado, como se lamentasse.",
-    fx: { ver: ["mar", "bolhasMuitas", "vermelho"], sons: ["fimRuim"], amb: { drone: 1, agua: 1 } } },
-  f_ar: { fim: true, tipo: "ruim", titulo: "Sem Ar", hora: "−???", lugar: "Tatuí-3",
-    texto: "O medidor chega a zero. A cabine fica em silêncio. Lá fora, uma luz azul se aproxima devagar e encosta no vidro.",
-    fx: { ver: ["mar", "criaturaLonge", "vermelho"], sons: ["fimRuim"], amb: { drone: .8, agua: .6 } } },
-  f_vinculo: { fim: true, tipo: "estranho", titulo: "Vínculo", hora: "−410 m", lugar: "Diante do vidro",
-    texto: "Você encosta a mão. O olho se aproxima até tocar o vidro do outro lado. Você entende sem palavras: ela não quer te fazer mal. Ela quer que alguém fique. E você fica.",
-    fx: { ver: ["mar", "olho"], sons: ["fimEstranho"], amb: { drone: .5, agua: .6 } } },
-};
-
-const FASES = {
-  apagao: { titulo: "A Noite do Apagão", genero: "Suspense", cor: "#f2a33a",
-    gancho: "A cidade apaga e uma mensagem chega no seu celular: não abra a porta.",
-    mec: "Código secreto · tempo · tocar rápido", nos: APAGAO, hub: ["cidade", "acesa"] },
-  onibus: { titulo: "Último Ônibus", genero: "Lenda urbana", cor: "#9bd86b",
-    gancho: "Uma linha de ônibus extinta em 1998 para no seu ponto, numa noite de chuva.",
-    mec: "Itens · segurar · tocar rápido", nos: ONIBUS, hub: ["estrada", "farois", "chuva"] },
-  abismo: { titulo: "Abismo", genero: "Ficção científica", cor: "#4fcfd9",
-    gancho: "Você desce sozinho a 410 metros para descobrir por que uma estação parou de responder.",
-    mec: "Oxigênio limitado · código · segurar", nos: ABISMO, hub: ["mar", "criaturaLonge"],
-    medidor: { nome: "O₂", ini: 50, fim: "f_ar" } },
-};
-
-const TAG = { bom: "Final bom", ruim: "Final ruim", estranho: "Final estranho" };
+const TAG = { bom: "Final bom", ruim: "Final ruim", estranho: "Final estranho", secreto: "Final secreto" };
 const $ = id => document.getElementById(id);
 /* No Android, "remover animações"/economia de bateria ligam o prefers-reduced-motion e o jogo ficava parado.
    Animação faz parte do jogo, então ela fica sempre ligada. */
@@ -754,6 +383,14 @@ function initAudio() {
   const mo = AC.createOscillator(); mo.type = "sawtooth"; mo.frequency.value = 38; mo.connect(ml); mo.start();
   const mw = AC.createOscillator(), mwg = AC.createGain(); mw.frequency.value = .4; mwg.gain.value = 3; mw.connect(mwg).connect(mo.frequency); mw.start();
   ruidoLoop().connect(filtro("lowpass", 300)).connect(AMB.motor.g);
+
+  AMB.zumbido = canal(.06, 0);
+  const zl = filtro("lowpass", 400); zl.connect(AMB.zumbido.g);
+  [60, 120, 180].forEach((f, i) => { const o = AC.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; const g = AC.createGain(); g.gain.value = [1, .5, .25][i]; o.connect(g).connect(zl); o.start(); });
+
+  AMB.fogo = canal(.14, 0);
+  const fb = filtro("bandpass", 900, .4); ruidoLoop().connect(fb).connect(AMB.fogo.g);
+  const fl = AC.createOscillator(), flg = AC.createGain(); fl.frequency.value = 7; flg.gain.value = .5; fl.connect(flg).connect(AMB.fogo.g.gain); fl.start();
 
   AMB.agua = canal(.5, .4);
   const al = filtro("lowpass", 220), alfo = AC.createOscillator(), alg = AC.createGain();
@@ -847,6 +484,8 @@ const SONS = {
   fimBom() { [220, 277.2, 329.6, 440].forEach((f, i) => tom(f, 4.5, { vol: .06, atk: 1.2, quando: .4 + i * .18, wet: .8 })); },
   fimRuim() { tom(98, 3, { tipo: "sawtooth", vol: .08, lp: 400, wet: .6 }); tom(103.8, 3, { tipo: "sawtooth", vol: .08, lp: 400, wet: .6 }); ruido(2, { f: 100, vol: .8, wet: .4 }); tremer(0, .5); },
   fimEstranho() { tom(660, 3.5, { vol: .06, ate: 330, atk: .6, wet: .9 }); tom(990, 3.5, { vol: .03, ate: 520, atk: .8, quando: .3, wet: .9 }); },
+  raio() { [1.1, 4.4].forEach(q => { ruido(.08, { filtro: "highpass", f: 2500, vol: .5, quando: q, wet: .3 }); ruido(2.6, { f: 90, vol: 1, quando: q + .15, atk: .05, wet: .7 }); tremer(q, .5); }); },
+  galho() { repetir(() => { ruido(.04, { filtro: "bandpass", f: 2200, q: 2, vol: .4, wet: .7 }); ruido(.05, { filtro: "bandpass", f: 1400, q: 2, vol: .3, wet: .7, quando: .07 }); }, 3700, 1.2, 4); },
   religar() { tom(40, 1.2, { tipo: "sawtooth", vol: .1, ate: 220, lp: 1200, wet: .4 }); ruido(.1, { f: 1200, vol: .4, quando: 1.2 }); },
 };
 function tocar(nome) { if (AC && !mudo && SONS[nome]) SONS[nome](); if (nome === "clique") vibrar(12); }
@@ -1175,7 +814,7 @@ function frame(now) {
   const t = (now - tCena) / 1000, v = k => ver.has(k), manha = v("manha");
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
   ctx.save();
-  if (!reduz) {
+  if (!reduz && !(cineAtual && cineAtual.fim)) {
     const z = 1 + Math.min(t, 25) * .0035;
     ctx.translate(W / 2, H * .35); ctx.scale(z, z); ctx.translate(-W / 2, -H * .35);
     tremores = tremores.filter(([a, b]) => now < b);
@@ -1189,6 +828,13 @@ function frame(now) {
   if (v("apagao")) alvo = t < 1 ? .55 : t < 1.5 ? (Math.random() < .5 ? .55 : .01) : .02;
   acesas = (v("apagao") || (v("luzVolta") && t < 1.2)) ? alvo : acesas + (alvo - acesas) * Math.min(1, .05 * kv);
 
+  const cin = cineAtual;
+  if (cin) {
+    const tc = (now - cin.t0) / 1000 * cin.vel;
+    cin.def.f(tc, cin.p, now);
+    if (cin.fim && tc >= cin.dur) { const f = cin.fim; cin.fim = null; f(); }
+    if (v("mar")) bolhasDesenho(v("bolhasMuitas"));
+  } else {
   if (v("mar")) mar(t, manha); else ceu(manha);
   if (v("cidade")) cidade();
   if (v("estrada")) estrada(t, v("rapido") ? 2.4 : (v("farois") || v("posto")) ? 0 : 1, manha);
@@ -1210,9 +856,10 @@ function frame(now) {
   if (v("lanternasTodas")) lanternas(t, "todas");
   if (v("lanternasSync")) lanternas(t, "sync");
   if (v("lanterna")) luzVermelha(W * .5, H * .62, 70, .55 + .2 * Math.sin(t * 3));
+  }
   if (v("chuva")) chuva();
   ctx.restore();
-  if (v("escuro")) escuro(now);
+  if (v("escuro") && !(cineAtual && cineAtual.fim)) escuro(now);
   if (v("farolAtras")) farolAtras(t);
   if (v("vermelho")) { ctx.fillStyle = `rgba(226,72,61,${.08 + .06 * Math.sin(t * 3)})`; ctx.fillRect(0, 0, W, H); }
   if (v("alarme")) { ctx.fillStyle = `rgba(226,40,40,${Math.sin(t * 7) > 0 ? .2 : .04})`; ctx.fillRect(0, 0, W, H); }
@@ -1226,6 +873,59 @@ montar(); setVer(["cidade", "acesa"]); requestAnimationFrame(frame);
    ============================================================ */
 let S = null, NOS = null, atual = "inicio", caminho = [], inv = [], medidor = null;
 let typing = null, tok = 0, descobertos = carregar();
+let cineAtual = null, ultimo = null;
+const ler = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+const gravar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const vis = (() => { const d = ler("pv_vis", {}); const o = {}; for (const k in FASES) o[k] = new Set(d[k] || []); return o; })();
+const salvarVis = () => { const o = {}; for (const k in vis) o[k] = [...vis[k]]; gravar("pv_vis", o); };
+const stats = Object.assign({ toques: 0, codigos: 0, segurar: 0, partidas: 0 }, ler("pv_stats", {}));
+const conqFeitas = new Set(ler("pv_conq", []));
+const totalFinais = () => Object.keys(FASES).reduce((n, k) => n + descobertos[k].size, 0);
+const totalPossivel = () => Object.keys(FASES).reduce((n, k) => n + finaisDe(k).length, 0);
+const secretosDe = k => finaisDe(k).filter(n => FASES[k].nos[n].tipo === "secreto");
+
+/* ---------- cinemática ---------- */
+const OVERLAY = new Set(["escuro", "vermelho", "alarme", "chuva", "farolAtras", "rapido", "bolhasMuitas", "manha"]);
+function cinePara(c, vista, pronto) {
+  const [nome, p = {}] = c.cine;
+  const def = CINE[nome];
+  if (!def) { cineAtual = null; pronto(); return; }
+  const dur = def.durDe ? def.durDe(p) : def.dur;
+  cineAtual = { def, p, dur, t0: performance.now(), vel: vista ? 1.8 : 1, fim: null };
+  if (reduz) { cineAtual.t0 -= dur * 1000; pronto(); return; }
+  document.body.classList.add("cine");
+  cineAtual.fim = () => { document.body.classList.remove("cine"); pronto(); };
+}
+function pularCine() {
+  if (!cineAtual || !cineAtual.fim) return;
+  cineAtual.t0 = performance.now() - cineAtual.dur * 1000 / cineAtual.vel;
+}
+$("pular").addEventListener("click", e => { e.stopPropagation(); pularCine(); });
+
+/* ---------- conquistas ---------- */
+const CONQ = [
+  ["primeiro", "Primeiro Final", "Descubra qualquer final", () => totalFinais() >= 1],
+  ["dez", "Curioso", "Descubra 10 finais", () => totalFinais() >= 10],
+  ["vinte5", "Colecionador", "Descubra 25 finais", () => totalFinais() >= 25],
+  ["todos", "Todos os Caminhos", "Descubra todos os finais do jogo", () => totalFinais() >= totalPossivel()],
+  ["fase", "Fase Completa", "Todos os finais de uma fase", () => Object.keys(FASES).some(k => descobertos[k].size >= finaisDe(k).length)],
+  ["segredo", "Lembrança", "Encontre um final secreto", () => Object.keys(FASES).some(k => secretosDe(k).some(n => descobertos[k].has(n)))],
+  ["segredos", "Memória Completa", "Encontre todos os finais secretos", () => Object.keys(FASES).every(k => secretosDe(k).every(n => descobertos[k].has(n)))],
+  ["rapido", "Dedos Rápidos", "Vença 10 desafios de tocar rápido", () => stats.toques >= 10],
+  ["frio", "Sangue Frio", "Vença 5 desafios de segurar", () => stats.segurar >= 5],
+  ["codigo", "Decifrador", "Acerte 3 códigos", () => stats.codigos >= 3],
+  ["fases", "Viajante", "Jogue todas as fases", () => Object.keys(FASES).every(k => vis[k].size > 0)],
+  ["explorador", "Explorador", "Visite 120 cenas diferentes", () => Object.values(vis).reduce((n, s) => n + s.size, 0) >= 120],
+];
+function checarConquistas() {
+  CONQ.forEach(([id, nome, , ok]) => {
+    if (!conqFeitas.has(id) && ok()) { conqFeitas.add(id); gravar("pv_conq", [...conqFeitas]); setTimeout(() => { aviso("Conquista: " + nome); tocar("item"); vibrar(60); }, 1400); }
+  });
+}
+function salvarJogo() {
+  if (S && NOS[atual] && !NOS[atual].fim) gravar("pv_save", { S, atual, caminho, inv, medidor });
+  else gravar("pv_save", null);
+}
 
 function carregar() {
   let d = {};
@@ -1293,6 +993,10 @@ function mostrar(id) {
   if (c.custo && !c.fim) gastar(c.custo);
   if (F.medidor && medidor <= 0 && id !== F.medidor.fim) { id = F.medidor.fim; c = NOS[id]; }
   atual = id;
+  const jaVista = vis[S].has(id);
+  vis[S].add(id); salvarVis(); salvarJogo();
+  document.body.classList.remove("cine");
+  if (!c.fim) ultimo = { atual: id, caminho: caminho.slice(), inv: inv.filter(x => x !== c.ganha), medidor: medidor == null ? null : medidor + (c.custo || 0) };
   if (c.ganha && !inv.includes(c.ganha)) { inv.push(c.ganha); aviso("+ " + c.ganha); tocar("item"); vibrar(40); }
   hud();
 
@@ -1300,7 +1004,9 @@ function mostrar(id) {
   $("choices").innerHTML = "";
   $("sceneNo").textContent = c.fim ? "Fim" : "Cena " + String(caminho.length + 1).padStart(2, "0");
   const fx = c.fx || {};
-  const lista = [...(fx.ver || ["cidade"])];
+  const lista = [...(fx.ver || (c.cine || cineAtual ? [] : ["cidade"]))];
+  if (!c.cine && lista.some(k => !OVERLAY.has(k))) cineAtual = null;
+  if (cineAtual) cineAtual.fim = null;
   const baixo = F.medidor && medidor < 30 && !c.fim;
   if (baixo && !lista.includes("vermelho")) lista.push("vermelho");
   setVer(lista);
@@ -1309,19 +1015,30 @@ function mostrar(id) {
   if (baixo && !(fx.sons || []).includes("coracao")) tocar("coracao");
 
   if (c.fim) {
+    const novo = !descobertos[S].has(id);
     descobertos[S].add(id); salvar(); contador();
+    stats.partidas++; gravar("pv_stats", stats);
     const trilha = caminho.map(p => "<b>" + p.escolha + "</b>").join(" → ");
     cena.innerHTML =
-      "<span class='end-tag " + c.tipo + "'>" + TAG[c.tipo] + "</span>" +
+      "<span class='end-tag " + c.tipo + "'>" + TAG[c.tipo] + (novo ? " · novo" : "") + "</span>" +
       "<div class='end-title'>" + c.titulo + "</div>" +
       "<div class='place'>" + c.hora + " · " + c.lugar + "</div>" +
       "<div class='text' id='txt'></div>";
-    typing = escrever($("txt"), c.texto, () => {
+    const meuF = tok;
+    const escreveFim = () => { if (meuF !== tok) return; typing = escrever($("txt"), c.texto, () => {
       const p = document.createElement("div"); p.className = "path";
-      p.innerHTML = "Seu caminho: " + trilha + "<br>Finais desta fase: " + descobertos[S].size + " de " + finaisDe(S).length;
+      const falta = finaisDe(S).length - descobertos[S].size;
+      const prox = Object.entries(FASES).find(([k, F]) => F.libera > totalFinais() - (novo ? 1 : 0) && F.libera <= totalFinais());
+      p.innerHTML = "Seu caminho: " + trilha + "<br>Finais desta fase: " + descobertos[S].size + " de " + finaisDe(S).length +
+        (falta ? " · faltam " + falta : " · fase completa!") + (prox ? "<br><b>Nova fase liberada: " + prox[1].titulo + "</b>" : "");
       cena.appendChild(p);
-      botoes([op("Jogar de novo", "__reiniciar"), op("Ver finais", "__finais"), op("Escolher outra fase", "__menu")]);
-    });
+      const bs = [];
+      if (ultimo) bs.push(op("Voltar à última escolha", "__voltar"));
+      bs.push(op("Jogar de novo", "__reiniciar"), op("Ver finais", "__finais"), op("Escolher outra fase", "__menu"));
+      botoes(bs);
+      checarConquistas();
+    }); };
+    if (c.cine) cinePara(c, false, escreveFim); else escreveFim();
     return;
   }
   cena.innerHTML =
@@ -1331,23 +1048,28 @@ function mostrar(id) {
     (c.dica ? "<div class='dica'>" + c.dica + "</div>" : "") +
     "<div class='hint' id='hint'>Toque no texto para pular</div>";
   const meu = tok;
-  typing = escrever($("txt"), c.texto, () => {
+  const comecaTexto = () => { if (meu !== tok) return; typing = escrever($("txt"), c.texto, () => {
     if (meu !== tok) return;
     const h = $("hint"); if (h) h.remove();
     if (c.acao) iniciarAcao(c.acao);
     else { botoes(c.escolhas); if (c.tempo) cronometro(c.tempo, () => { caminho.push({ escolha: "Hesitou" }); tocar("erro"); mostrar(c.aoAcabar); }); }
-  });
+  }); };
+  if (c.cine) cinePara(c, jaVista, comecaTexto); else comecaTexto();
 }
 
 function botoes(lista) {
   const box = $("choices"); box.innerHTML = "";
   lista.forEach((o, i) => {
     const b = document.createElement("button");
-    const falta = o.req && !inv.includes(o.req);
-    b.type = "button"; b.className = "choice"; b.id = "op-" + i; b.disabled = !!falta;
+    const faltaFinais = o.minFinais && descobertos[S].size < o.minFinais;
+    const falta = (o.req && !inv.includes(o.req)) || faltaFinais;
+    b.type = "button"; b.className = "choice" + (o.minFinais ? " lembranca" : ""); b.id = "op-" + i; b.disabled = !!falta;
+    const nova = NOS && NOS[o.ir] && !vis[S].has(o.ir) && !falta ? `<span class="novo">NOVO</span>` : "";
     const custo = o.custo && FASES[S]?.medidor ? `<span class="custo">${o.custo > 0 ? "−" : "+"}${Math.abs(o.custo)}% ${FASES[S].medidor.nome}</span>` : "";
-    const req = o.req ? `<span class="req">${falta ? "Precisa: " : "Usar: "}${o.req}</span>` : "";
-    b.innerHTML = `<span class="k">${"ABCD"[i]}</span><span class="lbl"><span>${o.t}</span>${req}</span>${custo}`;
+    const req = o.minFinais ? `<span class="req">${faltaFinais ? "Lembrança trancada · descubra " + o.minFinais + " finais desta fase (" + descobertos[S].size + "/" + o.minFinais + ")" : "Lembrança desbloqueada"}</span>`
+      : o.req ? `<span class="req">${falta ? "Precisa: " : "Usar: "}${o.req}</span>` : "";
+    const txt = faltaFinais ? "???" : o.t;
+    b.innerHTML = `<span class="k">${"ABCD"[i]}</span><span class="lbl"><span>${txt}</span>${req}</span>${custo}${nova}`;
     b.addEventListener("click", ev => { ev.stopPropagation(); escolher(o, b); });
     box.appendChild(b);
     setTimeout(() => b.classList.add("show"), reduz ? 0 : 90 * i + 30);
@@ -1359,6 +1081,11 @@ function escolher(o, el) {
   if (o.ir === "__reiniciar") return iniciarFase(S);
   if (o.ir === "__finais") return abrirFinais();
   if (o.ir === "__menu") return abrirHub();
+  if (o.ir === "__voltar") {
+    const u = ultimo; ultimo = null;
+    caminho = u.caminho; inv = u.inv; medidor = u.medidor;
+    return mostrar(u.atual);
+  }
   tok++;
   [...$("choices").querySelectorAll(".choice")].forEach(b => b.classList.add(b === el ? "picked" : "faded"));
   const tm = $("choices").querySelector(".timer"); if (tm) tm.remove();
@@ -1395,6 +1122,7 @@ function iniciarAcao(a) {
   const acabar = ok => {
     if (meu !== tok) return; tok++;
     tocar(ok ? "sucesso" : "erro");
+    if (ok) { if (a.tipo === "tocar") stats.toques++; if (a.tipo === "segurar") stats.segurar++; if (a.tipo === "codigo") stats.codigos++; gravar("pv_stats", stats); checarConquistas(); }
     caminho.push({ escolha: ok ? "Conseguiu" : "Falhou" });
     aviso(ok ? "Conseguiu!" : "Não deu…");
     setTimeout(() => mostrar(ok ? a.ok : a.falha), 600);
@@ -1472,9 +1200,11 @@ function iniciarAcao(a) {
   }
 }
 
-$("scene").addEventListener("click", () => typing && typing.skip());
+$("scene").addEventListener("click", () => { if (cineAtual && cineAtual.fim) return pularCine(); typing && typing.skip(); });
+document.addEventListener("pointerdown", e => { if (document.body.classList.contains("cine") && !e.target.closest(".top")) pularCine(); });
 document.addEventListener("keydown", e => {
   if (!$("hub").hidden || !$("drawer").hidden) return;
+  if (cineAtual && cineAtual.fim) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); pularCine(); } return; }
   if (document.activeElement && document.activeElement.classList.contains("big")) return;
   if ($("choices").querySelector(".pad")) return;
   const k = e.key.toLowerCase();
@@ -1483,24 +1213,37 @@ document.addEventListener("keydown", e => {
   else if (e.key === " " && typing) { e.preventDefault(); typing.skip(); }
 });
 
-function abrirFinais() {
-  const L = finaisDe(S);
-  $("drawerTitle").textContent = "Finais · " + FASES[S].titulo;
-  $("endGrid").innerHTML = L.map((k, i) => {
-    const f = NOS[k], ok = descobertos[S].has(k);
-    return "<div class='slot " + (ok ? "" : "locked") + "'><span class='n'>" +
-      String(i + 1).padStart(2, "0") + " · " + (ok ? TAG[f.tipo] : "Bloqueado") +
-      "</span><span class='t'>" + (ok ? f.titulo : "???") + "</span></div>";
-  }).join("");
+function desenharConquistas() {
+  $("conqs").innerHTML = CONQ.map(([id, nome, desc]) => `<div class="conq ${conqFeitas.has(id) ? "ok" : ""}"><i>${conqFeitas.has(id) ? "★" : "?"}</i><div><b>${nome}</b><br><span>${desc}</span></div></div>`).join("");
+}
+function abrirFinais(soConquistas) {
+  if (soConquistas || !S) {
+    $("drawerTitle").textContent = "Conquistas";
+    $("drawerSub").textContent = conqFeitas.size + " de " + CONQ.length + " conquistas · " + totalFinais() + " de " + totalPossivel() + " finais";
+    $("endGrid").innerHTML = "";
+  } else {
+    const L = finaisDe(S);
+    $("drawerTitle").textContent = "Finais · " + FASES[S].titulo;
+    $("drawerSub").textContent = "Cada escolha leva a um lugar diferente. Finais secretos aparecem como lembranças depois que você conhece a história.";
+    $("endGrid").innerHTML = L.map((k, i) => {
+      const f = NOS[k], ok = descobertos[S].has(k), sec = f.tipo === "secreto";
+      return "<div class='slot " + (ok ? "" : "locked") + "'><span class='n'>" +
+        String(i + 1).padStart(2, "0") + " · " + (ok ? TAG[f.tipo] : sec ? "Secreto" : "Bloqueado") +
+        "</span><span class='t" + (sec && ok ? " secreto" : "") + "'>" + (ok ? f.titulo : "???") + "</span></div>";
+    }).join("");
+  }
+  desenharConquistas();
   $("drawer").hidden = false; $("closeEndings").focus();
 }
-$("openEndings").addEventListener("click", abrirFinais);
+$("btnConq").addEventListener("click", () => abrirFinais(true));
+$("openEndings").addEventListener("click", () => abrirFinais(false));
 $("closeEndings").addEventListener("click", () => { $("drawer").hidden = true; });
 
 /* ---------- menu de fases ---------- */
 let pendente = null;
 function abrirHub() {
   tok++; pararTudo(); if (typing) typing.stop();
+  cineAtual = null; document.body.classList.remove("cine"); salvarJogo();
   $("choices").innerHTML = ""; $("scene").innerHTML = ""; $("hud").innerHTML = "";
   corDestaque("#f2a33a");
   setVer(["cidade", "acesa"]); setAmb({ drone: .5 });
@@ -1510,26 +1253,37 @@ function abrirHub() {
     html += `<button class="story continuar" type="button" id="fase-continuar" style="--c:${F.cor}">
       <span class="g"><span>Continuar</span><span>${F.genero}</span></span><h3>${F.titulo}</h3></button>`;
   }
-  html += Object.entries(FASES).map(([k, F]) => `
+  const tf = totalFinais();
+  $("progTotal").textContent = tf + " de " + totalPossivel() + " finais · " + conqFeitas.size + "/" + CONQ.length + " conquistas";
+  html += Object.entries(FASES).map(([k, F]) => {
+    const tranca = tf < (F.libera || 0), feitos = descobertos[k].size, tot = finaisDe(k).length;
+    if (tranca) return `
+    <button class="story trancada" type="button" id="fase-${k}" style="--c:${F.cor}" disabled>
+      <span class="g"><span>${F.genero}</span><span>Trancada</span></span>
+      <h3>${F.titulo}</h3>
+      <span class="mec">Descubra ${F.libera} finais para liberar · faltam ${F.libera - tf}</span>
+    </button>`;
+    return `
     <button class="story" type="button" id="fase-${k}" data-k="${k}" style="--c:${F.cor}">
-      <span class="g"><span>${F.genero}</span><span>${descobertos[k].size}/${finaisDe(k).length} finais</span></span>
+      <span class="g"><span>${F.genero}${vis[k].size ? "" : " · nova"}</span><span>${feitos}/${tot} finais</span></span>
       <h3>${F.titulo}</h3>
       <span class="gancho">${F.gancho}</span>
+      <span class="barra"><i style="width:${tot ? feitos / tot * 100 : 0}%"></i></span>
       <span class="mec">${F.mec}</span>
-    </button>`).join("");
+    </button>`; }).join("");
   $("lista").innerHTML = html;
   $("lista").querySelectorAll("[data-k]").forEach(b => b.addEventListener("click", () => iniciarFase(b.dataset.k)));
   const c = $("fase-continuar");
   if (c) c.addEventListener("click", () => { const p = pendente; pendente = null; iniciarFase(p.S, p); });
-  $("hub").hidden = false; $("drawer").hidden = true;
+  $("hub").hidden = false; $("drawer").hidden = true; document.body.classList.add("no-hub");
 }
 function iniciarFase(k, salvo) {
   try { initAudio(); } catch (e) {}
   S = k; const F = FASES[k]; NOS = F.nos;
   corDestaque(F.cor);
-  caminho = salvo?.caminho || []; inv = salvo?.inv || [];
+  caminho = salvo?.caminho || []; inv = salvo?.inv || []; ultimo = null; cineAtual = null;
   medidor = F.medidor ? (salvo?.medidor ?? F.medidor.ini) : null;
-  $("hub").hidden = true; $("drawer").hidden = true;
+  $("hub").hidden = true; $("drawer").hidden = true; document.body.classList.remove("no-hub");
   contador();
   mostrar(salvo?.atual && NOS[salvo.atual] ? salvo.atual : "inicio");
 }
@@ -1537,12 +1291,14 @@ $("btnMenu").addEventListener("click", () => { if (S && NOS[atual] && !NOS[atual
 
 /* ---------- início ---------- */
 function start(data) {
+  if (!data || !data.S) data = ler("pv_save", null);
   if (data && data.S && FASES[data.S] && FASES[data.S].nos[data.atual]) pendente = data;
   abrirHub();
 }
 /* ganchos do app Android */
 window.voltarAndroid = () => {
   if (!$("drawer").hidden) { $("drawer").hidden = true; return true; }
+  if (cineAtual && cineAtual.fim) { pularCine(); return true; }
   if ($("hub").hidden) { $("btnMenu").click(); return true; }
   return false;
 };
