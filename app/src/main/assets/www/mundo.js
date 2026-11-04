@@ -219,7 +219,7 @@ function abrirMapa() {
   const mapa = MAPAS[SOB.modo];
   const itens = Object.entries(mapa).filter(([id]) => id !== SOB.pos).map(([id, m]) => {
     const l = M().locais[id], d = diasAte(id), tipo = m.tipo, casa = SOB.casas[id];
-    const estado = casa ? "Sua casa" : tipo && TIPOS_LUGAR[tipo].conserto ? (consertado(id) ? "Consertado" : "Precisa de conserto") : tipo === "terreno" ? "Terreno livre" : tipo === "mercado" ? "Mercado" : "Abrigo abandonado";
+    const estado = casa ? "Sua casa" : tipo && TIPOS_LUGAR[tipo].conserto ? (consertado(id) ? "Consertado" : "Precisa de conserto") : tipo === "terreno" ? "Terreno livre" : tipo === "mercado" ? "Mercado" : tipo === "saque" ? (l.abrigo ? "Saque · dá pra morar" : "Saque") : "Abrigo abandonado";
     return { id, d, l, estado, casa };
   }).sort((a, b) => a.d - b.d);
   sobTexto("Para onde você vai? Viagens longas passam dias na estrada, com fome e perigo.", false);
@@ -438,7 +438,7 @@ function desenhaFundoAtual(t, p) { if (L().especialLugar) return desenhaEspecial
 function desenhaMapa(t) {
   const ch = SOB.modo === "cherno", mapa = MAPAS[SOB.modo];
   ctx.fillStyle = ch ? "#1a1c14" : "#16181a"; ctx.fillRect(0, 0, W, H);
-  const mx = W * .06, my = H * .08, mw = W * .88, mh = H * .52;
+  const mx = W * .04, my = H * .1, mw = W * .92, mh = H * .54;
   const P = m => [mx + m.x * mw, my + m.y * mh];
   ctx.fillStyle = ch ? "#24271c" : "#1f2422"; ctx.fillRect(mx, my, mw, mh);
   ctx.strokeStyle = "rgba(255,255,255,.04)"; for (let i = 1; i < 8; i++) { ctx.beginPath(); ctx.moveTo(mx + mw * i / 8, my); ctx.lineTo(mx + mw * i / 8, my + mh); ctx.moveTo(mx, my + mh * i / 8); ctx.lineTo(mx + mw, my + mh * i / 8); ctx.stroke(); }
@@ -450,7 +450,7 @@ function desenhaMapa(t) {
   ctx.setLineDash([]);
   Object.entries(mapa).forEach(([id, m]) => {
     const [x, y] = P(m), l = M().locais[id], casa = SOB.casas[id], tipo = m.tipo;
-    const cor = casa ? "#9bd86b" : tipo === "armas" ? "#e2483d" : tipo === "hospital" ? "#f0f0f0" : tipo === "agro" ? "#e3b46b" : tipo === "mercado" ? "#4fcfd9" : tipo === "terreno" ? "#b8a880" : "#9aa0b0";
+    const cor = casa ? "#9bd86b" : tipo === "armas" ? "#e2483d" : tipo === "hospital" ? "#f0f0f0" : tipo === "agro" ? "#e3b46b" : tipo === "mercado" ? "#4fcfd9" : tipo === "terreno" ? "#b8a880" : tipo === "saque" ? "#c890e0" : "#9aa0b0";
     ctx.fillStyle = cor; ctx.beginPath(); ctx.arc(x, y, casa ? 7 : 5, 0, 7); ctx.fill();
     if (tipo && TIPOS_LUGAR[tipo].conserto && !consertado(id)) { ctx.strokeStyle = "#e2483d"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x - 4, y - 4); ctx.lineTo(x + 4, y + 4); ctx.stroke(); }
     ctx.fillStyle = "rgba(233,228,216,.85)"; ctx.font = `600 ${Math.max(9, H * .013)}px "JetBrains Mono", monospace`;
