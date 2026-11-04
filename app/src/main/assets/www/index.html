@@ -135,6 +135,8 @@ body { background: var(--night); color: var(--ink); font-family: var(--f-body); 
 .big span { position: relative; }
 .big:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .big.bate { animation: bate .12s; }
+.big.perigo { border-color: var(--signal); color: var(--signal); background: rgba(226,72,61,.18); }
+.big.seguro { border-color: var(--ink-dim); }
 @keyframes bate { 50% { transform: scale(.97); } }
 .slots { display: flex; gap: 8px; justify-content: center; }
 .slots b {
@@ -332,6 +334,8 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
 
 <script src="historias.js"></script>
 <script src="cinema.js"></script>
+<script src="cinema2.js"></script>
+<script src="historias2.js"></script>
 <script>
 const TAG = { bom: "Final bom", ruim: "Final ruim", estranho: "Final estranho", secreto: "Final secreto" };
 const $ = id => document.getElementById(id);
@@ -486,6 +490,14 @@ const SONS = {
   fimEstranho() { tom(660, 3.5, { vol: .06, ate: 330, atk: .6, wet: .9 }); tom(990, 3.5, { vol: .03, ate: 520, atk: .8, quando: .3, wet: .9 }); },
   raio() { [1.1, 4.4].forEach(q => { ruido(.08, { filtro: "highpass", f: 2500, vol: .5, quando: q, wet: .3 }); ruido(2.6, { f: 90, vol: 1, quando: q + .15, atk: .05, wet: .7 }); tremer(q, .5); }); },
   galho() { repetir(() => { ruido(.04, { filtro: "bandpass", f: 2200, q: 2, vol: .4, wet: .7 }); ruido(.05, { filtro: "bandpass", f: 1400, q: 2, vol: .3, wet: .7, quando: .07 }); }, 3700, 1.2, 4); },
+  susto() { ruido(.7, { filtro: "highpass", f: 1200, vol: .9, wet: .5 }); tom(880, .7, { tipo: "sawtooth", vol: .16, ate: 1500, lp: 4000, wet: .4 }); tom(932, .7, { tipo: "sawtooth", vol: .16, ate: 1600, lp: 4000, wet: .4 }); ruido(.6, { f: 110, vol: 1, wet: .4 }); },
+  sussurro() { ruido(1.6, { filtro: "bandpass", f: 2400, q: 4, vol: .14, atk: .4, wet: .9, ate: 3800 }); ruido(1.2, { filtro: "bandpass", f: 1700, q: 5, vol: .09, atk: .3, wet: .9, quando: .5 }); },
+  aviso() { tom(70, .8, { tipo: "sawtooth", vol: .2, ate: 150, lp: 700, wet: .5, atk: .15 }); ruido(.6, { filtro: "bandpass", f: 500, q: 2, vol: .2, atk: .2, wet: .6 }); },
+  respira() { ruido(1, { filtro: "bandpass", f: 650, q: 1.3, vol: .3, atk: .35, wet: .5 }); },
+  passoLeve() { ruido(.04, { f: 300, vol: .22, wet: .3 }); },
+  carrinho() { repetir(() => tom(1900 + Math.random() * 300, .12, { tipo: "triangle", vol: .025, ate: 1600, wet: .6 }), 900, .3); },
+  cantarola() { const nt = [392, 440, 392, 349, 330, 349, 392]; repetir(() => nt.forEach((f, i) => tom(f, .5, { vol: .035, quando: i * .55, atk: .1, wet: .9 })), 6500, .8); },
+  arranhar() { repetir(() => ruido(.5, { filtro: "bandpass", f: 3000, q: 3, vol: .09, ate: 5200, atk: .05, wet: .4 }), 2300, .5); },
   religar() { tom(40, 1.2, { tipo: "sawtooth", vol: .1, ate: 220, lp: 1200, wet: .4 }); ruido(.1, { f: 1200, vol: .4, quando: 1.2 }); },
 };
 function tocar(nome) { if (AC && !mudo && SONS[nome]) SONS[nome](); if (nome === "clique") vibrar(12); }
@@ -863,6 +875,9 @@ function frame(now) {
   if (v("farolAtras")) farolAtras(t);
   if (v("vermelho")) { ctx.fillStyle = `rgba(226,72,61,${.08 + .06 * Math.sin(t * 3)})`; ctx.fillRect(0, 0, W, H); }
   if (v("alarme")) { ctx.fillStyle = `rgba(226,40,40,${Math.sin(t * 7) > 0 ? .2 : .04})`; ctx.fillRect(0, 0, W, H); }
+  desenhaAmeaca(now);
+  desenhaEvento(now, !!(S && FASES[S].terror && $("hub").hidden && $("drawer").hidden && !ameaca && !(cineAtual && cineAtual.fim) && !reduz));
+  desenhaSusto(now);
   requestAnimationFrame(frame);
 }
 let rzT; addEventListener("resize", () => { clearTimeout(rzT); rzT = setTimeout(montar, 120); });
@@ -886,12 +901,15 @@ const secretosDe = k => finaisDe(k).filter(n => FASES[k].nos[n].tipo === "secret
 
 /* ---------- cinemática ---------- */
 const OVERLAY = new Set(["escuro", "vermelho", "alarme", "chuva", "farolAtras", "rapido", "bolhasMuitas", "manha"]);
+function dispararSusto() { if (mudo || reduz) return; susto = performance.now(); tocar("susto"); vibrar(350); tremer(0, .4); }
 function cinePara(c, vista, pronto) {
   const [nome, p = {}] = c.cine;
   const def = CINE[nome];
   if (!def) { cineAtual = null; pronto(); return; }
+  const chave = nome + JSON.stringify(p);
+  if (cineAtual && cineAtual.chave === chave) { pronto(); return; }
   const dur = def.durDe ? def.durDe(p) : def.dur;
-  cineAtual = { def, p, dur, t0: performance.now(), vel: vista ? 1.8 : 1, fim: null };
+  cineAtual = { def, p, dur, chave, t0: performance.now(), vel: vista ? 1.8 : 1, fim: null };
   if (reduz) { cineAtual.t0 -= dur * 1000; pronto(); return; }
   document.body.classList.add("cine");
   cineAtual.fim = () => { document.body.classList.remove("cine"); pronto(); };
@@ -914,6 +932,8 @@ const CONQ = [
   ["rapido", "Dedos Rápidos", "Vença 10 desafios de tocar rápido", () => stats.toques >= 10],
   ["frio", "Sangue Frio", "Vença 5 desafios de segurar", () => stats.segurar >= 5],
   ["codigo", "Decifrador", "Acerte 3 códigos", () => stats.codigos >= 3],
+  ["invisivel", "Invisível", "Escape de monstros 8 vezes sem ser visto", () => (stats.furtivo || 0) >= 8],
+  ["sobrevivente", "Sobrevivente", "Descubra um final bom em todas as fases", () => Object.keys(FASES).every(k => [...descobertos[k]].some(n => FASES[k].nos[n] && FASES[k].nos[n].tipo === "bom"))],
   ["fases", "Viajante", "Jogue todas as fases", () => Object.keys(FASES).every(k => vis[k].size > 0)],
   ["explorador", "Explorador", "Visite 120 cenas diferentes", () => Object.values(vis).reduce((n, s) => n + s.size, 0) >= 120],
 ];
@@ -987,7 +1007,7 @@ function escrever(el, html, pronto) {
 }
 
 function mostrar(id) {
-  tok++; pararTudo();
+  tok++; pararTudo(); ameaca = null;
   const F = FASES[S];
   let c = NOS[id];
   if (c.custo && !c.fim) gastar(c.custo);
@@ -1048,7 +1068,7 @@ function mostrar(id) {
     (c.dica ? "<div class='dica'>" + c.dica + "</div>" : "") +
     "<div class='hint' id='hint'>Toque no texto para pular</div>";
   const meu = tok;
-  const comecaTexto = () => { if (meu !== tok) return; typing = escrever($("txt"), c.texto, () => {
+  const comecaTexto = () => { if (meu !== tok) return; if (fx.susto) depois(500 + Math.random() * 900, () => { if (meu === tok) dispararSusto(); }); typing = escrever($("txt"), c.texto, () => {
     if (meu !== tok) return;
     const h = $("hint"); if (h) h.remove();
     if (c.acao) iniciarAcao(c.acao);
@@ -1107,7 +1127,7 @@ function cronometro(seg, aoFim, onTick) {
     bar.classList.toggle("urgente", rest < 3);
     const s = Math.ceil(rest); if (s !== ultimo) { ultimo = s; if (rest < 4) tocar("tique"); }
     if (onTick) onTick(now);
-    if (rest <= 0) { tok++; aoFim(); return; }
+    if (rest <= 0) { aoFim(); if (meu === tok) tok++; return; }
     requestAnimationFrame(loop);
   })(t0);
 }
@@ -1120,9 +1140,9 @@ function iniciarAcao(a) {
   wrap.innerHTML = `<div class="acao-l">${a.rotulo}</div>`;
   box.appendChild(wrap);
   const acabar = ok => {
-    if (meu !== tok) return; tok++;
+    if (meu !== tok) return; tok++; ameaca = null;
     tocar(ok ? "sucesso" : "erro");
-    if (ok) { if (a.tipo === "tocar") stats.toques++; if (a.tipo === "segurar") stats.segurar++; if (a.tipo === "codigo") stats.codigos++; gravar("pv_stats", stats); checarConquistas(); }
+    if (ok) { if (a.tipo === "esconder" || a.tipo === "avancar") stats.furtivo = (stats.furtivo || 0) + 1; if (a.tipo === "tocar") stats.toques++; if (a.tipo === "segurar") stats.segurar++; if (a.tipo === "codigo") stats.codigos++; gravar("pv_stats", stats); checarConquistas(); }
     caminho.push({ escolha: ok ? "Conseguiu" : "Falhou" });
     aviso(ok ? "Conseguiu!" : "Não deu…");
     setTimeout(() => mostrar(ok ? a.ok : a.falha), 600);
@@ -1167,6 +1187,62 @@ function iniciarAcao(a) {
     b.focus({ preventScroll: true });
   }
 
+  if (a.tipo === "esconder" || a.tipo === "avancar") {
+    const b = document.createElement("button"); b.type = "button"; b.className = "big"; b.id = "acao-" + a.tipo;
+    b.innerHTML = `<i class="fill"></i><span></span>`; wrap.appendChild(b);
+    const info = document.createElement("div"); info.className = "hint"; info.style.textAlign = "center"; wrap.appendChild(info);
+    ameaca = { tipo: a.tipo, estado: "anda", ate: performance.now() + 1600 + Math.random() * 1200, passo: Math.random() * 6, escondido: false, prog: 0, andando: 0, touca: !!a.touca, quatro: !!a.quatro, pes: !!a.pes };
+    const ciclo = now => {
+      const A = ameaca; if (!A || now < A.ate) return;
+      if (A.estado === "anda") { A.estado = "aviso"; A.ate = now + (a.aviso || 750); tocar("aviso"); vibrar(70); }
+      else if (A.estado === "aviso") { A.estado = "olha"; A.ate = now + 1100 + Math.random() * 900; tocar("respira"); }
+      else { A.estado = "anda"; A.ate = now + 1200 + Math.random() * 2000; }
+    };
+    const pego = now => { susto = now; tocar("susto"); vibrar(400); tremer(0, .4); acabar(false); };
+    b.addEventListener("contextmenu", e => e.preventDefault());
+    if (a.tipo === "esconder") {
+      let seg = false, folego = 1, bloqueio = 0, ult = performance.now();
+      const on = e => { e.preventDefault(); if (performance.now() > bloqueio) seg = true; try { b.setPointerCapture(e.pointerId); } catch (_) {} };
+      const off = () => { seg = false; };
+      b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); b.addEventListener("lostpointercapture", off);
+      b.addEventListener("keydown", e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); if (performance.now() > bloqueio) seg = true; } });
+      b.addEventListener("keyup", e => { if (e.key === " " || e.key === "Enter") seg = false; });
+      info.textContent = "Segure quando ele for olhar. Solte para recuperar o fôlego.";
+      cronometro(a.dur, () => acabar(true), now => {
+        if (!ameaca) return;
+        const dt = Math.min(.1, (now - ult) / 1000); ult = now; ciclo(now);
+        if (ameaca.estado === "anda") ameaca.passo += dt;
+        if (seg) folego -= dt / (a.folego || 3.2); else folego = Math.min(1, folego + dt / 2.2);
+        if (seg && folego <= 0) { seg = false; folego = 0; bloqueio = now + 900; tocar("respira"); vibrar(150); }
+        ameaca.escondido = seg;
+        if (ameaca.estado === "olha" && !seg) return pego(now);
+        b.firstChild.style.width = Math.max(0, folego) * 100 + "%";
+        b.lastChild.textContent = seg ? (folego < .3 ? "Sem ar!" : "Escondido") : now < bloqueio ? "Sem fôlego…" : ameaca.estado === "aviso" ? "Esconda-se!" : "Segure";
+        b.classList.toggle("perigo", ameaca.estado !== "anda" && !seg); b.classList.toggle("seguro", seg);
+      });
+    } else {
+      let n = 0;
+      const andar = e => {
+        if (e) e.preventDefault(); if (meu !== tok || !ameaca) return;
+        const now = performance.now();
+        if (ameaca.estado === "olha") return pego(now);
+        n++; ameaca.prog = n / a.n; ameaca.andando = now + 260; tocar("passoLeve");
+        b.firstChild.style.width = ameaca.prog * 100 + "%";
+        if (n >= a.n) acabar(true);
+      };
+      b.addEventListener("pointerdown", andar);
+      b.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) andar(e); });
+      b.addEventListener("click", e => e.preventDefault());
+      info.textContent = "Toque para andar. Quando ele virar, pare de tocar.";
+      cronometro(a.limite || 30, () => acabar(false), now => {
+        if (!ameaca) return; ciclo(now);
+        b.lastChild.textContent = ameaca.estado === "olha" ? "PARE!" : ameaca.estado === "aviso" ? "Cuidado…" : "Avançar · " + n + " / " + a.n;
+        b.classList.toggle("perigo", ameaca.estado !== "anda");
+      });
+    }
+    b.focus({ preventScroll: true });
+  }
+
   if (a.tipo === "codigo") {
     let dig = "", tent = a.tentativas;
     const slots = document.createElement("div"); slots.className = "slots";
@@ -1206,6 +1282,7 @@ document.addEventListener("keydown", e => {
   if (!$("hub").hidden || !$("drawer").hidden) return;
   if (cineAtual && cineAtual.fim) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); pularCine(); } return; }
   if (document.activeElement && document.activeElement.classList.contains("big")) return;
+  if (ameaca) return;
   if ($("choices").querySelector(".pad")) return;
   const k = e.key.toLowerCase();
   const i = "abcd".indexOf(k) >= 0 ? "abcd".indexOf(k) : "1234".indexOf(e.key);
@@ -1243,7 +1320,7 @@ $("closeEndings").addEventListener("click", () => { $("drawer").hidden = true; }
 let pendente = null;
 function abrirHub() {
   tok++; pararTudo(); if (typing) typing.stop();
-  cineAtual = null; document.body.classList.remove("cine"); salvarJogo();
+  cineAtual = null; ameaca = null; document.body.classList.remove("cine"); salvarJogo();
   $("choices").innerHTML = ""; $("scene").innerHTML = ""; $("hud").innerHTML = "";
   corDestaque("#f2a33a");
   setVer(["cidade", "acesa"]); setAmb({ drone: .5 });
