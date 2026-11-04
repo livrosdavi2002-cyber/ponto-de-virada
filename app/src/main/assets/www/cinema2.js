@@ -364,7 +364,7 @@ function desenhaAmeaca(now) {
       return;
     }
     if (olhando) { const g = ctx.createLinearGradient(x, chao - H * .3, W / 2, H); g.addColorStop(0, "rgba(255,235,210,.3)"); g.addColorStop(1, "rgba(255,235,210,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 6, chao - H * .32); ctx.lineTo(x + 6, chao - H * .32); ctx.lineTo(W * .9, H); ctx.lineTo(W * .1, H); ctx.fill(); }
-    monstro(x, chao, H * .42, { fase: a.passo * 2, anda: a.estado === "anda" ? .6 : .05, dir: olhando ? -1 : dir, olhos: olhando ? 1 : aviso ? .5 + .5 * Math.sin(t * 30) : .25, touca: a.touca, cabeca: olhando ? 0 : .5, quatro: a.quatro, cor: a.cor, aro: a.aro, olhosRgb: a.olhosRgb });
+    (a.zumbi ? zumbi : monstro)(x, chao, H * (a.zumbi ? .3 : .42), { fase: a.passo * 2, anda: a.estado === "anda" ? .6 : .05, dir: olhando ? -1 : dir, olhos: olhando ? 1 : aviso ? .5 + .5 * Math.sin(t * 30) : .25, touca: a.touca, cabeca: olhando ? 0 : .5, quatro: a.quatro, cor: a.cor, aro: a.aro, olhosRgb: a.olhosRgb });
     if (a.escondido) frestas(.85);
     if (olhando && !a.escondido) { ctx.fillStyle = "rgba(226,72,61,.25)"; ctx.fillRect(0, 0, W, H); }
   }

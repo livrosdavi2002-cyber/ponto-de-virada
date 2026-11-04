@@ -227,6 +227,68 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
 .conq i { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-style: normal; border: 1px solid var(--line); color: var(--line); font-family: var(--f-display); font-weight: 800; }
 .conq.ok i { border-color: #ffd24d; color: #ffd24d; }
 .conq:not(.ok) b { color: var(--ink-dim); }
+/* ---------- modo sobrevivência ---------- */
+body.modo-sob .app { visibility: hidden; }
+.sob { background: linear-gradient(to bottom, transparent 0%, transparent 30%, rgba(11,14,20,.82) 52%, var(--night) 75%); pointer-events: none; }
+.sob .sob-in { pointer-events: auto; width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
+.sob-barra { pointer-events: auto; position: fixed; top: calc(var(--st) + 12px); left: max(16px, var(--sl)); right: max(16px, var(--sr)); display: flex; justify-content: space-between; align-items: center; font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
+.sob-barra button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink-dim); background: rgba(11,14,20,.6); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+.sob-modo { color: #e2483d; }
+.ic { width: 16px; height: 16px; flex: none; }
+.sob-hud { display: grid; gap: 7px; }
+.sb-topo { display: flex; align-items: baseline; gap: 10px; }
+.sb-dia { font-family: var(--f-display); font-weight: 800; font-size: 40px; line-height: .9; text-transform: uppercase; color: #e2483d; text-shadow: 0 0 22px rgba(226,72,61,.45); }
+.sb-hora { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); flex: 1; }
+.sb-en { display: flex; gap: 3px; }
+.sb-en i { color: var(--line); display: grid; transition: color .3s, transform .3s; }
+.sb-en i.on { color: #ffd24d; filter: drop-shadow(0 0 4px rgba(255,210,77,.6)); }
+.sb-en .ic { width: 18px; height: 18px; }
+.sb-barra { display: grid; grid-template-columns: 92px 1fr 56px; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; color: var(--ink); }
+.sb-l { display: flex; gap: 6px; align-items: center; text-transform: uppercase; color: var(--ink-dim); }
+.sb-b { height: 8px; border-radius: 4px; background: rgba(42,49,64,.8); overflow: hidden; }
+.sb-b i { display: block; height: 100%; border-radius: 4px; transition: width .7s cubic-bezier(.2,.8,.2,1); }
+.sb-v { text-align: right; }
+.sb-barra.baixo .sb-v, .sb-barra.baixo .sb-l { color: #e2483d; }
+.sb-barra.baixo .sb-b i { animation: blink 1s infinite; }
+.sb-inv { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.sb-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; background: rgba(11,14,20,.65); font-family: var(--f-mono); font-size: 11px; color: var(--ink); }
+.sb-chip small { color: var(--ink-dim); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.sb-chip .ic { width: 13px; height: 13px; color: var(--ink-dim); }
+.sob-texto { font-size: 19px; line-height: 1.42; text-shadow: 0 1px 12px var(--night); opacity: 0; transform: translateY(8px); transition: opacity .45s, transform .45s; }
+.sob-texto.in { opacity: 1; transform: none; }
+.sob-texto em { color: #ffd24d; font-style: italic; }
+.sob-texto .msg { font-family: var(--f-mono); font-size: .78em; color: var(--signal); }
+.sb-novo-dia { display: block; margin-top: 8px; font-family: var(--f-display); font-weight: 800; font-size: 30px; letter-spacing: .04em; text-transform: uppercase; color: #ffd24d; }
+.sob-acoes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 7px; }
+.sb-acao { grid-column: span 3; display: flex; align-items: center; gap: 9px; text-align: left; padding: 9px 11px; border-radius: 14px; border: 1px solid var(--line); background: rgba(20,25,36,.9); color: var(--ink); font-family: var(--f-body); cursor: pointer; opacity: 0; transform: translateY(8px); transition: opacity .3s, transform .3s, border-color .2s, background .2s; min-height: 52px; }
+.sb-acao.mini { grid-column: span 2; min-height: 42px; padding: 6px 8px; gap: 6px; }
+.sb-acao.mini b { font-size: 15px; } .sb-acao.mini .ic { width: 17px; height: 17px; }
+.sb-acao.show { opacity: 1; transform: none; }
+.sb-acao .ic { width: 22px; height: 22px; color: #ffd24d; }
+.sb-acao .sb-at { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.sb-acao b { font-family: var(--f-display); font-weight: 800; font-size: 19px; letter-spacing: .02em; text-transform: uppercase; line-height: 1; font-style: normal; }
+.sb-acao small { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .04em; color: var(--ink-dim); line-height: 1.35; }
+.sb-acao .sb-custo { flex: none; font-family: var(--f-mono); font-size: 11px; color: #ffd24d; }
+.sb-acao:active:not(:disabled) { transform: scale(.97); background: rgba(255,210,77,.12); }
+.sb-acao:disabled { opacity: .35 !important; }
+.sb-acao.destaque { grid-column: 1 / -1 !important; border-color: #ffd24d; background: rgba(255,210,77,.1); }
+.sb-acao.local { grid-column: 1 / -1; }
+.sob-texto { min-height: 2.8em; }
+.sob-acoes .sb-big, .sob-acoes .timer { grid-column: 1 / -1; }
+.sb-flutua { position: fixed; z-index: 6; top: 40%; font-family: var(--f-display); font-weight: 800; font-size: 26px; letter-spacing: .03em; text-transform: uppercase; pointer-events: none; animation: flutua 1.7s ease-out forwards; text-shadow: 0 2px 12px #000; }
+.sb-flutua.bom { color: #9bd86b; } .sb-flutua.ruim { color: #e2483d; }
+@keyframes flutua { 0% { opacity: 0; transform: translateY(10px) scale(.9); } 15% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-70px); } }
+.sb-titulo, .sb-morte { display: grid; gap: 2px; }
+.sb-titulo span, .sb-morte span { font-family: var(--f-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-dim); }
+.sb-titulo b, .sb-morte b { font-family: var(--f-display); font-weight: 800; font-size: clamp(54px, 17vw, 90px); line-height: .85; text-transform: uppercase; color: #e2483d; text-shadow: 0 0 30px rgba(226,72,61,.45); }
+.sb-titulo small, .sb-morte small { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
+@media (max-height: 720px) { .sob-texto { font-size: 16.5px; } .sb-acao { min-height: 50px; padding: 8px 10px; } .sb-acao b { font-size: 16px; } .sb-dia { font-size: 32px; } .sb-acao small { font-size: 9px; } }
+.story.sob-card { border: 1px solid #e2483d; background: linear-gradient(135deg, rgba(60,14,12,.9), rgba(20,25,36,.92)); position: relative; overflow: hidden; }
+.story.sob-card h3 { color: #e2483d; font-size: 40px; }
+.story.sob-card .tag { position: absolute; top: 14px; right: 14px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--night); background: #ffd24d; border-radius: 999px; padding: 4px 9px; font-weight: 600; }
+.premium-tag { align-self: flex-start; font-family: var(--f-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--night); background: #ffd24d; border-radius: 999px; padding: 5px 11px; font-weight: 600; }
+.premium-nota { font-family: var(--f-mono); font-size: 11px !important; letter-spacing: .04em; line-height: 1.5; }
+.btn.sec { background: transparent; color: var(--ink-dim); border: 1px solid var(--line); }
 .drawer h3 { font-family: var(--f-display); font-weight: 800; font-size: 28px; margin: 8px 0 0; text-transform: uppercase; color: var(--ink); }
 .end-title { font-family: var(--f-display); font-weight: 800; font-size: clamp(46px, 14vw, 78px); line-height: .9; text-transform: uppercase; text-wrap: balance; }
 .path { margin-top: 16px; font-family: var(--f-mono); font-size: 11px; color: var(--ink-dim); line-height: 1.7; letter-spacing: .04em; }
@@ -334,6 +396,26 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
     <div class="progresso"><span id="progTotal"></span><span class="grp2"><button id="btnVozHub" type="button">Narração: ligada</button><button id="btnTrocaVoz" type="button" hidden>Trocar voz</button><button id="btnConq" type="button">Conquistas</button></span></div>
     <div class="liberar" id="liberar" hidden></div>
     <div class="lista" id="lista"></div>
+  </div>
+</div>
+
+<div class="overlay sob" id="sob" hidden>
+  <div class="sob-in">
+    <div class="sob-barra"><button id="btnSobMenu" type="button">Menu</button><span class="sob-modo">Sobrevivência</span></div>
+    <div class="sob-hud" id="sobHud"></div>
+    <div class="sob-texto" id="sobTexto"></div>
+    <div class="sob-acoes" id="sobAcoes"></div>
+  </div>
+</div>
+
+<div class="overlay drawer" id="premium" hidden>
+  <div class="inner" style="margin-top:auto">
+    <span class="premium-tag">Premium</span>
+    <h2>Modo Sobrevivência</h2>
+    <p>Um apocalipse zumbi que não acaba. Escolha cidade, floresta, fazenda ou presídio, administre saúde, fome e energia, fortifique sua base, decida quem entra e negocie com mercadores. Seu progresso fica salvo até você morrer.</p>
+    <p class="premium-nota">A compra pela Play Store será ativada quando o jogo for publicado. Por enquanto, este botão libera o modo para teste.</p>
+    <button class="btn" id="btnPremiumTeste" type="button">Liberar (modo de teste)</button>
+    <button class="btn sec" id="btnPremiumFechar" type="button">Agora não</button>
   </div>
 </div>
 
@@ -516,6 +598,7 @@ const SONS = {
   carrinho() { repetir(() => tom(1900 + Math.random() * 300, .12, { tipo: "triangle", vol: .025, ate: 1600, wet: .6 }), 900, .3); },
   cantarola() { const nt = [392, 440, 392, 349, 330, 349, 392]; repetir(() => nt.forEach((f, i) => tom(f, .5, { vol: .035, quando: i * .55, atk: .1, wet: .9 })), 6500, .8); },
   arranhar() { repetir(() => ruido(.5, { filtro: "bandpass", f: 3000, q: 3, vol: .09, ate: 5200, atk: .05, wet: .4 }), 2300, .5); },
+  gemido() { tom(110, 1.4, { tipo: "sawtooth", vol: .1, ate: 70, lp: 500, atk: .2, wet: .6 }); tom(117, 1.2, { tipo: "sawtooth", vol: .06, ate: 80, lp: 400, atk: .3, quando: .1, wet: .6 }); ruido(1, { filtro: "bandpass", f: 400, q: 2, vol: .15, atk: .2, wet: .5 }); },
   religar() { tom(40, 1.2, { tipo: "sawtooth", vol: .1, ate: 220, lp: 1200, wet: .4 }); ruido(.1, { f: 1200, vol: .4, quando: 1.2 }); },
 };
 function tocar(nome) { if (AC && !mudo && SONS[nome]) SONS[nome](); if (nome === "clique") vibrar(12); }
@@ -1432,6 +1515,7 @@ $("closeEndings").addEventListener("click", () => { $("drawer").hidden = true; }
 let pendente = null;
 function abrirHub() {
   tok++; pararTudo(); if (typing) typing.stop();
+  if (window.sairSob) sairSob();
   cineAtual = null; ameaca = null; calar(); document.body.classList.remove("cine"); salvarJogo();
   $("choices").innerHTML = ""; $("scene").innerHTML = ""; $("hud").innerHTML = "";
   corDestaque("#f2a33a");
@@ -1444,6 +1528,11 @@ function abrirHub() {
   }
   const tf = totalFinais();
   $("progTotal").textContent = tf + " de " + totalPossivel() + " finais · " + conqFeitas.size + "/" + CONQ.length + " conquistas";
+  { const sv = (() => { try { return JSON.parse(localStorage.getItem("pv_sob")); } catch (e) { return null; } })(), rec = (() => { try { return +(localStorage.getItem("pv_sob_rec") || 0); } catch (e) { return 0; } })();
+    html += `<button class="story sob-card" type="button" id="fase-sob" style="--c:#e2483d"><span class="tag">${window.temPremium && temPremium() ? "Premium" : "Premium · bloqueado"}</span>
+      <span class="g"><span>Modo infinito · apocalipse zumbi</span></span><h3>Sobrevivência</h3>
+      <span class="gancho">${sv ? "Continuar: dia " + sv.dia + " · " + ({ cidade: "Cidade", floresta: "Floresta", fazenda: "Fazenda", presidio: "Presídio" }[sv.local] || "") : "Cidade, floresta, fazenda ou presídio. Quanto tempo você aguenta?"}</span>
+      <span class="mec">Energia · fome · saúde · defesa${rec ? " · recorde " + rec + " dias" : ""}</span></button>`; }
   html += Object.entries(FASES).map(([k, F]) => {
     const tranca = tf < (F.libera || 0), feitos = descobertos[k].size, tot = finaisDe(k).length;
     if (tranca) { const falta = F.libera - tf; return `
@@ -1473,6 +1562,7 @@ function abrirHub() {
     aviso("Falta" + (falta > 1 ? "m " : " ") + falta + (falta > 1 ? " finais" : " final") + " para liberar " + F.titulo);
   }));
   $("lista").querySelectorAll("[data-k]").forEach(b => b.addEventListener("click", () => iniciarFase(b.dataset.k)));
+  $("fase-sob").addEventListener("click", () => entrarSob());
   const c = $("fase-continuar");
   if (c) c.addEventListener("click", () => { const p = pendente; pendente = null; iniciarFase(p.S, p); });
   $("hub").hidden = false; $("drawer").hidden = true; document.body.classList.add("no-hub");
@@ -1498,6 +1588,8 @@ function start(data) {
 /* ganchos do app Android */
 window.voltarAndroid = () => {
   if (!$("drawer").hidden) { $("drawer").hidden = true; return true; }
+  if (!$("premium").hidden) { $("premium").hidden = true; return true; }
+  if (!$("sob").hidden) { abrirHub(); return true; }
   if (cineAtual && cineAtual.fim) { pularCine(); return true; }
   if ($("hub").hidden) { $("btnMenu").click(); return true; }
   return false;
@@ -1509,5 +1601,6 @@ window.margensAndroid = (t, b, l, r) => {
 };
 start({});
 </script>
+<script src="sobrevivencia.js"></script>
 </body>
 </html>
