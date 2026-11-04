@@ -24,7 +24,7 @@ function pessoa(x, y, h, o = {}) {
   ctx.save(); ctx.translate(x, y); ctx.scale(dir * s, s); ctx.rotate(inclina);
   const sw = Math.sin(fase) * anda, bob = anda ? Math.abs(Math.cos(fase)) * 3 * anda : 0;
   const resp = anda || escalar ? 0 : Math.sin(agora * 1.7 + x * .013) * 1.1; // respiração parada
-  const hipY = sentado ? -42 : -50 - bob, shY = hipY - 32 + resp, cabY = shY - 13 + resp * .3;
+  const hipY = sentado ? -28 : -50 - bob, shY = hipY - 32 + resp, cabY = shY - 13 + resp * .3;
   const pernas = new Path2D(), bracos = new Path2D(), pes = [], maos = [];
   const linha = (P, x0, y0, a1, l1, a2, l2) => {
     const x1 = x0 + Math.sin(a1) * l1, y1 = y0 + Math.cos(a1) * l1, x2 = x1 + Math.sin(a2) * l2, y2 = y1 + Math.cos(a2) * l2;
@@ -132,6 +132,12 @@ function floresta(t, scroll, chaoY, escura) {
     n.addColorStop(0, "rgba(150,160,185,0)"); n.addColorStop(.5, `rgba(150,160,185,${.07 - i * .015})`); n.addColorStop(1, "rgba(150,160,185,0)");
     ctx.fillStyle = n; ctx.fillRect(x - W, y - 30, W * 3, 60);
   }
+  if (!escura) for (let i = 0; i < 9; i++) { const a = .5 + .5 * Math.sin(t * 2 + i * 2.3); const fx = ((cvRnd(i) * W * 1.5 - scroll * .6 + Math.sin(t * .4 + i) * 30) % W + W) % W, fy = chaoY - H * (.05 + cvRnd(i * 4) * .25) + Math.cos(t * .7 + i) * 10;
+    luzCor(fx, fy, 10, a * .5, "200,255,120"); ctx.fillStyle = `rgba(220,255,150,${a})`; ctx.fillRect(fx, fy, 2, 2); }
+  if (Math.sin(t * .5) > .7) olhosNoEscuro(((W * .85 - scroll * .5) % W + W) % W, chaoY - H * .33, .6, t);
+  ctx.strokeStyle = "#030405"; ctx.lineWidth = 2;
+  for (let i = 0; i < 40; i++) { const gx = ((i * W / 36 - scroll) % W + W) % W, gh = 8 + cvRnd(i) * 16, sw = Math.sin(t * 1.4 + i) * 3;
+    ctx.beginPath(); ctx.moveTo(gx, H); ctx.lineTo(gx, chaoY + 4); ctx.quadraticCurveTo(gx + sw, chaoY - gh * .5, gx + sw * 1.5, chaoY - gh); ctx.stroke(); }
 }
 function fogueira(x, y, t, forca = 1) {
   luzCor(x, y - 10, H * .3 * forca, .38 * forca, "255,140,60");
@@ -216,6 +222,12 @@ function predioCorte(t, p) {
     // porta do andar e placa
     ctx.fillStyle = "#151a26"; ctx.fillRect(W * .05, y - fh * .62, W * .14, fh * .62);
     ctx.fillStyle = "#2b3346"; ctx.fillRect(W * .16, y - fh * .33, 4, 4);
+    ctx.fillStyle = "rgba(0,0,0,.5)"; ctx.beginPath(); ctx.arc(W * .12, y - fh * .42, 2, 0, 7); ctx.fill();
+    ctx.fillStyle = "#3a1412"; ctx.fillRect(W * .22, y - fh * .5, 12, 22); ctx.fillStyle = "#8a2a22"; ctx.fillRect(W * .22 + 3, y - fh * .5 + 4, 6, 14);
+    ctx.fillStyle = "#1a202d"; ctx.fillRect(W * .94, y - fh, 6, fh);
+    const lp = cvRnd(Math.floor(t * 7) + k * 17) < .12 ? .1 : (k % 3 === 0 ? .35 : .8);
+    ctx.fillStyle = `rgba(230,220,180,${.6 * lp})`; ctx.fillRect(W * .55, y - fh + 10, 26, 4); luzCor(W * .55 + 13, y - fh + 14, fh * .7, .1 * lp, "230,220,180");
+    ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(W * (.4 + cvRnd(k) * .3), y - fh); ctx.lineTo(W * (.42 + cvRnd(k) * .3), y - fh * .8); ctx.lineTo(W * (.41 + cvRnd(k) * .3), y - fh * .6); ctx.stroke();
     ctx.fillStyle = "rgba(233,228,216,.1)"; ctx.font = `800 ${fh * .42}px "Big Shoulders Display", sans-serif`;
     ctx.fillText(k < 0 ? "S" : k === 0 ? "T" : String(k), W * .04, y - fh * .7);
     const verde = .5 + .5 * Math.sin(t * 2 + k);
@@ -394,6 +406,14 @@ const CINE = {
     ctx.lineTo(W, chao); ctx.lineTo(0, chao); ctx.fill();
     ctx.fillStyle = "#111419"; ctx.fillRect(0, chao, W, H);
     ctx.fillStyle = "rgba(230,220,180,.4)"; for (let i = 0; i < 8; i++) ctx.fillRect(i * W * .16, chao + H * .05, W * .08, 3);
+    const px0 = W * .58, pl = cvRnd(Math.floor(t * 5)) < .1 ? .15 : 1;
+    ctx.fillStyle = "#141820"; ctx.fillRect(px0, chao - H * .34, 4, H * .34); ctx.fillRect(px0, chao - H * .34, W * .08, 4);
+    ctx.fillStyle = `rgba(255,220,150,${.8 * pl})`; ctx.fillRect(px0 + W * .06, chao - H * .335, 14, 4);
+    const cg = ctx.createLinearGradient(0, chao - H * .33, 0, chao); cg.addColorStop(0, `rgba(255,220,150,${.18 * pl})`); cg.addColorStop(1, "rgba(255,220,150,0)");
+    ctx.fillStyle = cg; ctx.beginPath(); ctx.moveTo(px0 + W * .06, chao - H * .33); ctx.lineTo(px0 + W * .06 + 14, chao - H * .33); ctx.lineTo(px0 + W * .2, chao); ctx.lineTo(px0 - W * .06, chao); ctx.fill();
+    for (let i = 0; i < 4; i++) { const a = t * 3 + i * 1.7; ctx.fillStyle = "rgba(255,240,200,.6)"; ctx.fillRect(px0 + W * .065 + Math.cos(a) * 14, chao - H * .32 + Math.sin(a * 1.3) * 10, 2, 2); }
+    [[.15, .09], [.45, .12], [.75, .08]].forEach(([fx, fy]) => { ctx.fillStyle = `rgba(150,170,200,.1)`; ctx.beginPath(); ctx.ellipse(W * fx, chao + H * fy, W * .09, H * .012, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = `rgba(255,220,150,${.08 * pl})`; ctx.beginPath(); ctx.ellipse(W * fx + 10, chao + H * fy, W * .03, H * .006, 0, 0, 7); ctx.fill(); });
     // abrigo do ponto
     const ax = W * .08;
     ctx.fillStyle = "#151922"; ctx.fillRect(ax, chao - H * .25, W * .3, 8); ctx.fillRect(ax + 4, chao - H * .25, 5, H * .25); ctx.fillRect(ax + W * .3 - 9, chao - H * .25, 5, H * .25);
@@ -428,28 +448,46 @@ const CINE = {
     pessoa(x, hy + H * .03, H * .21, { fase: passo(x, H * .21), anda: ca > 0 && ca < 1 ? 1 : 0 });
   } },
   dentroOnibus: { dur: 6.5, f(t, p) {
-    const chao = H * .6, ate = p.ate || "catraca";
-    const alvo = { catraca: .76, frente: .84, fundo: .1, cordinha: .4 }[ate];
-    const ca = cvSuave(cvSeg(t, .6, ate === "fundo" ? 5.4 : 2.6)), xm = cvMix(.92, alvo, ca);
+    const chao = H * .6, ate = p.ate || "catraca", hp = H * .23;
+    const alvo = { catraca: .755, frente: .83, fundo: .33, cordinha: .47 }[ate];
+    const ca = cvSuave(cvSeg(t, .6, ate === "fundo" ? 5.4 : 2.6)), xm = cvMix(.95, alvo, ca);
     const cam = Math.max(0, Math.min(W * 1.2, xm * W * 2.2 - W * .5));
     const X = f => f * W * 2.2 - cam;
-    ctx.fillStyle = "#0b100c"; ctx.fillRect(0, 0, W, H);
     const flick = Math.random() < .07 ? .3 : 1;
-    ctx.fillStyle = `rgba(190,255,190,${.16 * flick})`; ctx.fillRect(0, H * .1, W, 4);
-    ctx.fillStyle = "#151c17"; ctx.fillRect(0, chao, W, H);
-    for (let i = 0; i < 9; i++) {
-      const x = X(.05 + i * .1);
-      ctx.fillStyle = "rgba(20,30,24,1)"; ctx.fillRect(x, H * .18, W * .16, H * .15);
-      const ph = (t * .6 + i * .37) % 1; luzCor(x + W * .16 * ph, H * .25, 30, .14, "255,230,170");
-      ctx.fillStyle = "#1d2620"; ctx.fillRect(x, chao - H * .12, W * .16, H * .12);
-      if (i < 7 && i % 3 !== 2) pessoa(x + W * .08, chao - H * .01, H * .23, { sentado: true, cor: "#050705", aro: "rgba(140,220,140,.25)", cabeca: p.viram && t > 3 ? -1 : 0, dir: p.viram && t > 3 ? -1 : 1 });
+    ctx.fillStyle = "#0b100c"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#0f1611"; ctx.fillRect(0, 0, W, H * .1);
+    for (let i = 0; i < 7; i++) { const x = X(.06 + i * .16), f2 = cvRnd(Math.floor(t * 8) + i * 13) < .08 ? .2 : flick;
+      ctx.fillStyle = `rgba(200,255,200,${.55 * f2})`; ctx.fillRect(x - 30, H * .088, 60, 5); luzCor(x, H * .12, 100, .13 * f2, "190,255,190"); }
+    for (let i = 0; i < 10; i++) {
+      const x = X(.04 + i * .1), w = W * .19, y0 = H * .17, h = H * .17;
+      ctx.fillStyle = "#040705"; ctx.fillRect(x, y0, w, h);
+      const ph = (t * .6 + i * .37) % 1; luzCor(x + w * ph, y0 + h * .55, 36, .18, "255,230,170");
+      ctx.strokeStyle = "rgba(170,210,190,.22)"; ctx.lineWidth = 1;
+      for (let k = 0; k < 5; k++) { const gx = x + cvRnd(i * 9 + k) * w, gy = y0 + ((t * 26 * (1 + cvRnd(k + i)) + cvRnd(k * 3 + i) * h) % h); ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx - 1.5, gy + 8); ctx.stroke(); }
+      ctx.fillStyle = "#17201a"; ctx.fillRect(x - 4, y0 - 2, 8, h + 4);
+      ctx.fillStyle = i % 3 ? "rgba(155,216,107,.1)" : "rgba(242,163,58,.1)"; ctx.fillRect(x + w * .1, y0 - H * .05, w * .8, H * .032);
     }
-    // catraca e cobrador
-    ctx.fillStyle = "#26302a"; ctx.fillRect(X(.79), chao - H * .1, 6, H * .1);
-    pessoa(X(.74), chao, H * .22, { sentado: true, cor: "#050705", aro: "rgba(140,220,140,.25)" });
-    pessoa(X(.97), chao, H * .22, { sentado: true, cor: "#050705", aro: "rgba(140,220,140,.25)" });
-    const sentar = ate === "frente" || ate === "fundo";
-    pessoa(X(xm), chao, H * .25, { fase: ca * 30, anda: ca > 0 && ca < 1 ? 1 : 0, dir: alvo < .92 ? -1 : 1, sentado: sentar && ca >= 1 });
+    ctx.strokeStyle = "#2c3a30"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, H * .145); ctx.lineTo(W, H * .145); ctx.stroke();
+    for (let i = 0; i < 16; i++) { const x = X(.02 + i * .065), a = Math.sin(t * 2.1 + i * .35) * .2;
+      ctx.save(); ctx.translate(x, H * .145); ctx.rotate(a); ctx.strokeStyle = "#26332a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, H * .03); ctx.stroke(); ctx.beginPath(); ctx.arc(0, H * .03 + 6, 6, 0, 7); ctx.stroke(); ctx.restore(); }
+    ctx.fillStyle = "#141b16"; ctx.fillRect(0, chao, W, H);
+    ctx.fillStyle = "rgba(190,255,190,.06)"; ctx.fillRect(0, chao, W, 2);
+    ctx.strokeStyle = "rgba(0,0,0,.4)"; ctx.lineWidth = 1; for (let i = 0; i < 24; i++) { const x = X(i * .05); ctx.beginPath(); ctx.moveTo(x, chao); ctx.lineTo(x - 20, H); ctx.stroke(); }
+    const banco = cx => { const sh = hp * .27;
+      ctx.fillStyle = "#1e2921"; ctx.fillRect(cx - hp * .16, chao - sh - hp * .42, hp * .07, hp * .44);
+      ctx.fillStyle = "#26332a"; ctx.fillRect(cx - hp * .16, chao - sh - hp * .42, hp * .07, 4);
+      ctx.fillStyle = "#223026"; ctx.fillRect(cx - hp * .16, chao - sh, hp * .42, hp * .055);
+      ctx.fillStyle = "#101511"; ctx.fillRect(cx + hp * .02, chao - sh + hp * .055, 5, sh - hp * .055); ctx.fillRect(cx - hp * .15, chao - 3, hp * .4, 3); };
+    const lugares = [.13, .23, .33, .43, .53, .63, .73, .83];
+    const ocupados = [0, 1, 3, 4, 6];
+    lugares.forEach((f, i) => { banco(X(f)); if (ocupados.includes(i)) pessoa(X(f), chao, hp, { sentado: true, cor: "#050705", aro: "rgba(140,220,140,.25)", cabeca: p.viram && t > 3 ? -2.2 : 0 }); });
+    ctx.fillStyle = "#26302a"; ctx.fillRect(X(.785), chao - H * .1, 6, H * .1); ctx.fillRect(X(.775), chao - H * .072, W * .06, 4);
+    pessoa(X(.8), chao, hp * 1.04, { cor: "#050705", aro: "rgba(140,220,140,.25)", dir: -1, cabeca: p.viram && t > 3 ? 0 : 0 });
+    banco(X(.97)); pessoa(X(.97), chao, hp, { sentado: true, cor: "#050705", aro: "rgba(140,220,140,.25)" });
+    ctx.strokeStyle = "#1a221c"; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(X(.97) + hp * .34, chao - hp * .5, hp * .1, 0, 7); ctx.stroke();
+    const sentou = (ate === "frente" || ate === "fundo") && ca >= 1;
+    if (sentou) pessoa(X(alvo), chao, hp, { sentado: true });
+    else pessoa(X(xm), chao, H * .25, { fase: ca * 30, anda: ca > 0 && ca < 1 ? 1 : 0, dir: alvo < .95 && ca < 1 ? -1 : 1 });
     ctx.fillStyle = `rgba(140,220,140,${.04 * flick})`; ctx.fillRect(0, 0, W, H);
   } },
   ponte: { dur: 6.5, f(t, p) {
@@ -615,6 +653,8 @@ const CINE = {
     ctx.fillStyle = "rgba(220,110,40,.9)"; ctx.beginPath(); ctx.moveTo(W * .12, chao); ctx.lineTo(W * .27, chao - H * .14); ctx.lineTo(W * .42, chao); ctx.fill();
     ctx.fillStyle = "rgba(80,30,10,.9)"; ctx.beginPath(); ctx.moveTo(W * .24, chao); ctx.lineTo(W * .27, chao - H * .08); ctx.lineTo(W * .3, chao); ctx.fill();
     fogueira(W * .6, chao, t, p.fraca ? .5 : 1);
+    { const hp = H * .24; ctx.fillStyle = "#1c130b"; ctx.beginPath(); ctx.ellipse(W * .76 - hp * .02, chao - hp * .14, hp * .2, hp * .13, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = "rgba(255,150,80,.18)"; ctx.beginPath(); ctx.ellipse(W * .76 - hp * .2, chao - hp * .14, hp * .03, hp * .12, 0, 0, 7); ctx.fill(); }
     pessoa(W * .76, chao, H * .24, { sentado: true, dir: -1, cabeca: t > 3 && t < 4.5 ? -1 : t > 4.5 ? 1 : 0, aro: "rgba(255,150,80,.35)" });
     if (p.vozes !== false) { olhosNoEscuro(W * .08, chao - H * .2, cvSeg(t, 3, 3.6), t); olhosNoEscuro(W * .94, chao - H * .23, cvSeg(t, 4.5, 5.1), t); }
     if (p.passos) for (let i = 0; i < 3; i++) { const a = t * .6 + i * 2.1; olhosNoEscuro(W * .5 + Math.cos(a) * W * .45, chao - H * .2 + Math.sin(a) * H * .05, .7, t); }

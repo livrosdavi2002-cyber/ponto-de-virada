@@ -49,6 +49,12 @@ function monstro(x, y, h, o = {}) {
   ctx.restore();
 }
 
+/* deitado na cama (de barriga para cima) e depois sentado na beira, com o quadril no colchão */
+function deitaESenta(sen, beiraX, topo, hp, aro, cabeca) {
+  if (sen < 1) { ctx.save(); ctx.globalAlpha = 1 - sen; ctx.translate(beiraX - hp * .03, topo - hp * .075); ctx.rotate(-PI / 2); pessoa(0, 0, hp, { aro }); ctx.restore(); }
+  if (sen > 0) { ctx.save(); ctx.globalAlpha = sen; pessoa(beiraX - hp * .2, topo + hp * .27, hp, { sentado: true, cabeca, aro }); ctx.restore(); }
+}
+
 /* ---------- cenários novos ---------- */
 function paredeHosp(chao, t) {
   ctx.fillStyle = "#0c1412"; ctx.fillRect(0, 0, W, chao);
@@ -56,6 +62,25 @@ function paredeHosp(chao, t) {
   ctx.fillStyle = "#1a2522"; ctx.fillRect(0, chao * .62, W, 3);
   ctx.fillStyle = "#0a0f0e"; ctx.fillRect(0, chao, W, H - chao);
   ctx.fillStyle = "rgba(160,200,180,.05)"; for (let i = 0; i < 6; i++) ctx.fillRect(0, chao + 8 + i * 14, W, 1);
+  ctx.strokeStyle = "rgba(160,200,180,.06)"; for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.moveTo(i * W / 8, chao); ctx.lineTo(i * W / 8 - W * .3, H); ctx.stroke(); }
+  // manchas de umidade e tinta descascando
+  for (let i = 0; i < 6; i++) { const x = cvRnd(i * 7) * W, y = chao * (.15 + cvRnd(i * 3) * .4), r = 14 + cvRnd(i) * 30;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, "rgba(40,30,20,.35)"); g.addColorStop(1, "rgba(40,30,20,0)"); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    ctx.strokeStyle = "rgba(20,15,10,.4)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y + r * .4); ctx.lineTo(x + 2, y + r * 1.6); ctx.stroke(); }
+  // corrimão na parede
+  ctx.fillStyle = "#24302c"; ctx.fillRect(0, chao * .7, W, 4); ctx.fillStyle = "rgba(200,255,225,.08)"; ctx.fillRect(0, chao * .7, W, 1);
+  for (let x = W * .08; x < W; x += W * .22) { ctx.fillStyle = "#1a2421"; ctx.fillRect(x, chao * .7, 3, 9); }
+  // placa de saída piscando
+  const sa = cvRnd(Math.floor(t * 3)) < .15 ? .15 : .8;
+  ctx.fillStyle = `rgba(90,230,140,${sa})`; ctx.fillRect(W * .82, H * .07, W * .12, H * .022);
+  ctx.fillStyle = "#06140c"; ctx.font = `800 ${Math.max(9, H * .016)}px "JetBrains Mono", monospace`; ctx.fillText("SAÍDA", W * .835, H * .088);
+  luzCor(W * .88, H * .08, 40, .2 * sa, "90,230,140");
+  // papéis e fios no chão
+  ctx.fillStyle = "rgba(220,225,215,.14)"; for (let i = 0; i < 5; i++) { ctx.save(); ctx.translate(cvRnd(i * 11) * W, chao + 10 + cvRnd(i * 5) * (H - chao) * .5); ctx.rotate(cvRnd(i) * 3); ctx.fillRect(-7, -5, 14, 10); ctx.restore(); }
+  // suporte de soro e cadeira de rodas abandonados no canto
+  const sx = W * .93; ctx.strokeStyle = "#2a3532"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx, chao); ctx.lineTo(sx, chao - H * .2); ctx.moveTo(sx - 8, chao - H * .2); ctx.lineTo(sx + 8, chao - H * .2); ctx.moveTo(sx - 10, chao); ctx.lineTo(sx + 10, chao); ctx.stroke();
+  ctx.fillStyle = "rgba(200,230,220,.18)"; ctx.fillRect(sx + 3, chao - H * .19, 8, 14);
+  const cx = W * .02; ctx.strokeStyle = "#1f2926"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx + 20, chao - 16, 16, 0, 7); ctx.moveTo(cx + 6, chao - 38); ctx.lineTo(cx + 6, chao - 70); ctx.lineTo(cx + 14, chao - 70); ctx.moveTo(cx + 6, chao - 38); ctx.lineTo(cx + 40, chao - 38); ctx.stroke();
 }
 function lampadas(t, xs, y, cor = "200,255,225") {
   xs.forEach((x, i) => {
@@ -83,7 +108,20 @@ function paredeCasa(chao, t, papel = "#191512") {
   ctx.strokeStyle = "rgba(255,230,200,.035)"; ctx.lineWidth = 1;
   for (let x = 10; x < W; x += 24) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, chao); ctx.stroke(); }
   ctx.fillStyle = "#0e0b09"; ctx.fillRect(0, chao, W, H - chao);
+  ctx.strokeStyle = "rgba(255,220,180,.03)"; ctx.lineWidth = 1; for (let y = chao + 12; y < H; y += 16) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   ctx.fillStyle = "#231c17"; ctx.fillRect(0, chao - 8, W, 8);
+  for (let i = 0; i < 5; i++) { const x = cvRnd(i * 13 + 2) * W, r = 18 + cvRnd(i * 4) * 34;
+    const g = ctx.createRadialGradient(x, 0, 0, x, 0, r * 2); g.addColorStop(0, "rgba(10,6,3,.5)"); g.addColorStop(1, "rgba(10,6,3,0)"); ctx.fillStyle = g; ctx.fillRect(x - r * 2, 0, r * 4, r * 2); }
+  [[.1, .09, -.08], [.4, .07, .12]].forEach(([fx, fy, rot], i) => {
+    ctx.save(); ctx.translate(W * fx, H * fy); ctx.rotate(rot + Math.sin(t * .7 + i) * .01);
+    ctx.fillStyle = "#2a1f16"; ctx.fillRect(-W * .055, 0, W * .11, H * .075); ctx.fillStyle = "#3a3026"; ctx.fillRect(-W * .045, H * .007, W * .09, H * .06);
+    ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.beginPath(); ctx.arc(-W * .015, H * .03, H * .011, 0, 7); ctx.arc(W * .018, H * .032, H * .011, 0, 7); ctx.fill();
+    ctx.restore(); });
+  const rx = W * .94, ry = H * .06, ang = Math.sin(t * 3.1) * .35;
+  ctx.fillStyle = "#231a12"; ctx.fillRect(rx - 14, ry, 28, H * .2); ctx.fillStyle = "#d9cfae"; ctx.beginPath(); ctx.arc(rx, ry + 16, 10, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#111"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(rx, ry + 16); ctx.lineTo(rx + 5, ry + 11); ctx.moveTo(rx, ry + 16); ctx.lineTo(rx, ry + 9); ctx.stroke();
+  ctx.strokeStyle = "#8a6d24"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(rx, ry + 30); ctx.lineTo(rx + Math.sin(ang) * H * .1, ry + 30 + Math.cos(ang) * H * .1); ctx.stroke();
+  ctx.fillStyle = "#8a6d24"; ctx.beginPath(); ctx.arc(rx + Math.sin(ang) * H * .1, ry + 30 + Math.cos(ang) * H * .1, 5, 0, 7); ctx.fill();
 }
 function porta(x, chao, w, h, ab = 0, cor = "#0f0c0a", luz = null) {
   ctx.fillStyle = "#050404"; ctx.fillRect(x, chao - h, w, h);
@@ -107,8 +145,7 @@ Object.assign(CINE, {
     ctx.fillStyle = "#2c3a36"; ctx.fillRect(W * .06, chao - H * .14, 8, H * .08);
     const sen = cvSuave(cvSeg(t, 1, 2.4));
     if (p.vazia) return;
-    ctx.save(); ctx.translate(W * .14, chao - H * .1); ctx.rotate(-1.45 * (1 - sen));
-    pessoa(0, 0, H * .2, { sentado: sen > .5, cabeca: t > 3 ? 1 : 0, aro: "rgba(150,220,190,.25)" }); ctx.restore();
+    deitaESenta(sen, W * .56, chao - H * .1, H * .2, "rgba(150,220,190,.25)", t > 3 ? 1 : 0);
   } },
   corredorHosp: { dur: 6.5, f(t, p) {
     const chao = H * .58, m = p.m || "nada";
@@ -173,7 +210,12 @@ Object.assign(CINE, {
     for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
       const x = W * (.06 + c * .23), y = H * (.12 + r * .14);
       ctx.fillStyle = "#1c2425"; ctx.fillRect(x, y, W * .2, H * .12); ctx.fillStyle = "#2c3637"; ctx.fillRect(x + W * .08, y + H * .05, W * .04, 5);
+      ctx.fillStyle = "rgba(230,230,220,.35)"; ctx.fillRect(x + W * .02, y + H * .015, W * .05, H * .014);
+      ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.font = `600 ${Math.max(7, H * .009)}px "JetBrains Mono", monospace`; ctx.fillText(String(40 + r * 4 + c), x + W * .025, y + H * .026);
     }
+    ctx.fillStyle = "#050707"; ctx.beginPath(); ctx.ellipse(W * .7, chao + H * .06, 18, 5, 0, 0, 7); ctx.fill();
+    const gt = (t * .9) % 1; ctx.fillStyle = "rgba(190,230,240,.6)"; ctx.fillRect(W * .7, H * .05 + gt * (chao - H * .02), 2, 5);
+    if (gt > .95) { ctx.strokeStyle = "rgba(190,230,240,.4)"; ctx.beginPath(); ctx.ellipse(W * .7, chao + H * .06, 10 + (gt - .95) * 300, 3, 0, 0, 7); ctx.stroke(); }
     const ab = cvSuave(cvSeg(t, 2.5, 4.5)) * (p.aberta !== false ? 1 : 0);
     if (ab > 0) { const x = W * .52, y = H * .26; ctx.fillStyle = "#26302f"; ctx.fillRect(x, y, W * .2 + ab * W * .25, H * .12); ctx.fillStyle = "rgba(220,225,220,.55)"; ctx.beginPath(); ctx.ellipse(x + W * .16 + ab * W * .2, y + H * .05, W * .14, H * .03, 0, 0, 7); ctx.fill(); }
     const k = cvSuave(cvSeg(t, .3, 3.4)), x = cvMix(-W * .05, W * .32, k);
@@ -200,10 +242,14 @@ Object.assign(CINE, {
     const ab = .7 + .3 * Math.sin(t * 5) * (cvRnd(Math.floor(t * 6)) < .2 ? 1 : 0);
     ctx.fillStyle = "#3a2c1c"; ctx.fillRect(W * .07, chao - H * .14, 26, 18); luzCor(W * .07 + 13, chao - H * .14, H * .28, .35 * ab, "255,200,130");
     // cama
-    ctx.fillStyle = "#2a201a"; ctx.fillRect(W * .16, chao - H * .08, W * .44, H * .05); ctx.fillStyle = "#3a2e26"; ctx.fillRect(W * .16, chao - H * .15, 10, H * .12);
-    ctx.fillStyle = "#4a3b2f"; ctx.fillRect(W * .2, chao - H * .1, W * .38, H * .025);
+    ctx.fillStyle = "#3b2d22"; ctx.fillRect(W * .16, chao - H * .075, W * .44, H * .04);
+    ctx.fillStyle = "#2a2018"; ctx.fillRect(W * .17, chao - H * .035, 6, H * .035); ctx.fillRect(W * .58, chao - H * .035, 6, H * .035);
+    ctx.fillStyle = "#4d3b2c"; ctx.fillRect(W * .15, chao - H * .17, 12, H * .17); ctx.fillRect(W * .15, chao - H * .17, W * .04, 6);
+    ctx.fillStyle = "#6b5a49"; ctx.fillRect(W * .18, chao - H * .1, W * .42, H * .028);
+    ctx.fillStyle = "#8a7864"; ctx.beginPath(); ctx.ellipse(W * .23, chao - H * .108, W * .045, H * .012, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = "rgba(120,100,80,.6)"; ctx.fillRect(W * .34, chao - H * .1, W * .26, H * .05);
     const sen = cvSuave(cvSeg(t, 1.2, 2.6));
-    ctx.save(); ctx.translate(W * .24, chao - H * .08); ctx.rotate(-1.4 * (1 - sen)); pessoa(0, 0, H * .19, { sentado: sen > .5, cabeca: sen > .5 ? 1 : 0, aro: "rgba(255,200,130,.28)" }); ctx.restore();
+    deitaESenta(sen, W * .58, chao - H * .1, H * .19, "rgba(255,200,130,.28)", sen > .5 ? 1 : 0);
     // algo andando dentro da parede (arranhões que se movem)
     const ax = ((t * .12) % 1) * W * 1.2 - W * .1;
     ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = 2;
