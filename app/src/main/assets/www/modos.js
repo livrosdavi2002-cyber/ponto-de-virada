@@ -280,7 +280,7 @@ function chernoBase(t, p) {
     ctx.fillStyle = "#120c08"; ctx.fillRect(0, chao, W, H); trevoRad(W * .1, chao - H * .05, 10, .85);
   }
   const sx = W * .45 + Math.sin(t * .3) * W * .02;
-  pessoa(sx, chao + H * .045, H * .2, { cabeca: Math.sin(t * .5) > .7 ? -1 : 0 });
+  if (!p.semEu) pessoa(sx, chao + H * .045, H * .2, { cabeca: Math.sin(t * .5) > .7 ? -1 : 0 });
   SOB.grupo.forEach((g2, i) => pessoa(sx - W * .12 - i * W * .1, chao + H * .045, H * (.17 + (i % 2) * .02), { cor: "#06080c", dir: i % 2 ? -1 : 1, aro: "rgba(175,190,215,.22)" }));
   const nm = Math.min(4, Math.floor(SOB.dia / 4) + (p.noite ? 2 : 0));
   for (let i = 0; i < nm; i++) { const k = ((t * (.02 + cvRnd(i) * .02) + cvRnd(i * 7)) % 1), dir = cvRnd(i) < .5 ? 1 : -1; monstro(W * (dir > 0 ? k * 1.3 - .15 : 1.15 - k * 1.3), chao + H * .07, H * .14, { quatro: true, fase: t * 5 + i, anda: .9, dir, olhos: .8, olhosRgb: "190,255,120", cor: "#0b0d08", aro: "rgba(180,220,120,.2)" }); }
@@ -399,10 +399,10 @@ function abrirMochila(msg) {
   }
   painel("Mochila", h);
   const p = $s("sobPainel");
-  p.querySelectorAll("[data-comer]").forEach(b => b.addEventListener("click", () => { const k = b.dataset.comer, it = ITENS[k]; sobMuda(k, -1, false); sobMuda("fome", it.fome); if (it.rad && M().radiacao) sobMuda("rad", it.rad); tocar("item"); sobHud(); sobGravar(); abrirMochila(`Você come ${it.nome.toLowerCase()}. ${it.fome >= 35 ? "Matou bem a fome." : it.fome <= 15 ? "Mal deu para enganar o estômago." : ""}`); }));
-  p.querySelectorAll("[data-plantar]").forEach(b => b.addEventListener("click", () => { const k = b.dataset.plantar, it = ITENS[k], i = SOB.horta.findIndex(c => !c); if (i < 0) return; sobMuda(k, -1, false); SOB.horta[i] = { planta: it.planta, dias: it.dias, total: it.dias, rende: it.rende }; SOB.st.plantou++; tocar("item"); sobChecarObjetivos(); sobHud(); sobGravar(); abrirMochila(`Você planta ${it.nome.toLowerCase()}. Em ${it.dias} dias dá para colher.`); }));
-  p.querySelectorAll("[data-colher]").forEach(b => b.addEventListener("click", () => { const i = +b.dataset.colher, c = SOB.horta[i]; const n = c.rende + (SOB.clima === "chuva" ? 1 : 0); sobMuda(c.planta, n); SOB.horta[i] = null; SOB.st.colheu++; SOB.st.colhidos += n; tocar("sucesso"); sobChecarObjetivos(); sobHud(); sobGravar(); abrirMochila(`Você colhe ${n} ${ITENS[c.planta].nome.toLowerCase()}${n > 1 ? "s" : ""}.`); }));
-  p.querySelectorAll("[data-usar]").forEach(b => b.addEventListener("click", () => { const k = b.dataset.usar, it = ITENS[k]; sobMuda(k, -1, false); if (it.saude) sobMuda("saude", it.saude); if (it.rad && M().radiacao) sobMuda("rad", it.rad); if (it.cura) SOB.mordido = null; tocar("sucesso"); sobHud(); sobGravar(); if (!sobFim()) abrirMochila(`Você usa ${it.nome.toLowerCase()}.`); }));
+  p.querySelectorAll("[data-comer]").forEach(b => b.addEventListener("click", () => { const k = b.dataset.comer, it = ITENS[k]; sobMuda(k, -1, false); sobMuda("fome", it.fome); if (it.rad && M().radiacao) sobMuda("rad", it.rad); tocar("item"); sobHud(); sobGravar(); sobFazer("comer", 1800, () => sobDia(`Você come ${it.nome.toLowerCase()}. ${it.fome >= 35 ? "Matou bem a fome." : it.fome <= 15 ? "Mal deu para enganar o estômago." : ""}`), { item: k }); }));
+  p.querySelectorAll("[data-plantar]").forEach(b => b.addEventListener("click", () => { const k = b.dataset.plantar, it = ITENS[k], i = SOB.horta.findIndex(c => !c); if (i < 0) return; sobMuda(k, -1, false); SOB.horta[i] = { planta: it.planta, dias: it.dias, total: it.dias, rende: it.rende }; SOB.st.plantou++; tocar("item"); sobChecarObjetivos(); sobHud(); sobGravar(); sobFazer("plantar", 2200, () => sobDia(`Você planta ${it.nome.toLowerCase()}. Em ${it.dias} dias dá para colher.`)); }));
+  p.querySelectorAll("[data-colher]").forEach(b => b.addEventListener("click", () => { const i = +b.dataset.colher, c = SOB.horta[i]; const n = c.rende + (SOB.clima === "chuva" ? 1 : 0); sobMuda(c.planta, n); SOB.horta[i] = null; SOB.st.colheu++; SOB.st.colhidos += n; tocar("sucesso"); sobChecarObjetivos(); sobHud(); sobGravar(); sobFazer("colher", 2000, () => sobDia(`Você colhe ${n} ${ITENS[c.planta].nome.toLowerCase()}${n > 1 ? "s" : ""}.`), { item: c.planta }); }));
+  p.querySelectorAll("[data-usar]").forEach(b => b.addEventListener("click", () => { const k = b.dataset.usar, it = ITENS[k]; sobMuda(k, -1, false); if (it.saude) sobMuda("saude", it.saude); if (it.rad && M().radiacao) sobMuda("rad", it.rad); if (it.cura) SOB.mordido = null; tocar("sucesso"); sobHud(); sobGravar(); if (!sobFim()) sobFazer("curar", 1800, () => sobDia(`Você usa ${it.nome.toLowerCase()}.`)); }));
 }
 
 /* ---------- o dia ---------- */
@@ -472,24 +472,27 @@ function sobEncontro(g) {
 function sobFortificar() {
   sobGastar(); tocar("batidas");
   let g; if (qtd("material") >= 2) { sobMuda("material", -2, false); g = sobMuda("defesa", 12); } else g = sobMuda("defesa", 4);
-  sobAnimar({ tipo: "base" }, 1100, () => sobDia(g > 4 ? (M().radiacao ? "Você veda as janelas com plástico e tábuas. Menos poeira radioativa entra, e menos bichos também." : "Você prega tábuas nas janelas e reforça a porta.") : "Sem materiais, você só arrasta móveis para a porta."));
+  repetir(() => tocar("toque"), 385, .2, 5);
+  sobFazer("fortificar", 2300, () => sobDia(g > 4 ? (M().radiacao ? "Você veda as janelas com plástico e tábuas. Menos poeira radioativa entra, e menos bichos também." : "Você prega tábuas nas janelas e reforça a porta.") : "Sem materiais, você só arrasta móveis para a porta."));
 }
-function sobDescansar() { sobGastar(); sobMuda("saude", 12); tocar("respira"); sobDia("Você fecha os olhos por algumas horas."); }
+function sobDescansar() { sobGastar(); sobMuda("saude", 12); tocar("respira"); sobFazer("descansar", 2200, () => sobDia("Você fecha os olhos por algumas horas perto do fogo.")); }
 function sobEspecial() {
   sobGastar(); const e = L().especial;
-  if (e.loot) { const a = sobLoot(e.loot); tocar("item"); return sobDia(`Você arromba os apartamentos vizinhos, um por um. Encontra <em>${a}</em>.`); }
-  if (e.caca) { if (sobChance(.7)) { const it = e.cacaItem || "carne", n = sobRnd(1, 2); sobMuda(it, n); if (it === "javali" && M().radiacao) sobMuda("rad", 4); tocar("sucesso"); return sobDia(it === "javali" ? "Um javali enorme, com manchas estranhas no couro. Muita carne." : "Você volta com carne de caça para uns dias."); } sobMuda("saude", -sobRnd(8, 14)); tocar("erro"); return sobDia("Você escorrega num barranco e volta mancando, sem nada."); }
-  if (e.rega) { let n = 0; SOB.horta.forEach(c => { if (c && c.dias > 0) { c.dias--; n++; } }); tocar("item"); return sobDia(n ? `Você rega e capina os canteiros. ${n} planta${n > 1 ? "s cresceram" : " cresceu"} um dia.` : "Você prepara a terra. Plante sementes pela mochila."); }
-  if (e.radio) { SOB.radioChama = true; tocar("radio"); const ouviu = ["\"…quem estiver ouvindo, o comerciante passa amanhã pela estrada do radar…\"", "\"…emissão prevista, fiquem nos abrigos…\"", "\"…grupo de saqueadores visto perto do posto…\""]; return sobDia(`Você gira o dial até achar uma voz: ${ouviu[sobRnd(0, 2)]}`); }
-  if (e.vigia) { SOB.vigia = true; SOB.vigiaAmanha = true; tocar("sucesso"); return sobDia(M().radiacao ? "Do telhado, com o binóculo, você marca os caminhos seguros e as manchas de radiação." : "Você sobe na torre e marca as brechas no muro. Esta noite vai ser mais tranquila."); }
+  if (e.loot) { const a = sobLoot(e.loot); return sobFazer("saquear", 3400, () => { tocar("item"); sobDia(`Você arromba os apartamentos vizinhos, um por um. Encontra <em>${a}</em>.`); }); }
+  if (e.caca) { const ok = sobChance(.7); return sobFazer("cacar", 2800, () => { if (ok) { const it = e.cacaItem || "carne", n = sobRnd(1, 2); sobMuda(it, n); if (it === "javali" && M().radiacao) sobMuda("rad", 4); tocar("sucesso"); return sobDia(it === "javali" ? "Um javali enorme, com manchas estranhas no couro. Muita carne." : "Você volta com carne de caça para uns dias."); } sobMuda("saude", -sobRnd(8, 14)); tocar("erro"); sobDia("O bicho escapa. Na correria, você escorrega num barranco e volta mancando."); }); }
+  if (e.rega) { let n = 0; SOB.horta.forEach(c => { if (c && c.dias > 0) { c.dias--; n++; } }); return sobFazer("regar", 2400, () => { tocar("item"); sobDia(n ? `Você rega e capina os canteiros. ${n} planta${n > 1 ? "s cresceram" : " cresceu"} um dia.` : "Você prepara a terra. Plante sementes pela mochila."); }); }
+  if (e.radio) { SOB.radioChama = true; tocar("radio"); const ouviu = ["\"…quem estiver ouvindo, o comerciante passa amanhã pela estrada do radar…\"", "\"…emissão prevista, fiquem nos abrigos…\"", "\"…grupo de saqueadores visto perto do posto…\""]; return sobFazer("radio", 2400, () => sobDia(`Você gira o dial até achar uma voz: ${ouviu[sobRnd(0, 2)]}`)); }
+  if (e.vigia) { SOB.vigia = true; SOB.vigiaAmanha = true; return sobFazer("vigiar", 2600, () => sobDia(M().radiacao ? "Do telhado, com o binóculo, você marca os caminhos seguros e as manchas de radiação." : "Você sobe na torre e marca as brechas no muro. Esta noite vai ser mais tranquila.")); }
 }
 
 /* ---------- noite ---------- */
 function sobNoite() {
   sobOcupado = true; $s("sobAcoes").innerHTML = ""; fecharPainel();
   sobTexto("Você tranca tudo e apaga as luzes.", false);
-  sobLigarCena({ tipo: "base", noite: true }); setAmb({ drone: .9, vento: .6, chuva: SOB.clima === "chuva" ? .8 : 0 });
+  sobCena = { tipo: "acao", acao: "dormir", t0: performance.now() }; cineAtual = { def: CINE.sobrevivencia, p: {}, dur: 0, chave: "dormir", t0: performance.now(), vel: 1, fim: null };
+  setAmb({ drone: .9, vento: .6, chuva: SOB.clima === "chuva" ? .8 : 0 });
   setTimeout(() => {
+    sobLigarCena({ tipo: "base", noite: true });
     sobOcupado = false;
     let fugiu = null;
     SOB.grupo.forEach(g => { const comida = Object.keys(SOB.inv).find(k => ITENS[k] && ITENS[k].tipo === "comida" && SOB.inv[k] > 0); if (comida) sobMuda(comida, -1, false); else g.fome = (g.fome || 0) + 1; });
@@ -586,7 +589,7 @@ function sobMercador() {
   const ofertas = [...M().mercador].sort(() => Math.random() - .5).slice(0, 3);
   const mostrar = msg => {
     sobTexto(msg || (M().radiacao ? "Um comerciante de máscara e sobretudo para na porta. \"Iodo, filtros, comida. Aceito artefatos.\"" : "Um mercador chega puxando uma carroça, com um lampião pendurado. \"Tenho o que você precisa.\""), !msg);
-    sobBotoes([...ofertas.map(([da, n, paga, custo]) => ({ t: `${n} ${ITENS[da].nome}`, sub: `Paga ${custo} ${ITENS[paga].nome.toLowerCase()} · tem ${qtd(paga)}`, icone: ITENS[da].ic, desat: qtd(paga) < custo, on: () => { sobMuda(paga, -custo); sobMuda(da, n); SOB.st.comprou++; tocar("item"); sobChecarObjetivos(); sobHud(); mostrar("Negócio fechado. \"Mais alguma coisa?\""); } })),
+    sobBotoes([...ofertas.map(([da, n, paga, custo]) => ({ t: `${n} ${ITENS[da].nome}`, sub: `Paga ${custo} ${ITENS[paga].nome.toLowerCase()} · tem ${qtd(paga)}`, icone: ITENS[da].ic, desat: qtd(paga) < custo, on: () => { sobMuda(paga, -custo); sobMuda(da, n); SOB.st.comprou++; tocar("item"); sobChecarObjetivos(); sobHud(); sobFazer("comprar", 1500, () => { sobLigarCena({ tipo: "visita", quem: "mercador" }); mostrar("Negócio fechado. \"Mais alguma coisa?\""); }); } })),
       { t: "Dispensar", icone: "porta", cls: "mini", on: () => sobDia("O mercador vai embora pela estrada.") }]);
   };
   mostrar();
@@ -673,7 +676,7 @@ function entrarSob(modo = "zumbi") {
   document.body.classList.remove("no-hub", "cine"); document.body.classList.add("modo-sob");
   document.body.dataset.modo = modo;
   $s("sobModoNome").textContent = MODOS[modo].nome;
-  $s("sob").hidden = false;
+  $s("sob").hidden = false; medirPalco();
   try { initAudio(); } catch (e) {}
   corDestaque(MODOS[modo].cor);
   sobModo = modo; SOB = sobLer(modo);

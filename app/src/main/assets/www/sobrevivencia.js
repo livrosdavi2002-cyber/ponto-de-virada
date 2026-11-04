@@ -124,7 +124,7 @@ function sobBase(t, p) {
   }
   // personagem e grupo na frente da base
   const sx = W * .45 + Math.sin(t * .3) * W * .02;
-  pessoa(sx, chao + H * .045, H * .2, { cabeca: Math.sin(t * .5) > .7 ? -1 : 0 });
+  if (!p.semEu) pessoa(sx, chao + H * .045, H * .2, { cabeca: Math.sin(t * .5) > .7 ? -1 : 0 });
   SOB.grupo.forEach((g2, i) => pessoa(sx - W * .12 - i * W * .1, chao + H * .045, H * (.17 + (i % 2) * .02), { cor: "#06080c", dir: i % 2 ? -1 : 1, aro: "rgba(175,190,215,.22)" }));
   const nz = Math.min(7, 1 + Math.floor(SOB.dia / 3) + (p.noite ? 3 : 0) + (lc === "cidade" ? 2 : 0) - (lc === "floresta" ? 1 : 0));
   sobZumbis(t, chao + H * .07, nz, -.15, 1.15, .9);
