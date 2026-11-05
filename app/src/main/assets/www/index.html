@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0b0e14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Última Escolha">
 <title>Última Escolha</title>
 <style>
 @font-face{font-family:"Big Shoulders Display";font-weight:500;font-display:swap;src:url(fonts/big-shoulders-display-latin-500-normal.woff2) format("woff2")}
@@ -1765,5 +1771,23 @@ start({});
 <script src="grupo.js"></script>
 <script src="predio.js"></script>
 <script src="roca.js"></script>
+<script>
+/* versão de navegador / iPhone: funciona offline, destrava o som no primeiro toque e ensina a instalar */
+if (!window.Android) {
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  const destrava = () => { try { initAudio(); if (AC && AC.state !== "running") AC.resume(); } catch (e) {} };
+  ["touchend", "click"].forEach(ev => document.addEventListener(ev, destrava, { passive: true }));
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const instalado = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+  let viu = false; try { viu = localStorage.getItem("pv_dica_ios") === "1"; } catch (e) {}
+  if (ios && !instalado && !viu) {
+    const d = document.createElement("div");
+    d.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:500;background:#12151b;border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 16px;color:#f4efe4;font:15px/1.4 Newsreader,serif;box-shadow:0 10px 40px rgba(0,0,0,.6)";
+    d.innerHTML = '<b style="font:800 18px \'Big Shoulders Display\',sans-serif;letter-spacing:.03em">INSTALE NO IPHONE</b><br>Toque em <b>Compartilhar</b> (o quadrado com a setinha, embaixo) e depois em <b>Adicionar à Tela de Início</b>. O jogo abre em tela cheia e funciona sem internet.<button type="button" style="display:block;margin-top:10px;background:#f2a33a;color:#0b0e14;border:0;border-radius:10px;padding:8px 14px;font:700 13px \'JetBrains Mono\',monospace">Entendi</button>';
+    d.querySelector("button").addEventListener("click", () => { d.remove(); try { localStorage.setItem("pv_dica_ios", "1"); } catch (e) {} });
+    document.body.appendChild(d);
+  }
+}
+</script>
 </body>
 </html>

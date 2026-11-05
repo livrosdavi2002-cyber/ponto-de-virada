@@ -49,3 +49,26 @@ jobs:
         with:
           name: UltimaEscolha-PlayStore-AAB
           path: app/build/outputs/bundle/release/app-release.aab
+
+  # versão para iPhone e navegador (site no GitHub Pages)
+  site:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    continue-on-error: true
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - name: Montar o site
+        run: |
+          mkdir -p _site
+          cp -r app/src/main/assets/www/* _site/
+          cp docs/* _site/ 2>/dev/null || true
+          sed -i "s/const VERSAO = \"ue-1\"/const VERSAO = \"ue-${GITHUB_RUN_NUMBER}\"/" _site/sw.js
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - uses: actions/deploy-pages@v4
