@@ -5,7 +5,7 @@
    ============================================================ */
 let sobTopoPainel = 0;
 function medirPalco() { const el = document.querySelector("#sob .sob-in"); sobTopoPainel = el ? el.getBoundingClientRect().top : innerHeight * .5; }
-window.sobHv = () => document.body.classList.contains("modo-sob") && sobTopoPainel > 50 ? sobTopoPainel / .66 : 0;
+window.sobHv = () => document.body.classList.contains("modo-sob") && sobTopoPainel > 50 ? sobTopoPainel / .73 : 0; // chão e pés sempre visíveis acima do painel
 addEventListener("resize", () => setTimeout(medirPalco, 150));
 
 /* executa uma ação com animação; o resultado aparece quando ela termina */

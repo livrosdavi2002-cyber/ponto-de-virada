@@ -313,7 +313,8 @@ body.modo-sob .vignette { opacity: 0; }
 .sb-titulo b, .sb-morte b { font-family: var(--f-display); font-weight: 800; font-size: clamp(46px, 14vw, 80px); line-height: .88; text-transform: uppercase; color: var(--acc); }
 .sb-titulo small, .sb-morte small { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
 body.sob-mapa .sob .sob-in { height: 38vh; max-height: 38vh; }
-.sb-inv { display: none !important; } /* o que tem na mochila fica só na mochila */
+.sb-inv { display: none !important; }
+.sb-funcao { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; font-family: var(--f-mono); font-size: 12px; color: #9bd86b; } .sb-funcao .ic { width: 15px; height: 15px; } /* o que tem na mochila fica só na mochila */
 @media (max-height: 720px) { body.sob-mapa .sob .sob-in { height: 40vh; max-height: 40vh; } .sob .sob-in { height: 51vh; max-height: 51vh; } .sob-texto { font-size: 16.5px; } .sb-acao { min-height: 50px; padding: 8px 10px; } .sb-acao b { font-size: 16px; } .sb-dia { font-size: 32px; } .sb-acao small { font-size: 9px; } }
 .story.sob-card { border: 1px solid #e2483d; background: linear-gradient(135deg, rgba(60,14,12,.9), rgba(20,25,36,.92)); position: relative; overflow: hidden; }
 .story.sob-card h3 { color: #e2483d; font-size: 40px; }
@@ -1748,5 +1749,6 @@ start({});
 <script src="mundo.js"></script>
 <script src="casa.js"></script>
 <script src="criaturas.js"></script>
+<script src="grupo.js"></script>
 </body>
 </html>

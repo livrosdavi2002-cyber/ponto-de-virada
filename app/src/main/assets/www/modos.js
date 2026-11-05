@@ -479,7 +479,7 @@ function sobDescansar() { sobGastar(); sobMuda("saude", 12); tocar("respira"); s
 function sobEspecial() {
   sobGastar(); const e = L().especial;
   if (e.loot) { const a = sobLoot(e.loot); return sobFazer("saquear", 3400, () => { tocar("item"); sobDia(`Você arromba os apartamentos vizinhos, um por um. Encontra <em>${a}</em>.`); }); }
-  if (e.caca) { const ok = sobChance(.7); return sobFazer("cacar", 2800, () => { if (ok) { const it = e.cacaItem || "carne", n = sobRnd(1, 2); sobMuda(it, n); if (it === "javali" && M().radiacao) sobMuda("rad", 4); tocar("sucesso"); return sobDia(it === "javali" ? "Um javali enorme, com manchas estranhas no couro. Muita carne." : "Você volta com carne de caça para uns dias."); } sobMuda("saude", -sobRnd(8, 14)); tocar("erro"); sobDia("O bicho escapa. Na correria, você escorrega num barranco e volta mancando."); }); }
+  if (e.caca) { const ok = sobChance(.7 + (temFuncao("cacador") ? .2 : 0)); return sobFazer("cacar", 2800, () => { if (ok) { const it = e.cacaItem || "carne", n = sobRnd(1, 2) + (temFuncao("cacador") ? 1 : 0); sobMuda(it, n); if (it === "javali" && M().radiacao) sobMuda("rad", 4); tocar("sucesso"); return sobDia(it === "javali" ? "Um javali enorme, com manchas estranhas no couro. Muita carne." : "Você volta com carne de caça para uns dias."); } sobMuda("saude", -sobRnd(8, 14)); tocar("erro"); sobDia("O bicho escapa. Na correria, você escorrega num barranco e volta mancando."); }); }
   if (e.rega) { let n = 0; SOB.horta.forEach(c => { if (c && c.dias > 0) { c.dias--; n++; } }); return sobFazer("regar", 2400, () => { tocar("item"); sobDia(n ? `Você rega e capina os canteiros. ${n} planta${n > 1 ? "s cresceram" : " cresceu"} um dia.` : "Você prepara a terra. Plante sementes pela mochila."); }); }
   if (e.radio) { SOB.radioChama = true; tocar("radio"); const ouviu = ["\"…quem estiver ouvindo, o comerciante passa amanhã pela estrada do radar…\"", "\"…emissão prevista, fiquem nos abrigos…\"", "\"…grupo de saqueadores visto perto do posto…\""]; return sobFazer("radio", 2400, () => sobDia(`Você gira o dial até achar uma voz: ${ouviu[sobRnd(0, 2)]}`)); }
   if (e.vigia) { SOB.vigia = true; SOB.vigiaAmanha = true; return sobFazer("vigiar", 2600, () => sobDia(M().radiacao ? "Do telhado, com o binóculo, você marca os caminhos seguros e as manchas de radiação." : "Você sobe na torre e marca as brechas no muro. Esta noite vai ser mais tranquila.")); }
@@ -589,10 +589,14 @@ function sobMercador() {
   const ofertas = [...M().mercador].sort(() => Math.random() - .5).slice(0, 3); sobCena.ofertas = ofertas.map(o => o[0]); window.__ultimasOfertas = sobCena.ofertas;
   const mostrar = msg => {
     sobTexto(msg || (M().radiacao ? "Um comerciante de máscara e sobretudo para na porta. \"Iodo, filtros, comida. Aceito artefatos.\"" : "Um mercador chega puxando uma carroça, com um lampião pendurado. \"Tenho o que você precisa.\""), !msg);
-    sobBotoes([...ofertas.map(([da, n, paga, custo]) => ({ t: `${n} ${ITENS[da].nome}`, sub: `Paga ${custo} ${ITENS[paga].nome.toLowerCase()} · tem ${qtd(paga)}`, icone: ITENS[da].ic, desat: qtd(paga) < custo, on: () => { abrirPortaE(null); sobMuda(paga, -custo); sobMuda(da, n); SOB.st.comprou++; tocar("item"); sobChecarObjetivos(); sobHud(); sobFazer("comprar", 1500, () => { sobLigarCena({ tipo: "visita", quem: "mercador", abrir: performance.now() - 2000, ofertas: window.__ultimasOfertas }); mostrar("Negócio fechado. \"Mais alguma coisa?\""); }); } })),
+    sobBotoes([...ofertas.map(([da, n, paga, custo]) => ({ t: `${n} ${ITENS[da].nome}`, sub: `Paga ${custo} ${ITENS[paga].nome.toLowerCase()} · tem ${qtd(paga)}`, icone: ITENS[da].ic, desat: qtd(paga) < custo, on: () => { abrirPortaE(null); sobMuda(paga, -custo); sobMuda(da, n); SOB.st.comprou++; tocar("item"); sobChecarObjetivos(); sobHud(); mostrar("Negócio fechado. \"Mais alguma coisa?\""); } })),
       { t: "Dispensar", icone: "porta", cls: "mini", on: () => sobDia("O mercador vai embora pela estrada.") }]);
   };
-  mostrar();
+  if (!ehCasa()) return mostrar();
+  sobTexto(M().radiacao ? "Alguém bate na porta. Pela fresta, um comerciante de máscara e sobretudo: \"Tenho iodo, filtros e comida. Posso entrar para negociar?\"" : "Alguém bate na porta. Pela fresta, um mercador com um lampião e uma carroça: \"Tenho coisas boas. Posso entrar para negociar?\"");
+  sobBotoes([
+    { t: "Deixar entrar", sub: "Abre a porta para negociar", icone: "porta", cls: "destaque", on: () => abrirPortaE(() => mostrar()) },
+    { t: "Mandar embora", icone: "porta", cls: "mini", on: () => sobDia("O mercador vai embora pela estrada.") }]);
 }
 function sobBandidos() {
   sobLigarCena({ tipo: "visita", quem: "bandidos" }); tocar("passos"); vibrar(80);

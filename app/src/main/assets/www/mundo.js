@@ -492,7 +492,8 @@ desenhaAcao = function (t, c) {
     return;
   }
   if (c.acao === "atirar" || c.acao === "faca") {
-    const ch = SOB.modo === "cherno"; (ch ? chernoLugar : sobLugar)(t + 4, { cena: sobCena.cena || L().lugares[0].cena });
+    const ch = SOB.modo === "cherno", _pes = pessoa; pessoa = () => {}; // o fundo não desenha outro "você"
+    try { (ch ? chernoLugar : sobLugar)(t + 4, { cena: sobCena.cena || L().lugares[0].cena }); } finally { pessoa = _pes; }
     const chao = H * .6, y = chao + H * .03, h = H * .24, x = W * .3;
     for (let i = 0; i < Math.min(3, c.n || 1); i++) { const cai = t > .5 + i * .3 ? 1 : 0, zx = W * (.7 + i * .1);
       ctx.save(); ctx.translate(zx, y); ctx.rotate(cai * (c.mut ? .4 : 1.3)); if (c.mut) monstro(0, 0, H * .16, { quatro: true, dir: -1, olhos: cai ? 0 : 1, olhosRgb: "190,255,120", cor: "#0b0d08" }); else zumbi(0, 0, H * .2, { dir: -1, olhos: cai ? 0 : .4 }); ctx.restore(); }

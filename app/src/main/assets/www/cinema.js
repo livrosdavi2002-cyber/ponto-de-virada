@@ -17,7 +17,7 @@ const cvRnd = i => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return 
    fase = ciclo da passada; anda = 0..1 (amplitude); dir = 1 direita / -1 esquerda */
 function pessoa(x, y, h, o = {}) {
   const { fase = 0, anda = 0, dir = 1, cor = "#04060a", aro = "rgba(175,190,215,.28)", luz = false, luzRgb = "255,240,200",
-    sentado = false, subir = 0, capacete = false, inclina = 0, escalar = 0, vermelha = false, cabeca = 0, mochila = false, bater = 0 } = o;
+    sentado = false, subir = 0, capacete = false, inclina = 0, escalar = 0, vermelha = false, cabeca = 0, mochila = false, bater = 0, empurrar = 0 } = o;
   const s = h / 100, agora = performance.now() / 1000;
   // sombra no chão
   if (!sentado && !escalar && h > 14) { ctx.fillStyle = "rgba(0,0,0,.38)"; ctx.beginPath(); ctx.ellipse(x, y + 1, h * (.15 + anda * .06), h * .025, 0, 0, 7); ctx.fill(); }
@@ -32,6 +32,7 @@ function pessoa(x, y, h, o = {}) {
   };
   [1, -1].forEach(k => {
     if (sentado) { pes.push(linha(pernas, 0, hipY, 1.5, 24, .08, 25)); return; }
+    if (empurrar) { pes.push(k > 0 ? linha(pernas, 0, hipY, .42, 25, -.1, 25) : linha(pernas, 0, hipY, -.5, 26, -.42, 25)); return; } // pernas firmes, uma atrás
     const w = sw * k;
     let a1 = w * .55, dobra = .12 + Math.max(0, -w) * .9;
     if (escalar) { const e = Math.sin(fase + (k > 0 ? 0 : PI)); a1 = .35 + .35 * Math.max(0, e); dobra = .4 + .9 * Math.max(0, e); }
@@ -43,6 +44,7 @@ function pessoa(x, y, h, o = {}) {
   [1, -1].forEach(k => {
     if (escalar) { const e = Math.sin(fase + (k > 0 ? PI : 0)); const a = 2.75 + .28 * e; maos.push(linha(bracos, ox, shY + 3, a, 17, a + .15, 16)); return; }
     if (luz && k > 0) { mao = linha(bracos, ox, shY + 3, 1.15, 17, 1.5, 15); maos.push(mao); return; }
+    if (empurrar) { const tr = Math.sin(agora * 26 + k) * .05; maos.push(linha(bracos, ox, shY + 3 + k, 1.45 + tr, 16, 1.62 + tr, 15)); return; } // as duas mãos na porta
     if (bater && k > 0) { const bt = Math.max(0, Math.sin(agora * 12)) * .45 * bater; maos.push(linha(bracos, ox, shY + 3, 1.9 + bt * .5, 17, 2.4 + bt, 15)); return; } // batendo na porta
     const a = -sw * k * .6 + (anda ? 0 : .06 * k);
     maos.push(linha(bracos, ox, shY + 3, a, 17, a + .35, 15));
