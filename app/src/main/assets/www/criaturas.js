@@ -9,7 +9,7 @@
    ============================================================ */
 
 function zumbi(x, y, h, o = {}) {
-  const { fase = 0, anda = 0, dir = 1, olhos = .35, aro = "rgba(150,200,120,.26)", olhosRgb = "220,255,180", cabeca = .5 } = o;
+  const { fase = 0, anda = 0, dir = 1, olhos = .35, aro = "rgba(150,200,120,.26)", olhosRgb = "220,255,180", cabeca = .5, bater = 0 } = o;
   const s = h / 100, ag = performance.now() / 1000, sd = (x * 7.13) % 1; // semente por zumbi
   const sw = Math.sin(fase) * anda, manca = Math.max(0, Math.sin(fase)) * anda * 4;
   const pele = ["#5d6b55", "#6b6a58", "#56644f", "#706a5c"][Math.floor(sd * 4) % 4], roupa = ["#2c2a28", "#23303a", "#3a2a24", "#2a3328"][Math.floor(sd * 7) % 4];
@@ -31,7 +31,8 @@ function zumbi(x, y, h, o = {}) {
   ctx.fillStyle = pele; ctx.beginPath(); ctx.ellipse(pa[2] + 3, pa[3] - 1, 6, 2.6, 0, 0, 7); ctx.fill();
   ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pa[0] - 3, pa[1] + 2); ctx.lineTo(pa[0] + 3, pa[1] + 5); ctx.lineTo(pa[0] - 2, pa[1] + 7); ctx.stroke(); // barra rasgada
   // braço de trás
-  const m2 = membro(7, sh + 6, 1.32 - tre, 16, 1.52 - tre, 15, 6, 5, roupa, pele);
+  const soco = bater ? Math.max(0, Math.sin(ag * 9 + x)) * .35 : 0, soco2 = bater ? Math.max(0, Math.sin(ag * 9 + x + PI)) * .35 : 0;
+  const m2 = bater ? membro(7, sh + 6, 2.0 + soco2, 16, 2.2 + soco2, 15, 6, 5, roupa, pele) : membro(7, sh + 6, 1.32 - tre, 16, 1.52 - tre, 15, 6, 5, roupa, pele);
   // perna da frente
   const pf = membro(0, hip, sw * .45, 25, sw * .45 - .2, 25, 8.5, 7.5, calca, calca);
   ctx.fillStyle = "#151515"; ctx.beginPath(); ctx.ellipse(pf[2] + 4, pf[3] - 1, 7.5, 3.2, 0, 0, 7); ctx.fill();
@@ -66,7 +67,7 @@ function zumbi(x, y, h, o = {}) {
   ctx.fillStyle = "rgba(220,210,170,.8)"; for (let i = 0; i < 3; i++) ctx.fillRect(3.6 + i * 1.7, 5.2, 1, 1.4);
   ctx.restore();
   // braço da frente esticado, com dedos
-  const m1 = membro(10, sh + 4, 1.58 + tre + Math.sin(fase * .5) * .1, 17, 1.72 + tre, 16, 6.5, 5, roupa, pele);
+  const m1 = bater ? membro(10, sh + 4, 2.05 + soco, 17, 2.25 + soco, 16, 6.5, 5, roupa, pele) : membro(10, sh + 4, 1.58 + tre + Math.sin(fase * .5) * .1, 17, 1.72 + tre, 16, 6.5, 5, roupa, pele);
   [m1, m2].forEach(([, , mx, my], k) => { ctx.fillStyle = pele; ctx.beginPath(); ctx.arc(mx, my, 3, 0, 7); ctx.fill(); ctx.strokeStyle = pele; ctx.lineWidth = 1.4;
     for (let d = -1; d <= 1; d++) { ctx.beginPath(); ctx.moveTo(mx + 1, my); ctx.lineTo(mx + 5.5, my + d * 2.2 + Math.sin(ag * 5 + k + d) * .6); ctx.stroke(); } });
   // manga rasgada

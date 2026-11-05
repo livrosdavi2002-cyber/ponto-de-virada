@@ -258,8 +258,16 @@ function desenhaInterior(t, p) {
     if (quem === "mercador" && entrando <= 0) { const lx = cvMix(-W * .12, alvo, k) + hp * .12; luzCor(lx, pe - hp * .5, wx * .8, .5, "255,200,110"); ctx.fillStyle = "rgba(255,210,120,.95)"; ctx.fillRect(lx - 2, pe - hp * .52, 5, 7); }
   } else if (quem === "horda") {
     const rec = c.recuam ? cvSuave(Math.min(1, (performance.now() - c.recuam) / 1400)) : 0;
-    for (let i = 0; i < 4; i++) { const bx = wx * (.15 + i * .22) + Math.sin(t * 2.2 + i) * 4 - rec * W * (.25 + i * .05);
-      if (ch) monstro(bx, pe - 2, H * .12, { quatro: true, dir: 1, olhosRgb: "190,255,120", cor: "#0b0d08" }); else zumbi(bx, pe, hp * (.95 - (i % 2) * .06), { dir: 1, olhos: .6 }); }
+    // ficam do lado de fora: nada atravessa a parede/porta; o da frente bate na porta
+    const face = wx - wt / 2 - 1;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, face, H); ctx.clip();
+    for (let i = 0; i < 4; i++) {
+      const hz = hp * (.95 - (i % 2) * .06), frente = i === 3;
+      const bx = (ch ? face - H * .12 * .62 - (3 - i) * W * .055 : frente ? face - hz / 100 * 37.5 : face - hz * .46 - (3 - i) * W * .05) + (frente ? 0 : Math.sin(t * 2.2 + i) * 3) - rec * W * (.25 + i * .05);
+      if (ch) monstro(bx, pe - 2, H * .12, { quatro: true, dir: 1, olhosRgb: "190,255,120", cor: "#0b0d08", fase: t * 3 + i, anda: rec ? .8 : .15 });
+      else zumbi(bx, pe, hz, { dir: 1, olhos: .6, bater: frente && !rec ? 1 : 0, fase: t * 3 + i, anda: rec ? .7 : 0 });
+    }
+    ctx.restore();
     if (!segura && !c.segurando && !c.recuam && !ch) zumbi(wx + W * .06 + Math.sin(t * 3) * 3, pe, hp, { dir: 1, olhos: .8 }); // um já está entrando
   } else if (quem === "barulho") {
     const x = ((t * .2) % 1.3) * wx - wx * .15; ctx.fillStyle = "rgba(0,0,0,.75)"; ctx.beginPath(); ctx.ellipse(x, pe - hp * .5, hp * .14, hp * .5, 0, 0, 7); ctx.fill();
@@ -392,13 +400,13 @@ function desenhaInterior(t, p) {
   }
 
   /* ===== pessoas dentro ===== */
-  const sent = [[cx1, 1], [cx2, -1], [W * .76, 1]];
-  if (dorme > .5) g.forEach((q, i) => { if (i < 3) { const mx0 = W * (.3 + i * .14); ctx.fillStyle = "#2a2430"; ctx.fillRect(mx0 - 4, chao + H * .03, W * .13, 5); ctx.save(); ctx.translate(mx0 + W * .12, chao + H * .03); ctx.rotate(-PI / 2); pessoa(0, 0, H * .12, { cor: "#08090c", aro: "rgba(255,200,130,.15)" }); ctx.restore(); ctx.fillStyle = "#3a3448"; ctx.fillRect(mx0 + W * .03, chao + H * .022, W * .09, 6); } }); else
-  g.forEach((q, i) => { if (i < 3) { pessoa(sent[i][0], i === 2 ? btop + H * .17 * .28 : pe - H * .045, H * .17, { sentado: true, dir: sent[i][1], cor: "#08090c", aro: "rgba(255,200,130,.25)", cabeca: Math.sin(t * .4 + i) > .6 ? 1 : 0 }); } });
+  const sent = [[cx1, 1], [cx2, -1], [W * .3, 1]];
+  if (g.length > 2) { ctx.fillStyle = "#3a2616"; ctx.fillRect(W * .3 - H * .02, chao - H * .045, H * .05, 4); ctx.fillRect(W * .3 - H * .015, chao - H * .045, 3, H * .045); ctx.fillRect(W * .3 + H * .022, chao - H * .045, 3, H * .045); } // banquinho
+  g.forEach((q, i) => { if (i < 3) { pessoa(sent[i][0], i === 2 ? chao - H * .045 + H * .17 * .28 : pe - H * .045, H * .17, { sentado: true, dir: sent[i][1], cor: "#08090c", aro: "rgba(255,200,130,.25)", cabeca: Math.sin(t * .4 + i) > .6 ? 1 : 0 }); } });
   if (entrando > 0) { const ex = cvMix(alvo, wx + W * (quem === "mercador" ? .07 : .1), entrando); if (quem === "mercador") { luzCor(ex + hp * .12, pe - hp * .5, W * .2, .45, "255,200,110"); ctx.fillStyle = "rgba(255,210,120,.95)"; ctx.fillRect(ex + hp * .12 - 2, pe - hp * .52, 5, 7); }
     pessoa(ex, pe, hp, { fase: entrando * 22, anda: entrando < 1 ? .85 : 0, dir: 1, mochila: true, capacete: ch, luz: noite, luzRgb: "255,230,200", cor: "#07080b", aro: "rgba(200,210,230,.25)" }); if (c.crianca) pessoa(ex - W * .07, pe, hp * .6, { fase: entrando * 22 + 1, anda: entrando < 1 ? .85 : 0, dir: 1 }); }
   if (!p.semEu) {
-    if (c.segurando || c.recuam) pessoa(wx + W * .075 + (c.recuam ? 0 : Math.sin(t * 30) * 1.5), pe, hp, { dir: -1, inclina: c.recuam ? .05 : .32, empurrar: 1 });
+    if (c.segurando || c.recuam) pessoa(wx + wt / 2 + 2 + hp * (c.recuam ? .4 : .52) + (c.recuam ? 0 : Math.sin(t * 30) * 1.2), pe, hp, { dir: -1, inclina: c.recuam ? .05 : .22, empurrar: c.recuam ? 0 : 1 }); // as mãos encostam na porta
     else if (investiga >= 0) { const ix = cvMix(W * .72, wx + W * .09, cvSuave(investiga)); pessoa(ix, pe, hp, { dir: -1, fase: investiga * 24, anda: investiga < 1 ? .9 : 0, luz: true, luzRgb: "255,240,200" }); }
     else if (!dorme) pessoa(W * .42, pe, hp, { dir: -1, cabeca: quem ? 0 : Math.sin(t * .5) > .7 ? 1 : 0, aro: "rgba(255,200,130,.3)" });
   }
