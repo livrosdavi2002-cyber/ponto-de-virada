@@ -17,12 +17,35 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.7"
+          gradle-version: "8.13"
 
-      - name: Compilar
+      - name: Compilar versão de teste (APK)
         run: gradle assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
           name: UltimaEscolha-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      # versão da Play Store: só roda depois que o segredo SENHA_ASSINATURA for cadastrado no GitHub
+      - name: Preparar chave de assinatura
+        id: chave
+        env:
+          SENHA: ${{ secrets.SENHA_ASSINATURA }}
+        run: |
+          if [ -z "$SENHA" ]; then echo "Segredo SENHA_ASSINATURA ainda não cadastrado: pulando a versão da loja."; echo "ok=nao" >> "$GITHUB_OUTPUT"; exit 0; fi
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in assinatura/upload.jks.enc -out "$RUNNER_TEMP/upload.jks" -pass env:SENHA
+          echo "ok=sim" >> "$GITHUB_OUTPUT"
+
+      - name: Compilar versão da Play Store (AAB)
+        if: steps.chave.outputs.ok == 'sim'
+        env:
+          CHAVE_ARQUIVO: ${{ runner.temp }}/upload.jks
+          CHAVE_SENHA: ${{ secrets.SENHA_ASSINATURA }}
+        run: gradle bundleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        if: steps.chave.outputs.ok == 'sim'
+        with:
+          name: UltimaEscolha-PlayStore-AAB
+          path: app/build/outputs/bundle/release/app-release.aab

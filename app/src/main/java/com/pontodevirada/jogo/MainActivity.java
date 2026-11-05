@@ -2,6 +2,20 @@ package com.pontodevirada.jogo;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.window.OnBackInvokedDispatcher;
+
+import com.android.billingclient.api.AcknowledgePurchaseParams;
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingClientStateListener;
+import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.PendingPurchasesParams;
+import com.android.billingclient.api.ProductDetails;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryPurchasesParams;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
@@ -40,6 +54,15 @@ public class MainActivity extends Activity {
     private TextToSpeech voz;
     private boolean vozPronta = false;
     private final List<Voice> vozesPt = new ArrayList<>();
+
+    /* Loja (Google Play Billing): compra única que libera os modos infinitos */
+    private static final String PRODUTO = "premium_modos";
+    private BillingClient loja;
+    private ProductDetails produto;
+    private String preco = "";
+    private boolean premiumAtivo = false;
+    private boolean testeLiberado = false;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle estado) {
@@ -95,11 +118,75 @@ public class MainActivity extends Activity {
         });
 
         setContentView(web);
+        prefs = getSharedPreferences("loja", MODE_PRIVATE);
+        premiumAtivo = prefs.getBoolean("premium", false);
+        testeLiberado = depurando() && prefs.getBoolean("teste", false);
+        iniciarLoja();
+        // Android 13+: gesto/botão de voltar (o onBackPressed antigo não é mais chamado no Android 16)
+        if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::voltar);
         iniciarVoz();
         telaCheia();
 
         if (estado != null) web.restoreState(estado);
         else web.loadUrl(INICIO);
+    }
+
+    private boolean depurando() { return (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0; }
+
+    private void iniciarLoja() {
+        loja = BillingClient.newBuilder(this)
+                .setListener((resultado, compras) -> {
+                    int c = resultado.getResponseCode();
+                    if (c == BillingClient.BillingResponseCode.OK && compras != null) processarCompras(compras, true);
+                    else if (c == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) { marcarPremium(true); js("window.premiumComprado && premiumComprado()"); }
+                    else if (c == BillingClient.BillingResponseCode.USER_CANCELED) js("window.premiumErro && premiumErro('cancelado')");
+                    else js("window.premiumErro && premiumErro('erro')");
+                })
+                .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+                .enableAutoServiceReconnection()
+                .build();
+        loja.startConnection(new BillingClientStateListener() {
+            @Override public void onBillingSetupFinished(BillingResult r) {
+                if (r.getResponseCode() != BillingClient.BillingResponseCode.OK) return;
+                // restaura compras já feitas (troca de celular, reinstalação)
+                loja.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(), (br, lista) -> {
+                    if (br.getResponseCode() != BillingClient.BillingResponseCode.OK) return;
+                    boolean tem = false;
+                    for (Purchase p : lista) if (p.getProducts().contains(PRODUTO) && p.getPurchaseState() == Purchase.PurchaseState.PURCHASED) tem = true;
+                    if (!tem) marcarPremium(false); // reembolso ou compra cancelada
+                    processarCompras(lista, false);
+                });
+                List<QueryProductDetailsParams.Product> itens = new ArrayList<>();
+                itens.add(QueryProductDetailsParams.Product.newBuilder().setProductId(PRODUTO).setProductType(BillingClient.ProductType.INAPP).build());
+                loja.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(itens).build(), (br, res) -> {
+                    if (br.getResponseCode() != BillingClient.BillingResponseCode.OK || res.getProductDetailsList().isEmpty()) return;
+                    produto = res.getProductDetailsList().get(0);
+                    if (produto.getOneTimePurchaseOfferDetails() != null) preco = produto.getOneTimePurchaseOfferDetails().getFormattedPrice();
+                    js("window.precoPremium && precoPremium(" + JSONObject.quote(preco) + ")");
+                });
+            }
+            @Override public void onBillingServiceDisconnected() { }
+        });
+    }
+
+    private void processarCompras(List<Purchase> compras, boolean agora) {
+        for (Purchase p : compras) {
+            if (!p.getProducts().contains(PRODUTO)) continue;
+            if (p.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                marcarPremium(true);
+                if (agora) js("window.premiumComprado && premiumComprado()");
+                // a Play devolve o dinheiro se a compra não for confirmada em 3 dias
+                if (!p.isAcknowledged()) loja.acknowledgePurchase(AcknowledgePurchaseParams.newBuilder().setPurchaseToken(p.getPurchaseToken()).build(), r -> { });
+            } else if (p.getPurchaseState() == Purchase.PurchaseState.PENDING && agora) js("window.premiumErro && premiumErro('pendente')");
+        }
+    }
+
+    private void marcarPremium(boolean v) { premiumAtivo = v; prefs.edit().putBoolean("premium", v).apply(); }
+
+    private void voltar() {
+        web.evaluateJavascript("window.voltarAndroid ? voltarAndroid() : false", valor -> {
+            if (!"true".equals(valor)) finish();
+        });
     }
 
     /* Narração: voz do próprio Android (Google TTS), em português do Brasil */
@@ -174,11 +261,7 @@ public class MainActivity extends Activity {
 
     /* Botão voltar: abre o menu do jogo; no menu, fecha o app */
     @Override
-    public void onBackPressed() {
-        web.evaluateJavascript("window.voltarAndroid ? voltarAndroid() : false", valor -> {
-            if (!"true".equals(valor)) finish();
-        });
-    }
+    public void onBackPressed() { voltar(); }
 
     @Override
     protected void onPause() {
@@ -203,6 +286,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (loja != null) loja.endConnection();
         if (voz != null) voz.shutdown();
         if (web != null) web.destroy();
         super.onDestroy();
@@ -212,6 +296,29 @@ public class MainActivity extends Activity {
     public class Ponte {
         @JavascriptInterface
         public boolean vozDisponivel() { return vozPronta; }
+
+        @JavascriptInterface
+        public boolean premium() { return premiumAtivo || testeLiberado; }
+
+        @JavascriptInterface
+        public boolean depuracao() { return depurando(); }
+
+        @JavascriptInterface
+        public String precoPremium() { return preco; }
+
+        @JavascriptInterface
+        public void liberarTeste() { if (depurando()) { testeLiberado = true; prefs.edit().putBoolean("teste", true).apply(); } }
+
+        @JavascriptInterface
+        public boolean comprarPremium() {
+            if (loja == null || produto == null || !loja.isReady()) return false;
+            runOnUiThread(() -> {
+                List<BillingFlowParams.ProductDetailsParams> l = new ArrayList<>();
+                l.add(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(produto).build());
+                loja.launchBillingFlow(MainActivity.this, BillingFlowParams.newBuilder().setProductDetailsParamsList(l).build());
+            });
+            return true;
+        }
 
         @JavascriptInterface
         public void falar(String texto) {

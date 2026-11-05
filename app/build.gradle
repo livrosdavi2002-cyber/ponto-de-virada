@@ -2,23 +2,43 @@ plugins {
     id 'com.android.application'
 }
 
+// número da versão sobe sozinho a cada build do GitHub (a Play Store exige que sempre aumente)
+def numeroBuild = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+def chave = System.getenv("CHAVE_ARQUIVO")
+
 android {
     namespace 'com.pontodevirada.jogo'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
-        applicationId "com.pontodevirada.jogo"
+        applicationId "com.ultimaescolha.jogo"
         minSdk 24
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        targetSdk 36
+        versionCode 100 + numeroBuild
+        versionName "1.0." + numeroBuild
+    }
+
+    signingConfigs {
+        loja {
+            if (chave != null && file(chave).exists()) {
+                storeFile file(chave)
+                storePassword System.getenv("CHAVE_SENHA")
+                keyAlias "upload"
+                keyPassword System.getenv("CHAVE_SENHA")
+            }
+        }
     }
 
     buildTypes {
+        debug {
+            // versão de teste: instala ao lado da versão da loja e tem o botão de liberar o premium
+            applicationIdSuffix ".teste"
+            resValue "string", "app_name", "Última Escolha (teste)"
+        }
         release {
             minifyEnabled false
-            // assinado com a chave de teste para poder instalar direto no celular
-            signingConfig signingConfigs.debug
+            resValue "string", "app_name", "Última Escolha"
+            signingConfig (chave != null && file(chave).exists()) ? signingConfigs.loja : signingConfigs.debug
         }
     }
 
@@ -29,5 +49,6 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation 'com.android.billingclient:billing:9.1.0'
 }

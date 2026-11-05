@@ -179,7 +179,7 @@ const chaveSave = m => "pv_inf_" + m;
 const sobLer = m => { try { const d = JSON.parse(localStorage.getItem(chaveSave(m))); return d && d.versao === 2 ? d : null; } catch (e) { return null; } };
 const sobGravar = () => { if (SOB) try { localStorage.setItem(chaveSave(SOB.modo), JSON.stringify(SOB)); } catch (e) {} };
 const sobRecorde = m => { try { return +(localStorage.getItem("pv_rec_" + m) || 0); } catch (e) { return 0; } };
-window.temPremium = () => { try { if (window.Android && Android.premium && Android.premium()) return true; return localStorage.getItem("pv_premium") === "1"; } catch (e) { return false; } };
+window.temPremium = () => { try { if (window.Android && Android.premium) return !!Android.premium(); return localStorage.getItem("pv_premium") === "1"; } catch (e) { return false; } };
 const qtd = id => SOB.inv[id] || 0;
 const totalTipo = tipo => Object.entries(SOB.inv).reduce((n, [k, v]) => n + (ITENS[k] && ITENS[k].tipo === tipo ? v : 0), 0);
 const CLIMA = { limpo: ["Céu limpo", "sol"], nublado: ["Nublado", "nuvem"], chuva: ["Chuva", "chuva"], neblina: ["Neblina", "nevoa"], emissao: ["Alerta de emissão", "rad"] };
@@ -685,7 +685,21 @@ function entrarSob(modo = "zumbi") {
 }
 window.sairSob = () => { if ($s("sob").hidden) return; sobGravar(); fecharPainel(); ameaca = null; $s("sob").hidden = true; document.body.classList.remove("modo-sob"); setVer([]); };
 $s("btnSobMenu").addEventListener("click", () => abrirHub());
-$s("btnPremiumTeste").addEventListener("click", () => { try { localStorage.setItem("pv_premium", "1"); } catch (e) {} $s("premium").hidden = true; tocar("sucesso"); entrarSob($s("premium").dataset.modo || "zumbi"); });
+/* compra do premium pela Google Play */
+const ehTeste = () => { try { return !window.Android || !Android.depuracao || Android.depuracao(); } catch (e) { return false; } };
+const notaPremium = txt => { $s("premiumNota").textContent = txt; };
+const NOTA_PADRAO = $s("premiumNota").textContent;
+window.precoPremium = p => { $s("btnPremiumComprar").textContent = p ? `Desbloquear por ${p}` : "Desbloquear"; };
+const liberarPremium = () => { $s("premium").hidden = true; tocar("sucesso"); vibrar(60); entrarSob($s("premium").dataset.modo || "zumbi"); };
+window.premiumComprado = () => { if (!$s("premium").hidden) liberarPremium(); };
+window.premiumErro = tipo => notaPremium(tipo === "cancelado" ? "Compra cancelada. Quando quiser, é só tocar de novo." : tipo === "pendente" ? "Pagamento pendente. Assim que a Google Play confirmar, os modos são liberados sozinhos." : "Não deu para concluir a compra agora. Confira a internet e tente de novo.");
+new MutationObserver(() => { if ($s("premium").hidden) return; notaPremium(NOTA_PADRAO); $s("btnPremiumTeste").hidden = !ehTeste(); try { window.precoPremium(window.Android && Android.precoPremium ? Android.precoPremium() : ""); } catch (e) {} }).observe($s("premium"), { attributes: true, attributeFilter: ["hidden"] });
+$s("btnPremiumComprar").addEventListener("click", () => {
+  let ok = false; try { ok = !!(window.Android && Android.comprarPremium && Android.comprarPremium()); } catch (e) {}
+  if (ok) notaPremium("Abrindo a Google Play…");
+  else notaPremium(window.Android ? "A loja da Google Play ainda não respondeu. Confira a internet e tente de novo em alguns segundos." : "A compra só funciona no app instalado pela Play Store.");
+});
+$s("btnPremiumTeste").addEventListener("click", () => { if (!ehTeste()) return; try { localStorage.setItem("pv_premium", "1"); if (window.Android && Android.liberarTeste) Android.liberarTeste(); } catch (e) {} liberarPremium(); });
 $s("btnPremiumFechar").addEventListener("click", () => { $s("premium").hidden = true; });
 // salvo antigo (versão 1) do modo zumbi: descartado com segurança
 try { localStorage.removeItem("pv_sob"); } catch (e) {}
