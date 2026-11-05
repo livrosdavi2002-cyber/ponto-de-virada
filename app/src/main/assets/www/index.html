@@ -231,7 +231,7 @@ body.no-hub .app .top, body.no-hub .app .hud { visibility: hidden; }
 body.modo-sob .app { visibility: hidden; }
 .sob { background: none; pointer-events: none; padding: 0 !important; }
 body.modo-sob .vignette { opacity: 0; }
-.sob .sob-in { pointer-events: auto; position: fixed; left: 0; right: 0; bottom: 0; height: 54vh; max-height: 54vh; display: flex; flex-direction: column; gap: 10px;
+.sob .sob-in { pointer-events: auto; position: fixed; left: 0; right: 0; bottom: 0; height: 47vh; max-height: 47vh; display: flex; flex-direction: column; gap: 10px;
   padding: 14px max(16px, var(--sl)) calc(var(--sb) + 14px) max(16px, var(--sr)); box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain;
   background: #0f131b; border-top: 1px solid #2a3140; border-radius: 20px 20px 0 0; box-shadow: 0 -14px 34px rgba(0,0,0,.55); }
 .sob .sob-in > * { width: 100%; max-width: 560px; margin-inline: auto; }
@@ -313,7 +313,8 @@ body.modo-sob .vignette { opacity: 0; }
 .sb-titulo b, .sb-morte b { font-family: var(--f-display); font-weight: 800; font-size: clamp(46px, 14vw, 80px); line-height: .88; text-transform: uppercase; color: var(--acc); }
 .sb-titulo small, .sb-morte small { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
 body.sob-mapa .sob .sob-in { height: 38vh; max-height: 38vh; }
-@media (max-height: 720px) { body.sob-mapa .sob .sob-in { height: 40vh; max-height: 40vh; } .sob .sob-in { height: 58vh; max-height: 58vh; } .sob-texto { font-size: 16.5px; } .sb-acao { min-height: 50px; padding: 8px 10px; } .sb-acao b { font-size: 16px; } .sb-dia { font-size: 32px; } .sb-acao small { font-size: 9px; } }
+.sb-inv { display: none !important; } /* o que tem na mochila fica só na mochila */
+@media (max-height: 720px) { body.sob-mapa .sob .sob-in { height: 40vh; max-height: 40vh; } .sob .sob-in { height: 51vh; max-height: 51vh; } .sob-texto { font-size: 16.5px; } .sb-acao { min-height: 50px; padding: 8px 10px; } .sb-acao b { font-size: 16px; } .sb-dia { font-size: 32px; } .sb-acao small { font-size: 9px; } }
 .story.sob-card { border: 1px solid #e2483d; background: linear-gradient(135deg, rgba(60,14,12,.9), rgba(20,25,36,.92)); position: relative; overflow: hidden; }
 .story.sob-card h3 { color: #e2483d; font-size: 40px; }
 .story.sob-card .tag { position: absolute; top: 14px; right: 14px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--night); background: #ffd24d; border-radius: 999px; padding: 4px 9px; font-weight: 600; }
@@ -1746,5 +1747,6 @@ start({});
 <script src="acoes.js"></script>
 <script src="mundo.js"></script>
 <script src="casa.js"></script>
+<script src="criaturas.js"></script>
 </body>
 </html>

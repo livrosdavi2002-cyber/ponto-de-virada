@@ -577,19 +577,19 @@ function sobVisitante(noite, depois) {
   sobLigarCena({ tipo: "visita", quem: "pessoa", noite, crianca: sobChance(.25) }); tocar("batidas");
   sobTexto(`${noite ? "No meio da noite, alguém" : "Alguém"} bate na porta. É ${nome}. ${mordido ? "Está com o braço enrolado num pano sujo." : doente ? "Tosse sem parar e tem manchas na pele." : "Está magro, mas parece bem."} Pede para entrar.`);
   const cheio = SOB.grupo.length >= 3;
-  const entra = (m, msg) => { SOB.grupo.push({ nome, mordido: m }); if (sobChance(.5)) sobLoot([lt("enlatado", 0, 2), lt("municao", 0, 2)]); if (doente) sobMuda("rad", 8, false); tocar("sucesso"); sobChecarObjetivos(); sobHud(); depois(msg); };
+  const entra = (m, msg) => abrirPortaE(() => { SOB.grupo.push({ nome, mordido: m }); if (sobChance(.5)) sobLoot([lt("enlatado", 0, 2), lt("municao", 0, 2)]); if (doente) sobMuda("rad", 8, false); tocar("sucesso"); sobChecarObjetivos(); sobHud(); depois(msg); });
   sobBotoes([
     { t: "Deixar entrar", sub: cheio ? "Grupo cheio" : "+1 energia por dia, mas come", icone: "grupo", desat: cheio, on: () => entra(mordido, `${nome} entra e agradece. Agora vocês são ${SOB.grupo.length + 2}.`) },
-    { t: "Revistar antes", sub: "Ver se tem mordida", icone: "busca", desat: cheio, on: () => { if (mordido) { sobTexto(`Debaixo do pano, uma mordida roxa. ${nome} implora.`); sobBotoes([{ t: "Mandar embora", icone: "porta", on: () => depois(`${nome} vai embora sem olhar para trás.`) }, { t: "Deixar entrar mesmo assim", icone: "grupo", on: () => entra(true, `${nome} entra. Você tenta não pensar na mordida.`) }]); } else entra(false, `Tudo certo. ${nome} entra para o grupo.`); } },
+    { t: "Revistar antes", sub: "Ver se tem mordida", icone: "busca", desat: cheio, on: () => { if (sobCena) sobCena.fresta = true; if (mordido) { sobTexto(`Debaixo do pano, uma mordida roxa. ${nome} implora.`); sobBotoes([{ t: "Mandar embora", icone: "porta", on: () => depois(`${nome} vai embora sem olhar para trás.`) }, { t: "Deixar entrar mesmo assim", icone: "grupo", on: () => entra(true, `${nome} entra. Você tenta não pensar na mordida.`) }]); } else entra(false, `Tudo certo. ${nome} entra para o grupo.`); } },
     { t: "Mandar embora", icone: "porta", on: () => depois(`${nome} some ${noite ? "no escuro" : "pela estrada"}.`) },
   ]);
 }
 function sobMercador() {
   sobLigarCena({ tipo: "visita", quem: "mercador" }); tocar("campainha");
-  const ofertas = [...M().mercador].sort(() => Math.random() - .5).slice(0, 3); sobCena.ofertas = ofertas.map(o => o[0]);
+  const ofertas = [...M().mercador].sort(() => Math.random() - .5).slice(0, 3); sobCena.ofertas = ofertas.map(o => o[0]); window.__ultimasOfertas = sobCena.ofertas;
   const mostrar = msg => {
     sobTexto(msg || (M().radiacao ? "Um comerciante de máscara e sobretudo para na porta. \"Iodo, filtros, comida. Aceito artefatos.\"" : "Um mercador chega puxando uma carroça, com um lampião pendurado. \"Tenho o que você precisa.\""), !msg);
-    sobBotoes([...ofertas.map(([da, n, paga, custo]) => ({ t: `${n} ${ITENS[da].nome}`, sub: `Paga ${custo} ${ITENS[paga].nome.toLowerCase()} · tem ${qtd(paga)}`, icone: ITENS[da].ic, desat: qtd(paga) < custo, on: () => { sobMuda(paga, -custo); sobMuda(da, n); SOB.st.comprou++; tocar("item"); sobChecarObjetivos(); sobHud(); sobFazer("comprar", 1500, () => { sobLigarCena({ tipo: "visita", quem: "mercador" }); mostrar("Negócio fechado. \"Mais alguma coisa?\""); }); } })),
+    sobBotoes([...ofertas.map(([da, n, paga, custo]) => ({ t: `${n} ${ITENS[da].nome}`, sub: `Paga ${custo} ${ITENS[paga].nome.toLowerCase()} · tem ${qtd(paga)}`, icone: ITENS[da].ic, desat: qtd(paga) < custo, on: () => { abrirPortaE(null); sobMuda(paga, -custo); sobMuda(da, n); SOB.st.comprou++; tocar("item"); sobChecarObjetivos(); sobHud(); sobFazer("comprar", 1500, () => { sobLigarCena({ tipo: "visita", quem: "mercador", abrir: performance.now() - 2000, ofertas: window.__ultimasOfertas }); mostrar("Negócio fechado. \"Mais alguma coisa?\""); }); } })),
       { t: "Dispensar", icone: "porta", cls: "mini", on: () => sobDia("O mercador vai embora pela estrada.") }]);
   };
   mostrar();
