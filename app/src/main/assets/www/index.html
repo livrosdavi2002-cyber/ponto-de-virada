@@ -1631,8 +1631,8 @@ function abrirHub() {
     $("lista").innerHTML = `<p class="aba-intro">Um sítio aconchegante no meio da mata. Plante, regue, pesque e venda para consertar a caminhonete e ir embora. Mas cada assombração tem uma regra, e quem não aprende não vê o dia seguinte. Jogado com o celular deitado.</p>
       <button class="story modo-card" type="button" id="cardRoca" style="--c:#e07a2a"><span class="thumb" style="background:radial-gradient(ellipse at 70% 30%,#e07a2a55,transparent 60%),linear-gradient(180deg,#1a2410,#0a0d08)"></span>
       <span class="tag">Modo novo</span><span class="g"><span>Terror de fazenda</span>${venceu ? `<span>Melhor fuga: ${Math.floor(melhor / 60)} min ${melhor % 60} s</span>` : ""}</span>
-      <h3>Roça Assombrada</h3><span class="gancho">O gato fala. O cachorro preto não pode ver você de perto. E quando a mata estala, é hora de entrar.</span>
-      <span class="mec">Plantar · regar · pescar · vender · sobreviver</span></button>`;
+      <h3>Roça Assombrada</h3><span class="gancho">Yasmin perdeu a avó e o pai na mesma noite. Agora só tem a gatinha Sombrinha, um caderno de regras... e a mata, que estala.</span>
+      <span class="mec">Plantar · regar · pescar · vender · sobreviver · online com amigos</span></button>`;
     $("liberar").hidden = true; $("cardRoca").addEventListener("click", () => { tocar("clique"); entrarRoca(); });
     $("hub").hidden = false; $("drawer").hidden = true; document.body.classList.add("no-hub");
     return;
@@ -1770,6 +1770,7 @@ start({});
 <script src="criaturas.js"></script>
 <script src="grupo.js"></script>
 <script src="predio.js"></script>
+<script src="lib/peerjs.min.js"></script>
 <script src="roca.js"></script>
 <script>
 /* versão de navegador / iPhone: funciona offline, destrava o som no primeiro toque e ensina a instalar */
