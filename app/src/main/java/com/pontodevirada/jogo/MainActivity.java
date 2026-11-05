@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.ActivityInfo;
 import android.window.OnBackInvokedDispatcher;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
@@ -302,6 +303,12 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public boolean depuracao() { return depurando(); }
+
+        // o modo Roça é jogado com o celular deitado
+        @JavascriptInterface
+        public void orientacao(String modo) {
+            runOnUiThread(() -> setRequestedOrientation("paisagem".equals(modo) ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+        }
 
         @JavascriptInterface
         public String precoPremium() { return preco; }

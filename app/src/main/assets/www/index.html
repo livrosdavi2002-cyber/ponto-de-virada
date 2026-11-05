@@ -323,8 +323,8 @@ body.sob-mapa .sob .sob-in { height: 38vh; max-height: 38vh; }
 .premium-nota { font-family: var(--f-mono); font-size: 11px !important; letter-spacing: .04em; line-height: 1.5; }
 .btn.sec { background: transparent; color: var(--ink-dim); border: 1px solid var(--line); }
 /* abas do menu */
-.abas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border: 1px solid var(--line); border-radius: 14px; background: rgba(11,14,20,.7); }
-.abas button { font-family: var(--f-display); font-weight: 800; font-size: 17px; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-dim); background: transparent; border: 0; border-radius: 10px; padding: 10px 8px; cursor: pointer; }
+.abas { display: grid; grid-template-columns: 1fr 1.25fr .9fr; gap: 6px; padding: 4px; border: 1px solid var(--line); border-radius: 14px; background: rgba(11,14,20,.7); }
+.abas button { font-family: var(--f-display); font-weight: 800; font-size: 14.5px; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-dim); background: transparent; border: 0; border-radius: 10px; padding: 10px 8px; cursor: pointer; }
 .abas button.on { color: var(--night); background: var(--ink); }
 .abas-tag { font-family: var(--f-mono); font-size: 8.5px; letter-spacing: .1em; vertical-align: middle; padding: 2px 5px; border-radius: 999px; background: #ffd24d; color: var(--night); }
 .aba-intro { font-size: 16px !important; line-height: 1.45; color: var(--ink-dim); }
@@ -483,7 +483,7 @@ body[data-modo="cherno"] .sob-modo { color: #b8e05a; }
     <h1>Última <span>Escolha</span></h1>
     <p>Escolha uma fase. Use fone de ouvido: o som faz parte do jogo.</p>
     <div class="progresso"><span id="progTotal"></span><span class="grp2"><button id="btnVozHub" type="button">Narração: ligada</button><button id="btnTrocaVoz" type="button" hidden>Trocar voz</button><button id="btnConq" type="button">Conquistas</button></span></div>
-    <div class="abas" role="tablist"><button type="button" role="tab" id="abaHist" data-aba="hist">Histórias</button><button type="button" role="tab" id="abaInf" data-aba="inf">Modos infinitos <span class="abas-tag">Premium</span></button></div>
+    <div class="abas" role="tablist"><button type="button" role="tab" id="abaHist" data-aba="hist">Histórias</button><button type="button" role="tab" id="abaInf" data-aba="inf">Modos infinitos <span class="abas-tag">Premium</span></button><button type="button" role="tab" id="abaRoca" data-aba="roca">Roça <span class="abas-tag">Novo</span></button></div>
     <div class="liberar" id="liberar" hidden></div>
     <div class="lista" id="lista"></div>
   </div>
@@ -1097,6 +1097,7 @@ addEventListener("touchstart", toqueLuz, { passive: true });
 addEventListener("touchmove", toqueLuz, { passive: true });
 
 function frame(now) {
+  if (window.rocaAtiva) { requestAnimationFrame(frame); return; } // o modo Roça tem a própria tela
   const dt = ultFrame ? Math.min(now - ultFrame, 100) : 16.7; ultFrame = now; kv = dt / 16.7;
   /* qualidade adaptativa: se o celular não aguenta, baixa a resolução do fundo */
   if (dt > 30) lento++; else if (lento > 0) lento -= .25;
@@ -1616,9 +1617,20 @@ function abrirHub() {
   setVer(["cidade", "acesa"]); setAmb({ drone: .5 });
   if (!miniaturas) gerarMiniaturas();
   let aba = "hist"; try { aba = localStorage.getItem("pv_aba") || "hist"; } catch (e) {}
-  $("abaHist").classList.toggle("on", aba === "hist"); $("abaInf").classList.toggle("on", aba === "inf");
-  $("abaHist").setAttribute("aria-selected", aba === "hist"); $("abaInf").setAttribute("aria-selected", aba === "inf");
+  [["abaHist", "hist"], ["abaInf", "inf"], ["abaRoca", "roca"]].forEach(([id, a]) => { $(id).classList.toggle("on", aba === a); $(id).setAttribute("aria-selected", aba === a); });
   let html = "";
+  if (aba === "roca") {
+    $("progTotal").textContent = "Plante, venda... e sobreviva";
+    let melhor = 0, venceu = 0; try { melhor = +(localStorage.getItem("roca_melhor") || 0); venceu = +(localStorage.getItem("roca_venceu") || 0); } catch (e) {}
+    $("lista").innerHTML = `<p class="aba-intro">Um sítio aconchegante no meio da mata. Plante, regue, pesque e venda para consertar a caminhonete e ir embora. Mas cada assombração tem uma regra, e quem não aprende não vê o dia seguinte. Jogado com o celular deitado.</p>
+      <button class="story modo-card" type="button" id="cardRoca" style="--c:#e07a2a"><span class="thumb" style="background:radial-gradient(ellipse at 70% 30%,#e07a2a55,transparent 60%),linear-gradient(180deg,#1a2410,#0a0d08)"></span>
+      <span class="tag">Modo novo</span><span class="g"><span>Terror de fazenda</span>${venceu ? `<span>Melhor fuga: ${Math.floor(melhor / 60)} min ${melhor % 60} s</span>` : ""}</span>
+      <h3>Roça Assombrada</h3><span class="gancho">O gato fala. O cachorro preto não pode ver você de perto. E quando a mata estala, é hora de entrar.</span>
+      <span class="mec">Plantar · regar · pescar · vender · sobreviver</span></button>`;
+    $("liberar").hidden = true; $("cardRoca").addEventListener("click", () => { tocar("clique"); entrarRoca(); });
+    $("hub").hidden = false; $("drawer").hidden = true; document.body.classList.add("no-hub");
+    return;
+  }
   if (aba === "inf") {
     $("progTotal").textContent = "Sobreviva o máximo que conseguir";
     html += `<p class="aba-intro">Modos sem fim. Cada dia você decide como gastar a energia: vasculhar, fortificar, plantar, descansar. Sair não perde o progresso. Morrer, sim.</p>`;
@@ -1679,7 +1691,7 @@ function abrirHub() {
   if (c) c.addEventListener("click", () => { const p = pendente; pendente = null; iniciarFase(p.S, p); });
   $("hub").hidden = false; $("drawer").hidden = true; document.body.classList.add("no-hub");
 }
-["abaHist", "abaInf"].forEach(id => $(id).addEventListener("click", () => { try { localStorage.setItem("pv_aba", $(id).dataset.aba); } catch (e) {} tocar("clique"); abrirHub(); $("hub").scrollTo(0, 0); }));
+["abaHist", "abaInf", "abaRoca"].forEach(id => $(id).addEventListener("click", () => { try { localStorage.setItem("pv_aba", $(id).dataset.aba); } catch (e) {} tocar("clique"); abrirHub(); $("hub").scrollTo(0, 0); }));
 
 /* miniaturas das cenas nos cartões do menu: desenha cada cena uma vez no canvas e guarda a imagem */
 let miniaturas = null;
@@ -1729,6 +1741,7 @@ function start(data) {
 }
 /* ganchos do app Android */
 window.voltarAndroid = () => {
+  if (window.rocaVoltar && window.rocaVoltar()) return true;
   if (!$("drawer").hidden) { $("drawer").hidden = true; return true; }
   if (!$("premium").hidden) { $("premium").hidden = true; return true; }
   if (!$("sob").hidden) { abrirHub(); return true; }
@@ -1751,5 +1764,6 @@ start({});
 <script src="criaturas.js"></script>
 <script src="grupo.js"></script>
 <script src="predio.js"></script>
+<script src="roca.js"></script>
 </body>
 </html>
