@@ -150,16 +150,16 @@ function novoJogo() {
   const pedras = [], flores = [], cogumelos = [];
   for (let i = 0; i < 70; i++) { const x = rnd(CERCA.x0 + .5, CERCA.x1 - .5), y = rnd(CERCA.y0 + .5, CERCA.y1 - .5); if (solido[Math.floor(y)][Math.floor(x)]) continue; (i % 3 === 0 ? pedras : i % 3 === 1 ? flores : cogumelos).push({ x, y, k: Math.random() }); }
   R = {
-    t: 18, dia: 1, cor: 0, semente: 0, caido: null, outro: null, online: null, eu: { x: 13, y: 12.8, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5, y: 5.6 },
+    t: 18, dia: 1, vidas: 2, cor: 0, semente: 0, caido: null, outro: null, online: null, eu: { x: 13, y: 12.8, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5, y: 5.6 },
     solido, caixas, arvores, pedras, flores, cogumelos, moedas: 0, agua: 5, aguaMax: 5, oleo: 100, lanterna: false, folego: 100, correndo: false, vel: 3.1,
-    lanternaBoa: false, sementes: ["milho", "mandioca"], semente: 0, canteiros: CANTEIROS.map((k, i) => ({ ...k, aberto: i === 0, covas: Array.from({ length: k.w * k.h }, () => null) })),
+    diario: !!ls("roca_diario"), lanternaBoa: false, sementes: ["milho", "mandioca"], semente: 0, canteiros: CANTEIROS.map((k, i) => ({ ...k, aberto: i === 0, covas: Array.from({ length: k.w * k.h }, () => null) })),
     inv: { graveto: 0, folha: 0 }, colheita: {}, peixes: {}, extra: {}, vara: false, pecas: 0, vela: null, velaCom: false, velaEntregue: false, velaHoje: false,
-    gato: { x: 15, y: 12.6, alvo: null, prox: 25 }, cachorro: null, seco: { prox: 80, fase: "longe", t: 0, x: 0, y: 0 },
+    gato: { x: 15, y: 12.6, alvo: null, prox: 25 }, cachorro: null, seco: { prox: rnd(45, 150), fase: "longe", t: 0, x: 0, y: 0 },
     galinhas: Array.from({ length: 5 }, (_, i) => ({ x: 26.5 + i * 1.1, y: 10.4 + (i % 2) * .5, alvo: null, t: rnd(0, 3), dir: 1 })), ovos: 2,
     frutas: POMAR.map(() => ({ n: 1, t: rnd(0, 20) })), vulto: null, vultoT: 40,
     lamparinas: [1, 1, 1], lampT: 0, pisadeira: null, pesca: null, fx: [], msg: null, tutorial: 0, morto: null, venceu: null, tempoTotal: 0, ouro: +(ls("roca_ouro") || 0),
     chapeu: ls("roca_chapeu") || "palha", susto: 0, perto: 0, tremor: 0, poeira: [],
-    aranha: { fase: "longe", prox: 0, x: 0, y: 0, t: 0, alerta: 0 }, mula: { fase: "longe", prox: 0, t: 0 }, saci: { fase: "longe", prox: 60, t: 0, x: 0, y: 0 },
+    aranha: { fase: "longe", prox: 0, x: 0, y: 0, t: 0, alerta: 0 }, mula: { fase: "longe", prox: 0, t: 0 }, saci: { fase: "longe", prox: rnd(20, 120), t: 0, x: 0, y: 0 },
     esp: { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste", t: 0 }, peneira: false, sinoUsado: false, queimado: [], mel: COLMEIAS.map(() => 1),
     porcos: Array.from({ length: 3 }, (_, i) => ({ x: 51.4 + i * 1.5, y: 27 + (i % 2) * .8, alvo: null, t: rnd(0, 3), dir: 1 })), fxR: [],
   };
@@ -220,14 +220,15 @@ function montarUI() {
   d.innerHTML = `<canvas id="rocaCv"></canvas>
     <div class="rc-hud"><div class="rc-l"><b id="rcMoedas">0</b><span id="rcDia">Dia 1</span></div>
       <div class="rc-barras"><i class="rc-b agua"><s id="rcAgua"></s></i><i class="rc-b oleo"><s id="rcOleo"></s></i><i class="rc-b folego"><s id="rcFolego"></s></i></div>
-      <div class="rc-itens" id="rcItens"></div><button class="rc-menu" id="rcMenu" type="button">Pausa</button></div>
+      <div class="rc-vidas" id="rcVidas"></div><div class="rc-itens" id="rcItens"></div><button class="rc-menu rc-moch" id="rcMoch" type="button" aria-label="Mochila"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="8" width="18" height="20" rx="6" fill="#8a5a32" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="17" width="11" height="8" rx="2.5" fill="#6a4224" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 19.5h11" stroke="currentColor" stroke-width="1"/><circle cx="16" cy="21.5" r="1.1" fill="#f2c94a"/></svg></button><button class="rc-menu" id="rcMenu" type="button">Pausa</button></div>
+    <div class="rc-obj" id="rcObj"></div>
     <div class="rc-joy" id="rcJoy"><i id="rcJoyK"></i></div>
-    <div class="rc-bts"><button id="rcSem" type="button" class="rc-bt sem"></button><button id="rcLuz" type="button" class="rc-bt luz">Lanterna</button><button id="rcCorre" type="button" class="rc-bt corre">Correr</button><button id="rcAcao" type="button" class="rc-bt acao">Ação</button></div>
+    <div class="rc-bts"><button id="rcSem" type="button" class="rc-bt sem"></button><button id="rcLuz" type="button" class="rc-bt luz" aria-label="Lanterna"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 9a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="2"/><rect x="10" y="9" width="12" height="3" rx="1" fill="currentColor"/><path d="M11 12h10l1 11H10z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path class="chama" d="M16 14c2 2.5 2.6 4 2.6 5.3a2.6 2.6 0 0 1-5.2 0c0-1.3.6-2.8 2.6-5.3z" fill="#f2c94a"/><rect x="9" y="23" width="14" height="3" rx="1" fill="currentColor"/></svg></button><button id="rcCorre" type="button" class="rc-bt corre" aria-label="Correr"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="19" cy="6.5" r="3" fill="currentColor"/><path d="M16.5 5.5c-2 1-3 3-3.4 5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="19" cy="3.6" rx="4.6" ry="1.2" fill="currentColor"/><path d="M18 10l-3 7h6z" fill="currentColor"/><path d="M17 11l-5 2.5M19 11l4.5 3.5M16 17l-4.5 4 -3 .5M19 17l2.5 5 4 1.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12h5M2 16h6M4 20h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".6"/></svg></button><button id="rcAcao" type="button" class="rc-bt acao">Ação</button></div>
     <div class="rc-fala" id="rcFala" hidden></div><div class="rc-dica" id="rcDica"></div>
     <div class="rc-painel" id="rcPainel" hidden></div>
     <div class="rc-gire" id="rcGire" hidden><b>Vire o celular</b><span>Este modo é jogado com o celular deitado.</span></div>`;
   document.body.appendChild(d);
-  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire"].forEach(i => el[i] = document.getElementById(i));
+  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcObj", "rcVidas", "rcMoch"].forEach(i => el[i] = document.getElementById(i));
   cv = document.getElementById("rocaCv"); c = cv.getContext("2d"); luzCv = document.createElement("canvas"); lc = luzCv.getContext("2d");
   const st = document.createElement("style"); st.textContent = `
   #roca{position:fixed;inset:0;z-index:300;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;font-family:var(--f-mono,monospace)}
@@ -246,6 +247,17 @@ function montarUI() {
   .rc-bt{border:2px solid rgba(255,255,255,.18);background:rgba(12,14,18,.55);color:#f4efe4;border-radius:50%;width:62px;height:62px;font:700 10px var(--f-mono,monospace);letter-spacing:.04em;text-transform:uppercase}
   .rc-bt.acao{width:88px;height:88px;grid-row:1/3;grid-column:2;background:rgba(242,163,58,.28);border-color:rgba(242,163,58,.65);font-size:11px}
   .rc-bt.on{background:rgba(242,201,74,.4);border-color:#f2c94a}.rc-bt.sem{font-size:9px;line-height:1.1}
+  .rc-bt svg{width:34px;height:34px;display:block;margin:auto}.rc-bt.luz.on .chama{filter:drop-shadow(0 0 4px #f2c94a)}.rc-bt.luz:not(.on) .chama{fill:rgba(255,255,255,.25)}
+  .rc-moch{margin-left:auto;padding:4px 8px}.rc-moch svg{width:28px;height:28px;display:block}.rc-moch + .rc-menu{margin-left:0}
+  .rc-obj{position:absolute;left:max(12px,env(safe-area-inset-left));top:52px;max-width:38vw;color:#f2c94a;font:600 10.5px/1.3 var(--f-mono,monospace);text-shadow:0 1px 4px #000;pointer-events:none;letter-spacing:.02em}
+  .rc-vidas{display:flex;flex-direction:column;gap:2px;color:#f4efe4;font-size:10px;text-shadow:0 1px 4px #000}.rc-vidas b{color:#e2483d;font-size:13px;letter-spacing:1px}
+  .rc-dia-pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.rc-bicho{display:flex;gap:10px;background:#e8dcc0;color:#2a1e12;border-radius:6px;padding:8px;box-shadow:0 2px 0 rgba(0,0,0,.3)}
+  .rc-bicho canvas{width:84px;height:100px;flex:none;background:#111;border:4px solid #f4efe4;border-bottom-width:12px;transform:rotate(-2deg);filter:sepia(.55) contrast(1.15) grayscale(.2)}
+  .rc-bicho b{display:block;font:800 17px "Big Shoulders Display",sans-serif;color:#5a1a10}.rc-bicho span{font:13px/1.35 var(--f-body,serif)}.rc-bicho i{display:block;font:italic 12px/1.3 var(--f-body,serif);color:#6a5a40;margin-top:4px}
+  .rc-caixa.rc-diario{background:#d8ccae;color:#2a1e12}.rc-caixa.rc-diario h2{color:#3a2410}.rc-caixa.rc-diario p,.rc-caixa.rc-diario li{color:#3a2a18;font:15px/1.45 var(--f-body,serif)}.rc-caixa.rc-diario .rc-op{color:#2a1e12;background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.15)}.rc-caixa.rc-diario .rc-op.dest{background:rgba(120,40,20,.18);border-color:rgba(120,40,20,.5)}
+  .rc-caixa.rc-diario table{width:100%;border-collapse:collapse;font:14px var(--f-body,serif)}.rc-caixa.rc-diario td{padding:4px 6px;border-bottom:1px dashed rgba(60,40,20,.3)}.rc-caixa.rc-diario td:last-child{text-align:right;font-weight:700;color:#7a3a10}.rc-caixa.rc-diario h3{margin:10px 0 4px;font:800 16px "Big Shoulders Display",sans-serif;color:#5a1a10;letter-spacing:.04em}
+  .rc-caixa.rc-diario ul{margin:0;padding-left:18px}.rc-caixa.rc-diario li{margin-bottom:5px}
+  .rc-moch-l{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}.rc-moch-l div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:7px 10px;font:13px var(--f-body,serif)}.rc-moch-l b{color:#f2c94a;font:700 15px var(--f-mono,monospace);float:right}
   .rc-bts .luz{grid-column:1;grid-row:1}.rc-bts .corre{grid-column:1;grid-row:2}.rc-bts .sem{position:absolute;right:0;bottom:100px;width:88px;height:42px;border-radius:14px}
   .rc-fala{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;width:min(520px,52vw);background:rgba(12,14,18,.88);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px 16px;color:#f4efe4;font:15px/1.4 var(--f-body,serif)}
   .rc-fala small{display:block;margin-top:6px;color:#9bd86b;font:600 10px var(--f-mono,monospace);letter-spacing:.1em;text-transform:uppercase}
@@ -277,7 +289,7 @@ function montarUI() {
   const solta = () => { joy.on = false; joy.dx = joy.dy = 0; el.rcJoyK.style.transform = ""; };
   jz.addEventListener("pointerup", solta); jz.addEventListener("pointercancel", solta);
   const bt = (b, fn) => b.addEventListener("pointerdown", e => { e.preventDefault(); initAudio(); fn(); });
-  bt(el.rcAcao, acao); bt(el.rcLuz, () => alternarLanterna()); bt(el.rcCorre, () => correr()); bt(el.rcSem, () => { R.semente = (R.semente + 1) % R.sementes.length; tocarTom(900, .05, { vol: .05 }); hud(); });
+  bt(el.rcAcao, acao); bt(el.rcLuz, () => alternarLanterna()); bt(el.rcCorre, () => correr()); bt(el.rcMoch, () => { if (R && !R.menu && !painelAberto) abrirMochila(); }); bt(el.rcSem, () => { R.semente = (R.semente + 1) % R.sementes.length; tocarTom(900, .05, { vol: .05 }); hud(); });
   el.rcMenu.addEventListener("click", () => pausar());
   el.rcFala.addEventListener("pointerdown", e => { e.preventDefault(); proximaFala(); });
   addEventListener("keydown", e => { if (document.getElementById("roca").hidden) return; teclas[e.key.toLowerCase()] = true; const k = e.key.toLowerCase(); if (["f", "e", " "].includes(k)) { e.preventDefault(); if (R.msg) proximaFala(); else acao(); } if (k === "r") alternarLanterna(); if (k === "shift") correr(); if (k === "q") el.rcSem.dispatchEvent(new Event("pointerdown")); if (k === "escape") pausar(); });
@@ -316,10 +328,12 @@ function oQueFazer() {
     if (s.x > 7 && s.y < 2.4) return { t: "Bancada", fn: abrirBancada, loc: 1 };
     if (Math.hypot(s.x - 5, s.y - 3.5) < 1.6 && !R.lamparinas.every(v => v)) return { t: "Acender", fn: () => { if (R.oleo >= 10) { R.oleo -= 10; R.lamparinas = R.lamparinas.map(() => 1); R.lampT = 0; S.colher(); efeito("Lamparinas acesas", "#f2c94a"); } else efeito("Sem óleo para acender", "#e8e2d4"); } };
     if (Math.hypot(s.x - 4.4, s.y - 1.6) < 1.2) return { t: "Fogão", fn: () => efeito("O fogo estala. Por um instante, parece a voz da vó.", "#e8e2d4"), loc: 1 };
+    if (Math.hypot(s.x - 5, s.y - 4.5) < 1.3) return { t: "Diário da vó", fn: () => abrirDiario(), loc: 1 };
+    const lc2 = lembrancaPerto(s, LEMB_CASA); if (lc2) return { t: "Olhar", fn: () => lembrar(lc2), loc: 1 };
     return null;
   }
   const p = R.eu;
-  if (R.outro && R.outro.caido && !R.outro.dentro && dist(p, R.outro.eu) < 1.4) return { t: "Levantar", fn: () => { R.outro.caido = null; S.colher(); efeito("De pé! Corre!", "#9bd86b"); } };
+  if (R.outro && R.outro.caido && !R.outro.caido.fora && !R.outro.dentro && dist(p, R.outro.eu) < 1.4) return { t: "Levantar", fn: () => { R.outro.caido = null; S.colher(); efeito("De pé! Corre!", "#9bd86b"); } };
   if (dist(p, CASA.porta) < 1.1) return { t: "Entrar", fn: entrar, loc: 1 };
   if (dist(p, CAIXOTE) < 1.2) { const v = valorVenda(); return { t: v ? `Vender ${v}` : "Caixote", fn: vender }; }
   if (dist(p, POCO) < 1.4) return { t: "Tirar água", fn: tirarAgua };
@@ -329,12 +343,13 @@ function oQueFazer() {
   if (dist(p, DOCA) < 1.3) return { t: R.vara ? "Pescar" : "Sem vara", fn: () => R.vara ? pescar() : efeito("Faça uma vara na bancada: 3 gravetos e 2 folhas", "#e8e2d4"), loc: 1 };
   if (dist(p, CAPELA.porta) < 1.3) return { t: "Tocar o sino", fn: tocarSino };
   for (let i = 0; i < COLMEIAS.length; i++) { const [cx, cy] = COLMEIAS[i]; if (Math.hypot(p.x - cx, p.y - (cy + .4)) < .9) return { t: R.mel[i] ? "Tirar mel" : "Colmeia", fn: () => { if (ehNoite()) return efeito("As abelhas dormem. Melhor não.", "#e8e2d4"); if (!R.mel[i]) return efeito("Amanhã tem mais", "#e8e2d4"); R.mel[i] = 0; R.extra.mel = (R.extra.mel || 0) + 1; S.abelhas(cx, cy); efeito("+1 mel", "#f2c94a"); hud(); } }; }
-  if (p.x > CHIQUEIRO.x0 && p.x < CHIQUEIRO.x1 && Math.abs(p.y - CHIQUEIRO.y1 - .3) < .6) return { t: "Porcos", fn: () => { S.oinc(p.x, CHIQUEIRO.y1); efeito(R.mula.hoje && ehNoite() ? "Eles não param de olhar para a mata." : "Oinc!", "#e8a8a8"); }, loc: 1 };
-  if (dist(p, { x: BALANCO.x, y: BALANCO.y + .3 }) < 1.1) return { t: "Balanço", fn: () => efeito(ehNoite() ? "Está quente. Como se alguém tivesse acabado de levantar." : "A corda range. A vó balançava você aqui.", "#e8e2d4"), loc: 1 };
+  if (p.x > CHIQUEIRO.x0 && p.x < CHIQUEIRO.x1 && Math.abs(p.y - CHIQUEIRO.y1 - .3) < .6) return { t: "Porcos", fn: () => { S.oinc(p.x, CHIQUEIRO.y1); falar([R.mula.hoje && ehNoite() ? "Eles não param de olhar para a mata. Porco sabe das coisas." : ["Oi, porquinhos! A vó dava nome para todos. Esse é o Torresmo... coitado.", "A vó dizia que porco grita antes de coisa ruim chegar.", "Eles estão com fome. Eu também."][Math.floor(Math.random() * 3)]], null, "Yasmin"); }, loc: 1 };
+  if (dist(p, { x: BALANCO.x, y: BALANCO.y + .3 }) < 1.1) return { t: "Balanço", fn: () => falar([ehNoite() ? "O balanço está quente. Como se alguém tivesse acabado de levantar." : "A vó me balançava aqui e cantava a música do sabiá. Eu pedia mais alto, mais alto..."], null, "Yasmin"), loc: 1 };
   if (dist(p, GALINHEIRO.porta) < 1.3) return { t: R.ovos ? `Pegar ${R.ovos} ovos` : "Sem ovos", fn: () => { if (!R.ovos) return efeito("Elas botam de manhã", "#e8e2d4"); R.extra.ovo = (R.extra.ovo || 0) + R.ovos; efeito(`+${R.ovos} ovos`); R.ovos = 0; S.colher(); tocarTom(900, .12, { tipo: "square", vol: .02, ate: 1300, lp: 2000 }); hud(); } };
   for (let i = 0; i < POMAR.length; i++) { const [fx, fy] = POMAR[i]; if (Math.hypot(p.x - fx, p.y - (fy + .6)) < 1.1) { const f = R.frutas[i]; return { t: f.n ? `Colher ${f.n} laranja${f.n > 1 ? "s" : ""}` : "Laranjeira", fn: () => { if (!f.n) return efeito("Ainda verdes", "#e8e2d4"); R.extra.laranja = (R.extra.laranja || 0) + f.n; efeito(`+${f.n} laranja`); f.n = 0; f.t = 0; S.colher(); hud(); } }; } }
   if (dist(p, { x: CASINHA.x, y: CASINHA.y + .7 }) < 1.2) return { t: "Casinha", loc: 1, fn: () => { if (ehNoite()) { tocarRuido(.1, { f: 200, vol: .5, wet: .4 }); tocarRuido(.1, { f: 200, vol: .5, wet: .4, quando: .35 }); tocarRuido(.1, { f: 200, vol: .5, wet: .4, quando: .7 }); efeito("Alguém bateu de dentro.", "#e2483d"); } else efeito("Melhor não.", "#e8e2d4"); } };
   for (const pl of PLACAS) if (dist(p, pl) < 1.2) return { t: "Ler", fn: () => falar([pl.txt], null, "Placa"), loc: 1 };
+  const lb = lembrancaPerto(p, LEMBRANCAS); if (lb && !covaPerto()) return { t: "Olhar", fn: () => lembrar(lb), loc: 1 };
   const cp = covaPerto();
   if (cp) {
     if (cp.fechado) return { t: `Abrir · ${cp.k.preco}`, fn: () => abrirCanteiro(cp.k) };
@@ -400,6 +415,87 @@ function abrirVisual() {
   document.getElementById("rcFechar").addEventListener("click", abrirBancada);
 }
 function fecharPainel() { painelAberto = false; el.rcPainel.hidden = true; el.rcPainel.innerHTML = ""; }
+/* ---------- diário da vó, mochila e lembranças da Yasmin ---------- */
+const BICHOS = [
+  ["seco", "Corpo-Seco", "Mora na mata. Quando a mata estalar, CORRA para dentro de casa: ele vem de quatro, mais rápido que você andando. Dentro de casa ele não entra. O sino da capela espanta ele.", "Ele nunca foi enterrado. A terra não quis."],
+  ["aranha", "A Pernuda", "Juntas estalando lá no alto = ela está perto. Ela só enxerga LUZ e MOVIMENTO: apague a lanterna e fique parada até as juntas sumirem. No milharal ela não te vê.", "Seu avô viu ela uma vez, da altura do pé de manga. Nunca mais dormiu de luz acesa."],
+  ["lobo", "O cachorro preto", "Não deixe ele chegar perto: de perto ele vira lobisomem. Se virar, corra para casa. Depois de um tempo ele desiste e volta para a mata.", "Ele aparece no segundo dia. Não dê comida."],
+  ["mula", "Mula-sem-cabeça", "O chão brilha em linha reta e os porcos gritam: SAIA DA LINHA. Ela não faz curva. Queima a plantação por onde passa.", "Dizem que é castigo. Eu digo que é só uma mula muito brava."],
+  ["esp", "Seu Tonico, o espantalho", "Só anda no escuro. Ilumine ele com a lanterna e ele congela. Na madrugada, fique de olho no poste vazio.", "Eu mesma costurei a boca dele. Ele não gostou."],
+  ["saci", "Saci", "Redemoinho assobiando de dia. Seca a plantação e rouba moedas. Com a peneira da bancada, entre no redemoinho e pegue ele: ele paga para ser solto.", "Deixe um fuminho na janela e ele fica mais manso."],
+  ["pisadeira", "Pisadeira", "Dentro de casa, as lamparinas apagam com o tempo. Quando a última apagar, ela sai de baixo da cama. Mantenha as lamparinas acesas (use óleo na mesa) ou saia de casa.", "Ela gosta de quem dorme de barriga cheia."],
+  ["alma", "A alma da vela", "Toda noite aparece uma vela acesa em algum lugar do sítio. Siga o som do sininho, pegue a vela e deixe na cruz do cemitério antes de amanhecer. Se esquecer, ela vem buscar todo mundo.", "É a bisa. Ela só quer companhia."],
+  ["poco", "O rosto do poço", "De noite, às vezes tem alguém olhando lá do fundo do poço. Ele não sobe. Só assusta.", "Não responda quando ele chamar seu nome."]];
+function fotoMonstro(cvF, quem) {
+  const g = cvF.getContext("2d"), cS = c, WS = W, HS = H; cvF.width = 168; cvF.height = 200;
+  c = g; W = cvF.width; H = cvF.height;
+  try { g.fillStyle = "#0c0a08"; g.fillRect(0, 0, W, H); const gr = g.createRadialGradient(W / 2, H * .45, 4, W / 2, H * .45, W * .8); gr.addColorStop(0, "rgba(90,80,60,.35)"); gr.addColorStop(1, "rgba(0,0,0,.6)"); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    g.save(); g.translate(W / 2, H * .5); if (quem === "aranha") g.scale(.55, .55); rostoMonstro(quem, W * .38, .75, 1.3); g.restore();
+    for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .07})`; g.fillRect(Math.random() * W, Math.random() * H, 1, 1); } // grão da foto velha
+  } finally { c = cS; W = WS; H = HS; }
+}
+function abrirDiario(aba = "bichos") {
+  painelAberto = true; el.rcPainel.hidden = false; if (!R.diario) { R.diario = true; ls("roca_diario", 1); }
+  const abas = [["bichos", "Os bichos"], ["precos", "O que vale"], ["guia", "Guia do sítio"], ["obj", "O que fazer"]];
+  let corpo = "";
+  if (aba === "bichos") corpo = `<p>Coisas que vivem por aqui. Leia tudo, Yasmin. Uma regra esquecida é uma noite a menos.</p><div class="rc-dia-pg">${BICHOS.map(([q, n, r, nota]) => `<div class="rc-bicho"><canvas data-q="${q}"></canvas><div><b>${n}</b><span>${r}</span><i>${nota}</i></div></div>`).join("")}</div>`;
+  if (aba === "precos") corpo = `<p>Tudo se vende no caixote do lado da porta. Venda antes de escurecer.</p>
+    <h3>Da horta</h3><table>${Object.values(PLANTAS).map(p => `<tr><td>${p.nome}${p.custo ? ` <small>(semente ${p.custo} moedas na bancada)</small>` : ""}</td><td>${p.preco} moedas</td></tr>`).join("")}</table>
+    <h3>Do sítio</h3><table><tr><td>Ovo (galinheiro, toda manhã)</td><td>${EXTRAS.ovo[1]} moedas</td></tr><tr><td>Laranja (pomar, amadurece de novo)</td><td>${EXTRAS.laranja[1]} moedas</td></tr><tr><td>Mel (colmeias depois do riacho, 1 por dia cada)</td><td>${EXTRAS.mel[1]} moedas</td></tr></table>
+    <h3>Do lago</h3><table>${PEIXES.map(p => `<tr><td>${p[0]}</td><td>${p[1]} moedas</td></tr>`).join("")}</table>`;
+  if (aba === "guia") corpo = `<ul>
+    <li><b>Água:</b> o regador enche no poço. Planta sem água não cresce.</li>
+    <li><b>Óleo:</b> a lanterna e as lamparinas de casa gastam óleo. Quando acabar, compre <b>Óleo da lanterna</b> na bancada (dentro de casa) por 5 moedas. Lamparina apagada? Chegue perto da mesa e acenda (gasta um pouco de óleo).</li>
+    <li><b>Lanterna:</b> serve para ver de noite e congelar o espantalho, mas a Pernuda enxerga a luz. Saiba a hora de apagar.</li>
+    <li><b>Fôlego:</b> correr cansa. Ande um pouco que ele volta.</li>
+    <li><b>Gravetos e folhas:</b> a Sombrinha traz quando passeia. Com 3 gravetos e 2 folhas a bancada faz a vara de pesca. A doca fica no lago.</li>
+    <li><b>Canteiros:</b> tem mais canteiros pelo sítio. Pague para abrir e plante mais de uma vez.</li>
+    <li><b>Bancada:</b> regador grande, botas, lanterna reforçada, peneira, sementes novas e as peças da caminhonete.</li>
+    <li><b>Capela:</b> o sino espanta o Corpo-Seco e manda o espantalho de volta. Só uma vez por noite.</li>
+    <li><b>Milharal:</b> esconderijo contra a Pernuda.</li>
+    <li><b>Mochila:</b> o botão da mochila mostra tudo o que você carrega. Este diário fica guardado nela.</li>
+    <li><b>Com amigo:</b> cada uma tem sua água e 2 vidas. Quem for pega cai no chão e só a outra consegue levantar. Sem vidas, não levanta mais.</li></ul>`;
+  if (aba === "obj") corpo = `<p><b>Agora:</b> ${objetivo()}.</p><ul><li>Plante, regue, colha e venda para juntar moedas.</li><li>Compre as três peças na bancada: bateria (120), pneu (170) e motor de arranque (240).</li><li>Leve tudo até a caminhonete no portão e vá embora deste sítio.</li><li>De noite, siga as regras dos bichos. Toda noite tem uma vela para levar até a cruz.</li></ul><p><i>Se encontrar seu pai, diga que eu sinto muito. — Benedita</i></p>`;
+  el.rcPainel.innerHTML = `<div class="rc-caixa rc-diario"><h2>Diário da Vó Benedita</h2><div class="rc-linha" style="margin:4px 0 10px">${abas.map(([k, n]) => `<button type="button" class="rc-op${k === aba ? " dest" : ""}" data-aba="${k}">${n}</button>`).join("")}</div>${corpo}<div class="rc-linha"><button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
+  el.rcPainel.querySelectorAll("[data-aba]").forEach(b => b.addEventListener("click", () => { tocarRuido(.25, { filtro: "highpass", f: 2500, vol: .05 }); abrirDiario(b.dataset.aba); }));
+  el.rcPainel.querySelectorAll("canvas[data-q]").forEach(k => fotoMonstro(k, k.dataset.q));
+  document.getElementById("rcFechar").addEventListener("click", fecharPainel);
+}
+function abrirMochila() {
+  painelAberto = true; el.rcPainel.hidden = false;
+  const l = [], add = (n, v) => { if (v) l.push(`<div>${n}<b>${v}</b></div>`); };
+  add("Água no regador", `${R.agua}/${R.aguaMax}`); add("Óleo", Math.round(R.oleo) + "%"); add("Moedas", R.moedas);
+  Object.entries(R.colheita).forEach(([k, n]) => add(PLANTAS[k].nome, n)); Object.entries(R.peixes).forEach(([k, n]) => add(k, n)); Object.entries(R.extra).forEach(([k, n]) => add(EXTRAS[k][0], n));
+  add("Gravetos", R.inv.graveto); add("Folhas", R.inv.folha); add("Sementes", R.sementes.map(k => PLANTAS[k].nome).join(", "));
+  if (R.vara) add("Vara de pesca", "✓"); if (R.peneira) add("Peneira", "✓"); if (R.lanternaBoa) add("Lanterna reforçada", "✓"); if (R.vel > 3.2) add("Botas de borracha", "✓"); if (R.velaCom) add("Vela acesa", "✓"); add("Peças da caminhonete", R.pecas ? `${R.pecas}/3` : "0/3");
+  const venda = valorVenda();
+  el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Mochila</h2><p>${venda ? `O que você carrega vale <b style="color:#f2c94a">${venda} moedas</b> no caixote.` : "Nada para vender por enquanto."} Objetivo: ${objetivo()}.</p><div class="rc-moch-l">${l.join("")}</div>
+    <div class="rc-linha">${R.diario ? `<button type="button" class="rc-op dest" id="rcLerDiario">Ler o diário da vó</button>` : `<span style="color:#b8b2a4;font-size:13px">Tem um diário em cima da mesa da casa...</span>`}<button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
+  if (R.diario) document.getElementById("rcLerDiario").addEventListener("click", () => abrirDiario());
+  document.getElementById("rcFechar").addEventListener("click", fecharPainel);
+}
+// lugares onde a Yasmin lembra de coisas (tocar em "Olhar")
+const LEMBRANCAS = [
+  { x: 19.5, y: 7.5, r: 1.4, dia: ["A vó estendia a roupa aqui e eu brincava de esconde-esconde entre os lençóis. Ela sempre fingia que não me achava. Que saudade dela...", "Ainda tem um vestido dela no varal. Cheira a sabão de coco."], noite: ["Os lençóis estão se mexendo... e não tem vento nenhum."] },
+  { x: 23, y: 18.3, r: 1, dia: ["O vô fez esse catavento antes de eu nascer. A vó dizia que, quando ele para de girar, é porque alguém está olhando."], noite: ["Ele parou de girar."] },
+  { x: 44, y: 13.9, r: 1.3, dia: ["O trator do vô. A vó me sentava no colo dela e me deixava fingir que dirigia."], noite: ["O banco do trator está quente."] },
+  { x: 39.5, y: 12.1, r: 1.3, dia: ["O celeiro sempre teve cheiro de milho e poeira. Agora tem cheiro de outra coisa."], noite: ["Tem alguma coisa respirando lá dentro. Melhor não abrir."] },
+  { x: 40.4, y: 25.6, r: 1.3, dia: ["Aqui estão o vô e a bisa. A vó trazia flores todo domingo. Eu devia trazer também."], noite: ["A terra desse túmulo está remexida... de dentro para fora."] },
+  { x: 35.2, y: 23.5, r: 1.3, dia: ["A vó dizia para nunca nadar no lago depois que escurece. Eu nunca perguntei por quê."], noite: ["Tem bolhas subindo no meio do lago. Como se alguém respirasse lá embaixo."] },
+  { x: 17.6, y: 10, r: 1, dia: ["O machado do pai. Ele rachava lenha cantando. Ele vai voltar. Ele tem que voltar."], noite: ["Alguém empilhou a lenha de novo. Não fui eu."] },
+  { x: 45.2, y: 11.2, r: 1.1, dia: ["A gente pulava no feno até ficar com coceira. A vó ria tanto que tinha que sentar."], noite: ["Tem um buraco no meio do feno. Do tamanho de uma pessoa deitada."] },
+  { x: 21.8, y: 14.9, r: .9, dia: ["A vó me levava na carriola até a horta. Ela dizia que eu era a colheita especial dela."], noite: ["A roda da carriola ainda está girando."] },
+  { x: 20.2, y: 19.2, r: 1, dia: ["A vó chamava ele de Seu Tonico. Eu tinha medo dele. Ainda tenho."], noite: ["Não olha pra ele. Não olha pra ele. Não olha pra ele."] },
+  { x: 53.5, y: 12.2, r: 1.2, dia: ["O milho ficou mais alto que eu. Quando o vento passa, parece que alguém sussurra meu nome."], noite: ["Alguém está andando no meio do milho. Devagar. Do meu lado."] },
+  { x: 46.4, y: 18, r: 1.2, dia: ["A água do riacho é gelada. A vó dizia que ela vem lá de dentro da mata, de onde ninguém volta."], noite: ["Tem dois pontinhos brilhando na água. Piscando."] },
+  { x: 25.2, y: 33.6, r: 1.2, dia: ["A estrada some na curva. Lá longe tem a cidade, o colégio, a minha cama. Parece outro mundo."], noite: ["Tem uma luz parada lá longe na estrada. Não é carro."] },
+  { x: 29, y: 11.4, r: .9, dia: ["A galinha pintadinha se chama Dona Cocó. Fui eu que dei o nome."], noite: ["As galinhas não fazem barulho nenhum. Galinha sempre faz barulho."] }];
+const LEMB_CASA = [
+  { x: 1.7, y: 3, r: 1, dia: ["A cama da vó. O travesseiro ainda tem o cheiro dela.", "Eu dormia aqui quando tinha pesadelo. Ela contava histórias até eu dormir."], noite: ["Não olha embaixo da cama. Por favor, não olha embaixo da cama."] },
+  { x: 8.1, y: 3.6, r: .9, dia: ["No armário tem o xale da vó e uma caixinha de música que não toca mais."], noite: ["A caixinha de música tocou sozinha. Só uma nota."] },
+  { x: 1.6, y: 5.3, r: .9, dia: ["A cadeira de balanço da vó. Ela tricotava aqui ouvindo o rádio."], noite: ["Ela está balançando. Eu não encostei."] }];
+function lembrancaPerto(p, lista) { for (let i = 0; i < lista.length; i++) if (Math.hypot(p.x - lista[i].x, p.y - lista[i].y) < lista[i].r) return lista[i]; return null; }
+function lembrar(l) { const arr = ehNoite() ? l.noite : l.dia; l.i = ((l.i || 0) + 1) % arr.length; falar([arr[l.i]], null, "Yasmin"); }
 function pausar() {
   if (!R || R.morto || R.venceu) return; painelAberto = true; el.rcPainel.hidden = false;
   el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Pausa</h2><p>Dia ${R.dia}. Se sair agora, a partida é perdida.</p>
@@ -421,9 +517,10 @@ function telaFim(tipo) {
 }
 function morrer(quem, porque, dica) { if (R.morto || R.venceu || R.caido) return;
   if (R.online === "host" && quem !== "alma" && jogadores().filter(P => !P.caido).length > 1) {
-    R.caido = { quem, porque, dica, t: 0 }; R.correndo = false; R.lanterna = false; R.dentro = false;
+    const fora = R.vidas <= 0; if (!fora) R.vidas--;
+    R.caido = { quem, porque, dica, t: 0, fora }; R.correndo = false; R.lanterna = false; R.dentro = false;
     if (R.trocado) enviar({ t: "caiu", quem }); else { S.susto(); try { vibrar(400); } catch (e) {} }
-    efeito("Caiu! Chegue perto e levante", "#e2483d"); return;
+    efeito(fora ? "Sem vidas! Agora é com a outra" : "Caiu! Só a outra pode levantar", "#e2483d"); hud(); return;
   } R.morto = { quem, porque, dica, t: 0 }; R.correndo = false; S.susto(); try { vibrar(500); } catch (e) {} setTimeout(() => telaFim("morreu"), 2300); }
 
 /* ---------- HUD ---------- */
@@ -436,6 +533,14 @@ function hud() {
   el.rcItens.innerHTML = it.map(x => `<span>${x}</span>`).join("");
   const sm = PLANTAS[R.sementes[R.semente]]; el.rcSem.innerHTML = `<span style="color:${sm.cor}">●</span><br>${sm.nome}`;
   el.rcLuz.classList.toggle("on", R.lanterna); el.rcCorre.classList.toggle("on", R.correndo);
+  el.rcObj.textContent = R.menu ? "" : "Objetivo: " + objetivo();
+  const cor = n => "♥".repeat(Math.max(0, n)) + "♡".repeat(Math.max(0, 2 - n));
+  el.rcVidas.innerHTML = R.online && R.outro ? `<span>Você <b>${cor(R.vidas)}</b></span><span>${R.online === "host" ? "Amigo" : "Yasmin"} <b>${cor(R.outro.vidas)}</b></span>` : "";
+}
+function objetivo() {
+  if (R.pecas >= 3) return "leve tudo até a caminhonete no portão e vá embora!";
+  const falta = [["Bateria nova", 120], ["Pneu", 170], ["Motor de arranque", 240]][R.pecas];
+  return `juntar ${falta[1]} moedas e comprar ${falta[0].toLowerCase()} na bancada (peças ${R.pecas}/3)` + (ehNoite() ? " · sobreviva até amanhecer" : "");
 }
 
 /* ---------- atualização ---------- */
@@ -501,14 +606,16 @@ function atualizar(dt) {
   const o = oQueFazer(); el.rcAcao.textContent = o ? o.t : "Ação"; el.rcAcao.style.opacity = o ? 1 : .5;
 }
 function comecaNoite() { R.velaHoje = true; R.velaEntregue = false; R.velaT = rnd(8, 18); R.sinoUsado = false;
-  R.aranha.hoje = R.dia >= 2 && (R.dia === 2 || Math.random() < .75); R.aranha.prox = rnd(14, 38);
-  R.mula.hoje = R.dia >= 3; R.mula.prox = rnd(18, 34); R.mula.vezes = 0; R.esp.dorme = false; efeito("Anoiteceu", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
+  // cada noite é sorteada: quem vem, quando vem e quantas vezes (nada de padrão)
+  R.aranha.hoje = R.dia >= 2 && Math.random() < .65; R.aranha.prox = rnd(4, 70);
+  R.mula.hoje = R.dia >= 2 && Math.random() < (R.dia >= 3 ? .6 : .3); R.mula.prox = rnd(6, 60); R.mula.vezes = 0; R.mula.max = 1 + Math.floor(Math.random() * 3);
+  R.esp.dorme = !(R.dia >= 2 && Math.random() < .6); R.esp.limiar = rnd(.1, .65);
+  R.velaT = rnd(3, 40); efeito("Anoiteceu", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
 function amanhece() {
   if (R.velaHoje && !R.velaEntregue) { R.alma = { t: 0 }; return; } // a alma vem cobrar
   R.dia++; R.velaHoje = false; R.vela = null; R.velaCom = false; if (R.outro) R.outro.velaCom = false; R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false; efeito(`Dia ${R.dia}`, "#f2c94a");
   Object.assign(R.esp, { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste" }); if (R.aranha.fase !== "longe") R.aranha.fase = "sai"; R.mula.fase = "longe";
-  jogadores().forEach(P => { if (!P.caido) return; P.caido = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : .5); P.eu.y = CASA.porta.y + .7; if (P !== R) enviar({ t: "pos", x: P.eu.x, y: P.eu.y }); });
-  if (jogadores().length > 1) efeito("A Sombrinha arrastou quem caiu para a varanda", "#e8e2d4");
+
   tocarTom(523, 1.5, { tipo: "triangle", vol: .04, wet: .6 }); tocarTom(659, 1.5, { tipo: "triangle", vol: .035, quando: .2, wet: .6 }); tocarTom(780, .4, { tipo: "square", vol: .02, ate: 1100, lp: 2000, quando: 1 }); // galo
   if (R.dia === 2 && !R.cachorro) { R.cachorro = { x: 34, y: 14, fase: "calmo", t: 0 }; setTimeout(() => R && R.cachorro && S.uivo(R.cachorro.x, R.cachorro.y), 1200); }
 }
@@ -534,22 +641,29 @@ function atualizarSeco(dt) {
     if (s.t > 22) { s.fase = "sai"; s.t = 0; S.suspiro(s.x, s.y); }
     return;
   }
-  if (s.fase === "sai") { const dd = s.x < (CERCA.x0 + CERCA.x1) / 2 ? -1 : 1; s.x += dd * 3.6 * dt; s.dir = dd; s.fase2 = (s.fase2 || 0) + dt * 11; if (s.t > 6) { s.fase = "longe"; s.prox = rnd(150, 210) - Math.min(60, R.dia * 8); efeito("Ouviu o suspiro. Já pode sair.", "#9aa8c8"); } }
+  if (s.fase === "sai") { const dd = s.x < (CERCA.x0 + CERCA.x1) / 2 ? -1 : 1; s.x += dd * 3.6 * dt; s.dir = dd; s.fase2 = (s.fase2 || 0) + dt * 11; if (s.t > 6) { s.fase = "longe"; s.prox = Math.random() < .2 ? rnd(25, 60) : rnd(70, 260) - Math.min(50, R.dia * 6); /* sem padrão: às vezes volta logo */ efeito("Ouviu o suspiro. Já pode sair.", "#9aa8c8"); } }
 }
 function atualizarCachorro(dt) {
-  const k = R.cachorro; if (!k) return; k.t += dt;
+  const k = R.cachorro; if (!k) return; k.t += dt; if (k.calma > 0) k.calma -= dt;
   const alvo = R.eu, d = dist(k, alvo);
   if (k.fase === "calmo") {
-    const quer = 6.5; if (!R.dentro && d > quer + .5) { k.x += (alvo.x - k.x) / d * 1.4 * dt; k.y += (alvo.y - k.y) / d * 1.4 * dt; k.dir = alvo.x > k.x ? 1 : -1; k.anda = 1; } else { k.anda = 0; k.dir = alvo.x > k.x ? 1 : -1; }
+    const quer = 6.5; if (!R.dentro && d > quer + .5) { k.x += (alvo.x - k.x) / d * 1.4 * dt; k.y += (alvo.y - k.y) / d * 1.4 * dt; k.dir = alvo.x > k.x ? 1 : -1; k.anda = 1; }
+    else if (dist(k, CASA.porta) < 6) { const dd = dist(k, CASA.porta) || 1; k.x += (k.x - CASA.porta.x) / dd * 1.6 * dt; k.y += (k.y - CASA.porta.y) / dd * 1.6 * dt; k.anda = 1; } // não fica plantado na porta
+    else { k.anda = 0; k.dir = alvo.x > k.x ? 1 : -1; }
     k.x = cl(k.x, CERCA.x0 + .6, CERCA.x1 - .6); k.y = cl(k.y, CERCA.y0 + .6, CERCA.y1 - .6);
-    if (!R.dentro && d < 2.8) { k.fase = "vira"; k.t = 0; S.rosnado(k.x, k.y); R.tremor = .6; }
-  } else if (k.fase === "vira") { if (k.t > 1.3) { k.fase = "lobo"; k.t = 0; S.uivo(k.x, k.y); } }
+    if (!R.dentro && !(k.calma > 0) && d < 2.8) { k.fase = "vira"; k.t = 0; S.rosnado(k.x, k.y); R.tremor = .6; }
+  } else if (k.fase === "vira") { if (k.t > 1.3) { k.fase = "lobo"; k.t = 0; k.porta = 0; S.uivo(k.x, k.y); } }
   else if (k.fase === "lobo") {
     const alvo2 = R.dentro ? { x: CASA.porta.x, y: CASA.porta.y + 1 } : alvo, d2 = dist(k, alvo2);
     if (d2 > .1) { k.x += (alvo2.x - k.x) / d2 * 5.9 * dt; k.y += (alvo2.y - k.y) / d2 * 5.9 * dt; k.dir = alvo2.x > k.x ? 1 : -1; k.anda = 1; if (Math.random() < dt * 10) R.poeira.push({ x: k.x, y: k.y, t: 0 }); }
     if (k.t % 1.3 < dt) S.rosnado(k.x, k.y);
-    if (!R.dentro && d < .8) morrer("lobo", "O cachorro preto virou lobisomem.", "Fique longe do cachorro. Se ele virar, corra para casa: em 8 segundos ele volta ao normal.");
-    if (k.t > 8) { k.fase = "calmo"; k.t = 0; }
+    if (!R.dentro && d < .8) morrer("lobo", "O cachorro preto virou lobisomem.", "Fique longe do cachorro. Se ele virar, corra para casa: ele desiste e volta para a mata.");
+    if (R.dentro) k.porta += dt;
+    if (k.t > 8 || k.porta > 2.5 || R.caido) { // desiste: arranha a porta, uiva e corre de volta para a mata
+      k.fase = "foge"; k.t = 0; const lados = [{ x: CERCA.x0 + 1, y: rnd(20, 31) }, { x: rnd(30, 46), y: CERCA.y1 - 1 }, { x: rnd(30, 44), y: CERCA.y0 + 1 }]; k.fuga = lados[Math.floor(Math.random() * 3)]; S.uivo(k.x, k.y); }
+  } else if (k.fase === "foge") {
+    const dd = dist(k, k.fuga); if (dd > .2) { k.x += (k.fuga.x - k.x) / dd * 4.6 * dt; k.y += (k.fuga.y - k.y) / dd * 4.6 * dt; k.dir = k.fuga.x > k.x ? 1 : -1; k.anda = 1; }
+    if (dd < .3 || k.t > 7) { k.fase = "calmo"; k.t = 0; k.calma = rnd(25, 50); }
   }
 }
 function atualizarAlma(dt) {
@@ -560,7 +674,7 @@ function atualizarAlma(dt) {
 }
 function atualizarCasa(dt) {
   if (R.dentro) {
-    if (!R.pisadeira) { R.lampT += dt; if (R.lampT > 20) { R.lampT = 0; const i = R.lamparinas.lastIndexOf(1); if (i >= 0) { R.lamparinas[i] = 0; S.apaga(); if (i === 0) { R.pisadeira = { t: 0, x: 1.7, y: 2.8 }; S.respira(); R.tremor = .5; efeito("Algo se mexe debaixo da cama", "#e2483d"); } } } }
+    if (!R.pisadeira) { R.lampT += dt; if (R.lampT > (R.lampLim || 20)) { R.lampT = 0; R.lampLim = rnd(9, 34); const i = R.lamparinas.lastIndexOf(1); if (i >= 0) { R.lamparinas[i] = 0; S.apaga(); if (i === 0) { R.pisadeira = { t: 0, x: 1.7, y: 2.8 }; S.respira(); R.tremor = .5; efeito("Algo se mexe debaixo da cama", "#e2483d"); } } } }
     else { const p = R.pisadeira; p.t += dt; if (p.t > 1.8) { const d = dist(p, R.sala), v = 2.2 * (.6 + .8 * Math.abs(Math.sin(p.t * 3))); if (d > .05) { p.x += (R.sala.x - p.x) / d * v * dt; p.y += (R.sala.y - p.y) / d * v * dt; p.dir = R.sala.x > p.x ? 1 : -1; } if (p.t % 2.2 < dt) S.respira(); if (d < .6) morrer("pisadeira", "A Pisadeira saiu de baixo da cama.", "Não fique muito tempo dentro de casa: quando as lamparinas apagam, saia. Elas acendem de novo com o tempo."); } if (p.t > 30) R.pisadeira = null; }
   } else { R.pisadeira = null; R.lampT += dt; if (R.lampT > 12) { R.lampT = 0; const i = R.lamparinas.indexOf(0); if (i >= 0) R.lamparinas[i] = 1; } }
 }
@@ -568,7 +682,7 @@ function atualizarCasa(dt) {
 /* ---------- jogadores (sozinha ou online) ---------- */
 // No online, o anfitrião simula tudo. O convidado é guardado em R.outro com os mesmos campos do jogador local,
 // e comJogador troca os campos por um instante para reaproveitar as regras escritas para R.eu.
-const CAMPOS = ["eu", "dentro", "sala", "lanterna", "correndo", "regando", "velaCom", "pesca", "perto", "caido", "folego", "chapeu", "semente", "cor"];
+const CAMPOS = ["agua", "vidas", "eu", "dentro", "sala", "lanterna", "correndo", "regando", "velaCom", "pesca", "perto", "caido", "folego", "chapeu", "semente", "cor"];
 const jogadores = () => R.outro && R.online === "host" ? [R, R.outro] : [R];
 function comJogador(P, fn) {
   if (!P || P === R || !R.outro) return fn();
@@ -626,7 +740,7 @@ function atualizarAranha(dt) {
 /* Mula-sem-cabeça: avisa com o chão brilhando em linha reta e passa como um raio. */
 function atualizarMula(dt) {
   const m = R.mula; if (R.tutorial === 0) return; m.t += dt;
-  if (m.fase === "longe") { if (!m.hoje || !ehNoite() || m.vezes >= 3) return; m.prox -= dt; if (m.prox > 0) return;
+  if (m.fase === "longe") { if (!m.hoje || !ehNoite() || m.vezes >= (m.max || 3)) return; m.prox -= dt; if (m.prox > 0) return;
     const P = alvoPara(rnd(CERCA.x0, CERCA.x1), rnd(CERCA.y0, CERCA.y1)); const fora = !P.dentro && !P.caido;
     m.horiz = Math.random() < .6; m.linha = m.horiz ? (fora ? P.eu.y : rnd(CERCA.y0 + 2, CERCA.y1 - 2)) : (fora ? P.eu.x : rnd(CERCA.x0 + 2, CERCA.x1 - 2)); m.dir = Math.random() < .5 ? 1 : -1;
     m.fase = "aviso"; m.t = 0; S.porcos(); S.galope(m.horiz ? (m.dir > 0 ? CERCA.x0 : CERCA.x1) : m.linha, m.horiz ? m.linha : (m.dir > 0 ? CERCA.y0 : CERCA.y1), 6); efeito("Os porcos estão gritando...", "#f2a33a"); return; }
@@ -639,7 +753,7 @@ function atualizarMula(dt) {
     for (const k of R.canteiros) k.covas.forEach((cv2, i) => { if (!cv2) return; const cx = k.x + i % k.w + .5, cy = k.y + Math.floor(i / k.w) + .5, ao = m.horiz ? cy : cx, ao2 = m.horiz ? cx : cy;
       if (Math.abs(ao - m.linha) < .7 && (ao2 - antes) * (ao2 - m.pos) <= 0) { k.covas[i] = null; R.fx.push({ txt: "Queimou!", cor: "#f2a33a", t: 0, x: cx, y: cy }); } });
     for (const J of jogadores()) { if (J.dentro || J.caido) continue; if (Math.abs((m.horiz ? J.eu.y : J.eu.x) - m.linha) < .75 && Math.abs((m.horiz ? J.eu.x : J.eu.y) - m.pos) < 1.1) comJogador(J, () => morrer("mula", "A mula-sem-cabeça passou por cima de você.", "Quando o chão brilhar em linha reta, saia da linha. Ela não faz curva.")); }
-    if ((m.pos - fim) * m.dir > 0) { m.fase = "longe"; m.prox = rnd(24, 42); m.vezes++; }
+    if ((m.pos - fim) * m.dir > 0) { m.fase = "longe"; m.prox = rnd(10, 55); m.vezes++; }
   }
 }
 /* Saci: redemoinho de dia. Seca a plantação e rouba moedas. Com peneira, dá para pegar. */
@@ -659,12 +773,12 @@ function atualizarSaci(dt) {
     if (s.t > 38 || ehNoite()) { s.fase = "sai"; s.t = 0; s.alvo = BORDA(); }
     return;
   }
-  if (s.fase === "sai") { irAte(s, s.alvo, 4, dt); if (s.t > 5) { s.fase = "longe"; s.prox = rnd(80, 140); } }
+  if (s.fase === "sai") { irAte(s, s.alvo, 4, dt); if (s.t > 5) { s.fase = "longe"; s.prox = rnd(30, 170); } }
 }
 /* Espantalho: só anda no escuro. Com a luz da lanterna em cima, congela. */
 function atualizarEspantalho(dt) {
   const e = R.esp; if (R.tutorial === 0) return; e.t += dt;
-  const ativo = ehNoite() && R.dia >= 2 && progNoite() > .3 && !e.dorme;
+  const ativo = ehNoite() && R.dia >= 2 && progNoite() > (e.limiar || .3) && !e.dorme;
   if (!ativo) { if (e.fase === "vivo") { e.fase = "volta"; } if (e.fase === "volta") { if (irAte(e, ESPANTALHO, 3, dt) < .1) e.fase = "poste"; } return; }
   const P = alvoPara(e.x, e.y), d = dist(e, P.eu);
   if (e.fase === "poste" || e.fase === "volta") { if (!P.dentro && !P.caido && d < 8) { e.fase = "vivo"; e.t = 0; S.palha(e.x, e.y); } return; }
@@ -755,7 +869,7 @@ function desenharVoce(x, y, tm, o = {}) {
     sombra(x, y, 16 * s, 5 * s); c.save(); c.translate(x, y); c.scale(s, s);
     c.fillStyle = rp.jard; c.fillRect(-12, -9, 18, 8); c.fillStyle = rp.blusa; c.fillRect(4, -9, 6, 8); c.fillStyle = rp.pele; c.beginPath(); c.arc(14, -6, 6, 0, 7); c.fill(); c.fillStyle = rp.cabelo; c.beginPath(); c.arc(16, -7, 6, PI * .6, PI * 1.9); c.fill(); c.fillRect(17, -3, 9, 3);
     c.fillStyle = "#2a1a12"; c.fillRect(-18, -6, 7, 4); c.strokeStyle = "#1a1210"; c.lineWidth = 1; c.beginPath(); c.moveTo(12, -7); c.lineTo(14, -5); c.moveTo(14, -7); c.lineTo(12, -5); c.stroke();
-    c.fillStyle = `rgba(226,72,61,${.5 + .3 * Math.sin(tm * 4)})`; c.font = `800 ${Math.round(11)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText(q === R ? "VOCÊ CAIU" : "AJUDE!", 0, -22); c.textAlign = "start"; c.restore(); return;
+    c.fillStyle = `rgba(226,72,61,${.5 + .3 * Math.sin(tm * 4)})`; c.font = `800 ${Math.round(11)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText(q.caido.fora ? "SEM VIDAS" : q === R ? "VOCÊ CAIU" : "AJUDE!", 0, -22); c.textAlign = "start"; c.restore(); return;
   }
   sombra(x, y, 13 * s, 4.5 * s);
   c.save(); c.translate(x, y); c.scale(dir * s, s);
@@ -764,6 +878,7 @@ function desenharVoce(x, y, tm, o = {}) {
   // trança de trás (balança quando anda)
   const tr = Math.sin(f * .5 + tm * 2) * 2 * (andaK + .3);
   c.fillStyle = rp.cabelo; for (let i = 0; i < 4; i++) { c.beginPath(); c.ellipse(-7 - i * .6 + tr * i * .3, -36 - bob + i * 4, 2.6, 2.4, 0, 0, 7); c.fill(); } c.fillStyle = rp.fita; c.fillRect(-9.5 + tr, -21 - bob, 4, 2.5);
+  c.fillStyle = "#7a4a28"; c.beginPath(); c.roundRect ? c.roundRect(-13, -32 - bob, 7, 14, 2.5) : c.rect(-13, -32 - bob, 7, 14); c.fill(); c.fillStyle = "#5a3418"; c.fillRect(-13, -32 - bob, 7, 4); c.fillStyle = "#f2c94a"; c.fillRect(-10.2, -28.6 - bob, 1.4, 1.4); c.fillStyle = "#5a3418"; c.fillRect(-12.5, -23 - bob, 6, 4); // mochila
   // pernas, meias e botinhas
   c.fillStyle = rp.pele; c.fillRect(-5 + sw * .4, -12, 4, 9); c.fillRect(1 - sw * .4, -12, 4, 9);
   c.fillStyle = "#e8e4d8"; c.fillRect(-5 + sw * .4, -6, 4, 3); c.fillRect(1 - sw * .4, -6, 4, 3);
@@ -1233,6 +1348,8 @@ function desenharDentro(tm) {
   const L = [[X(5), Y(3.2)], [X(.15), Y(4)], [X(9.85), Y(5.6)]];
   R.lamparinas.forEach((v, i) => { const [lx, ly] = L[i]; c.fillStyle = "#3a3a3a"; c.fillRect(lx - 4, ly - 6, 8, 10); c.fillStyle = "#c8a050"; c.fillRect(lx - 5, ly + 3, 10, 2); if (v) { c.fillStyle = "rgba(255,210,120,.95)"; c.beginPath(); c.ellipse(lx + Math.sin(tm * 9 + i) * .6, ly - 9, 3, 5, 0, 0, 7); c.fill(); } else { c.fillStyle = "rgba(200,200,200,.3)"; c.beginPath(); c.arc(lx, ly - 10 - (tm * 8 % 6), 2, 0, 7); c.fill(); } });
   // você
+  { const bx = X(5), by = Y(3.35), u = s / 40; c.save(); c.translate(bx, by); c.rotate(-.12); c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(-15 * u, -8 * u, 32 * u, 20 * u); c.fillStyle = "#5a2a1a"; c.fillRect(-16 * u, -10 * u, 32 * u, 20 * u); c.fillStyle = "#e8dcc0"; c.fillRect(-14 * u, -8.5 * u, 13 * u, 17 * u); c.fillRect(1 * u, -8.5 * u, 13 * u, 17 * u); c.strokeStyle = "rgba(60,40,20,.6)"; c.lineWidth = 1; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(-12 * u, (-5 + i * 3) * u); c.lineTo(-3 * u, (-5 + i * 3) * u); c.moveTo(3 * u, (-5 + i * 3) * u); c.lineTo(12 * u, (-5 + i * 3) * u); c.stroke(); }
+    if (!R.diario) { c.strokeStyle = `rgba(242,201,74,${.4 + .4 * Math.sin(tm * 4)})`; c.lineWidth = 2; c.strokeRect(-18 * u, -12 * u, 36 * u, 24 * u); } c.restore(); } // o diário da vó em cima da mesa
   const ou = R.outro; if (ou && ou.dentro && ou.sala) desenharVoce(X(ou.sala.x), Y(ou.sala.y), tm, { q: ou, dir: ou.sala.dir || 1, s: s * 1.05, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" });
   desenharVoce(X(R.sala.x), Y(R.sala.y), tm, { dir: R.sala.dir || 1, s: s * 1.05 });
   // escuridão conforme as lamparinas
@@ -1263,13 +1380,7 @@ function desenharPisadeira(p, X, Y, s, tm) {
   const g = c.createRadialGradient(s * .35, 0, 0, s * .35, 0, s * .6); g.addColorStop(0, "rgba(240,220,170,.2)"); g.addColorStop(1, "rgba(240,220,170,0)"); c.fillStyle = g; c.beginPath(); c.arc(s * .35, 0, s * .6, 0, 7); c.fill();
   c.restore();
 }
-function desenharSusto(tm) {
-  const cai = !R.morto && R.caido && R.caido.t < 2.4 ? R.caido : null;
-  const quem = R.morto ? R.morto.quem : cai ? cai.quem : R.rostoPoco ? "poco" : null; if (!quem) return;
-  const k = R.morto ? Math.min(1, R.morto.t / .2) : cai ? cl(Math.min(cai.t / .2, (2.4 - cai.t) / .5), 0, 1) : cl(R.susto / 1.1, 0, 1); if (k <= 0) { R.rostoPoco = 0; return; }
-  c.fillStyle = `rgba(0,0,0,${.88 * k})`; c.fillRect(0, 0, W, H);
-  const tr = R.morto && R.morto.t < 1 ? rnd(-10, 10) : 0, r = Math.min(W, H) * .38 * (.75 + .25 * k), x = W / 2 + tr, y = H / 2 + tr * .6;
-  c.save(); c.globalAlpha = k; c.translate(x, y); const ab = .6 + .4 * Math.abs(Math.sin(tm * 18));
+function rostoMonstro(quem, r, ab, tm) { // desenha o rosto centrado na origem (susto e fotos do diário)
   const dentes = (y0, larg, n, alt, cima) => { c.fillStyle = "#e8e0c8"; for (let i = 0; i < n; i++) { const tx = -larg / 2 + (i + .5) * larg / n; c.beginPath(); c.moveTo(tx - larg / n * .45, y0); c.lineTo(tx, y0 + (cima ? 1 : -1) * alt * (.7 + .3 * ((i * 7) % 3) / 2)); c.lineTo(tx + larg / n * .45, y0); c.fill(); } };
   const olhos = (ex, ey, rr, rgb) => { c.fillStyle = "rgba(0,0,0,.75)"; c.beginPath(); c.ellipse(-ex, ey, rr * 1.5, rr * 1.7, 0, 0, 7); c.ellipse(ex, ey, rr * 1.5, rr * 1.7, 0, 0, 7); c.fill(); c.fillStyle = `rgb(${rgb})`; c.beginPath(); c.arc(-ex, ey, rr * .5, 0, 7); c.arc(ex, ey, rr * .5, 0, 7); c.fill(); const g = c.createRadialGradient(0, ey, 0, 0, ey, ex * 2.4); g.addColorStop(0, `rgba(${rgb},.25)`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.fillRect(-ex * 3, ey - ex * 2, ex * 6, ex * 4); };
   if (quem === "seco") { // boca gigante que ocupa o rosto
@@ -1309,10 +1420,25 @@ function desenharSusto(tm) {
     olhos(r * .26, -r * .2, r * .09, quem === "alma" ? "10,10,20" : "255,250,230");
     c.fillStyle = "#0a0404"; c.beginPath(); c.ellipse(0, r * .45, r * .2, r * .35 * ab, 0, 0, 7); c.fill(); dentes(r * .45 - r * .3 * ab, r * .3, 5, r * .1, true);
     c.strokeStyle = quem === "alma" ? "rgba(230,230,240,.85)" : "#e8e4dc"; c.lineWidth = 2.4; for (let i = 0; i < 26; i++) { const sx = -r * .75 + i * r * .06; c.beginPath(); c.moveTo(sx * .7, -r * .85); c.quadraticCurveTo(sx * 1.2, -r * .2, sx * 1.4 + Math.sin(tm * 4 + i) * 6, r * 1.1); c.stroke(); }
+  } else if (quem === "saci") { // carinha de moleque com gorro vermelho e cachimbo
+    c.fillStyle = "#3a2216"; c.beginPath(); c.ellipse(0, 0, r * .55, r * .68, 0, 0, 7); c.fill();
+    c.fillStyle = "#c8281e"; c.beginPath(); c.moveTo(-r * .62, -r * .35); c.quadraticCurveTo(-r * .2, -r * 1.25, r * .75, -r * 1.05); c.quadraticCurveTo(r * .3, -r * .7, r * .62, -r * .35); c.fill();
+    olhos(r * .22, -r * .1, r * .08, "255,230,160"); c.fillStyle = "#1a0a06"; c.beginPath(); c.ellipse(0, r * .3, r * .32, r * .14 + r * .08 * ab, 0, 0, Math.PI); c.fill(); dentes(r * .3, r * .5, 6, r * .08, true);
+    c.fillStyle = "#c89a5a"; c.fillRect(r * .25, r * .32, r * .5, r * .06); c.fillRect(r * .68, r * .18, r * .12, r * .18); c.fillStyle = `rgba(255,140,40,${.6 + .4 * Math.sin(tm * 8)})`; c.beginPath(); c.arc(r * .74, r * .17, r * .05, 0, 7); c.fill();
+    c.fillStyle = "rgba(200,200,200,.3)"; for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(r * (.8 + i * .08), r * (.05 - i * .14), r * (.06 + i * .03), 0, 7); c.fill(); }
   } else { // rosto no fundo do poço
     c.fillStyle = "#9aa4a8"; c.beginPath(); c.ellipse(0, 0, r * .55, r * .75, 0, 0, 7); c.fill(); olhos(r * .22, -r * .15, r * .08, "10,14,18"); c.fillStyle = "#1a2024"; c.beginPath(); c.ellipse(0, r * .35, r * .14, r * .22 * ab, 0, 0, 7); c.fill();
     c.strokeStyle = "rgba(20,30,30,.8)"; c.lineWidth = 2; for (let i = 0; i < 14; i++) { c.beginPath(); c.moveTo(-r * .5 + i * r * .08, -r * .7); c.lineTo(-r * .55 + i * r * .085, r * .2); c.stroke(); }
   }
+}
+function desenharSusto(tm) {
+  const cai = !R.morto && R.caido && R.caido.t < 2.4 ? R.caido : null;
+  const quem = R.morto ? R.morto.quem : cai ? cai.quem : R.rostoPoco ? "poco" : null; if (!quem) return;
+  const k = R.morto ? Math.min(1, R.morto.t / .2) : cai ? cl(Math.min(cai.t / .2, (2.4 - cai.t) / .5), 0, 1) : cl(R.susto / 1.1, 0, 1); if (k <= 0) { R.rostoPoco = 0; return; }
+  c.fillStyle = `rgba(0,0,0,${.88 * k})`; c.fillRect(0, 0, W, H);
+  const tr = R.morto && R.morto.t < 1 ? rnd(-10, 10) : 0, r = Math.min(W, H) * .38 * (.75 + .25 * k), x = W / 2 + tr, y = H / 2 + tr * .6;
+  c.save(); c.globalAlpha = k; c.translate(x, y); const ab = .6 + .4 * Math.abs(Math.sin(tm * 18));
+  rostoMonstro(quem, r, ab, tm);
   c.restore();
   if (R.morto) { c.fillStyle = `rgba(226,40,30,${.3 * Math.max(0, 1 - R.morto.t)})`; c.fillRect(0, 0, W, H); }
 }
@@ -1320,7 +1446,7 @@ function desenharFx() {
   R.fx.forEach(f => { const a = 1 - f.t / 1.8, x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 30; c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(14, TS * .34))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.7)"; c.lineWidth = 3; c.strokeText(f.txt, x, y); c.fillText(f.txt, x, y); c.textAlign = "start"; c.globalAlpha = 1; });
   R.fxR && R.fxR.forEach(f => { const a = 1 - f.t / 1.8, x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 30; if (R.dentro && f.x != null) return; c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(14, TS * .34))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.7)"; c.lineWidth = 3; c.strokeText(f.txt, x, y); c.fillText(f.txt, x, y); c.textAlign = "start"; c.globalAlpha = 1; });
   const a = R.aranha, m = R.mula;
-  el.rcDica.textContent = R.caido ? "Você caiu. Espere alguém te levantar... ou o dia nascer." : a.fase === "ataque" ? "Ela te viu! Corra para dentro de casa!" : (a.fase === "aviso" || a.fase === "anda") && !R.dentro ? (noMilharal(R.eu) ? "No milharal ela não te enxerga. Fique quieta." : "Juntas estalando... apague a lanterna e fique parada!")
+  el.rcDica.textContent = R.caido ? (R.caido.fora ? "Você não tem mais vidas. Agora é com a sua amiga." : "Você caiu. Só a sua amiga pode te levantar!") : a.fase === "ataque" ? "Ela te viu! Corra para dentro de casa!" : (a.fase === "aviso" || a.fase === "anda") && !R.dentro ? (noMilharal(R.eu) ? "No milharal ela não te enxerga. Fique quieta." : "Juntas estalando... apague a lanterna e fique parada!")
     : m.fase === "aviso" && !R.dentro ? "O chão está brilhando! Saia da linha!" : R.dentro ? "" : R.seco.fase === "anda" || R.seco.fase === "aviso" ? "A mata estalou. Corra para dentro de casa!" : R.cachorro && R.cachorro.fase === "lobo" ? "Corra para casa!"
     : R.esp.fase === "vivo" && !R.esp.parado ? "O espantalho está andando. Ilumine ele!" : R.saci.fase === "anda" ? (R.peneira ? "Redemoinho! Pegue o Saci com a peneira!" : "Redemoinho! Fuja dele: o Saci rouba moedas") : R.vela && !velaNaMao() ? "Siga o som do sino e ache a vela" : velaNaMao() ? "Leve a vela até a cruz do cemitério" : "";
   if ((a.fase === "anda" || a.fase === "ataque") && !R.dentro) { // olho que mostra o quanto ela já te notou
@@ -1494,7 +1620,7 @@ function netCaiu() {
   painelAberto = true; el.rcPainel.hidden = false; el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>A conexão caiu</h2><p>Perdemos o contato com a sala do seu amigo.</p><div class="rc-linha"><button type="button" class="rc-op dest" id="rcSair">Voltar</button></div></div>`;
   document.getElementById("rcSair").addEventListener("click", () => { fecharPainel(); menuInicial(); });
 }
-const novoOutro = () => ({ eu: { x: 14.2, y: 12.9, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5.6, y: 5.6, dir: 1 }, lanterna: false, correndo: false, regando: 0, velaCom: false, pesca: null, perto: 0, caido: null, folego: 100, chapeu: "palha", semente: 0, cor: 1 });
+const novoOutro = () => ({ eu: { x: 14.2, y: 12.9, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5.6, y: 5.6, dir: 1 }, lanterna: false, correndo: false, regando: 0, velaCom: false, pesca: null, perto: 0, caido: null, folego: 100, chapeu: "palha", semente: 0, cor: 1, agua: 5, vidas: 2 });
 function netReceber(d) {
   if (!d || !d.t) return;
   if (d.t === "tchau") return netCaiu();
@@ -1521,24 +1647,24 @@ let aoErroLobby = null;
 const SOM_ORIG = {}; Object.keys(S).forEach(k => { SOM_ORIG[k] = S[k]; if (k === "passo") return; S[k] = (...a) => { SOM_ORIG[k](...a); if (R && R.online === "host" && R.outro) enviar({ t: "som", k, a }); }; });
 function cairLocal(quem) { if (R.caido) return; R.caido = { quem, t: 0 }; R.dentro = false; R.lanterna = false; R.correndo = false; SOM_ORIG.susto(); try { vibrar(400); } catch (e) {} }
 function estadoPara() {
-  const pl = q => ({ eu: { x: q.eu.x, y: q.eu.y, dir: q.eu.dir, anda: q.eu.anda, fase: q.eu.fase }, dentro: q.dentro, sala: q.sala, lanterna: q.lanterna, regando: q.regando, chapeu: q.chapeu, caido: q.caido ? { quem: q.caido.quem } : null, velaCom: q.velaCom, cor: q.cor, perto: q.perto });
+  const pl = q => ({ eu: { x: q.eu.x, y: q.eu.y, dir: q.eu.dir, anda: q.eu.anda, fase: q.eu.fase }, dentro: q.dentro, sala: q.sala, lanterna: q.lanterna, regando: q.regando, chapeu: q.chapeu, caido: q.caido ? { quem: q.caido.quem, fora: q.caido.fora } : null, velaCom: q.velaCom, cor: q.cor, perto: q.perto, vidas: q.vidas, agua: q.agua });
   const o = R.outro;
   return { t: "s", T: R.t, dia: R.dia, moedas: R.moedas, agua: R.agua, aguaMax: R.aguaMax, oleo: R.oleo, vel: R.vel, lanternaBoa: R.lanternaBoa, sementes: R.sementes, vara: R.vara, pecas: R.pecas, peneira: R.peneira,
     inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
     gato: R.gato, cachorro: R.cachorro, seco: R.seco, vulto: R.vulto, vela: R.vela, velaEntregue: R.velaEntregue, velaHoje: R.velaHoje, alma: R.alma, galinhas: R.galinhas, porcos: R.porcos,
     aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
-    outro: pl(R), voce: o ? { caido: o.caido ? { quem: o.caido.quem } : null, velaCom: o.velaCom, regando: o.regando } : null };
+    outro: pl(R), voce: o ? { caido: o.caido ? { quem: o.caido.quem, fora: o.caido.fora } : null, velaCom: o.velaCom, regando: o.regando, agua: o.agua, vidas: o.vidas } : null };
 }
 const SUAVE = ["gato", "cachorro", "seco", "aranha", "esp", "saci", "vulto", "mula"];
 function aplicarEstado(d) {
   const suave = (velho, novo) => { if (velho && novo && novo.x != null && velho.x != null && Math.hypot(novo.x - velho.x, novo.y - velho.y) < 4) { novo.ax = novo.x; novo.ay = novo.y; novo.x = velho.x; novo.y = velho.y; } };
   SUAVE.forEach(k => suave(R[k], d[k])); ["galinhas", "porcos"].forEach(k => d[k] && d[k].forEach((g, i) => suave(R[k] && R[k][i], g)));
   if (d.outro && R.outro) { const a = d.outro.eu, b = R.outro.eu; suave(b, a); if (d.outro.sala && R.outro.sala) suave(R.outro.sala, d.outro.sala); }
-  ["dia", "moedas", "agua", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
+  ["dia", "moedas", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
     "gato", "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "queimado", "sinoT", "sinoUsado", "outro", "tempoTotal"].forEach(k => { R[k] = d[k]; });
   R.t = d.T; R.fxR = d.fx || []; R.semente = cl(R.semente, 0, R.sementes.length - 1);
   d.canteiros.forEach(([a, cv2], i) => { R.canteiros[i].aberto = a; R.canteiros[i].covas = cv2; });
-  if (d.voce) { if (d.voce.caido) cairLocal(d.voce.caido.quem); else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
+  if (d.voce) { R.agua = d.voce.agua; R.vidas = d.voce.vidas; if (d.voce.caido) { cairLocal(d.voce.caido.quem); R.caido.fora = d.voce.caido.fora; } else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
   if (d.morto && !R.morto) { R.morto = { ...d.morto, t: 0 }; SOM_ORIG.susto(); try { vibrar(500); } catch (e) {} setTimeout(() => R && R.morto && telaFim("morreu"), 2300); }
   if (d.venceu && !R.venceu) { R.venceu = { t: d.venceu.t }; R.lanterna = false; }
   if (!d.morto && !d.venceu && (R.morto || R.venceu)) { R.morto = null; R.venceu = null; }
@@ -1624,5 +1750,6 @@ window.sairRoca = function () {
 window.rocaVoltar = () => { if (!window.rocaAtiva) return false; if (document.querySelector(".rc-hist")) return true; if (R && R.menu) { if (painelAberto && document.getElementById("rcCancelar")) { netFechar(); menuInicial(); } else { fecharPainel(); sairRoca(); } return true; } if (painelAberto) { if (R && (R.morto || R.venceu)) return true; fecharPainel(); } else pausar(); return true; };
 window.rocaNet = Net; window.rocaHistoria = () => historia(() => {});
 window.rocaEstado = () => R; // usado nos testes
+window.morrerTeste = () => morrer("seco", "teste", "teste");
 })();
 
