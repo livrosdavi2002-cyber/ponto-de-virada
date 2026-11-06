@@ -1,0 +1,6 @@
+"DepotBuild"
+{
+	"DepotID" "COLOQUE_O_DEPOT_LINUX_AQUI"
+	"ContentRoot" "./RocaAssombrada-PC-Linux/"
+	"FileMapping" { "LocalPath" "*" "DepotPath" "." "Recursive" "1" }
+}

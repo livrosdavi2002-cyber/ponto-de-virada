@@ -1,0 +1,63 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Roça Assombrada: app separado do "Última Escolha" (outro nome e outro pacote na Play Store)
+def numeroBuild = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+def chave = System.getenv("CHAVE_ARQUIVO")
+
+android {
+    namespace 'com.rocaassombrada.jogo'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.rocaassombrada.jogo"
+        minSdk 24
+        targetSdk 36
+        versionCode 100 + numeroBuild
+        versionName "1.0." + numeroBuild
+    }
+
+    signingConfigs {
+        loja {
+            if (chave != null && file(chave).exists()) {
+                storeFile file(chave)
+                storePassword System.getenv("CHAVE_SENHA")
+                keyAlias "upload"
+                keyPassword System.getenv("CHAVE_SENHA")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".teste"
+            resValue "string", "app_name", "Roça Assombrada (teste)"
+        }
+        release {
+            minifyEnabled false
+            resValue "string", "app_name", "Roça Assombrada"
+            signingConfig = (chave != null && file(chave).exists()) ? signingConfigs.loja : signingConfigs.debug
+        }
+    }
+
+    // o jogo (HTML) vem da pasta roca-assombrada/www + os arquivos compartilhados com o jogo principal
+    sourceSets { main { assets.srcDirs = ["$buildDir/jogo"] } }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+tasks.register('juntarJogo', Copy) {
+    into "$buildDir/jogo/www"
+    from('../www')
+    from('../../app/src/main/assets/www') { include 'roca.js', 'lib/**', 'fonts/**' }
+}
+preBuild.dependsOn 'juntarJogo'
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
+}

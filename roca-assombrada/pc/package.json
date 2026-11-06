@@ -1,0 +1,29 @@
+{
+  "name": "roca-assombrada",
+  "productName": "Roça Assombrada",
+  "version": "1.0.0",
+  "description": "Roça Assombrada: terror e fazenda do folclore brasileiro",
+  "main": "main.js",
+  "author": "Roça Assombrada",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "pacote-win": "electron-builder --win dir --x64",
+    "pacote-linux": "electron-builder --linux dir --x64"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.rocaassombrada.jogo",
+    "productName": "Roça Assombrada",
+    "executableName": "RocaAssombrada",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "preload.js", "www/**/*"],
+    "win": { "icon": "icone.png", "target": ["dir"] },
+    "linux": { "icon": "icone.png", "target": ["dir"], "category": "Game" },
+    "asar": true
+  }
+}

@@ -20,7 +20,7 @@ jobs:
           gradle-version: "8.13"
 
       - name: Compilar versão de teste (APK)
-        run: gradle assembleDebug --no-daemon
+        run: gradle :app:assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
@@ -42,7 +42,7 @@ jobs:
         env:
           CHAVE_ARQUIVO: ${{ runner.temp }}/upload.jks
           CHAVE_SENHA: ${{ secrets.SENHA_ASSINATURA }}
-        run: gradle bundleRelease --no-daemon
+        run: gradle :app:bundleRelease --no-daemon
 
       - uses: actions/upload-artifact@v4
         if: steps.chave.outputs.ok == 'sim'
@@ -68,6 +68,11 @@ jobs:
           cp -r app/src/main/assets/www/* _site/
           cp docs/* _site/ 2>/dev/null || true
           sed -i "s/const VERSAO = \"ue-1\"/const VERSAO = \"ue-${GITHUB_RUN_NUMBER}\"/" _site/sw.js
+          # Roça Assombrada, o jogo separado: fica em /roca/
+          sh roca-assombrada/preparar.sh
+          mkdir -p _site/roca && cp -r roca-assombrada/www/* _site/roca/
+          sed -i "s/const VERSAO = \"ra-1\"/const VERSAO = \"ra-${GITHUB_RUN_NUMBER}\"/" _site/roca/sw.js
+          sed -i "s#<script src=\"base.js\"></script>#<script src=\"base.js\"></script><script>window.ROCA_VERSAO=\"1.0.${GITHUB_RUN_NUMBER}\"</script>#" _site/roca/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

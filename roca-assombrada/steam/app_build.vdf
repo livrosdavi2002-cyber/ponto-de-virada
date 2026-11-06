@@ -1,0 +1,13 @@
+"AppBuild"
+{
+	"AppID" "COLOQUE_O_APPID_AQUI"
+	"Desc" "Roça Assombrada"
+	"BuildOutput" "./saida/"
+	"ContentRoot" "./"
+	"SetLive" ""
+	"Depots"
+	{
+		"COLOQUE_O_DEPOT_WINDOWS_AQUI" "depot_windows.vdf"
+		"COLOQUE_O_DEPOT_LINUX_AQUI" "depot_linux.vdf"
+	}
+}

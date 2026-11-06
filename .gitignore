@@ -4,3 +4,12 @@ app/build/
 local.properties
 .idea/
 *.iml
+
+# Roça Assombrada: cópias geradas na hora de montar
+roca-assombrada/www/roca.js
+roca-assombrada/www/lib/
+roca-assombrada/www/fonts/
+roca-assombrada/pc/www/
+roca-assombrada/pc/node_modules/
+roca-assombrada/pc/dist/
+roca-assombrada/android/build/

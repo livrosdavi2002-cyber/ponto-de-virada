@@ -250,6 +250,8 @@ function montarUI() {
   .rc-bt{border:2px solid rgba(255,255,255,.18);background:rgba(12,14,18,.55);color:#f4efe4;border-radius:50%;width:62px;height:62px;font:700 10px var(--f-mono,monospace);letter-spacing:.04em;text-transform:uppercase}
   .rc-bt.acao{width:88px;height:88px;grid-row:1/3;grid-column:2;background:rgba(242,163,58,.28);border-color:rgba(242,163,58,.65);font-size:11px}
   .rc-bt.on{background:rgba(242,201,74,.4);border-color:#f2c94a}.rc-bt.sem{font-size:9px;line-height:1.1}
+  #roca.rc-pc .rc-joy,#roca.rc-controle .rc-joy,#roca.rc-controle .rc-bts{display:none}
+  .rc-caixa button:focus-visible,.rc-caixa button:focus{outline:3px solid #f2c94a;outline-offset:2px}
   .rc-bt svg{width:34px;height:34px;display:block;margin:auto}.rc-bt.luz.on .chama{filter:drop-shadow(0 0 4px #f2c94a)}.rc-bt.luz:not(.on) .chama{fill:rgba(255,255,255,.25)}
   .rc-moch{margin-left:auto;padding:4px 8px}.rc-moch svg{width:28px;height:28px;display:block}.rc-moch + .rc-menu{margin-left:0}
   .rc-obj{position:absolute;left:max(12px,env(safe-area-inset-left));top:52px;max-width:38vw;color:#f2c94a;font:600 10.5px/1.3 var(--f-mono,monospace);text-shadow:0 1px 4px #000;pointer-events:none;letter-spacing:.02em}
@@ -304,6 +306,7 @@ function montarUI() {
   el.rcChatF.addEventListener("submit", e => { e.preventDefault(); mandarChat(el.rcChatIn.value); el.rcChatIn.value = ""; abrirChat(false); });
   el.rcChatX.addEventListener("click", () => abrirChat(false));
   el.rcChatBar.querySelectorAll("[data-r]").forEach(b => b.addEventListener("click", () => { mandarChat(b.dataset.r); abrirChat(false); }));
+  if (matchMedia("(pointer: fine)").matches && !("ontouchstart" in window)) document.getElementById("roca").classList.add("rc-pc");
   bt(el.rcMoch, () => { if (R && !R.menu && !painelAberto) abrirMochila(); }); bt(el.rcSem, () => { R.semente = (R.semente + 1) % R.sementes.length; tocarTom(900, .05, { vol: .05 }); hud(); });
   el.rcMenu.addEventListener("click", () => pausar());
   el.rcFala.addEventListener("pointerdown", e => { e.preventDefault(); proximaFala(); });
@@ -583,7 +586,7 @@ function atualizarPesca(dt) {
 }
 function moverLocal(dt) {
   // movimento
-  let dx = joy.dx, dy = joy.dy;
+  let dx = joy.dx, dy = joy.dy; if (CONTROLE.dx || CONTROLE.dy) { dx = CONTROLE.dx; dy = CONTROLE.dy; }
   if (teclas["a"] || teclas["arrowleft"]) dx = -1; if (teclas["d"] || teclas["arrowright"]) dx = 1; if (teclas["w"] || teclas["arrowup"]) dy = -1; if (teclas["s"] || teclas["arrowdown"]) dy = 1;
   if (R.caido || (R.msg && R.online) || (painelAberto && R.online)) { dx = 0; dy = 0; }
   const m = Math.hypot(dx, dy); if (m > 1) { dx /= m; dy /= m; }
@@ -1500,7 +1503,7 @@ function desenharVitoria(tm) { if (!R.venceu) return; const k = R.venceu.t; if (
 function loop(ts) {
   if (!rodando || !R) return;
   requestAnimationFrame(loop); // agenda antes: um erro de desenho não congela o jogo
-  const fps = window.fpsAlvo ? fpsAlvo() : 30; if (ultimo && ts - ultimo < 1000 / fps - 4) return; // 30 quadros por segundo bastam: o celular esquenta bem menos
+  lerControle(); const fps = window.fpsAlvo ? fpsAlvo() : 30; if (ultimo && ts - ultimo < 1000 / fps - 4) return; // 30 quadros por segundo bastam: o celular esquenta bem menos
   const t0 = performance.now(); window.rocaPerfN = (window.rocaPerfN || 0) + 1;
   const dt = Math.min(.07, (ts - ultimo) / 1000 || 0); ultimo = ts;
   if (R.online === "guest") atualizarConvidado(dt); else atualizar(dt);
@@ -2395,12 +2398,59 @@ function menuInicial() {
     <button type="button" class="rc-op" id="rcEntrarSala">Entrar numa sala<small>Digite o código do amigo</small></button>
     <button type="button" class="rc-op" id="rcHistBt">Ver a história<small>Como tudo começou</small></button></div>
     ${matchMedia("(pointer: fine)").matches ? `<p style="font-size:12.5px;color:#b8b2a4">No computador: <b>WASD</b> ou setas andam · <b>E</b>/espaço = ação · <b>R</b> = lanterna · <b>Shift</b> = correr · <b>Q</b> = semente · <b>M</b> = mochila · <b>Enter</b> = chat · <b>Esc</b> = pausa</p>` : ""}
-    <div class="rc-linha"><button type="button" class="rc-op" id="rcSair">Voltar ao menu do jogo</button></div></div>`;
+    ${matchMedia("(pointer: fine)").matches || navigator.getGamepads && [...navigator.getGamepads()].some(Boolean) ? `<p style="font-size:12.5px;color:#b8b2a4">Controle: <b>analógico</b> anda · <b>A</b> ação · <b>B</b> lanterna · <b>X</b> correr · <b>Y</b> semente · <b>Select</b> mochila · <b>Start</b> pausa</p>` : ""}
+    <div class="rc-linha">${window.ROCA_SOLO ? `<button type="button" class="rc-op" id="rcOpcoes">Opções</button>${window.PC || (window.Android && Android.sair) ? `<button type="button" class="rc-op" id="rcSair">Sair do jogo</button>` : ""}` : `<button type="button" class="rc-op" id="rcSair">Voltar ao menu do jogo</button>`}</div></div>`;
   document.getElementById("rcSolo").addEventListener("click", () => iniciarJogo("solo"));
   document.getElementById("rcCriar").addEventListener("click", criarSala);
   document.getElementById("rcEntrarSala").addEventListener("click", entrarSala);
   document.getElementById("rcHistBt").addEventListener("click", () => { fecharPainel(); historia(menuInicial); });
-  document.getElementById("rcSair").addEventListener("click", () => { fecharPainel(); sairRoca(); });
+  const bs = document.getElementById("rcSair"); if (bs) bs.addEventListener("click", () => { if (window.ROCA_SOLO) { if (window.PC) PC.sair(); else if (window.Android && Android.sair) Android.sair(); return; } fecharPainel(); sairRoca(); });
+  const bo = document.getElementById("rcOpcoes"); if (bo) bo.addEventListener("click", opcoes);
+  focarPrimeiro();
+}
+function opcoes() { // só na versão separada da Roça (no jogo antigo isso fica no menu principal)
+  const lig = v => v ? "ligada" : "desligada", fps = window.fpsAlvo ? fpsAlvo() : 30;
+  painelAberto = true; el.rcPainel.hidden = false;
+  el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Opções</h2><div class="rc-grade">
+    <button type="button" class="rc-op" id="opSom">Som: ${typeof mudo !== "undefined" && mudo ? "desligado" : "ligado"}</button>
+    <button type="button" class="rc-op" id="opVoz">Narração da história: ${lig(window.vozLigada !== false)}</button>
+    <button type="button" class="rc-op" id="opFps">Gráfico: ${fps === 60 ? "suave (60 quadros, gasta mais bateria)" : "economia (30 quadros)"}</button>
+    ${window.PC ? `<button type="button" class="rc-op" id="opTela">Tela cheia (F11)</button>` : ""}
+    <button type="button" class="rc-op" id="opHist">Apagar a história já vista<small>A abertura aparece de novo</small></button></div>
+    <p style="font-size:12px;color:#b8b2a4">Roça Assombrada · versão ${window.ROCA_VERSAO || "1"}</p>
+    <div class="rc-linha"><button type="button" class="rc-op dest" id="rcFechar">Voltar</button></div></div>`;
+  const re = () => opcoes();
+  document.getElementById("opSom").addEventListener("click", () => { if (window.alternarSom) alternarSom(); re(); });
+  document.getElementById("opVoz").addEventListener("click", () => { if (window.alternarVozSolo) alternarVozSolo(); re(); });
+  document.getElementById("opFps").addEventListener("click", () => { try { localStorage.setItem("pv_fps", fps === 60 ? "30" : "60"); } catch (e) {} medir(); re(); });
+  const bt2 = document.getElementById("opTela"); if (bt2) bt2.addEventListener("click", () => PC.telaCheia());
+  document.getElementById("opHist").addEventListener("click", () => { ls("roca_hist", ""); try { localStorage.removeItem("roca_hist"); } catch (e) {} efeito("A história vai aparecer de novo", "#e8e2d4"); re(); });
+  document.getElementById("rcFechar").addEventListener("click", () => { fecharPainel(); menuInicial(); });
+  focarPrimeiro();
+}
+/* ---------- controle (Xbox, PlayStation, Steam Deck) ---------- */
+const CONTROLE = { b: [], dx: 0, dy: 0, eixo: 0, usado: false };
+function focarPrimeiro() { if (!CONTROLE.usado) return; setTimeout(() => { const b = el.rcPainel.querySelector("button:not([disabled]), input"); if (b) b.focus(); }, 30); }
+function moverFoco(d) { const l = [...el.rcPainel.querySelectorAll("button:not([disabled]), input")]; if (!l.length) return; let i = l.indexOf(document.activeElement); i = i < 0 ? 0 : (i + d + l.length) % l.length; l[i].focus(); l[i].scrollIntoView({ block: "nearest" }); }
+function lerControle() {
+  const gps = navigator.getGamepads ? navigator.getGamepads() : []; let g = null; for (const x of gps) if (x && x.connected) { g = x; break; }
+  CONTROLE.dx = CONTROLE.dy = 0; if (!g) return;
+  const b = i => !!(g.buttons[i] && g.buttons[i].pressed), antes = CONTROLE.b, novo = i => b(i) && !antes[i];
+  const ax = g.axes[0] || 0, ay = g.axes[1] || 0; CONTROLE.b = g.buttons.map(x => x.pressed);
+  if (CONTROLE.b.some(Boolean) || Math.abs(ax) > .3 || Math.abs(ay) > .3) { if (!CONTROLE.usado) { CONTROLE.usado = true; document.getElementById("roca").classList.add("rc-controle"); } }
+  const eixoV = Math.abs(ay) > .6 ? Math.sign(ay) : Math.abs(ax) > .6 ? Math.sign(ax) : 0, eixoNovo = eixoV && eixoV !== CONTROLE.eixo; CONTROLE.eixo = eixoV;
+  if (document.querySelector(".rc-hist")) { if (novo(0) && window.rocaHistAvancar) rocaHistAvancar(); if (novo(1) || novo(9)) { const p = document.querySelector(".rc-pular"); if (p) p.click(); } return; }
+  if (R && R.msg) { if (novo(0) || novo(1)) proximaFala(); return; }
+  if (!el.rcChatBar.hidden) { if (novo(1)) abrirChat(false); return; }
+  if (painelAberto) {
+    if (novo(12) || novo(14) || (eixoNovo && eixoV < 0)) moverFoco(-1); if (novo(13) || novo(15) || (eixoNovo && eixoV > 0)) moverFoco(1);
+    if (novo(0)) { const a = document.activeElement; if (a && el.rcPainel.contains(a) && a.tagName === "BUTTON") a.click(); else moverFoco(0); }
+    if (novo(1) || novo(9)) { if (window.rocaVoltar) rocaVoltar(); } return;
+  }
+  if (!R || R.menu) return;
+  let dx = Math.abs(ax) > .22 ? ax : 0, dy = Math.abs(ay) > .22 ? ay : 0; if (b(14)) dx = -1; if (b(15)) dx = 1; if (b(12)) dy = -1; if (b(13)) dy = 1; CONTROLE.dx = dx; CONTROLE.dy = dy;
+  if (novo(0)) acao(); if (novo(1)) alternarLanterna(); if (novo(2) || novo(10)) correr(); if (novo(3)) el.rcSem.dispatchEvent(new Event("pointerdown")); if (novo(9)) pausar(); if (novo(8)) abrirMochila(); if (novo(5) && R.online && R.outro) abrirChat(true);
+  if (CONTROLE.usado && g.vibrationActuator && R.tremor > .5 && !CONTROLE.vib) { CONTROLE.vib = true; try { g.vibrationActuator.playEffect("dual-rumble", { duration: 300, strongMagnitude: .8, weakMagnitude: .5 }); } catch (e) {} setTimeout(() => CONTROLE.vib = false, 600); }
 }
 function telaSala(html) { painelAberto = true; el.rcPainel.hidden = false; el.rcPainel.innerHTML = `<div class="rc-caixa">${html}<div class="rc-linha"><button type="button" class="rc-op" id="rcCancelar">Cancelar</button></div></div>`; document.getElementById("rcCancelar").addEventListener("click", () => { netFechar(); menuInicial(); }); }
 function criarSala() {
