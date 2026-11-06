@@ -18,7 +18,7 @@ const BALANCO = { x: 9.6, y: 28 }, CARRIOLA = { x: 21.8, y: 14.4 }, LENHA = { x:
 const FENOS = [[45, 8.4], [45.6, 10.4], [44, 9.6]];
 const ESPANTALHO = { x: 20.2, y: 18.6 };
 const CASA = { x: 10, y: 7, w: 6, h: 4.4, porta: { x: 13, y: 11.6 } };
-const POCO = { x: 19.5, y: 9.6 }, CAIXOTE = { x: 16.8, y: 12 }, CAMINHONETE = { x: 25.2, y: 31.2 };
+const POCO = { x: 19.5, y: 9.6 }, CAIXOTE = { x: 16.8, y: 12 }, CAMINHONETE = { x: 28.8, y: 31.2 };
 const CEMITERIO = { x0: 39, y0: 24, x1: 45, y1: 31 }, CRUZ = { x: 42, y: 27.2 };
 const GALINHEIRO = { x: 27, y: 6.6, w: 4, h: 3, porta: { x: 29, y: 9.8 } }, CERCADO = { x0: 25.5, y0: 6.2, x1: 33, y1: 12 };
 const CELEIRO = { x: 36, y: 6.5, w: 7, h: 5 }, TRATOR = { x: 44, y: 13.2 };
@@ -130,7 +130,7 @@ function novoJogo() {
   semente = 7;
   const solido = Array.from({ length: MH }, (_, y) => Array.from({ length: MW }, (_, x) => x < CERCA.x0 || x >= CERCA.x1 || y < CERCA.y0 || y >= CERCA.y1));
   const bloq = (x0, y0, w, h) => { for (let y = Math.floor(y0); y < y0 + h; y++) for (let x = Math.floor(x0); x < x0 + w; x++) if (solido[y] && x >= 0 && x < MW) solido[y][x] = true; };
-  bloq(19, 9, 1, 1); bloq(LAGO.x0, LAGO.y0, LAGO.x1 - LAGO.x0, LAGO.y1 - LAGO.y0); bloq(24, 30.4, 3, 1.4);
+  bloq(19, 9, 1, 1); bloq(LAGO.x0, LAGO.y0, LAGO.x1 - LAGO.x0, LAGO.y1 - LAGO.y0); bloq(27.5, 30.4, 3, 1.4); for (let y = CERCA.y1; y < MH; y++) for (let x = 24; x <= 26; x++) solido[y][x] = false; // a estrada para a vila
   bloq(GALINHEIRO.x, GALINHEIRO.y, GALINHEIRO.w, GALINHEIRO.h - .2); bloq(43, 12.6, 2, 1);
   bloq(7, 9, 1, 1); bloq(23, 17, 1, 1); bloq(41.6, 26.8, 1, 1);
   // riacho (só passa pelas pontes)
@@ -150,7 +150,8 @@ function novoJogo() {
   const pedras = [], flores = [], cogumelos = [];
   for (let i = 0; i < 70; i++) { const x = rnd(CERCA.x0 + .5, CERCA.x1 - .5), y = rnd(CERCA.y0 + .5, CERCA.y1 - .5); if (solido[Math.floor(y)][Math.floor(x)]) continue; (i % 3 === 0 ? pedras : i % 3 === 1 ? flores : cogumelos).push({ x, y, k: Math.random() }); }
   R = {
-    t: 18, dia: 1, vidas: 2, cor: 0, semente: 0, caido: null, outro: null, online: null, eu: { x: 13, y: 12.8, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5, y: 5.6 },
+    t: 18, dia: 1, vidas: 1, lugar: "sitio", predio: null, andar: 0, int: { x: 4.5, y: 5.2, dir: 1 }, roupa: null, garrafada: 0, broa: 0, conv: {}, fade: 0,
+    enxada: false, lampiao: false, ferradura: false, sal: false, arruda: false, aguaBenta: 0, cor: 0, semente: 0, caido: null, outro: null, online: null, eu: { x: 13, y: 12.8, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5, y: 5.6 },
     solido, caixas, arvores, pedras, flores, cogumelos, moedas: 0, agua: 5, aguaMax: 5, oleo: 100, lanterna: false, folego: 100, correndo: false, vel: 3.1,
     diario: !!ls("roca_diario"), lanternaBoa: false, sementes: ["milho", "mandioca"], semente: 0, canteiros: CANTEIROS.map((k, i) => ({ ...k, aberto: i === 0, covas: Array.from({ length: k.w * k.h }, () => null) })),
     inv: { graveto: 0, folha: 0 }, colheita: {}, peixes: {}, extra: {}, vara: false, pecas: 0, vela: null, velaCom: false, velaEntregue: false, velaHoje: false,
@@ -336,6 +337,7 @@ function covaPerto() {
 function oQueFazer() {
   if (!R || R.morto || R.venceu) return null;
   if (R.caido) return null;
+  if (R.lugar === "vila") return oQueFazerVila();
   if (R.pesca) return R.pesca.fisgou ? { t: "Puxar!", fn: puxarPeixe, loc: 1 } : { t: "...", fn: () => {}, loc: 1 };
   if (R.dentro) {
     const s = R.sala;
@@ -348,7 +350,7 @@ function oQueFazer() {
     return null;
   }
   const p = R.eu;
-  if (R.outro && R.outro.caido && !R.outro.caido.fora && !R.outro.dentro && dist(p, R.outro.eu) < 1.4) return { t: "Levantar", fn: () => { R.outro.caido = null; S.colher(); efeito("De pé! Corre!", "#9bd86b"); } };
+  if (R.outro && R.outro.caido && !R.outro.caido.fora && !R.outro.dentro && (R.outro.lugar || "sitio") === (R.lugar || "sitio") && dist(p, R.outro.eu) < 1.4) return { t: "Levantar", fn: () => { R.outro.caido = null; S.colher(); efeito("De pé! Corre!", "#9bd86b"); } };
   if (dist(p, CASA.porta) < 1.1) return { t: "Entrar", fn: entrar, loc: 1 };
   if (dist(p, CAIXOTE) < 1.2) { const v = valorVenda(); return { t: v ? `Vender ${v}` : "Caixote", fn: vender }; }
   if (dist(p, POCO) < 1.4) return { t: "Tirar água", fn: tirarAgua };
@@ -377,7 +379,7 @@ function oQueFazer() {
   return null;
 }
 function acao() { if (!R || R.menu) return; if (R.msg) return proximaFala(); if (painelAberto) return; const o = oQueFazer(); if (!o) return; if (R.online === "guest" && !o.loc) { enviar({ t: "acao", nome: o.t }); tocarTom(700, .04, { vol: .03 }); return; } o.fn(); }
-function efeito(txt, cor = "#9bd86b") { R.fx.push({ txt, cor, t: 0, x: R.dentro ? null : R.eu.x, y: R.dentro ? null : R.eu.y }); }
+function efeito(txt, cor = "#9bd86b") { const dentro = R.dentro || R.predio; R.fx.push({ txt, cor, t: 0, x: dentro ? null : R.eu.x, y: dentro ? null : R.eu.y, lugar: R.lugar || "sitio" }); }
 function plantar(cp) { const tipo = R.sementes[R.semente]; cp.k.covas[cp.i] = { tipo, est: 0, seca: true, t: 0 }; S.plantar(); }
 function regar(cp) { if (R.agua <= 0) return efeito("O regador está vazio. Vá ao poço.", "#5ab0e0"); R.agua--; const cv2 = cp.k.covas[cp.i]; cv2.seca = false; cv2.t = 0; R.regando = .6; S.regar(); hud(); }
 function colher(cp) { const cv2 = cp.k.covas[cp.i]; R.colheita[cv2.tipo] = (R.colheita[cv2.tipo] || 0) + 1; cp.k.covas[cp.i] = null; S.colher(); efeito(`+1 ${PLANTAS[cv2.tipo].nome}`); hud(); }
@@ -451,7 +453,7 @@ function fotoMonstro(cvF, quem) {
 }
 function abrirDiario(aba = "bichos") {
   painelAberto = true; el.rcPainel.hidden = false; if (!R.diario) { R.diario = true; ls("roca_diario", 1); }
-  const abas = [["bichos", "Os bichos"], ["precos", "O que vale"], ["guia", "Guia do sítio"], ["obj", "O que fazer"]];
+  const abas = [["bichos", "Os bichos"], ["pistas", "Pistas"], ["precos", "O que vale"], ["guia", "Guia do sítio"], ["obj", "O que fazer"]];
   let corpo = "";
   if (aba === "bichos") corpo = `<p>Coisas que vivem por aqui. Leia tudo, Yasmin. Uma regra esquecida é uma noite a menos.</p><div class="rc-dia-pg">${BICHOS.map(([q, n, r, nota]) => `<div class="rc-bicho"><canvas data-q="${q}"></canvas><div><b>${n}</b><span>${r}</span><i>${nota}</i></div></div>`).join("")}</div>`;
   if (aba === "precos") corpo = `<p>Tudo se vende no caixote do lado da porta. Venda antes de escurecer.</p>
@@ -469,7 +471,8 @@ function abrirDiario(aba = "bichos") {
     <li><b>Capela:</b> o sino espanta o Corpo-Seco e manda o espantalho de volta. Só uma vez por noite.</li>
     <li><b>Milharal:</b> esconderijo contra a Pernuda.</li>
     <li><b>Mochila:</b> o botão da mochila mostra tudo o que você carrega. Este diário fica guardado nela.</li>
-    <li><b>Com amigo:</b> cada uma tem sua água e 2 vidas. Quem for pega cai no chão e só a outra consegue levantar. Sem vidas, não levanta mais.</li></ul>`;
+    <li><b>Vila Sossego:</b> desça a estrada do portão. Os bichos não vão lá. De dia as lojas abrem; à noite a vila apaga e todos dormem no quarto de cima.</li><li><b>Com amigo:</b> cada uma tem sua água e 1 coração. Quem for pega cai e só a outra levanta. Sem coração, fica fora até amanhecer. Toda manhã o coração volta. Se as duas caírem, o sítio volta para o dia 1.</li></ul>`;
+  if (aba === "pistas") { const p = pistas(), l = Object.values(p); corpo = `<p><i>Páginas em branco no fim do caderno. Aqui a Yasmin anota o que descobre na Vila Sossego, descendo a estrada do portão.</i></p><p><b>${l.length} de ${NPISTAS} pistas</b>${l.length >= NPISTAS ? " · agora você sabe a verdade." : ""}</p><ul>${l.map(t => `<li>${t}</li>`).join("") || "<li>Nada ainda. Converse com os moradores da vila (de dia: de noite todos dormem).</li>"}</ul>`; }
   if (aba === "obj") corpo = `<p><b>Agora:</b> ${objetivo()}.</p><ul><li>Plante, regue, colha e venda para juntar moedas.</li><li>Compre as três peças na bancada: bateria (120), pneu (170) e motor de arranque (240).</li><li>Leve tudo até a caminhonete no portão e vá embora deste sítio.</li><li>De noite, siga as regras dos bichos. Toda noite tem uma vela para levar até a cruz.</li></ul><p><i>Se encontrar seu pai, diga que eu sinto muito. — Benedita</i></p>`;
   el.rcPainel.innerHTML = `<div class="rc-caixa rc-diario"><h2>Diário da Vó Benedita</h2><div class="rc-linha" style="margin:4px 0 10px">${abas.map(([k, n]) => `<button type="button" class="rc-op${k === aba ? " dest" : ""}" data-aba="${k}">${n}</button>`).join("")}</div>${corpo}<div class="rc-linha"><button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
   el.rcPainel.querySelectorAll("[data-aba]").forEach(b => b.addEventListener("click", () => { tocarRuido(.25, { filtro: "highpass", f: 2500, vol: .05 }); abrirDiario(b.dataset.aba); }));
@@ -482,7 +485,7 @@ function abrirMochila() {
   add("Água no regador", `${R.agua}/${R.aguaMax}`); add("Óleo", Math.round(R.oleo) + "%"); add("Moedas", R.moedas);
   Object.entries(R.colheita).forEach(([k, n]) => add(PLANTAS[k].nome, n)); Object.entries(R.peixes).forEach(([k, n]) => add(k, n)); Object.entries(R.extra).forEach(([k, n]) => add(EXTRAS[k][0], n));
   add("Gravetos", R.inv.graveto); add("Folhas", R.inv.folha); add("Sementes", R.sementes.map(k => PLANTAS[k].nome).join(", "));
-  if (R.vara) add("Vara de pesca", "✓"); if (R.peneira) add("Peneira", "✓"); if (R.lanternaBoa) add("Lanterna reforçada", "✓"); if (R.vel > 3.2) add("Botas de borracha", "✓"); if (R.velaCom) add("Vela acesa", "✓"); add("Peças da caminhonete", R.pecas ? `${R.pecas}/3` : "0/3");
+  if (R.vara) add("Vara de pesca", "✓"); if (R.peneira) add("Peneira", "✓"); if (R.lanternaBoa) add("Lanterna reforçada", "✓"); if (R.vel > 3.2) add("Botas de borracha", "✓"); if (R.velaCom) add("Vela acesa", "✓"); if (R.garrafada) add("Garrafada", "✓"); if (R.aguaBenta) add("Água benta", "✓"); if (R.broa > 0) add("Broa (fôlego)", Math.ceil(R.broa) + " s"); if (R.enxada) add("Enxada de aço", "✓"); if (R.lampiao) add("Lampião de ferro", "✓"); if (R.ferradura) add("Ferradura na porta", "✓"); if (R.sal) add("Sal na soleira", "✓"); if (R.arruda) add("Arruda", "✓"); add("Pistas", `${Object.keys(pistas()).length}/${NPISTAS}`); add("Peças da caminhonete", R.pecas ? `${R.pecas}/3` : "0/3");
   const venda = valorVenda();
   el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Mochila</h2><p>${venda ? `O que você carrega vale <b style="color:#f2c94a">${venda} moedas</b> no caixote.` : "Nada para vender por enquanto."} Objetivo: ${objetivo()}.</p><div class="rc-moch-l">${l.join("")}</div>
     <div class="rc-linha">${R.diario ? `<button type="button" class="rc-op dest" id="rcLerDiario">Ler o diário da vó</button>` : `<span style="color:#b8b2a4;font-size:13px">Tem um diário em cima da mesa da casa...</span>`}<button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
@@ -523,14 +526,18 @@ function pausar() {
 function telaFim(tipo) {
   painelAberto = true; el.rcPainel.hidden = false;
   const mins = Math.floor(R.tempoTotal / 60), segs = Math.round(R.tempoTotal % 60);
-  const txt = tipo === "venceu" ? `<h2 style="color:#9bd86b">Você foi embora</h2><p>A caminhonete pega na terceira tentativa. Pelo retrovisor, o sítio fica pequeno... e alguém acena da janela da casa vazia.</p><p>Dia ${R.dia} · ${mins} min ${segs} s</p>`
+  const verdade = Object.keys(pistas()).length >= NPISTAS;
+  const txt = tipo === "venceu" ? `<h2 style="color:#9bd86b">Você foi embora</h2><p>A caminhonete pega na terceira tentativa. Pelo retrovisor, o sítio fica pequeno... e alguém acena da janela da casa vazia.</p>${verdade ? `<p style="color:#f2c94a">Você sabe a verdade: a mata cobra alguém do sítio a cada trinta anos, e a vó foi duas vezes para que não fosse você. Na porteira, uma voz igual à do seu pai chama o seu nome. Você não olha para trás.</p>` : `<p style="font-size:13px;color:#b8b2a4">Ainda há perguntas sem resposta na Vila Sossego.</p>`}<p>Dia ${R.dia} · ${mins} min ${segs} s</p>`
     : `<h2 style="color:#e2483d">Você morreu</h2><p>${R.morto.porque}</p><p style="font-size:13px;color:#9bd86b">${R.morto.dica}</p><p>Chegou ao dia ${R.dia}.</p>`;
-  const conv = R.online === "guest";
-  el.rcPainel.innerHTML = `<div class="rc-caixa">${txt}${conv ? `<p style="font-size:13px">Esperando o anfitrião começar outra partida...</p>` : ""}<div class="rc-linha">${conv ? "" : `<button type="button" class="rc-op dest" id="rcDeNovo">Jogar de novo</button>`}<button type="button" class="rc-op" id="rcSair">Menu</button></div></div>`;
+  const conv = R.online === "guest", reinicia = R.online === "host" && R.outro && tipo === "morreu";
+  if (reinicia) setTimeout(() => { if (R && R.morto && R.online === "host" && R.outro) { fecharPainel(); iniciarJogo("host", true); } }, 6500);
+  el.rcPainel.innerHTML = `<div class="rc-caixa">${txt}${conv ? `<p style="font-size:13px">${tipo === "morreu" ? "As duas caíram. A sala continua aberta: o sítio volta para o dia 1 em instantes..." : "Esperando o anfitrião começar outra partida..."}</p>` : reinicia ? `<p style="font-size:13px;color:#f2c94a">As duas caíram. A sala continua aberta: voltando para o dia 1 em 6 segundos...</p>` : ""}<div class="rc-linha">${conv ? "" : `<button type="button" class="rc-op dest" id="rcDeNovo">Jogar de novo</button>`}<button type="button" class="rc-op" id="rcSair">Menu</button></div></div>`;
   if (!conv) document.getElementById("rcDeNovo").addEventListener("click", () => { const m = R.online && R.outro ? "host" : "solo"; fecharPainel(); iniciarJogo(m); });
   document.getElementById("rcSair").addEventListener("click", () => { fecharPainel(); R.menu = true; menuInicial(); });
 }
 function morrer(quem, porque, dica) { if (R.morto || R.venceu || R.caido) return;
+  if (quem === "seco" && R.aguaBenta > 0) { R.aguaBenta = 0; R.seco.fase = "sai"; R.seco.t = 0; S.suspiro(R.seco.x, R.seco.y); efeito("A água benta queimou o Corpo-Seco! Ele fugiu", "#9ad0f0"); hud(); return; }
+  if (quem !== "alma" && R.garrafada > 0) { R.garrafada = 0; R.susto = 1.1; S.susto(); R.lanterna = false; R.dentro = false; R.eu.x = CASA.porta.x; R.eu.y = CASA.porta.y + .7; if (R.trocado) enviar({ t: "pos", x: R.eu.x, y: R.eu.y }); efeito("A garrafada da Dona Cida te trouxe de volta!", "#9bd86b"); hud(); return; }
   if (R.online === "host" && quem !== "alma" && jogadores().filter(P => !P.caido).length > 1) {
     const fora = R.vidas <= 0; if (!fora) R.vidas--;
     R.caido = { quem, porque, dica, t: 0, fora }; R.correndo = false; R.lanterna = false; R.dentro = false;
@@ -550,13 +557,15 @@ function hud() {
   el.rcLuz.classList.toggle("on", R.lanterna); el.rcCorre.classList.toggle("on", R.correndo);
   const comAmigo = !!(R.online && R.outro && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
   el.rcObj.textContent = R.menu ? "" : "Objetivo: " + objetivo();
-  const cor = n => "♥".repeat(Math.max(0, n)) + "♡".repeat(Math.max(0, 2 - n));
+  const cor = n => n > 0 ? "♥" : "♡";
   el.rcVidas.innerHTML = R.online && R.outro ? `<span>Você <b>${cor(R.vidas)}</b></span><span>${R.online === "host" ? "Amigo" : "Yasmin"} <b>${cor(R.outro.vidas)}</b></span>` : "";
 }
 function objetivo() {
+  const np = Object.keys(pistas()).length, pp = np < NPISTAS ? ` · pistas ${np}/${NPISTAS} na vila` : "";
+  if (R.lugar === "vila") return `descobrir o que aconteceu (pistas ${np}/${NPISTAS})` + (ehNoite() ? " · a vila dorme: volte de dia" : "");
   if (R.pecas >= 3) return "leve tudo até a caminhonete no portão e vá embora!";
   const falta = [["Bateria nova", 120], ["Pneu", 170], ["Motor de arranque", 240]][R.pecas];
-  return `juntar ${falta[1]} moedas e comprar ${falta[0].toLowerCase()} na bancada (peças ${R.pecas}/3)` + (ehNoite() ? " · sobreviva até amanhecer" : "");
+  return `juntar ${falta[1]} moedas e comprar ${falta[0].toLowerCase()} na bancada (peças ${R.pecas}/3)` + (ehNoite() ? " · sobreviva até amanhecer" : "") + pp;
 }
 
 /* ---------- atualização ---------- */
@@ -579,9 +588,11 @@ function moverLocal(dt) {
   const m = Math.hypot(dx, dy); if (m > 1) { dx /= m; dy /= m; }
   if (R.pesca && m > .2) R.pesca = null;
   if (R.correndo) { R.folego -= 30 * dt; if (R.folego <= 0) { R.folego = 0; R.correndo = false; } } else R.folego = Math.min(100, R.folego + 14 * dt);
-  const vel = R.vel * (R.correndo ? 1.75 : 1) * (R.dentro ? .8 : 1);
-  if (R.dentro) anda(R.sala, dx, dy, vel, dt, true); else anda(R.eu, dx, dy, vel, dt, false);
-  const pp = R.dentro ? R.sala : R.eu;
+  if (R.broa > 0) { R.broa -= dt; R.folego = 100; }
+  const vel = R.vel * (R.correndo ? 1.75 : 1) * (R.dentro || R.predio ? .8 : 1);
+  if (R.lugar === "vila") { if (R.predio) andaLivre(R.int, dx, dy, vel, dt, livrePredio); else { andaLivre(R.eu, dx, dy, vel, dt, livreVila); if (R.eu.y < .5) voltarSitio(); } }
+  else if (R.dentro) anda(R.sala, dx, dy, vel, dt, true); else { anda(R.eu, dx, dy, vel, dt, false); if (R.eu.y > 36.7 && !R.venceu) irVila(); }
+  const pp = R.predio ? R.int : R.dentro ? R.sala : R.eu;
   if (m > .1) { pp.dir = dx < -.1 ? -1 : dx > .1 ? 1 : (pp.dir || 1); R.eu.fase += dt * vel * 3.2; R.eu.anda = Math.min(1, m); if ((R.eu.fase % PI) < dt * vel * 3.2) S.passo(); } else R.eu.anda = 0;
   if (R.regando > 0) R.regando -= dt;
 }
@@ -601,18 +612,18 @@ function atualizar(dt) {
   if (antesNoite && !agoraNoite) amanhece();
   moverLocal(dt);
   const nLuz = jogadores().filter(P => P.lanterna).length;
-  if (nLuz) { R.oleo -= (R.lanternaBoa ? .5 : .9) * dt * nLuz; if (R.oleo <= 0) { R.oleo = 0; if (R.lanterna) efeito("A lanterna apagou", "#f2a33a"); R.lanterna = false; if (R.outro) R.outro.lanterna = false; } }
+  if (nLuz) { R.oleo -= (R.lanternaBoa ? .5 : .9) * (R.lampiao ? .5 : 1) * dt * nLuz; if (R.oleo <= 0) { R.oleo = 0; if (R.lanterna) efeito("A lanterna apagou", "#f2a33a"); R.lanterna = false; if (R.outro) R.outro.lanterna = false; } }
   if (R.outro && R.outro.regando > 0) R.outro.regando -= dt;
   // plantas, pomar e galinhas
-  for (const k of R.canteiros) k.covas.forEach((cv2, i) => { if (!cv2 || cv2.seca || cv2.est >= 3) return; cv2.t += dt; if (cv2.t >= PLANTAS[cv2.tipo].tempo) { cv2.est++; cv2.t = 0; if (cv2.est < 3) cv2.seca = true; else S.pronto(k.x + i % k.w, k.y + Math.floor(i / k.w)); } });
+  for (const k of R.canteiros) k.covas.forEach((cv2, i) => { if (!cv2 || cv2.seca || cv2.est >= 3) return; cv2.t += dt * (R.enxada ? 1.35 : 1); if (cv2.t >= PLANTAS[cv2.tipo].tempo) { cv2.est++; cv2.t = 0; if (cv2.est < 3) cv2.seca = true; else S.pronto(k.x + i % k.w, k.y + Math.floor(i / k.w)); } });
   R.frutas.forEach(f => { if (f.n >= 3) return; f.t += dt; if (f.t > 45) { f.t = 0; f.n++; } });
   R.galinhas.forEach(g => { g.t -= dt; if (!g.alvo || g.t <= 0) { g.alvo = { x: rnd(26, 31.6), y: rnd(9.9, 10.9) }; g.t = rnd(1.5, 4); } const d = dist(g, g.alvo); if (d > .1) { g.x += (g.alvo.x - g.x) / d * .9 * dt; g.y += (g.alvo.y - g.y) / d * .9 * dt; g.dir = g.alvo.x > g.x ? 1 : -1; g.anda = 1; } else g.anda = 0; if (Math.random() < dt * .04) { const [v, pn] = somEm(g.x, g.y); tocarTom(rnd(700, 900), .09, { tipo: "square", vol: .012 * v, ate: 1200, lp: 1800, pan: pn }); } });
   atualizarPesca(dt);
   // o vulto parado na beira da mata à noite (só olha; some quando você chega perto ou ilumina)
   if (ehNoite() && !R.dentro) { R.vultoT -= dt; if (!R.vulto && R.vultoT <= 0) { const lado = Math.floor(rnd(0, 3)); R.vulto = lado === 0 ? { x: CERCA.x0 - .7, y: rnd(10, 28) } : lado === 1 ? { x: CERCA.x1 + .7, y: rnd(10, 28) } : { x: rnd(10, 40), y: CERCA.y0 - .7 }; R.vulto.t = 0; } if (R.vulto) { R.vulto.t += dt; const d = dist(R.vulto, R.eu); if (d < (R.lanterna ? 7 : 4) || R.vulto.t > 14) { R.vulto = null; R.vultoT = rnd(25, 45); } } } else R.vulto = null;
   atualizarGato(dt);
-  comJogador(alvoPara(R.seco.x, R.seco.y), () => atualizarSeco(dt));
-  if (R.cachorro) comJogador(alvoPara(R.cachorro.x, R.cachorro.y), () => atualizarCachorro(dt));
+  comAlvo(alvoPara(R.seco.x, R.seco.y), () => atualizarSeco(dt));
+  if (R.cachorro) comAlvo(alvoPara(R.cachorro.x, R.cachorro.y), () => atualizarCachorro(dt));
   atualizarAlma(dt);
   comJogador(jogadores().find(P => P.dentro && !P.caido) || R, () => atualizarCasa(dt));
   atualizarAranha(dt); atualizarMula(dt); atualizarSaci(dt); atualizarEspantalho(dt); atualizarBichos(dt);
@@ -629,14 +640,16 @@ function comecaNoite() { R.velaHoje = true; R.velaEntregue = false; R.velaT = rn
   R.velaT = rnd(3, 40); efeito("Anoiteceu", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
 function amanhece() {
   if (R.velaHoje && !R.velaEntregue) { R.alma = { t: 0 }; return; } // a alma vem cobrar
-  R.dia++; R.velaHoje = false; R.vela = null; R.velaCom = false; if (R.outro) R.outro.velaCom = false; R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false; efeito(`Dia ${R.dia}`, "#f2c94a");
+  R.dia++; R.velaHoje = false; R.vela = null; R.velaCom = false; if (R.outro) R.outro.velaCom = false; R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false;
+  jogadores().forEach(P => { P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : .5); P.eu.y = CASA.porta.y + .7; if (P !== R) enviar({ t: "pos", x: P.eu.x, y: P.eu.y }); } });
+  if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a");
   Object.assign(R.esp, { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste" }); if (R.aranha.fase !== "longe") R.aranha.fase = "sai"; R.mula.fase = "longe";
 
   tocarTom(523, 1.5, { tipo: "triangle", vol: .04, wet: .6 }); tocarTom(659, 1.5, { tipo: "triangle", vol: .035, quando: .2, wet: .6 }); tocarTom(780, .4, { tipo: "square", vol: .02, ate: 1100, lp: 2000, quando: 1 }); // galo
   if (R.dia === 2 && !R.cachorro) { R.cachorro = { x: 34, y: 14, fase: "calmo", t: 0 }; setTimeout(() => R && R.cachorro && S.uivo(R.cachorro.x, R.cachorro.y), 1200); }
 }
 function atualizarGato(dt) {
-  const g = R.gato; if (R.tutorial === 0) return;
+  const g = R.gato; if (R.tutorial === 0 || R.lugar === "vila") return;
   g.prox -= dt;
   if (!g.alvo && g.prox <= 0 && !R.dentro) { g.alvo = { x: cl(R.eu.x + rnd(-2, 2), CERCA.x0 + 1, CERCA.x1 - 1), y: cl(R.eu.y + rnd(-1.5, 1.5), CERCA.y0 + 1, CERCA.y1 - 1) }; }
   if (g.alvo) { const d = dist(g, g.alvo); if (d > .2) { g.x += (g.alvo.x - g.x) / d * 2.8 * dt; g.y += (g.alvo.y - g.y) / d * 2.8 * dt; g.dir = g.alvo.x > g.x ? 1 : -1; g.anda = 1; }
@@ -667,7 +680,7 @@ function atualizarCachorro(dt) {
     else if (dist(k, CASA.porta) < 6) { const dd = dist(k, CASA.porta) || 1; k.x += (k.x - CASA.porta.x) / dd * 1.6 * dt; k.y += (k.y - CASA.porta.y) / dd * 1.6 * dt; k.anda = 1; } // não fica plantado na porta
     else { k.anda = 0; k.dir = alvo.x > k.x ? 1 : -1; }
     k.x = cl(k.x, CERCA.x0 + .6, CERCA.x1 - .6); k.y = cl(k.y, CERCA.y0 + .6, CERCA.y1 - .6);
-    if (!R.dentro && !(k.calma > 0) && d < 2.8) { k.fase = "vira"; k.t = 0; S.rosnado(k.x, k.y); R.tremor = .6; }
+    if (!R.dentro && !(k.calma > 0) && d < 2.8 && !(R.ferradura && dist(k, CASA.porta) < 8)) { k.fase = "vira"; k.t = 0; S.rosnado(k.x, k.y); R.tremor = .6; }
   } else if (k.fase === "vira") { if (k.t > 1.3) { k.fase = "lobo"; k.t = 0; k.porta = 0; S.uivo(k.x, k.y); } }
   else if (k.fase === "lobo") {
     const alvo2 = R.dentro ? { x: CASA.porta.x, y: CASA.porta.y + 1 } : alvo, d2 = dist(k, alvo2);
@@ -690,7 +703,7 @@ function atualizarAlma(dt) {
 }
 function atualizarCasa(dt) {
   if (R.dentro) {
-    if (!R.pisadeira) { R.lampT += dt; if (R.lampT > (R.lampLim || 20)) { R.lampT = 0; R.lampLim = rnd(9, 34); const i = R.lamparinas.lastIndexOf(1); if (i >= 0) { R.lamparinas[i] = 0; S.apaga(); if (i === 0) { R.pisadeira = { t: 0, x: 1.7, y: 2.8 }; S.respira(); R.tremor = .5; efeito("Algo se mexe debaixo da cama", "#e2483d"); } } } }
+    if (!R.pisadeira) { R.lampT += dt; if (R.lampT > (R.lampLim || 20)) { R.lampT = 0; R.lampLim = rnd(9, 34) * (R.sal ? 2 : 1); const i = R.lamparinas.lastIndexOf(1); if (i >= 0) { R.lamparinas[i] = 0; S.apaga(); if (i === 0) { R.pisadeira = { t: 0, x: 1.7, y: 2.8 }; S.respira(); R.tremor = .5; efeito("Algo se mexe debaixo da cama", "#e2483d"); } } } }
     else { const p = R.pisadeira; p.t += dt; if (p.t > 1.8) { const d = dist(p, R.sala), v = 2.2 * (.6 + .8 * Math.abs(Math.sin(p.t * 3))); if (d > .05) { p.x += (R.sala.x - p.x) / d * v * dt; p.y += (R.sala.y - p.y) / d * v * dt; p.dir = R.sala.x > p.x ? 1 : -1; } if (p.t % 2.2 < dt) S.respira(); if (d < .6) morrer("pisadeira", "A Pisadeira saiu de baixo da cama.", "Não fique muito tempo dentro de casa: quando as lamparinas apagam, saia. Elas acendem de novo com o tempo."); } if (p.t > 30) R.pisadeira = null; }
   } else { R.pisadeira = null; R.lampT += dt; if (R.lampT > 12) { R.lampT = 0; const i = R.lamparinas.indexOf(0); if (i >= 0) R.lamparinas[i] = 1; } }
 }
@@ -698,21 +711,23 @@ function atualizarCasa(dt) {
 /* ---------- jogadores (sozinha ou online) ---------- */
 // No online, o anfitrião simula tudo. O convidado é guardado em R.outro com os mesmos campos do jogador local,
 // e comJogador troca os campos por um instante para reaproveitar as regras escritas para R.eu.
-const CAMPOS = ["agua", "vidas", "eu", "dentro", "sala", "lanterna", "correndo", "regando", "velaCom", "pesca", "perto", "caido", "folego", "chapeu", "semente", "cor"];
+const CAMPOS = ["lugar", "predio", "andar", "int", "roupa", "garrafada", "broa", "conv", "agua", "vidas", "eu", "dentro", "sala", "lanterna", "correndo", "regando", "velaCom", "pesca", "perto", "caido", "folego", "chapeu", "semente", "cor"];
 const jogadores = () => R.outro && R.online === "host" ? [R, R.outro] : [R];
 function comJogador(P, fn) {
   if (!P || P === R || !R.outro) return fn();
   const o = R.outro; for (const k of CAMPOS) { const v = R[k]; R[k] = o[k]; o[k] = v; } R.trocado = true;
   try { return fn(); } finally { for (const k of CAMPOS) { const v = R[k]; R[k] = o[k]; o[k] = v; } R.trocado = false; }
 }
+function comAlvo(P, fn) { comJogador(P, () => { if (R.lugar !== "vila") return fn(); const d = R.dentro; R.dentro = true; try { fn(); } finally { R.dentro = d; } }); } // na vila os bichos agem como se você estivesse trancada em casa
 function alvoPara(x, y) { // quem a assombração persegue: o mais perto, de preferência do lado de fora
-  let melhor = R, md = 1e9; for (const P of jogadores()) { if (P.caido) continue; const d = Math.hypot(P.eu.x - x, P.eu.y - y) + (P.dentro ? 40 : 0); if (d < md) { md = d; melhor = P; } } return melhor;
+  let melhor = R, md = 1e9; for (const P of jogadores()) { if (P.caido) continue; const d = Math.hypot(P.eu.x - x, P.eu.y - y) + (P.dentro ? 40 : 0) + (P.lugar === "vila" ? 1e5 : 0); if (d < md) { md = d; melhor = P; } } return melhor;
 }
 const velaNaMao = () => R.velaCom || (R.outro && R.outro.velaCom);
 const noMilharal = p => p.x > MILHARAL.x0 && p.x < MILHARAL.x1 && p.y > MILHARAL.y0 && p.y < MILHARAL.y1;
 const progNoite = () => cl(((R.t % CICLO) - DIA) / NOITE, 0, 1);
-const raioLuz = P => P.lanterna ? (R.lanternaBoa ? 5.4 : 4.4) : 1.7;
+const raioLuz = P => P.lanterna ? (R.lanternaBoa ? 5.4 : 4.4) + (R.lampiao ? 1 : 0) : 1.7;
 function calcPerto() {
+  if (R.lugar === "vila") return 0;
   if (R.dentro && !R.pisadeira) return 0;
   let p = 0; const e = R.eu;
   if (R.seco.fase === "anda") p = Math.max(p, 1 - dist(e, R.seco) / 9);
@@ -736,7 +751,7 @@ function atualizarAranha(dt) {
     if (!a.alvo || dist(a, a.alvo) < .6) a.alvo = { x: cl(P.eu.x + rnd(-6, 6), CERCA.x0 + 1, CERCA.x1 - 1), y: cl(P.eu.y + rnd(-5, 5), CERCA.y0 + 1, CERCA.y1 - 1) };
     irAte(a, a.alvo, 1.35, dt); a.passo += dt * 2.2;
     let viu = 0, quem = null;
-    for (const J of jogadores()) { if (J.dentro || J.caido || noMilharal(J.eu)) continue; const d = dist(J.eu, a); if (d > 11) continue;
+    for (const J of jogadores()) { if (J.dentro || J.caido || J.lugar === "vila" || noMilharal(J.eu)) continue; const d = dist(J.eu, a); if (d > 11) continue;
       const v = ((J.lanterna ? 1.3 : 0) + (J.eu.anda > .15 ? (J.correndo ? 1.2 : .7) : 0)) * (1 - d / 11); if (v > viu) { viu = v; quem = J; } }
     a.alerta = cl(a.alerta + (viu ? viu * .85 : -.22) * dt, 0, 1);
     if (a.t % 1.6 < dt) S.juntas(a.x, a.y, .6);
@@ -745,10 +760,10 @@ function atualizarAranha(dt) {
     return;
   }
   if (a.fase === "ataque") {
-    const P = a.quem ? (R.outro || R) : R; const alvo = P.dentro ? { x: CASA.porta.x, y: CASA.porta.y + 1.2 } : P.eu;
+    const P = a.quem ? (R.outro || R) : R; const alvo = (P.dentro || P.lugar === "vila") ? { x: CASA.porta.x, y: CASA.porta.y + 1.2 } : P.eu;
     irAte(a, alvo, 6.1, dt); a.passo += dt * 7; if (a.t % .9 < dt) S.juntas(a.x, a.y, 1);
-    if (!P.dentro && !P.caido && dist(a, P.eu) < 1.25) comJogador(P, () => morrer("aranha", "A Pernuda te viu. Lá do alto, a boca abriu até o chão.", "Quando as juntas estalarem, apague a lanterna e fique parada. Ou se esconda no milharal."));
-    if (P.caido || (P.dentro && a.t > 5) || a.t > 13) { a.fase = "sai"; a.t = 0; a.alvo = BORDA(); }
+    if (!(P.dentro || P.lugar === "vila") && !P.caido && dist(a, P.eu) < 1.25) comJogador(P, () => morrer("aranha", "A Pernuda te viu. Lá do alto, a boca abriu até o chão.", "Quando as juntas estalarem, apague a lanterna e fique parada. Ou se esconda no milharal."));
+    if (P.caido || ((P.dentro || P.lugar === "vila") && a.t > 5) || a.t > 13) { a.fase = "sai"; a.t = 0; a.alvo = BORDA(); }
     return;
   }
   if (a.fase === "sai") { irAte(a, a.alvo || BORDA(), 2.2, dt); a.passo += dt * 3; if (a.t > 9) { a.fase = "longe"; a.hoje = false; efeito("As juntas se afastaram...", "#9aa8c8"); } }
@@ -768,7 +783,7 @@ function atualizarMula(dt) {
     for (let q = Math.min(antes, m.pos); q <= Math.max(antes, m.pos); q += .5) R.queimado.push({ x: m.horiz ? q : m.linha + rnd(-.3, .3), y: m.horiz ? m.linha + rnd(-.3, .3) : q, t: 0 });
     for (const k of R.canteiros) k.covas.forEach((cv2, i) => { if (!cv2) return; const cx = k.x + i % k.w + .5, cy = k.y + Math.floor(i / k.w) + .5, ao = m.horiz ? cy : cx, ao2 = m.horiz ? cx : cy;
       if (Math.abs(ao - m.linha) < .7 && (ao2 - antes) * (ao2 - m.pos) <= 0) { k.covas[i] = null; R.fx.push({ txt: "Queimou!", cor: "#f2a33a", t: 0, x: cx, y: cy }); } });
-    for (const J of jogadores()) { if (J.dentro || J.caido) continue; if (Math.abs((m.horiz ? J.eu.y : J.eu.x) - m.linha) < .75 && Math.abs((m.horiz ? J.eu.x : J.eu.y) - m.pos) < 1.1) comJogador(J, () => morrer("mula", "A mula-sem-cabeça passou por cima de você.", "Quando o chão brilhar em linha reta, saia da linha. Ela não faz curva.")); }
+    for (const J of jogadores()) { if (J.dentro || J.caido || J.lugar === "vila") continue; if (Math.abs((m.horiz ? J.eu.y : J.eu.x) - m.linha) < .75 && Math.abs((m.horiz ? J.eu.x : J.eu.y) - m.pos) < 1.1) comJogador(J, () => morrer("mula", "A mula-sem-cabeça passou por cima de você.", "Quando o chão brilhar em linha reta, saia da linha. Ela não faz curva.")); }
     if ((m.pos - fim) * m.dir > 0) { m.fase = "longe"; m.prox = rnd(10, 55); m.vezes++; }
   }
 }
@@ -783,9 +798,9 @@ function atualizarSaci(dt) {
     if (Math.random() < dt * 8) R.poeira.push({ x: s.x + rnd(-.3, .3), y: s.y, t: 0 });
     R.canteiros.forEach(k => k.covas.forEach((cv2, i) => { if (!cv2 || cv2.est >= 3 || cv2.seca) return; if (Math.hypot(k.x + i % k.w + .5 - s.x, k.y + Math.floor(i / k.w) + .5 - s.y) < .7) { cv2.seca = true; cv2.t = 0; if (s.t - s.secou > 3) { s.secou = s.t; R.fx.push({ txt: "Secou!", cor: "#d8b860", t: 0, x: s.x, y: s.y }); } } }));
     if (s.t % 3.4 < dt) S.assobio(s.x, s.y);
-    for (const J of jogadores()) { if (J.dentro || J.caido || dist(J.eu, s) > .8) continue;
+    for (const J of jogadores()) { if (J.dentro || J.caido || J.lugar === "vila" || dist(J.eu, s) > .8) continue;
       if (R.peneira) { R.moedas += 30; s.pego = true; s.fase = "longe"; s.prox = 999; S.risada(s.x, s.y); S.moedas(); R.fx.push({ txt: "Pegou o Saci na peneira! +30", cor: "#f2c94a", t: 0, x: s.x, y: s.y }); hud(); return; }
-      const n = Math.min(15, Math.ceil(R.moedas * .15)); R.moedas -= n; S.risada(s.x, s.y); R.fx.push({ txt: n ? `O Saci levou ${n} moedas!` : "O Saci riu de você", cor: "#e2483d", t: 0, x: s.x, y: s.y }); s.fase = "sai"; s.t = 0; s.alvo = BORDA(); hud(); return; }
+      const n = R.arruda ? 0 : Math.min(15, Math.ceil(R.moedas * .15)); R.moedas -= n; S.risada(s.x, s.y); R.fx.push({ txt: n ? `O Saci levou ${n} moedas!` : "O Saci riu de você", cor: "#e2483d", t: 0, x: s.x, y: s.y }); s.fase = "sai"; s.t = 0; s.alvo = BORDA(); hud(); return; }
     if (s.t > 38 || ehNoite()) { s.fase = "sai"; s.t = 0; s.alvo = BORDA(); }
     return;
   }
@@ -797,13 +812,13 @@ function atualizarEspantalho(dt) {
   const ativo = ehNoite() && R.dia >= 2 && progNoite() > (e.limiar || .3) && !e.dorme;
   if (!ativo) { if (e.fase === "vivo") { e.fase = "volta"; } if (e.fase === "volta") { if (irAte(e, ESPANTALHO, 3, dt) < .1) e.fase = "poste"; } return; }
   const P = alvoPara(e.x, e.y), d = dist(e, P.eu);
-  if (e.fase === "poste" || e.fase === "volta") { if (!P.dentro && !P.caido && d < 8) { e.fase = "vivo"; e.t = 0; S.palha(e.x, e.y); } return; }
-  e.luz = jogadores().some(J => J.lanterna && !J.dentro && dist(J.eu, e) < raioLuz(J) + .3);
+  if (e.fase === "poste" || e.fase === "volta") { if (!(P.dentro || P.lugar === "vila") && !P.caido && d < 8) { e.fase = "vivo"; e.t = 0; S.palha(e.x, e.y); } return; }
+  e.luz = jogadores().some(J => J.lanterna && !J.dentro && J.lugar !== "vila" && dist(J.eu, e) < raioLuz(J) + .3);
   e.parado = e.luz || R.aranha.fase === "anda" || R.aranha.fase === "ataque";
   if (e.parado) return;
-  const alvo = P.dentro ? { x: CASA.porta.x, y: CASA.porta.y + 1.3 } : P.eu, pulo = .5 + .9 * Math.abs(Math.sin(e.t * 4));
+  const alvo = (P.dentro || P.lugar === "vila") ? { x: CASA.porta.x, y: CASA.porta.y + 1.3 } : P.eu, pulo = .5 + .9 * Math.abs(Math.sin(e.t * 4));
   irAte(e, alvo, 2.1 * pulo, dt); if (e.t % .55 < dt) S.palha(e.x, e.y);
-  if (!P.dentro && !P.caido && dist(e, P.eu) < .8) comJogador(P, () => morrer("esp", "O espantalho te pegou no escuro.", "Ilumine o espantalho com a lanterna: com a luz em cima ele não se mexe. O sino da capela manda ele de volta."));
+  if (!(P.dentro || P.lugar === "vila") && !P.caido && dist(e, P.eu) < .8) comJogador(P, () => morrer("esp", "O espantalho te pegou no escuro.", "Ilumine o espantalho com a lanterna: com a luz em cima ele não se mexe. O sino da capela manda ele de volta."));
 }
 function tocarSino() {
   if (!ehNoite()) return efeito("O sino está frio. De noite ele serve para alguma coisa.", "#e8e2d4");
@@ -879,8 +894,8 @@ function desenharPlanta(cv2, x, y, tm) {
 // Yasmin (e quem joga com ela): menina de tranças, jardineira e chapéu. q = jogador desenhado.
 const ROUPAS = [{ jard: "#b8485a", jard2: "#963848", blusa: "#e8c860", cabelo: "#3a2216", fita: "#e2483d", pele: "#e8c0a0" }, { jard: "#3a6a9a", jard2: "#2e5478", blusa: "#e8e4d8", cabelo: "#1a1210", fita: "#f2c94a", pele: "#c8946a" }];
 function desenharVoce(x, y, tm, o = {}) {
-  const q = o.q || R, s = (o.s || TS) / 48, e = q.eu, dir = o.dir ?? (q.dentro ? (q.sala && q.sala.dir) || 1 : e.dir || 1), andaK = o.anda ?? (e.anda || 0), f = e.fase || 0, p = q.perto || 0, rp = ROUPAS[q.cor || 0];
-  const ch = (COSMETICOS.find(k => k[0] === q.chapeu) || COSMETICOS[0])[3];
+  let q = o.q || R, s = (o.s || TS) / 48, e = q.eu, dir = o.dir ?? (q.dentro ? (q.sala && q.sala.dir) || 1 : e.dir || 1), andaK = o.anda ?? (e.anda || 0), f = e.fase || 0, p = q.perto || 0, rp = ROUPAS[q.cor || 0];
+  const ch = (COSMETICOS.find(k => k[0] === q.chapeu) || COSMETICOS[0])[3]; { const rl = q.roupa && ROUPAS_LOJA.find(x => x[0] === q.roupa); if (rl) rp = { ...rp, jard: rl[2], jard2: rl[3] }; }
   if (q.caido) { // desmaiada no chão
     sombra(x, y, 16 * s, 5 * s); c.save(); c.translate(x, y); c.scale(s, s);
     c.fillStyle = rp.jard; c.fillRect(-12, -9, 18, 8); c.fillStyle = rp.blusa; c.fillRect(4, -9, 6, 8); c.fillStyle = rp.pele; c.beginPath(); c.arc(14, -6, 6, 0, 7); c.fill(); c.fillStyle = rp.cabelo; c.beginPath(); c.arc(16, -7, 6, PI * .6, PI * 1.9); c.fill(); c.fillRect(17, -3, 9, 3);
@@ -1248,7 +1263,7 @@ function desenharMundo(tm) {
   if (R.aranha.fase !== "longe") obj.push([R.aranha.y, () => desenharAranha(R.aranha, tm)]);
   if (R.mula.fase === "corre") obj.push([R.mula.y, () => desenharMula(R.mula, tm)]);
   if (R.saci.fase !== "longe") obj.push([R.saci.y, () => desenharSaci(R.saci, tm)]);
-  const ou = R.outro; if (ou && !ou.dentro && !(R.venceu && R.venceu.t > 1)) obj.push([ou.eu.y, () => { desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" }); if (ou.velaCom) desenharVela(PX(ou.eu.x) - TS * .28, PY(ou.eu.y) - TS * .35, tm); }]);
+  const ou = R.outro; if (ou && !ou.dentro && ou.lugar !== "vila" && !(R.venceu && R.venceu.t > 1)) obj.push([ou.eu.y, () => { desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" }); if (ou.velaCom) desenharVela(PX(ou.eu.x) - TS * .28, PY(ou.eu.y) - TS * .35, tm); }]);
   obj.push([GALINHEIRO.y + GALINHEIRO.h, () => desenharGalinheiro(tm)]);
   obj.push([CELEIRO.y + CELEIRO.h, () => desenharCeleiro(tm)]);
   obj.push([TRATOR.y, () => desenharTrator()]); obj.push([CASINHA.y + .7, () => desenharCasinha()]); obj.push([CATAVENTO.y + .6, () => desenharCatavento(tm)]); obj.push([VARAL.y, () => desenharVaral(tm)]);
@@ -1292,7 +1307,7 @@ function desenharLuz(tm) {
   const lit = R.lamparinas.filter(v => v).length / 3;
   if (lit) [[.2, .53], [.8, .53]].forEach(([fx, fy]) => furo(PX(CASA.x + CASA.w * fx), PY(CASA.y + CASA.h * fy) + TS * .6, TS * 1.7 * lit, .8));
   furo(PX(CASA.x + CASA.w * .62), PY(CASA.y + CASA.h * .5), TS * 1.1, .8); // lampião da porta
-  const ou = R.outro; if (ou && !ou.dentro) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
+  const ou = R.outro; if (ou && !ou.dentro && ou.lugar !== "vila") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   furo(PX(CAPELA.porta.x), PY(CAPELA.porta.y) - 6, TS * 1.5, .75); // velinhas da capela
   if (R.mula.fase === "corre") furo(PX(R.mula.x), PY(R.mula.y) - TS, TS * 2.4, 1);
   if (R.mula.fase === "aviso") { if (R.mula.horiz) for (let x = CERCA.x0; x < CERCA.x1; x += 2) furo(PX(x), PY(R.mula.linha), TS * 1.1, .5); else for (let y = CERCA.y0; y < CERCA.y1; y += 2) furo(PX(R.mula.linha), PY(y), TS * 1.1, .5); }
@@ -1310,7 +1325,7 @@ function desenharLuz(tm) {
   if (R.mula.fase === "corre") brilho(PX(R.mula.x), PY(R.mula.y) - TS * 1.2, TS * 1.6, "255,120,30", .5);
   if (R.aranha.fase !== "longe") brilho(PX(R.aranha.x) + (R.aranha.dir || 1) * TS * 1.9, PY(R.aranha.y) - TS * 4.6, TS * .9, "230,60,40", (.2 + R.aranha.alerta * .4) * nt);
   if (R.esp.fase === "vivo") brilho(PX(R.esp.x), PY(R.esp.y) - TS * 1.1, TS * .35, "255,40,30", .6 * nt);
-  if (ou && ou.lanterna && !ou.dentro) brilho(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * 3, "255,200,120", .14 * nt);
+  if (ou && ou.lanterna && !ou.dentro && ou.lugar !== "vila") brilho(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * 3, "255,200,120", .14 * nt);
   if (R.cachorro) brilho(PX(R.cachorro.x) + (R.cachorro.dir || 1) * TS * .35, PY(R.cachorro.y) - TS * (R.cachorro.fase === "lobo" ? 1.2 : .45), TS * .35, "255,40,30", .6 * nt);
   c.globalCompositeOperation = "source-over";
   if (R.mula.fase === "aviso") desenharMula(R.mula, tm);
@@ -1459,16 +1474,16 @@ function desenharSusto(tm) {
   if (R.morto) { c.fillStyle = `rgba(226,40,30,${.3 * Math.max(0, 1 - R.morto.t)})`; c.fillRect(0, 0, W, H); }
 }
 function desenharFx() {
-  R.fx.forEach(f => { const a = 1 - f.t / 1.8, x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 30; c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(14, TS * .34))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.7)"; c.lineWidth = 3; c.strokeText(f.txt, x, y); c.fillText(f.txt, x, y); c.textAlign = "start"; c.globalAlpha = 1; });
-  R.fxR && R.fxR.forEach(f => { const a = 1 - f.t / 1.8, x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 30; if (R.dentro && f.x != null) return; c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(14, TS * .34))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.7)"; c.lineWidth = 3; c.strokeText(f.txt, x, y); c.fillText(f.txt, x, y); c.textAlign = "start"; c.globalAlpha = 1; });
+  R.fx.forEach(f => { if (f.x != null && ((f.lugar || "sitio") !== (R.lugar || "sitio") || R.predio)) return; const a = 1 - f.t / 1.8, x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 30; c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(14, TS * .34))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.7)"; c.lineWidth = 3; c.strokeText(f.txt, x, y); c.fillText(f.txt, x, y); c.textAlign = "start"; c.globalAlpha = 1; });
+  R.fxR && R.fxR.forEach(f => { if (f.x != null && ((f.lugar || "sitio") !== (R.lugar || "sitio") || R.predio)) return; const a = 1 - f.t / 1.8, x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 30; if (R.dentro && f.x != null) return; c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(14, TS * .34))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.7)"; c.lineWidth = 3; c.strokeText(f.txt, x, y); c.fillText(f.txt, x, y); c.textAlign = "start"; c.globalAlpha = 1; });
   const a = R.aranha, m = R.mula;
-  el.rcDica.textContent = R.caido ? (R.caido.fora ? "Você não tem mais vidas. Agora é com a sua amiga." : "Você caiu. Só a sua amiga pode te levantar!") : a.fase === "ataque" ? "Ela te viu! Corra para dentro de casa!" : (a.fase === "aviso" || a.fase === "anda") && !R.dentro ? (noMilharal(R.eu) ? "No milharal ela não te enxerga. Fique quieta." : "Juntas estalando... apague a lanterna e fique parada!")
+  el.rcDica.textContent = R.lugar === "vila" && !R.caido ? (ehNoite() && !luzesVila() ? "A vila apagou. Todo mundo dorme... menos você." : "") : R.caido ? (R.caido.fora ? "Você não tem mais vidas. Agora é com a sua amiga." : "Você caiu. Só a sua amiga pode te levantar!") : a.fase === "ataque" ? "Ela te viu! Corra para dentro de casa!" : (a.fase === "aviso" || a.fase === "anda") && !R.dentro ? (noMilharal(R.eu) ? "No milharal ela não te enxerga. Fique quieta." : "Juntas estalando... apague a lanterna e fique parada!")
     : m.fase === "aviso" && !R.dentro ? "O chão está brilhando! Saia da linha!" : R.dentro ? "" : R.seco.fase === "anda" || R.seco.fase === "aviso" ? "A mata estalou. Corra para dentro de casa!" : R.cachorro && R.cachorro.fase === "lobo" ? "Corra para casa!"
     : R.esp.fase === "vivo" && !R.esp.parado ? "O espantalho está andando. Ilumine ele!" : R.saci.fase === "anda" ? (R.peneira ? "Redemoinho! Pegue o Saci com a peneira!" : "Redemoinho! Fuja dele: o Saci rouba moedas") : R.vela && !velaNaMao() ? "Siga o som do sino e ache a vela" : velaNaMao() ? "Leve a vela até a cruz do cemitério" : "";
-  if ((a.fase === "anda" || a.fase === "ataque") && !R.dentro) { // olho que mostra o quanto ela já te notou
+  if ((a.fase === "anda" || a.fase === "ataque") && !R.dentro && R.lugar !== "vila") { // olho que mostra o quanto ela já te notou
     const w = Math.min(180, W * .24), x = W / 2 - w / 2, y = 36, v = a.fase === "ataque" ? 1 : a.alerta; c.fillStyle = "rgba(0,0,0,.5)"; c.fillRect(x, y, w, 7); c.fillStyle = v > .7 ? "#e2483d" : v > .35 ? "#f2a33a" : "#e8e2d4"; c.fillRect(x, y, w * v, 7);
     c.strokeStyle = "rgba(255,255,255,.5)"; c.lineWidth = 1.5; c.beginPath(); c.ellipse(x - 14, y + 3.5, 9, 5, 0, 0, 7); c.stroke(); c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(x - 14, y + 3.5, 2.4, 0, 7); c.fill(); }
-  if (!R.dentro) { if (CHAT.meu) balaoChat(R.eu, CHAT.meu); if (CHAT.dele && R.outro && !R.outro.dentro) balaoChat(R.outro.eu, CHAT.dele); }
+  if (!R.dentro && !R.predio) { if (CHAT.meu) balaoChat(R.eu, CHAT.meu); if (CHAT.dele && R.outro && !R.outro.dentro && !R.outro.predio && R.outro.lugar === R.lugar) balaoChat(R.outro.eu, CHAT.dele); }
   if (R.caido) { c.fillStyle = `rgba(120,10,10,${.25 + .1 * Math.sin(performance.now() / 300)})`; c.fillRect(0, 0, W, H); }
 }
 function desenharVitoria(tm) { if (!R.venceu) return; const k = R.venceu.t; if (k < 1) return; c.fillStyle = `rgba(0,0,0,${cl((k - 3) / 1.4, 0, 1)})`; c.fillRect(0, 0, W, H); }
@@ -1482,12 +1497,387 @@ function loop(ts) {
   if (R.online === "host" && R.outro) { Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .1; enviar(estadoPara()); } }
   const tm = ts / 1000;
   c.setTransform(DPRr, 0, 0, DPRr, 0, 0);
-  if (R.dentro) desenharDentro(tm); else { if (R.venceu && R.venceu.t > 1) { CAMINHONETE.x += .0; } desenharMundo(tm); desenharLuz(tm); }
-  if (R.venceu && R.venceu.t > 1 && !R.dentro) { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + Math.max(0, R.venceu.t - 1.5) * 2.2); c.globalCompositeOperation = "lighter"; c.fillStyle = "rgba(255,240,200,.18)"; c.beginPath(); c.moveTo(x - TS * .8, y); c.lineTo(x - TS * 2, y + TS * 6); c.lineTo(x + TS * 2, y + TS * 6); c.lineTo(x + TS * .8, y); c.fill(); c.globalCompositeOperation = "source-over"; }
+  if (R.lugar === "vila") { if (R.predio) desenharPredio(tm); else { desenharVila(tm); desenharLuzVila(tm); } }
+  else if (R.dentro) desenharDentro(tm); else { if (R.venceu && R.venceu.t > 1) { CAMINHONETE.x += .0; } desenharMundo(tm); desenharLuz(tm); }
+  if (R.fade > 0) { c.fillStyle = `rgba(0,0,0,${Math.min(1, R.fade)})`; c.fillRect(0, 0, W, H); R.fade -= .05; }
+  if (R.venceu && R.venceu.t > 1 && !R.dentro && R.lugar !== "vila") { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + Math.max(0, R.venceu.t - 1.5) * 2.2); c.globalCompositeOperation = "lighter"; c.fillStyle = "rgba(255,240,200,.18)"; c.beginPath(); c.moveTo(x - TS * .8, y); c.lineTo(x - TS * 2, y + TS * 6); c.lineTo(x + TS * 2, y + TS * 6); c.lineTo(x + TS * .8, y); c.fill(); c.globalCompositeOperation = "source-over"; }
   desenharFx(); desenharSusto(tm); desenharVitoria(tm);
   // vinheta
   if (!VINHETA) { VINHETA = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75); VINHETA.addColorStop(0, "rgba(0,0,0,0)"); VINHETA.addColorStop(1, "rgba(0,0,0,.55)"); } c.fillStyle = VINHETA; c.fillRect(0, 0, W, H);
   window.rocaMs = (window.rocaMs || 0) * .95 + (performance.now() - t0) * .05;
+}
+
+/* =====================================================================
+   VILA SOSSEGO: a cidadezinha no fim da estrada. Os bichos não vêm aqui.
+   De dia tem loja e conversa; de noite tudo apaga e cada um dorme no
+   quarto de cima da própria casa.
+   ===================================================================== */
+const VW = 46, VH = 34, ROOM = { w: 9, h: 6 };
+const VPREDIOS = [
+  { id: "armazem", nome: "Armazém do Joaquim", placa: "ARMAZÉM", x: 3, y: 7, w: 6, h: 4.4, cor: "#7a5a3a", cor2: "#c8b89a", tel: "#5a2a1a", npc: "joaquim", vit: ["#c8a050", "#8a5a2a", "#e8d8a0"] },
+  { id: "padaria", nome: "Padaria da Lurdes", placa: "PADARIA", x: 11, y: 7, w: 6, h: 4.4, cor: "#a8704a", cor2: "#e8d0b0", tel: "#6a3020", npc: "lurdes", vit: ["#d8a050", "#c88a3a", "#f2e0b0"], chamine: 1 },
+  { id: "costura", nome: "Costuras da Zuleica", placa: "COSTURA", x: 27, y: 7, w: 6, h: 4.4, cor: "#6a5a7a", cor2: "#d8c8d0", tel: "#3a2a3a", npc: "zuleica", vit: ["#a02a2a", "#2a3a6a", "#e8e2d8"] },
+  { id: "ferreiro", nome: "Ferraria do Bento", placa: "FERRARIA", x: 35, y: 7, w: 6, h: 4.4, cor: "#4a4440", cor2: "#a89a88", tel: "#2a2220", npc: "bento", vit: ["#6a6a6a", "#8a8a8a", "#4a4a4a"], chamine: 1 },
+  { id: "botica", nome: "Botica da Dona Cida", placa: "BOTICA", x: 3, y: 15.4, w: 6, h: 4.4, cor: "#4a6a4a", cor2: "#c8d0b0", tel: "#2a3a22", npc: "cida", vit: ["#5a8a3a", "#8a3a6a", "#c8c860"] },
+  { id: "barbearia", nome: "Barbearia do Zé", placa: "BARBEARIA", x: 11, y: 15.4, w: 6, h: 4.4, cor: "#8a3a3a", cor2: "#e8e2d8", tel: "#4a1a1a", npc: "ze", vit: ["#e8e2d8", "#a02a2a", "#3a5a8a"] },
+  { id: "delegacia", nome: "Delegacia", placa: "DELEGACIA", x: 29, y: 15.4, w: 6, h: 4.4, cor: "#5a5a4a", cor2: "#c8c0a8", tel: "#2a2a22", npc: "ramos", vit: ["#3a3a3a", "#6a6a5a", "#2a2a2a"] },
+  { id: "coveiro", nome: "Casa do coveiro", placa: "", x: 36, y: 15.4, w: 6, h: 4.4, cor: "#3a3228", cor2: "#8a8070", tel: "#1e1a14", npc: "damiao", vit: ["#2a2a2a", "#3a3a3a", "#1a1a1a"] },
+  { id: "igreja", nome: "Igreja de Santa Luzia", placa: "", x: 18, y: 24.4, w: 10, h: 5.2, cor: "#c8c0b0", cor2: "#e8e2d8", tel: "#4a2a1e", npc: "anselmo", igreja: 1 }];
+const PORTA = p => ({ x: p.x + p.w / 2, y: p.y + p.h + .25 });
+const VPOSTES = [[5.6, 12], [12.4, 12], [19.8, 12], [26.2, 12], [33, 12], [40.4, 12], [6, 20.2], [13.4, 20.2], [19.6, 20.2], [26.4, 20.2], [32.6, 20.2], [39.8, 20.2], [21, 31.4], [25, 31.4]];
+const VBANCOS = [[19.4, 16.4], [26.6, 16.4], [19.4, 18.6], [26.6, 18.6]], VFONTE = { x: 23, y: 17.6 };
+const VCEM = { x0: 31.5, y0: 24, x1: 43, y1: 31.5 };
+// moradores: casa = onde dorme; rota = por onde anda de dia (quem não fica no balcão)
+const NPCS = [
+  { id: "joaquim", nome: "Seu Joaquim", casa: "armazem", loja: 1, look: { pele: "#d8a888", roupa: "#3a6a3a", cabelo: "#c8c8c8", bigode: 1, velho: 1, avental: "#e8e2d0" },
+    conversas: [["Ah... a neta da Benedita. Tem os olhos dela. Pena.", "Compro o que você colher pagando melhor que o caixote do sítio. Dinheiro aqui é o que não falta. Gente é que falta."],
+      ["Sua vó esteve aqui na semana que sumiu. Levou dez litros de óleo e um saco de sal grosso.", "Eu perguntei se ia ter festa. Ela disse: \"É pra segurar a porta até a menina chegar.\"", "Eu nunca soube de menina nenhuma. Até hoje."]],
+    pista: [1, "oleo", "Seu Joaquim: a vó comprou óleo e sal grosso \"para segurar a porta até a menina chegar\". Ela sabia que eu vinha."],
+    extra: ["Não ande na estrada depois que o sol baixar. De dia ela é curta. De noite ela fica comprida.", "Fecho às cinco. Sempre fechei. Quem abre de noite não abre mais nada."],
+    sono: ["...não fui eu que vendi a corda... não fui eu...", "...dez litros... ela pediu dez litros..."] },
+  { id: "lurdes", nome: "Dona Lurdes", casa: "padaria", loja: 1, look: { pele: "#c8946a", roupa: "#e8e2d8", cabelo: "#3a2216", coque: 1, avental: "#f2f0e8" },
+    conversas: [["Broa quentinha, menina? Dá fôlego pra correr. Lá no sítio você vai precisar.", "Não repara no Tião. Ele fala coisa que não devia."], "carta"],
+    pista: [1, "carta", "Dona Lurdes guardava uma carta da vó: \"Não procure seu pai na mata. O que voltar com a cara dele não é ele. Conserte a caminhonete e vá. Não olhe para trás na porteira.\""],
+    extra: ["Pão de ontem eu jogo pro mato. Amanhece sempre comido.", "Reze antes de dormir. Não por você. Por quem está do lado de fora."],
+    sono: ["...Tião... sai da janela... não acena pra ele...", "(Ela dorme de olhos abertos.)"] },
+  { id: "zuleica", nome: "Dona Zuleica", casa: "costura", loja: 1, look: { pele: "#e8c0a0", roupa: "#6a3a5a", cabelo: "#8a8a8a", oculos: 1, magra: 1 },
+    conversas: [["Roupa nova muda tudo. Até o jeito que as coisas te enxergam no escuro.", "Escolhe uma. Faço no seu tamanho. Eu sei o seu tamanho."],
+      ["Sua avó encomendou uma roupa comigo antes de sumir. Preta. Toda fechada.", "Uma mortalha, menina. No tamanho dela mesma.", "Ela provou, disse que serviu e falou: \"Não vou precisar de caixão. A mata não devolve.\""]],
+    pista: [1, "mortalha", "Dona Zuleica: a vó mandou fazer a própria mortalha. Disse que \"a mata não devolve\"."],
+    extra: ["Tem gente nessa vila que eu costuro do batizado ao enterro. Gente demais.", "Não pegue linha preta do chão. Não é linha."],
+    sono: ["...a manga ficou curta... os braços dele cresceram...", "...medida errada... de novo..."] },
+  { id: "bento", nome: "Seu Bento", casa: "ferreiro", loja: 1, look: { pele: "#a8744a", roupa: "#4a3a2a", cabelo: "#2a1a10", barba: 1, grande: 1, avental: "#6a4a2a" },
+    conversas: [["Ferro frio espanta coisa ruim. Por isso eu durmo em cima da bigorna, ha.", "Precisa de ferramenta? Faço enxada que planta sozinha. Quase."],
+      ["Teu pai passou aqui. Não na noite que sumiu... três noites DEPOIS.", "De madrugada. Batendo de porta em porta, chamando teu nome. Com a voz dele, igualzinha.", "Ninguém abriu. Aqui ninguém abre de noite. Ele bateu até o galo cantar. Depois foi pra mata andando de costas. De costas, menina."]],
+    pista: [1, "pai_porta", "Seu Bento: três noites depois, \"meu pai\" bateu nas portas da vila me chamando. Foi embora andando de costas."],
+    extra: ["Ferradura na porta segura cachorro grande. Daquele tipo.", "Se ouvir martelada de noite, não sou eu. Eu durmo."],
+    sono: ["...não abre... não abre... ele sabe teu nome...", "(Ronco alto. Ele aperta um martelo contra o peito.)"] },
+  { id: "cida", nome: "Dona Cida", casa: "botica", loja: 1, look: { pele: "#8a5a3a", roupa: "#5a3a6a", cabelo: "#e8e2d8", lenco: "#c8a030", velho: 1 },
+    conversas: [["Benedita e eu aprendemos a benzer com a mesma madrinha. Ela era melhor. Por isso foi ela.", "Leva uma garrafada. Se a coisa te pegar, ela te devolve uma vez."],
+      ["As regras do caderno não são da sua vó. São mais velhas que a vila.", "A mata tem fome de trinta em trinta anos. Alguém do sítio tem que ir. Se ninguém vai, ela vem buscar.", "Trinta anos atrás seria a sua mãe. A Benedita foi no lugar dela... e a mata deixou ela voltar. Agora o prazo venceu."]],
+    pista: [1, "trinta", "Dona Cida: a mata cobra alguém do sítio a cada 30 anos. A vó já tinha ido uma vez, no lugar da minha mãe, e voltou."],
+    extra: ["Arruda atrás da orelha e o Saci passa reto. Ele odeia o cheiro.", "Não diga seu nome em voz alta no sítio. Elas anotam."],
+    sono: ["...Benedita, devolve a menina... não é a vez dela...", "(Ela reza dormindo, numa língua que você não conhece.)"] },
+  { id: "ze", nome: "Seu Zé", casa: "barbearia", look: { pele: "#d8a888", roupa: "#e8e2d8", cabelo: "#1a1210", careca: 1, bigode: 1 },
+    conversas: [["Cortar o cabelo? Não? Melhor. Cabelo cortado no sítio não se joga fora. Elas usam.", "Aqui todo mundo conversa na cadeira. E eu escuto tudo."],
+      ["Vou te contar o que a vila não conta: ninguém daqui vai no sítio da Benedita. Nem de dia.", "Mas toda semana alguém deixa comida na porteira. Pão, ovo, uma vela acesa.", "Não é pra sua vó. Nunca foi. É pra manter ELA quieta lá dentro da mata."]],
+    pista: [1, "oferenda", "Seu Zé: a vila deixa comida e vela na porteira toda semana para manter quieta a coisa da mata."],
+    extra: ["O delegado tem uma lista. Pergunta pra ele. Ou melhor: não pergunta.", "Meu espelho mostra quem entra. Às vezes mostra quem não entrou."],
+    sono: ["...a tesoura... quem tirou a tesoura da gaveta?...", "...cabelo comprido... no milharal..."] },
+  { id: "ramos", nome: "Delegado Ramos", casa: "delegacia", look: { pele: "#c8946a", roupa: "#4a5a3a", cabelo: "#2a1a10", bigode: 1, chapeu: "#3a3a2a" },
+    rota: [[8, 13.2], [20, 13.2], [20.6, 21.4], [40, 21.4], [40, 13.2], [26, 13.2]],
+    conversas: [["Menina sozinha na vila? Vá pra casa antes de escurecer. É lei. Minha lei.", "Desaparecido? Nessa vila ninguém desaparece. No papel, nunca sumiu ninguém."],
+      ["...Tá bom. Mas você não viu isso.", "(Ele mostra uma folha velha.) 1936: Antônio, do sítio. 1966: Maria, do sítio. 1996: Benedita, do sítio, riscado. 2026: em branco.", "A Benedita foi e voltou. Ninguém volta. Por isso o nome está riscado. E por isso 2026 ainda está em branco."]],
+    pista: [1, "lista", "Delegado Ramos: uma lista com um nome do sítio a cada 30 anos. 1996: Benedita (riscado). 2026: em branco."],
+    extra: ["Ronda? Eu faço ronda até as cinco. Depois a vila é delas.", "Se vir seu pai, não fale com ele. É uma ordem."],
+    sono: ["...2026... em branco... alguém escreve de noite...", "...a mata não é minha jurisdição..."] },
+  { id: "anselmo", nome: "Padre Anselmo", casa: "igreja", loja: 1, look: { pele: "#e8c0a0", roupa: "#141218", cabelo: "#c8c8c8", careca: 1, velho: 1, batina: 1 },
+    conversas: [["Que Santa Luzia guarde seus olhos, filha. No sítio você vai precisar deles abertos.", "Água benta afasta o Corpo-Seco. Uma vez. Ele não volta duas vezes para o mesmo frasco."],
+      ["Sua avó veio se confessar na véspera. Eu não posso contar o que ela disse.", "...Mas posso contar o que ela pediu: que eu tocasse o sino da capela do sítio quando você chegasse.", "Eu não fui. Ninguém sobe a estrada de noite. Me perdoe. A capela ficou muda, e alguma coisa acordou."]],
+    pista: [1, "sino", "Padre Anselmo: a vó pediu que ele tocasse o sino da capela do sítio quando eu chegasse. Ele teve medo e não foi."],
+    extra: ["A missa é às três da tarde. Ninguém vem às seis.", "Os santos da igreja estão sem rosto. Amanheceram assim."],
+    sono: ["...perdão, Benedita... eu tive medo...", "(Ele dorme de joelhos ao lado da cama.)"] },
+  { id: "damiao", nome: "Damião, o coveiro", casa: "coveiro", look: { pele: "#a8846a", roupa: "#5a4a3a", cabelo: "#3a2a1a", palha: 1, magra: 1, pa: 1 },
+    rota: [[39, 21.6], [39, 23.2], [33, 23.2], [33, 32.4], [42, 32.4], [42, 23.2]],
+    conversas: [["Coveiro. Damião. Não aperto a mão de ninguém, nem dos vivos.", "Na vila só se morre de velho. Quem morre de outro jeito, morre lá no sítio."],
+      ["Mês passado a Benedita me pagou pra abrir uma cova no cemitério do sítio. Sem nome.", "Eu cavei de tarde. De manhã estava fechada. Cavei de novo. Fechou de novo.", "Na terceira vez tinha marca de unha na terra. De dentro pra fora."]],
+    pista: [1, "cova", "Damião, o coveiro: a vó mandou abrir uma cova sem nome no sítio. Ela fechava sozinha, com marcas de unha por dentro."],
+    extra: ["Não pise em túmulo. Eles sentem o peso.", "Tem cova aberta no meu cemitério para 2026. Ninguém me mandou abrir."],
+    sono: ["...fecha... fecha de novo... quem fecha?...", "(Ele dorme de botas, sujas de terra fresca.)"] },
+  { id: "tiao", nome: "Tiãozinho", casa: "padaria", cama: 1, look: { pele: "#c8946a", roupa: "#3a6a9a", cabelo: "#1a1210", bone: "#c8281e", crianca: 1 },
+    rota: [[19, 15.4], [27, 15.4], [27.6, 19.6], [18.6, 19.6]],
+    conversas: [["Você é a menina do sítio? Lá tem um homem bonzinho no milharal. Ele acena.", "A mãe diz que o homem não tem rosto. Mas tem sim. Ele pegou um emprestado."],
+      ["Ontem ele me chamou pelo nome. Disse que é o seu pai. Que está com saudade.", "Ele pediu pra eu te avisar: \"Fala pra Yasmin abrir a porta quando eu bater.\"", "Você vai abrir?"]],
+    pista: [1, "milharal", "Tiãozinho: um homem sem rosto no milharal diz que é meu pai. Pediu que eu \"abra a porta quando ele bater\"."],
+    extra: ["Brinca de esconde-esconde? Eu sempre ganho. As coisas daqui me ajudam a esconder.", "Sabe por que a vila apaga tudo de noite? Pra ELA achar que aqui não tem ninguém."],
+    sono: ["...pai da Yasmin... não... não vou abrir...", "(Ele dorme virado para a parede, cantando baixinho uma música que ninguém ensinou.)"] }];
+const NPISTAS = NPCS.length;
+const pistas = () => { try { return JSON.parse(ls("roca_pistas") || "{}"); } catch (e) { return {}; } };
+function ganharPista(n) { const p = pistas(); if (p[n.pista[1]]) return; p[n.pista[1]] = n.pista[2]; ls("roca_pistas", JSON.stringify(p)); efeito(`Pista nova no diário (${Object.keys(p).length}/${NPISTAS})`, "#f2c94a"); tocarTom(523, .3, { tipo: "triangle", vol: .05, wet: .6 }); tocarTom(784, .5, { tipo: "triangle", vol: .04, quando: .2, wet: .6 }); }
+const predio = id => VPREDIOS.find(p => p.id === id);
+const npc = id => NPCS.find(n => n.id === id);
+
+/* ---------- agenda dos moradores (só depende do relógio: todo mundo vê igual no online) ---------- */
+function rotaPonto(rota, d) { let tot = 0; const seg = []; for (let i = 0; i < rota.length; i++) { const a = rota[i], b = rota[(i + 1) % rota.length], l = Math.hypot(b[0] - a[0], b[1] - a[1]); seg.push([a, b, l]); tot += l; }
+  let r = ((d % tot) + tot) % tot; for (const [a, b, l] of seg) { if (r <= l) { const k = r / l; return { x: mix(a[0], b[0], k), y: mix(a[1], b[1], k), dir: b[0] >= a[0] ? 1 : -1 }; } r -= l; } return { x: rota[0][0], y: rota[0][1], dir: 1 }; }
+function npcOnde(n) {
+  const k = R.t % CICLO, p = predio(n.casa), cama = n.cama ? { x: 3.9, y: 1.7 } : { x: 1.6, y: 1.75 };
+  if (k >= DIA - 2 || k < 5) return { dentro: true, predio: n.casa, andar: 1, x: cama.x, y: cama.y, dorme: true };
+  if (k >= DIA - 9) { // fim de tarde: todo mundo vai para casa
+    if (!n.rota) return { dentro: true, predio: n.casa, andar: 1, x: 5.4, y: 3.2, dir: -1 };
+    const a = rotaPonto(n.rota, (DIA - 9) * .9), b = PORTA(p), q = cl((k - (DIA - 9)) / 6, 0, 1); if (q >= 1) return { dentro: true, predio: n.casa, andar: 1, x: 5.4, y: 3.2, dir: -1 };
+    return { dentro: false, x: mix(a.x, b.x, q), y: mix(a.y, b.y, q), dir: b.x > a.x ? 1 : -1, anda: 1 };
+  }
+  if (n.rota) { const a = rotaPonto(n.rota, k * .9), a2 = rotaPonto(n.rota, k * .9 + .1); return { dentro: false, x: a.x, y: a.y, dir: a2.x >= a.x ? 1 : -1, anda: 1 }; }
+  if (n.casa === "igreja") return { dentro: true, predio: "igreja", andar: 0, x: 4.5, y: 2.2, dir: 1 };
+  return { dentro: true, predio: n.casa, andar: 0, x: 3.5, y: 1.75, dir: 1 };
+}
+const lojaAberta = id => { const k = R.t % CICLO; return k >= 5 && k < DIA - 9; };
+
+/* ---------- mapa da vila (colisão) ---------- */
+let VILA = null;
+function montarVila() {
+  let sd = 4242; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  const sol = Array.from({ length: VH }, (_, y) => Array.from({ length: VW }, (_, x) => x < 1 || x >= VW - 1 || y >= VH - 1));
+  const caixas = [], arv = [];
+  VPREDIOS.forEach(p => caixas.push([p.x - .1, p.y - 1.9, p.x + p.w + .1, p.y + p.h + .05]));
+  VPOSTES.forEach(([x, y]) => caixas.push([x - .14, y - .2, x + .14, y + .05]));
+  VBANCOS.forEach(([x, y]) => caixas.push([x - .6, y - .25, x + .6, y + .08]));
+  caixas.push([VFONTE.x - 1.3, VFONTE.y - .9, VFONTE.x + 1.3, VFONTE.y + .7]);
+  caixas.push([VCEM.x0, VCEM.y0, VCEM.x1, VCEM.y1]);
+  caixas.push([24.6, 2.6, 25.8, 3.15]); // placa da entrada
+  // mata em volta: densa no topo (menos a estrada) e nas bordas
+  for (let y = 0; y < VH; y++) for (let x = 0; x < VW; x++) {
+    const topo = y < 6 && Math.abs(x + .5 - 23) > 1.6, borda = x < 2 || x > VW - 3 || y > VH - 2, fundo = y > 5.4 && y < 6.6 && (x < 2.6 || x > 42), atras = y >= 5 && y < 6.5;
+    if ((topo || borda || fundo) && r() < .8) { arv.push({ x: x + .5 + (r() - .5) * .6, y: y + .5 + (r() - .5) * .5, r: .7 + r() * .5, c: Math.floor(r() * 5) }); if (topo || borda) sol[y][x] = true; }
+    else if (atras && !(x > 21 && x < 25) && r() < .3) arv.push({ x: x + .5, y: y + .5, r: .6 + r() * .4, c: Math.floor(r() * 5) });
+  }
+  [[15.6, 30], [9, 27], [5, 31], [29.4, 32], [44, 22], [1.6, 22]].forEach(([x, y]) => { arv.push({ x, y, r: .9, c: Math.floor(r() * 5) }); caixas.push([x - .3, y - .25, x + .3, y + .1]); });
+  const tumulos = []; for (let gx = VCEM.x0 + 1; gx < VCEM.x1 - .6; gx += 1.6) for (let gy = VCEM.y0 + 1.2; gy < VCEM.y1 - .4; gy += 1.5) tumulos.push({ x: gx + (r() - .5) * .3, y: gy, k: r(), aberta: Math.abs(gx - (VCEM.x1 - 2.2)) < .9 && Math.abs(gy - (VCEM.y0 + 4.2)) < .8 });
+  VILA = { sol, caixas, arv, tumulos };
+  gerarChaoVila();
+}
+let vilaCv = null;
+function gerarChaoVila() {
+  const P = 32; vilaCv = document.createElement("canvas"); vilaCv.width = VW * P; vilaCv.height = VH * P; const g = vilaCv.getContext("2d");
+  let sd = 77; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  g.fillStyle = "#4e5a2e"; g.fillRect(0, 0, VW * P, VH * P);
+  for (let i = 0; i < 2600; i++) { g.fillStyle = r() < .5 ? "rgba(110,120,60,.35)" : "rgba(30,40,20,.35)"; g.beginPath(); g.ellipse(r() * VW * P, r() * VH * P, 5 + r() * 18, 3 + r() * 9, r() * 3, 0, 7); g.fill(); }
+  g.fillStyle = "#1e2614"; g.fillRect(0, 0, VW * P, 6 * P); // mata
+  const terra = (pts, w) => { g.strokeStyle = "#7a5e3e"; g.lineWidth = w * P; g.lineCap = "round"; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x * P, y * P) : g.moveTo(x * P, y * P)); g.stroke(); g.strokeStyle = "rgba(160,130,90,.35)"; g.lineWidth = w * P * .4; g.stroke(); };
+  terra([[23, -1], [23, 6.5]], 1.6);
+  const pedra = (x0, y0, x1, y1, cor = "#6a6458") => { g.fillStyle = cor; g.fillRect(x0 * P, y0 * P, (x1 - x0) * P, (y1 - y0) * P); g.strokeStyle = "rgba(0,0,0,.28)"; g.lineWidth = 1;
+    for (let y = y0; y < y1; y += .42) for (let x = x0 + ((Math.round(y / .42) % 2) * .3); x < x1; x += .6) { g.strokeRect(x * P, y * P, .6 * P, .42 * P); } for (let i = 0; i < (x1 - x0) * (y1 - y0) * 2; i++) { g.fillStyle = r() < .5 ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.08)"; g.fillRect((x0 + r() * (x1 - x0)) * P, (y0 + r() * (y1 - y0)) * P, .6 * P, .42 * P); } };
+  pedra(1, 11.6, VW - 1, 14.3); pedra(1, 19.9, VW - 1, 22.5); pedra(21.6, 6.2, 24.4, 24.6); pedra(16.6, 14.3, 29.4, 19.9, "#7a7262"); pedra(17, 29.6, 29, 32.8, "#7a7262");
+  g.fillStyle = "#3a3222"; g.fillRect(VCEM.x0 * P, VCEM.y0 * P, (VCEM.x1 - VCEM.x0) * P, (VCEM.y1 - VCEM.y0) * P);
+  for (let i = 0; i < 500; i++) { g.strokeStyle = r() < .5 ? "rgba(140,150,80,.5)" : "rgba(30,40,20,.5)"; const x = r() * VW * P, y = (6 + r() * (VH - 6)) * P; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - .5) * 3, y - 3 - r() * 4); g.stroke(); }
+  for (let i = 0; i < 260; i++) { g.fillStyle = ["#c8662a", "#8a3018", "#d89a2a"][Math.floor(r() * 3)]; g.beginPath(); g.ellipse(r() * VW * P, (6 + r() * (VH - 6)) * P, 2.4, 1.3, r() * 3, 0, 7); g.fill(); }
+}
+function livreVila(x, y) {
+  const rr = .28; for (const [ox, oy] of [[-rr, 0], [rr, 0], [0, -rr * .6], [0, rr * .4]]) { const tx = Math.floor(x + ox), ty = Math.floor(y + oy); if (ty < -2 || tx < 0 || tx >= VW || ty >= VH) return false; if (ty >= 0 && VILA.sol[ty][tx]) return false; }
+  for (const [x0, y0, x1, y1] of VILA.caixas) if (x > x0 - rr && x < x1 + rr && y > y0 - .12 && y < y1 + .12) return false; return true;
+}
+function moveisPredio(id, andar) {
+  const l = [[7.1, .9, 1.6, 1.5]]; // escada
+  if (andar === 1) { l.push([.5, 1, 2.2, 1.7], [.4, 4.1, 1, 1.3], [4.4, 3.9, 1.3, .8]); if (id === "padaria") l.push([3.1, 1, 1.7, 1.4]); return l; }
+  if (id === "igreja") { l.push([3.2, 1.1, 2.6, .7], [.9, 3.1, 2.8, .45], [5.3, 3.1, 2.8, .45], [.9, 4.2, 2.8, .45], [5.3, 4.2, 2.8, .45]); return l; }
+  l.push([1.2, 2.3, 4.6, .6]); // balcão
+  const extra = { armazem: [6, 3.6, 1.6, 1], padaria: [6.1, 3.4, 1.3, 1.1], costura: [6.2, 3.8, 1.5, .6], ferreiro: [5.9, 3.5, 1.4, 1.1], botica: [6.2, 3.6, 1, 1], barbearia: [5.9, 3.4, 1, 1], delegacia: [5.6, 3.2, 2.8, 2.1], coveiro: [5.4, 3.5, 2.6, .8] }[id];
+  if (extra) l.push(extra); return l;
+}
+function livrePredio(x, y) { if (x < .5 || x > ROOM.w - .5 || y < 1.1 || y > ROOM.h - .25) return false; for (const [mx, my, mw, mh] of moveisPredio(R.predio, R.andar)) if (x > mx - .2 && x < mx + mw + .2 && y > my && y < my + mh + .25) return false; return true; }
+function andaLivre(p, dx, dy, vel, dt, livre) { const nx = p.x + dx * vel * dt, ny = p.y + dy * vel * dt, preso = !livre(p.x, p.y); if (preso || livre(nx, p.y)) p.x = nx; if (preso || livre(p.x, ny)) p.y = ny; }
+
+/* ---------- ir e voltar ---------- */
+function irVila() { if (!VILA) montarVila(); R.lugar = "vila"; R.predio = null; R.eu.x = 23; R.eu.y = .9; R.lanterna = R.lanterna && ehNoite(); cam.x = 23; cam.y = 6; R.fade = 1; S.porta(); efeito("Vila Sossego", "#e8e2d4"); hud(); if (!ls("roca_vila")) { ls("roca_vila", 1); setTimeout(() => R && falar(["Vila Sossego. A vó falava daqui como se fosse longe. É só descer a estrada.", "Alguém aqui tem que saber o que aconteceu com ela. E com o meu pai."], null, "Yasmin"), 900); } }
+function voltarSitio() { R.lugar = "sitio"; R.predio = null; R.eu.x = 25.2; R.eu.y = 35.6; cam.x = 25.2; cam.y = 32; R.fade = 1; S.porta(); hud(); }
+function entrarPredio(p) { R.predio = p.id; R.andar = 0; R.int = { x: 4.5, y: 5.4, dir: -1 }; S.porta(); if (ehNoite()) tocarTom(180, .8, { tipo: "sawtooth", vol: .03, ate: 120, lp: 600, wet: .6 }); hud(); }
+function sairPredio() { const p = predio(R.predio), d = PORTA(p); R.predio = null; R.eu.x = d.x; R.eu.y = d.y + .3; S.porta(); hud(); }
+function trocarAndar() { R.andar = R.andar ? 0 : 1; R.int = { x: 7.9, y: 2.9, dir: -1 }; R.fade = .6; for (let i = 0; i < 6; i++) tocarRuido(.06, { filtro: "lowpass", f: 500, vol: .12, quando: i * .13 }); }
+
+/* ---------- conversar ---------- */
+function conversar(n) {
+  const o = npcOnde(n);
+  if (o.dorme) { falar([n.sono[Math.floor(Math.random() * n.sono.length)]], null, n.nome + " (dormindo)"); return; }
+  R.conv = R.conv || {}; const i = R.conv[n.id] || 0; let lista = n.conversas[i];
+  if (lista === "carta") { const p = pistas(); if (!p.pai_porta && !p.milharal) { falar(["Hoje não, querida. Volta outro dia.", "(Ela olha para a gaveta do balcão e não diz mais nada. Talvez ela fale se você souber mais do seu pai.)"], null, n.nome); return; }
+    lista = ["Você andou perguntando do seu pai... então chegou a hora.", "A Benedita deixou isso comigo. Disse pra só entregar quando você perguntasse dele.", "CARTA: \"Yasmin, se você está lendo, eu já fui. Não procure seu pai na mata. O que voltar com a cara dele não é ele. Conserte a caminhonete e vá embora. Não olhe para trás na porteira. Te amo. — Vó\""]; }
+  if (!lista) lista = [n.extra[Math.floor(Math.random() * n.extra.length)]];
+  R.conv[n.id] = i + 1;
+  falar(lista, () => { if (n.pista && n.pista[0] === i) ganharPista(n); }, n.nome);
+}
+function npcAqui() { // morador mais perto de você (no mesmo lugar)
+  let melhor = null, md = 9; for (const n of NPCS) { const o = npcOnde(n);
+    if (R.predio) { if (!o.dentro || o.predio !== R.predio || o.andar !== R.andar) continue; const alvo = o.dorme ? { x: o.x, y: o.y + 1.3 } : R.predio === "igreja" ? { x: o.x, y: o.y + .9 } : (o.y < 2.3 ? { x: o.x, y: 3.25 } : o); const d = Math.hypot(alvo.x - R.int.x, alvo.y - R.int.y); if (d < 1.35 && d < md) { md = d; melhor = n; } }
+    else { if (o.dentro) continue; const d = Math.hypot(o.x - R.eu.x, o.y - R.eu.y); if (d < 1.2 && d < md) { md = d; melhor = n; } } }
+  return melhor;
+}
+function oQueFazerVila() {
+  if (R.predio) {
+    const s = R.int;
+    if (R.andar === 0 && s.y > 5.2 && Math.abs(s.x - 4.5) < 1) return { t: "Sair", fn: sairPredio, loc: 1 };
+    if (Math.hypot(s.x - 7.9, s.y - 2.85) < 1) return { t: R.andar ? "Descer" : "Subir", fn: trocarAndar, loc: 1 };
+    const n = npcAqui();
+    if (n) { const o = npcOnde(n); if (o.dorme) return { t: "Ouvir", fn: () => conversar(n), loc: 1 }; if (n.loja && lojaAberta(n.casa)) return { t: "Loja", fn: () => abrirLoja(n), loc: 1 }; return { t: "Conversar", fn: () => conversar(n), loc: 1 }; }
+    if (R.andar === 0 && Math.hypot(s.x - 3.5, s.y - 3.25) < 1.4 && R.predio !== "igreja" && !npcAqui()) return { t: "Balcão", fn: () => falar([ehNoite() ? "Não tem ninguém no balcão. Lá em cima, alguma coisa range." : "O balcão está vazio. Fechou cedo hoje."], null, "Yasmin"), loc: 1 };
+    return null;
+  }
+  const p = R.eu;
+  if (p.y < .7) return null;
+  for (const q of VPREDIOS) { const d = PORTA(q); if (Math.hypot(p.x - d.x, p.y - d.y) < 1) return { t: ehNoite() ? "Entrar (escuro)" : "Entrar", fn: () => entrarPredio(q), loc: 1 }; }
+  const n = npcAqui(); if (n) return { t: "Conversar", fn: () => conversar(n), loc: 1 };
+  if (Math.hypot(p.x - 25.2, p.y - 3.4) < 1.2) return { t: "Ler", fn: () => falar(["VILA SOSSEGO · POPULAÇÃO 47. Alguém riscou o 47 e escreveu 46 com tinta vermelha. Embaixo: \"VOLTE ANTES DO ESCURO\"."], null, "Placa"), loc: 1 };
+  if (Math.hypot(p.x - VFONTE.x, p.y - (VFONTE.y + 1)) < 1.4) return { t: "Olhar", fn: () => falar([ehNoite() ? "A fonte está cheia de novo. Mas não choveu. E a água está morna." : "A fonte está seca. A santa no meio dela não tem rosto. Alguém raspou com faca."], null, "Yasmin"), loc: 1 };
+  if (p.x > VCEM.x0 - .6 && p.x < VCEM.x1 + .6 && Math.abs(p.y - VCEM.y0 + .3) < .7) return { t: "Olhar", fn: () => falar(["O cemitério da vila. Lá no fundo tem uma cova aberta, com uma plaquinha: 2026."], null, "Yasmin"), loc: 1 };
+  return null;
+}
+function opcoesLoja(id) {
+  const l = [], item = (nome, desc, preco, ok, fn) => l.push({ nome, desc, preco, ok: ok && R.moedas >= preco, fn });
+  if (id === "armazem") { const v = Math.round(valorVenda() * 1.25); l.push({ nome: "Vender tudo", desc: v ? `O Joaquim paga ${v} moedas (25% a mais)` : "Você não tem nada para vender", preco: 0, ok: v > 0, fn: () => { R.moedas += Math.round(valorVenda() * 1.25); R.colheita = {}; R.peixes = {}; R.extra = {}; if (R.vara) { R.inv.graveto = 0; R.inv.folha = 0; } } });
+    item("Lata de óleo", "Enche a lanterna e as lamparinas", 4, R.oleo < 100, () => { R.oleo = 100; R.lamparinas = R.lamparinas.map(() => 1); }); item("Sal grosso", "Na soleira: a Pisadeira demora o dobro para vir", 25, !R.sal, () => { R.sal = true; }); }
+  if (id === "padaria") item("Broa de milho", "Fôlego sem fim por um tempo", 6, !(R.broa > 0), () => { R.broa = 45; });
+  if (id === "costura") ROUPAS_LOJA.forEach(([k, nome, , , preco]) => { const tem = roupasCompradas().includes(k); l.push({ nome: (R.roupa === k ? "✓ " : "") + nome, desc: tem ? "Já é sua: toque para vestir" : "Vestido feito no seu tamanho", preco: tem ? 0 : preco, ok: R.roupa !== k && (tem || R.moedas >= preco), fn: () => { R.roupa = k; const c2 = roupasCompradas(); if (!c2.includes(k)) { c2.push(k); ls("roca_roupas", JSON.stringify(c2)); } } }); });
+  if (id === "ferreiro") { item("Enxada de aço", "As plantas crescem mais rápido", 70, !R.enxada, () => { R.enxada = true; }); item("Lampião de ferro", "Ilumina mais e gasta metade do óleo", 90, !R.lampiao, () => { R.lampiao = true; }); item("Ferradura na porta", "O lobisomem não vira perto da casa", 50, !R.ferradura, () => { R.ferradura = true; }); }
+  if (id === "botica") { item("Garrafada", "Se um bicho te pegar, você volta uma vez", 40, !(R.garrafada > 0), () => { R.garrafada = 1; }); item("Raminho de arruda", "O Saci não rouba mais suas moedas", 30, !R.arruda, () => { R.arruda = true; }); }
+  if (id === "igreja") item("Água benta", "O Corpo-Seco foge em vez de te pegar (uma vez)", 20, !(R.aguaBenta > 0), () => { R.aguaBenta = 1; });
+  return l;
+}
+const ROUPAS_LOJA = [["vermelho", "Vestido vermelho", "#a02a2a", "#7a1e1e", 30], ["azul", "Vestido azul-noite", "#2a3a6a", "#1e2a50", 30], ["musgo", "Vestido verde-musgo", "#4a5a2a", "#38461e", 30], ["amarela", "Jardineira amarela", "#c8a030", "#a07e20", 30], ["luto", "Vestido de luto", "#1e1a1e", "#141014", 45]];
+const roupasCompradas = () => { try { return JSON.parse(ls("roca_roupas") || "[]"); } catch (e) { return []; } };
+function abrirLoja(n) {
+  painelAberto = true; el.rcPainel.hidden = false; const id = n.casa, o = opcoesLoja(id), p = predio(id);
+  el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>${p.nome}</h2><p>${n.nome} · você tem <b style="color:#f2c94a">${R.moedas} moedas</b></p><div class="rc-grade">${o.map((x, i) => `<button type="button" class="rc-op" data-i="${i}" ${x.ok ? "" : "disabled"}>${x.nome}<small>${x.desc}${x.preco ? ` · ${x.preco} moedas` : ""}</small></button>`).join("")}</div>
+    <div class="rc-linha"><button type="button" class="rc-op dest" id="rcConversar">Conversar</button><button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
+  el.rcPainel.querySelectorAll("[data-i]").forEach(b => b.addEventListener("click", () => { const x = o[+b.dataset.i];
+    if (R.online === "guest") { enviar({ t: "compra", nome: x.nome.replace(/^✓ /, ""), loja: id }); b.disabled = true; tocarTom(900, .05, { vol: .05 }); setTimeout(() => painelAberto && document.getElementById("rcConversar") && abrirLoja(n), 400); return; }
+    R.moedas -= x.preco; x.fn(); S.moedas(); hud(); abrirLoja(n); }));
+  document.getElementById("rcConversar").addEventListener("click", () => { fecharPainel(); conversar(n); });
+  document.getElementById("rcFechar").addEventListener("click", fecharPainel);
+}
+
+/* ---------- desenho da vila ---------- */
+const luzesVila = () => { const k = R.t % CICLO; return k > DIA - 16 && k < DIA + 6; }; // acendem no fim da tarde e APAGAM quando a noite fecha
+const apagaUm = i => { const k = R.t % CICLO; return k > DIA + 1 + i * .6; };
+function desenharNpc(n, x, y, s, tm, o = {}) {
+  const L = n.look, k = s / 48 * (L.crianca ? .78 : L.grande ? 1.12 : 1), dir = o.dir || 1, an = o.anda ? Math.sin(tm * 9 + n.id.length) : 0;
+  sombra(x, y, 12 * k, 4 * k); c.save(); c.translate(x, y); c.scale(dir * k, k); if (L.velho) c.rotate(.06 * dir);
+  c.fillStyle = "#2a2018"; c.fillRect(-5 + an * 3, -12, 4, 12); c.fillRect(1 - an * 3, -12, 4, 12);
+  c.fillStyle = L.roupa; const larg = L.magra ? 7 : L.grande ? 11 : 9; c.fillRect(-larg, L.batina ? -32 : -32, larg * 2, L.batina ? 31 : 21);
+  if (L.avental) { c.fillStyle = L.avental; c.fillRect(-larg + 2, -24, larg * 2 - 4, 16); }
+  c.fillStyle = L.pele; c.fillRect(larg - 1, -30 + an * 2, 4, 13); c.fillRect(-larg - 3, -30 - an * 2, 4, 13);
+  if (L.pa) { c.strokeStyle = "#6a4a2a"; c.lineWidth = 2; c.beginPath(); c.moveTo(larg + 2, -34); c.lineTo(larg + 5, -2); c.stroke(); c.fillStyle = "#7a7a7a"; c.fillRect(larg + 2, -4, 7, 6); }
+  c.fillStyle = L.pele; c.beginPath(); c.arc(0, -39, 8, 0, 7); c.fill();
+  if (!L.careca) { c.fillStyle = L.cabelo; c.beginPath(); c.arc(0, -41, 8.4, PI, 0); c.fill(); if (L.coque) { c.beginPath(); c.arc(-4, -48, 4, 0, 7); c.fill(); } }
+  else { c.fillStyle = L.cabelo; c.fillRect(-8.5, -40, 3, 5); }
+  if (L.lenco) { c.fillStyle = L.lenco; c.beginPath(); c.arc(0, -41, 8.8, PI, 0); c.fill(); c.fillRect(-9, -42, 18, 3); }
+  if (L.chapeu || L.palha) { c.fillStyle = L.chapeu || "#c8a050"; c.fillRect(-12, -46, 24, 3); c.fillRect(-7, -52, 14, 7); }
+  if (L.bone) { c.fillStyle = L.bone; c.beginPath(); c.arc(0, -42, 8.6, PI, 0); c.fill(); c.fillRect(0, -43, 12, 3); }
+  // olhos que seguem a menina
+  const olha = Math.sign((R.predio ? R.int.x : R.eu.x) - (o.wx ?? 0)) * dir; c.fillStyle = "#1a1210"; c.fillRect(2 + olha, -41, 2, 2.2); c.fillRect(6 + olha, -41, 2, 2.2);
+  if (L.oculos) { c.strokeStyle = "#c8c8c8"; c.lineWidth = 1; c.strokeRect(1, -42.5, 4, 4); c.strokeRect(5.5, -42.5, 4, 4); }
+  if (L.bigode) { c.fillStyle = L.cabelo === "#c8c8c8" ? "#d8d8d8" : "#1a1210"; c.fillRect(3, -36.5, 7, 1.8); }
+  if (L.barba) { c.fillStyle = L.cabelo; c.beginPath(); c.arc(3, -34, 7, 0, PI); c.fill(); }
+  c.strokeStyle = "#5a2a1a"; c.lineWidth = 1; c.beginPath(); c.moveTo(4, -34.5); c.lineTo(8, -34.5); c.stroke(); // boca reta. ninguém sorri aqui
+  c.restore();
+}
+function desenharPredioFora(p, tm) {
+  const x = PX(p.x), y = PY(p.y), w = p.w * TS, h = p.h * TS; if (!naTela(x + w / 2, y + h / 2, w * 1.3)) return;
+  sombra(x + w / 2, y + h + 3, w * .58, TS * .3, .35);
+  const lit = luzesVila() && !apagaUm(VPREDIOS.indexOf(p)), noite = horaNoite();
+  if (p.igreja) return desenharIgrejaFora(p, x, y, w, h, tm, lit);
+  const meio = y + h * .46;
+  c.fillStyle = p.cor2; c.fillRect(x, y, w, h * .46); c.fillStyle = "rgba(0,0,0,.12)"; for (let i = 0; i < 6; i++) c.fillRect(x + (i * .37 % 1) * w, y + h * (.05 + (i % 3) * .12), w * .1, h * .04); // reboco descascando
+  c.fillStyle = p.cor; c.fillRect(x, meio, w, h * .54); c.strokeStyle = "rgba(0,0,0,.25)"; c.lineWidth = 1; for (let i = 1; i < 6; i++) { c.beginPath(); c.moveTo(x, meio + i * h * .09); c.lineTo(x + w, meio + i * h * .09); c.stroke(); }
+  c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(x, meio - 3, w, 5); // beiral entre os andares
+  // telhado
+  c.fillStyle = p.tel; c.beginPath(); c.moveTo(x - TS * .3, y + 4); c.lineTo(x + TS * .5, y - TS * 1.7); c.lineTo(x + w - TS * .5, y - TS * 1.7); c.lineTo(x + w + TS * .3, y + 4); c.fill();
+  c.strokeStyle = "rgba(0,0,0,.3)"; c.lineWidth = 2; for (let i = 1; i < 5; i++) { const yy = y - TS * 1.7 + i * TS * .36; c.beginPath(); c.moveTo(x - TS * .3 + (1 - i / 5) * TS * .8, yy); c.lineTo(x + w + TS * .3 - (1 - i / 5) * TS * .8, yy); c.stroke(); }
+  if (p.chamine) { c.fillStyle = "#5a4a3a"; c.fillRect(x + w * .74, y - TS * 2.1, TS * .4, TS * .8); if (!ehNoite()) for (let i = 0; i < 4; i++) { const f = (tm * .4 + i * .25) % 1; c.fillStyle = `rgba(200,200,200,${.25 * (1 - f)})`; c.beginPath(); c.arc(x + w * .74 + TS * .2 + f * 14, y - TS * 2.2 - f * TS * 1.2, 5 + f * 10, 0, 7); c.fill(); } }
+  // janelas de cima (o quarto)
+  [[.18, .1], [.62, .1]].forEach(([fx, fy], i) => { const jx = x + w * fx, jy = y + h * fy, jw = w * .2, jh = h * .26;
+    c.fillStyle = lit ? `rgba(255,${190 + Math.sin(tm * 6 + i) * 10},110,.9)` : "#0c1018"; c.fillRect(jx, jy, jw, jh); c.strokeStyle = "#2a1a10"; c.lineWidth = 2.5; c.strokeRect(jx, jy, jw, jh); c.beginPath(); c.moveTo(jx + jw / 2, jy); c.lineTo(jx + jw / 2, jy + jh); c.stroke();
+    c.fillStyle = p.tel; c.fillRect(jx - 5, jy, 5, jh); c.fillRect(jx + jw, jy, 5, jh); // venezianas
+    if (!lit && noite > .6 && Math.sin(tm * .35 + VPREDIOS.indexOf(p) * 2.1 + i) > .985) { c.fillStyle = "rgba(0,0,0,.95)"; c.beginPath(); c.arc(jx + jw / 2, jy + jh * .5, jw * .22, 0, 7); c.fill(); c.fillRect(jx + jw * .3, jy + jh * .6, jw * .4, jh * .4); } }); // alguém olhando
+  // térreo: porta, vitrine e placa
+  const px = x + w / 2, py = y + h; c.fillStyle = "#2a180e"; c.fillRect(px - TS * .42, py - h * .42, TS * .84, h * .42); c.fillStyle = "#4a2a18"; c.fillRect(px - TS * .36, py - h * .4, TS * .72, h * .4); c.fillStyle = "#c8a050"; c.beginPath(); c.arc(px + TS * .22, py - h * .2, 2.4, 0, 7); c.fill();
+  const vx = x + w * .07, vy = meio + h * .12, vw = w * .26, vh = h * .24; c.fillStyle = lit ? "rgba(255,200,120,.85)" : ehNoite() ? "#0a0c10" : "#8aa0b0"; c.fillRect(vx, vy, vw, vh);
+  if (!ehNoite() || lit) for (let i = 0; i < 6; i++) { c.fillStyle = p.vit[i % 3]; c.fillRect(vx + 3 + (i % 3) * vw * .31, vy + vh * (i < 3 ? .2 : .6), vw * .22, vh * .26); }
+  c.strokeStyle = "#2a1a10"; c.lineWidth = 3; c.strokeRect(vx, vy, vw, vh);
+  c.fillStyle = "#0a0c10"; c.fillRect(x + w * .72, vy, w * .18, vh); c.strokeRect(x + w * .72, vy, w * .18, vh);
+  if (p.placa) { c.fillStyle = "#3a2414"; c.fillRect(px - w * .3, meio + 3, w * .6, TS * .36); c.fillStyle = "#e8d8b0"; c.font = `800 ${Math.round(TS * .22)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText(p.placa, px, meio + 3 + TS * .27); c.textAlign = "start"; }
+  if (p.id === "ferreiro") { c.fillStyle = "#3a3a3a"; c.fillRect(x + w + 4, py - TS * .55, TS * .5, TS * .3); c.fillRect(x + w + TS * .12, py - TS * .3, TS * .26, TS * .3); if (!ehNoite()) { c.fillStyle = `rgba(255,120,40,${.5 + .3 * Math.sin(tm * 9)})`; c.beginPath(); c.arc(x + w * .14, py - h * .1, 5, 0, 7); c.fill(); } }
+  if (p.id === "barbearia") { const bx = x + w * .95, by = py - h * .5; for (let i = 0; i < 5; i++) { c.fillStyle = (i + Math.floor(tm * 3)) % 2 ? "#c8281e" : "#e8e2d8"; c.fillRect(bx, by + i * 6, 6, 6); } }
+  if (p.id === "coveiro") { c.fillStyle = "#3a2a1a"; c.fillRect(x + w + 6, py - TS * .9, TS * .3, TS * .9); c.fillRect(x + w + 2, py - TS * .7, TS * .5, TS * .18); }
+  if (lit) { c.save(); c.globalCompositeOperation = "lighter"; const g = c.createRadialGradient(px, py, 2, px, py, TS * 1.6); g.addColorStop(0, "rgba(255,180,90,.18)"); g.addColorStop(1, "rgba(255,180,90,0)"); c.fillStyle = g; c.fillRect(px - TS * 2, py - TS * 2, TS * 4, TS * 3); c.restore(); }
+}
+function desenharIgrejaFora(p, x, y, w, h, tm, lit) {
+  c.fillStyle = "#b8b0a0"; c.fillRect(x, y, w, h); c.fillStyle = "rgba(60,50,40,.3)"; for (let i = 0; i < 9; i++) { c.beginPath(); c.ellipse(x + w * ((i * .41) % 1), y + h * (.3 + (i % 3) * .22), w * .07, h * .05, 0, 0, 7); c.fill(); }
+  c.fillStyle = "#4a2a1e"; c.beginPath(); c.moveTo(x - TS * .3, y + 4); c.lineTo(x + w / 2, y - TS * 2); c.lineTo(x + w + TS * .3, y + 4); c.fill();
+  const tx = x + w / 2; c.fillStyle = "#c8c0b0"; c.fillRect(tx - TS * .7, y - TS * 4.2, TS * 1.4, TS * 2.6); c.fillStyle = "#141010"; c.beginPath(); c.moveTo(tx - TS * .4, y - TS * 2.2); c.lineTo(tx - TS * .4, y - TS * 3.3); c.arc(tx, y - TS * 3.3, TS * .4, PI, 0); c.lineTo(tx + TS * .4, y - TS * 2.2); c.fill();
+  c.fillStyle = "#8a6a2a"; const bal = Math.sin(tm * .7) * .05; c.save(); c.translate(tx, y - TS * 3.4); c.rotate(bal); c.beginPath(); c.moveTo(-TS * .22, TS * .5); c.quadraticCurveTo(-TS * .22, 0, 0, 0); c.quadraticCurveTo(TS * .22, 0, TS * .22, TS * .5); c.fill(); c.restore();
+  c.fillStyle = "#4a2a1e"; c.beginPath(); c.moveTo(tx - TS * .85, y - TS * 4.2); c.lineTo(tx, y - TS * 5); c.lineTo(tx + TS * .85, y - TS * 4.2); c.fill(); c.fillStyle = "#2a1a10"; c.fillRect(tx - 2.5, y - TS * 5.9, 5, TS * .95); c.fillRect(tx - TS * .25, y - TS * 5.6, TS * .5, 5);
+  c.fillStyle = lit ? "rgba(255,190,110,.8)" : "#1a1e2a"; c.beginPath(); c.arc(tx, y + h * .28, TS * .5, 0, 7); c.fill(); c.strokeStyle = "#5a4a3a"; c.lineWidth = 2; for (let i = 0; i < 8; i++) { c.beginPath(); c.moveTo(tx, y + h * .28); c.lineTo(tx + Math.cos(i * PI / 4) * TS * .5, y + h * .28 + Math.sin(i * PI / 4) * TS * .5); c.stroke(); } // rosácea
+  [[.12], [.78]].forEach(([fx]) => { c.fillStyle = lit ? "rgba(255,190,110,.75)" : "#141820"; c.beginPath(); c.moveTo(x + w * fx, y + h * .85); c.lineTo(x + w * fx, y + h * .45); c.arc(x + w * (fx + .05), y + h * .45, w * .05, PI, 0); c.lineTo(x + w * (fx + .1), y + h * .85); c.fill(); });
+  const py = y + h; c.fillStyle = "#1a0e08"; c.beginPath(); c.moveTo(tx - TS * .7, py); c.lineTo(tx - TS * .7, py - TS * 1.3); c.arc(tx, py - TS * 1.3, TS * .7, PI, 0); c.lineTo(tx + TS * .7, py); c.fill(); c.fillStyle = "#4a2a18"; c.fillRect(tx - TS * .62, py - TS * 1.3, TS * .6, TS * 1.3); c.fillRect(tx + TS * .02, py - TS * 1.3, TS * .6, TS * 1.3);
+  c.fillStyle = "#e8e2d0"; c.font = `700 ${Math.round(TS * .2)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText("SANTA LUZIA", tx, y + h * .55); c.textAlign = "start";
+}
+function desenharVilaObjetos(tm) {
+  const obj = [];
+  VILA.arv.forEach(a => obj.push([a.y, () => desenharArvore(a, tm)]));
+  VPREDIOS.forEach(p => obj.push([p.y + p.h, () => desenharPredioFora(p, tm)]));
+  VPOSTES.forEach(([px, py], i) => obj.push([py, () => { const x = PX(px), y = PY(py); if (!naTela(x, y)) return; sombra(x, y, 6, 2.5); c.fillStyle = "#2a2a2a"; c.fillRect(x - 2, y - TS * 1.9, 4, TS * 1.9); c.fillRect(x - 2, y - TS * 1.9, TS * .4, 3); c.fillStyle = "#3a3a3a"; c.fillRect(x + TS * .3, y - TS * 1.86, 8, 9);
+    const aceso = luzesVila() && !apagaUm(i * .4); if (aceso) { c.fillStyle = Math.random() < .03 ? "#5a4a2a" : "#ffe0a0"; c.fillRect(x + TS * .3 + 1, y - TS * 1.84, 6, 6); } }]));
+  VBANCOS.forEach(([bx, by]) => obj.push([by, () => { const x = PX(bx), y = PY(by); if (!naTela(x, y)) return; sombra(x, y, TS * .6, TS * .1); c.fillStyle = "#5a3e24"; c.fillRect(x - TS * .6, y - TS * .32, TS * 1.2, TS * .1); c.fillRect(x - TS * .6, y - TS * .6, TS * 1.2, TS * .08); c.fillStyle = "#2a2a2a"; c.fillRect(x - TS * .5, y - TS * .32, 3, TS * .32); c.fillRect(x + TS * .5, y - TS * .32, 3, TS * .32); }]));
+  obj.push([VFONTE.y + .7, () => { const x = PX(VFONTE.x), y = PY(VFONTE.y); if (!naTela(x, y, 200)) return; sombra(x, y + TS * .5, TS * 1.4, TS * .35); c.fillStyle = "#8a8478"; c.beginPath(); c.ellipse(x, y + TS * .3, TS * 1.3, TS * .55, 0, 0, 7); c.fill(); c.fillStyle = ehNoite() ? "#2a3a40" : "#3a3428"; c.beginPath(); c.ellipse(x, y + TS * .25, TS * 1.05, TS * .4, 0, 0, 7); c.fill();
+    c.fillStyle = "#a8a090"; c.fillRect(x - TS * .14, y - TS * .9, TS * .28, TS * 1.1); c.beginPath(); c.arc(x, y - TS * 1.05, TS * .18, 0, 7); c.fill(); c.fillStyle = "#8a8478"; c.beginPath(); c.moveTo(x - TS * .3, y - TS * .1); c.lineTo(x, y - TS * .85); c.lineTo(x + TS * .3, y - TS * .1); c.fill(); c.fillStyle = "#6a645a"; c.fillRect(x - TS * .1, y - TS * 1.12, TS * .2, TS * .12); }]); // a santa sem rosto
+  obj.push([3.15, () => { const x = PX(25.2), y = PY(3.1); if (!naTela(x, y)) return; c.fillStyle = "#3a2a1a"; c.fillRect(x - 2, y - TS * 1.2, 4, TS * 1.2); c.fillStyle = "#5a4028"; c.fillRect(x - TS * .7, y - TS * 1.25, TS * 1.4, TS * .55); c.fillStyle = "#e8d8b0"; c.font = `700 ${Math.round(TS * .14)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText("VILA SOSSEGO", x, y - TS * 1.04); c.fillText("POP. 47", x, y - TS * .82); c.strokeStyle = "#a01e1e"; c.lineWidth = 2; c.beginPath(); c.moveTo(x + TS * .1, y - TS * .86); c.lineTo(x + TS * .42, y - TS * .8); c.stroke(); c.fillStyle = "#c82a1e"; c.fillText("46", x + TS * .5, y - TS * .7); c.textAlign = "start"; }]);
+  obj.push([VCEM.y0, () => { for (let gx = VCEM.x0; gx <= VCEM.x1; gx += .8) { const x = PX(gx), y = PY(VCEM.y0); c.fillStyle = "#1a1a1a"; c.fillRect(x - 1.5, y - TS * .7, 3, TS * .7); } c.strokeStyle = "#1a1a1a"; c.lineWidth = 2; c.beginPath(); c.moveTo(PX(VCEM.x0), PY(VCEM.y0) - TS * .55); c.lineTo(PX(VCEM.x1), PY(VCEM.y0) - TS * .55); c.stroke(); }]);
+  VILA.tumulos.forEach(t => obj.push([t.y, () => { const x = PX(t.x), y = PY(t.y); if (!naTela(x, y)) return; if (t.aberta) { c.fillStyle = "#140c06"; c.fillRect(x - TS * .3, y - TS * .2, TS * .6, TS * .9); c.fillStyle = "#5a4a30"; c.fillRect(x + TS * .35, y, TS * .5, TS * .3); c.fillStyle = "#e8e2d0"; c.font = `700 ${Math.round(TS * .14)}px "JetBrains Mono", monospace`; c.fillText("2026", x - TS * .25, y - TS * .3); return; }
+    c.fillStyle = t.k > .5 ? "#7a7468" : "#5a564e"; if (t.k > .7) { c.fillRect(x - 2.5, y - TS * .7, 5, TS * .7); c.fillRect(x - TS * .2, y - TS * .55, TS * .4, 4); } else { c.beginPath(); c.moveTo(x - TS * .2, y); c.lineTo(x - TS * .2, y - TS * .4); c.arc(x, y - TS * .4, TS * .2, PI, 0); c.lineTo(x + TS * .2, y); c.fill(); } }]));
+  NPCS.forEach(n => { const o = npcOnde(n); if (o.dentro) return; obj.push([o.y, () => { desenharNpc(n, PX(o.x), PY(o.y), TS, tm, { dir: o.dir, anda: o.anda, wx: o.x }); if (dist(o, R.eu) < 3.2) { c.fillStyle = "rgba(240,235,220,.8)"; c.font = `700 ${Math.round(Math.max(10, TS * .2))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText(n.nome, PX(o.x), PY(o.y) - TS * 1.25); c.textAlign = "start"; } }]); });
+  const ou = R.outro; if (ou && ou.lugar === "vila" && !ou.predio) obj.push([ou.eu.y, () => desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" })]);
+  obj.push([R.eu.y, () => desenharVoce(PX(R.eu.x), PY(R.eu.y), tm)]);
+  obj.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
+}
+function desenharVila(tm) {
+  if (!VILA) montarVila();
+  cam.x += (R.eu.x - cam.x) * .12; cam.y += (R.eu.y - cam.y) * .12; cam.x = cl(cam.x, W / TS / 2, VW - W / TS / 2); cam.y = cl(cam.y, Math.min(4, VH / 2), VH - H / TS / 2);
+  c.fillStyle = "#141a0e"; c.fillRect(0, 0, W, H);
+  c.drawImage(vilaCv, (cam.x - W / 2 / TS) * 32, (cam.y - H / 2 / TS) * 32, W / TS * 32, H / TS * 32, 0, 0, W, H);
+  desenharVilaObjetos(tm);
+}
+function desenharLuzVila(tm) {
+  const nt = horaNoite(); if (nt <= .02) return; const lw = luzCv.width, lh = luzCv.height, k = lw / W;
+  lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(4,6,14,${.9 * nt})`; lc.fillRect(0, 0, lw, lh);
+  lc.globalCompositeOperation = "destination-out";
+  const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
+  furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * raioLuz(R), R.lanterna ? 1 : .7);
+  const ou = R.outro; if (ou && ou.lugar === "vila" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
+  if (luzesVila()) { VPOSTES.forEach(([px, py], i) => { if (!apagaUm(i * .4)) furo(PX(px + .35), PY(py) - TS * 1.5, TS * 2.2, .85); }); VPREDIOS.forEach((p, i) => { if (!apagaUm(i)) furo(PX(p.x + p.w / 2), PY(p.y + p.h * .55), TS * 2.6, .7); }); }
+  c.drawImage(luzCv, 0, 0, W, H);
+}
+function desenharPredio(tm) {
+  const p = predio(R.predio), s = Math.min(W / (ROOM.w + 1.2), H / (ROOM.h + 1.4)), ox = W / 2 - ROOM.w / 2 * s, oy = H / 2 - ROOM.h / 2 * s + s * .1, X = x => ox + x * s, Y = y => oy + y * s, A = R.andar, noite = ehNoite() && !luzesVila();
+  c.fillStyle = "#06070a"; c.fillRect(0, 0, W, H);
+  c.fillStyle = A ? "#6a4a30" : p.igreja ? "#6a645a" : "#5a4430"; c.fillRect(X(0), Y(.9), ROOM.w * s, (ROOM.h - .9) * s);
+  for (let i = 0; i < 12; i++) { c.fillStyle = i % 2 ? "rgba(0,0,0,.08)" : "rgba(255,255,255,.03)"; c.fillRect(X(0), Y(.9 + i * .45), ROOM.w * s, .45 * s); }
+  c.fillStyle = A ? "#8a7058" : p.igreja ? "#a8a090" : p.cor; c.fillRect(X(0), Y(0), ROOM.w * s, .95 * s); c.fillStyle = "rgba(0,0,0,.2)"; c.fillRect(X(0), Y(.85), ROOM.w * s, .1 * s);
+  const caixa = (x, y, w, h, cor, topo) => { c.fillStyle = "rgba(0,0,0,.3)"; c.fillRect(X(x) + 3, Y(y + h) - 2, w * s, 5); c.fillStyle = cor; c.fillRect(X(x), Y(y), w * s, h * s); if (topo) { c.fillStyle = topo; c.fillRect(X(x), Y(y), w * s, .18 * s); } };
+  // escada
+  { const ex = X(7.1), ey = Y(.9); for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? "#5a3a22" : "#6a4a2a"; c.fillRect(ex, ey + (A ? i : 5 - i) * .25 * s, 1.6 * s, .25 * s); } c.fillStyle = "#3a2414"; c.fillRect(ex - 4, ey, 4, 1.5 * s); c.fillStyle = "#e8d8b0"; c.font = `700 ${Math.round(s * .18)}px "JetBrains Mono", monospace`; c.fillText(A ? "▼ DESCE" : "▲ SOBE", ex + 4, ey + 1.7 * s); }
+  if (A === 0) { // térreo: a loja
+    c.fillStyle = "#2a180e"; c.fillRect(X(4), Y(ROOM.h) - 4, s, 8); c.fillStyle = "#e8d8b0"; c.font = `700 ${Math.round(s * .17)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText("PORTA", X(4.5), Y(ROOM.h) + s * .3); c.textAlign = "start";
+    if (p.igreja) { caixa(3.2, 1.1, 2.6, .7, "#e8e2d0", "#c8a050"); c.fillStyle = "#c8a050"; c.fillRect(X(4.45), Y(.2), .1 * s, .7 * s); c.fillRect(X(4.2), Y(.38), .6 * s, .08 * s); for (const [bx, by] of [[.9, 3.1], [5.3, 3.1], [.9, 4.2], [5.3, 4.2]]) caixa(bx, by, 2.8, .45, "#5a3e24", "#7a5a32");
+      [[1.2, .1], [7.3, .1]].forEach(([sx2]) => { c.fillStyle = "#a8a090"; c.fillRect(X(sx2), Y(.1), .4 * s, .75 * s); c.fillStyle = "#6a645a"; c.beginPath(); c.arc(X(sx2 + .2), Y(.2), .14 * s, 0, 7); c.fill(); }); // santos sem rosto
+      for (let i = 0; i < 6; i++) { c.fillStyle = "#e8e2d0"; c.fillRect(X(3.4 + i * .4), Y(1.05), 3, -8); c.fillStyle = `rgba(255,200,90,${.6 + .3 * Math.sin(tm * 11 + i)})`; c.beginPath(); c.ellipse(X(3.4 + i * .4) + 1.5, Y(1.05) - 10, 1.6, 3, 0, 0, 7); c.fill(); } }
+    else {
+      for (let i = 0; i < 3; i++) { caixa(.3 + i * 2.2, .25, 1.9, .6, "#3a2414"); for (let k2 = 0; k2 < 5; k2++) { c.fillStyle = p.vit[(i + k2) % 3]; c.fillRect(X(.4 + i * 2.2 + k2 * .35), Y(.3), .25 * s, .22 * s); c.fillRect(X(.4 + i * 2.2 + k2 * .35), Y(.58), .25 * s, .2 * s); } } // prateleiras
+      caixa(1.2, 2.3, 4.6, .6, "#6a4a2a", "#8a6a3a");
+      const ex = { armazem: () => { for (let i = 0; i < 4; i++) caixa(6 + (i % 2) * .8, 3.6 + Math.floor(i / 2) * .5, .75, .5, "#c8b080", "#a89060"); }, padaria: () => { caixa(6.1, 3.4, 1.3, 1.1, "#8a4a2a", "#6a3a1e"); c.fillStyle = `rgba(255,${120 + Math.sin(tm * 8) * 30},40,.85)`; c.fillRect(X(6.4), Y(3.9), .7 * s, .35 * s); },
+        costura: () => { for (let i = 0; i < 2; i++) { c.fillStyle = "#3a3030"; c.fillRect(X(6.4 + i * .8), Y(3.2), .12 * s, .9 * s); c.fillStyle = ["#a02a2a", "#1e1a1e"][i]; c.beginPath(); c.ellipse(X(6.46 + i * .8), Y(3.4), .3 * s, .42 * s, 0, 0, 7); c.fill(); } },
+        ferreiro: () => { caixa(5.9, 3.5, 1.4, 1.1, "#3a3a3a", "#5a5a5a"); c.fillStyle = `rgba(255,${100 + Math.sin(tm * 9) * 40},30,.9)`; c.beginPath(); c.arc(X(6.6), Y(3.8), .3 * s, 0, 7); c.fill(); },
+        botica: () => { caixa(6.2, 3.6, 1, 1, "#2a2a2a"); c.fillStyle = "#5a8a3a"; c.beginPath(); c.ellipse(X(6.7), Y(3.7), .4 * s, .15 * s, 0, 0, 7); c.fill(); for (let i = 0; i < 3; i++) { c.fillStyle = "rgba(150,200,120,.3)"; c.beginPath(); c.arc(X(6.7) + Math.sin(tm * 2 + i) * 6, Y(3.4) - ((tm * 20 + i * 12) % 30), 4, 0, 7); c.fill(); } },
+        barbearia: () => { caixa(5.9, 3.4, 1, 1, "#8a1e1e", "#a02a2a"); c.fillStyle = "#c8d0d8"; c.fillRect(X(5.6), Y(.15), 1.6 * s, .65 * s); if (Math.sin(tm * .5) > .9) { c.fillStyle = "rgba(0,0,0,.8)"; c.beginPath(); c.arc(X(6.4), Y(.45), .14 * s, 0, 7); c.fill(); } },
+        delegacia: () => { c.fillStyle = "rgba(20,20,20,.5)"; c.fillRect(X(5.6), Y(3.2), 2.8 * s, 2.1 * s); c.strokeStyle = "#5a5a5a"; c.lineWidth = 3; for (let i = 0; i <= 9; i++) { c.beginPath(); c.moveTo(X(5.6 + i * .31), Y(3.2)); c.lineTo(X(5.6 + i * .31), Y(5.3)); c.stroke(); } c.fillStyle = "#e8e2d0"; c.fillRect(X(6.8), Y(4.6), .5 * s, .3 * s); },
+        coveiro: () => { for (let i = 0; i < 2; i++) caixa(5.4 + i * 1.35, 3.5, 1.2, .8, "#3a2414", "#4a3020"); c.strokeStyle = "#6a4a2a"; c.lineWidth = 2; c.beginPath(); c.moveTo(X(8.2), Y(3.1)); c.lineTo(X(8.4), Y(5)); c.stroke(); } }[p.id]; if (ex) ex();
+      if (!lojaAberta(p.id)) { c.fillStyle = "#e8d8b0"; c.font = `800 ${Math.round(s * .26)}px "Big Shoulders Display", sans-serif`; c.fillText("FECHADO", X(2.6), Y(2.8)); } }
+  } else { // em cima: o quarto
+    caixa(.5, 1, 2.2, 1.7, "#e8e2d0", "#c8b8a0"); c.fillStyle = "#8a3a3a"; c.fillRect(X(.5), Y(1.6), 2.2 * s, 1.1 * s); c.fillStyle = "#f2f0e8"; c.fillRect(X(.7), Y(1.1), .8 * s, .4 * s);
+    if (p.id === "padaria") { caixa(3.1, 1, 1.7, 1.4, "#e8e2d0"); c.fillStyle = "#3a6a9a"; c.fillRect(X(3.1), Y(1.5), 1.7 * s, .9 * s); }
+    caixa(.4, 4.1, 1, 1.3, "#4a2a18", "#5a3a22"); caixa(4.4, 3.9, 1.3, .8, "#6a4a2a", "#8a6a3a"); c.fillStyle = "#e8e2d0"; c.fillRect(X(4.9), Y(3.95), 4, -9); if (!noite) { c.fillStyle = "rgba(255,200,90,.8)"; c.beginPath(); c.ellipse(X(4.9) + 2, Y(3.95) - 11, 1.6, 3, 0, 0, 7); c.fill(); }
+    c.fillStyle = noite ? "#0a1020" : "#8aa8c0"; c.fillRect(X(3.4), Y(.15), .9 * s, .55 * s); c.strokeStyle = "#2a1a0e"; c.lineWidth = 3; c.strokeRect(X(3.4), Y(.15), .9 * s, .55 * s);
+    if (noite && Math.sin(tm * .5) > .96) { c.fillStyle = "rgba(240,240,230,.9)"; c.fillRect(X(3.7), Y(.35), 3, 3); c.fillRect(X(3.95), Y(.35), 3, 3); }
+  }
+  // moradores aqui dentro
+  NPCS.forEach(n => { const o = npcOnde(n); if (!o.dentro || o.predio !== R.predio || o.andar !== A) return;
+    if (o.dorme) { c.fillStyle = n.look.pele; c.beginPath(); c.arc(X(o.x - .45), Y(o.y - .45), .26 * s, 0, 7); c.fill(); c.fillStyle = "#1a1210"; c.fillRect(X(o.x - .52), Y(o.y - .47), 3, 1.5); c.fillRect(X(o.x - .36), Y(o.y - .47), 3, 1.5); if (!n.look.careca) { c.fillStyle = n.look.cabelo; c.beginPath(); c.arc(X(o.x - .45), Y(o.y - .52), .23 * s, PI, 0); c.fill(); } c.fillStyle = "rgba(0,0,0,.25)"; c.fillRect(X(o.x - .7), Y(o.y - .2), 1.2 * s, .5 * s);
+      c.fillStyle = "rgba(230,230,240,.7)"; c.font = `700 ${Math.round(s * .2)}px "JetBrains Mono", monospace`; c.fillText("z".repeat(1 + Math.floor(tm * 1.5) % 3), X(o.x - .1), Y(o.y - .8)); return; }
+    desenharNpc(n, X(o.x), Y(o.y + .35), s * 1.05, tm, { dir: o.dir, wx: o.x }); });
+  const ou = R.outro; if (ou && ou.lugar === "vila" && ou.predio === R.predio && ou.andar === A) desenharVoce(X(ou.int.x), Y(ou.int.y), tm, { q: ou, dir: ou.int.dir || 1, s: s * 1.05, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" });
+  desenharVoce(X(R.int.x), Y(R.int.y), tm, { dir: R.int.dir || 1, s: s * 1.05 });
+  // escuro de noite: só a lanterna
+  if (noite) { const x = X(R.int.x), y = Y(R.int.y) - s * .4, r = s * (R.lanterna ? 3.6 : 2.4), g = c.createRadialGradient(x, y, r * .2, x, y, r); g.addColorStop(0, "rgba(3,4,8,0)"); g.addColorStop(1, "rgba(3,4,8,.84)"); c.fillStyle = g; c.fillRect(0, 0, W, H); }
+  c.fillStyle = "rgba(240,235,220,.6)"; c.font = `700 ${Math.round(Math.max(11, s * .2))}px "JetBrains Mono", monospace`; c.textAlign = "right"; c.fillText(p.nome + (A ? " · quarto" : ""), X(ROOM.w), Y(ROOM.h) + Math.max(14, s * .3)); c.textAlign = "start";
 }
 
 /* ---------- a história antes do jogo ---------- */
@@ -1640,22 +2030,22 @@ function netCaiu() {
   painelAberto = true; el.rcPainel.hidden = false; el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>A conexão caiu</h2><p>Perdemos o contato com a sala do seu amigo.</p><div class="rc-linha"><button type="button" class="rc-op dest" id="rcSair">Voltar</button></div></div>`;
   document.getElementById("rcSair").addEventListener("click", () => { fecharPainel(); menuInicial(); });
 }
-const novoOutro = () => ({ eu: { x: 14.2, y: 12.9, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5.6, y: 5.6, dir: 1 }, lanterna: false, correndo: false, regando: 0, velaCom: false, pesca: null, perto: 0, caido: null, folego: 100, chapeu: "palha", semente: 0, cor: 1, agua: 5, vidas: 2 });
+const novoOutro = () => ({ eu: { x: 14.2, y: 12.9, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5.6, y: 5.6, dir: 1 }, lanterna: false, correndo: false, regando: 0, velaCom: false, pesca: null, perto: 0, caido: null, folego: 100, chapeu: "palha", semente: 0, cor: 1, agua: 5, vidas: 1, lugar: "sitio", predio: null, andar: 0, int: { x: 4.5, y: 5.2, dir: 1 }, roupa: null, garrafada: 0, broa: 0, conv: {} });
 function netReceber(d) {
   if (!d || !d.t) return;
   if (d.t === "tchau") return netCaiu();
   if (d.t === "chat") return receberChat(d.txt);
   if (Net.papel === "host") {
     if (!R || !R.outro) return; const o = R.outro;
-    if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); }
+    if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; o.lugar = d.lugar === "vila" ? "vila" : "sitio"; o.predio = d.predio || null; o.andar = d.andar | 0; if (d.int) o.int = d.int; o.conv = d.conv || {}; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); }
     else if (d.t === "acao") { comJogador(o, () => { const a = oQueFazer(); if (a && !a.loc && a.t.split(" ")[0] === String(d.nome).split(" ")[0]) a.fn(); }); hud(); }
-    else if (d.t === "compra") { const op = opcoesBancada().find(x => x.nome === d.nome); if (op && op.ok) { R.moedas -= op.preco; comJogador(o, op.fn); S.moedas(); hud(); } }
+    else if (d.t === "compra") { const op = comJogador(o, () => (d.loja ? opcoesLoja(d.loja) : opcoesBancada())).find(x => x.nome.replace(/^✓ /, "") === d.nome); if (op && op.ok) { R.moedas -= op.preco; comJogador(o, op.fn); S.moedas(); hud(); } }
     else if (d.t === "peixe") { R.peixes[d.nome] = (R.peixes[d.nome] || 0) + 1; hud(); }
     return;
   }
   if (Net.papel === "guest") {
     if (d.t === "cheia") { aoErroLobby && aoErroLobby("Essa sala já tem dois jogadores."); netFechar(); return; }
-    if (d.t === "inicio") { iniciarJogo("guest"); return; }
+    if (d.t === "inicio") { iniciarJogo("guest", d.volta); return; }
     if (!R || R.online !== "guest") return;
     if (d.t === "s") aplicarEstado(d);
     else if (d.t === "som" && SOM_ORIG[d.k]) SOM_ORIG[d.k](...(d.a || []));
@@ -1668,24 +2058,24 @@ let aoErroLobby = null;
 const SOM_ORIG = {}; Object.keys(S).forEach(k => { SOM_ORIG[k] = S[k]; if (k === "passo") return; S[k] = (...a) => { SOM_ORIG[k](...a); if (R && R.online === "host" && R.outro) enviar({ t: "som", k, a }); }; });
 function cairLocal(quem) { if (R.caido) return; R.caido = { quem, t: 0 }; R.dentro = false; R.lanterna = false; R.correndo = false; SOM_ORIG.susto(); try { vibrar(400); } catch (e) {} }
 function estadoPara() {
-  const pl = q => ({ eu: { x: q.eu.x, y: q.eu.y, dir: q.eu.dir, anda: q.eu.anda, fase: q.eu.fase }, dentro: q.dentro, sala: q.sala, lanterna: q.lanterna, regando: q.regando, chapeu: q.chapeu, caido: q.caido ? { quem: q.caido.quem, fora: q.caido.fora } : null, velaCom: q.velaCom, cor: q.cor, perto: q.perto, vidas: q.vidas, agua: q.agua });
+  const pl = q => ({ lugar: q.lugar, predio: q.predio, andar: q.andar, int: q.int, roupa: q.roupa, eu: { x: q.eu.x, y: q.eu.y, dir: q.eu.dir, anda: q.eu.anda, fase: q.eu.fase }, dentro: q.dentro, sala: q.sala, lanterna: q.lanterna, regando: q.regando, chapeu: q.chapeu, caido: q.caido ? { quem: q.caido.quem, fora: q.caido.fora } : null, velaCom: q.velaCom, cor: q.cor, perto: q.perto, vidas: q.vidas, agua: q.agua });
   const o = R.outro;
   return { t: "s", T: R.t, dia: R.dia, moedas: R.moedas, agua: R.agua, aguaMax: R.aguaMax, oleo: R.oleo, vel: R.vel, lanternaBoa: R.lanternaBoa, sementes: R.sementes, vara: R.vara, pecas: R.pecas, peneira: R.peneira,
-    inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
+    enxada: R.enxada, lampiao: R.lampiao, ferradura: R.ferradura, sal: R.sal, arruda: R.arruda, aguaBenta: R.aguaBenta, inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
     gato: R.gato, cachorro: R.cachorro, seco: R.seco, vulto: R.vulto, vela: R.vela, velaEntregue: R.velaEntregue, velaHoje: R.velaHoje, alma: R.alma, galinhas: R.galinhas, porcos: R.porcos,
     aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
-    outro: pl(R), voce: o ? { caido: o.caido ? { quem: o.caido.quem, fora: o.caido.fora } : null, velaCom: o.velaCom, regando: o.regando, agua: o.agua, vidas: o.vidas } : null };
+    outro: pl(R), voce: o ? { roupa: o.roupa, garrafada: o.garrafada, broa: o.broa, caido: o.caido ? { quem: o.caido.quem, fora: o.caido.fora } : null, velaCom: o.velaCom, regando: o.regando, agua: o.agua, vidas: o.vidas } : null };
 }
 const SUAVE = ["gato", "cachorro", "seco", "aranha", "esp", "saci", "vulto", "mula"];
 function aplicarEstado(d) {
   const suave = (velho, novo) => { if (velho && novo && novo.x != null && velho.x != null && Math.hypot(novo.x - velho.x, novo.y - velho.y) < 4) { novo.ax = novo.x; novo.ay = novo.y; novo.x = velho.x; novo.y = velho.y; } };
   SUAVE.forEach(k => suave(R[k], d[k])); ["galinhas", "porcos"].forEach(k => d[k] && d[k].forEach((g, i) => suave(R[k] && R[k][i], g)));
   if (d.outro && R.outro) { const a = d.outro.eu, b = R.outro.eu; suave(b, a); if (d.outro.sala && R.outro.sala) suave(R.outro.sala, d.outro.sala); }
-  ["dia", "moedas", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
+  ["enxada", "lampiao", "ferradura", "sal", "arruda", "aguaBenta", "dia", "moedas", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
     "gato", "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "queimado", "sinoT", "sinoUsado", "outro", "tempoTotal"].forEach(k => { R[k] = d[k]; });
   R.t = d.T; R.fxR = d.fx || []; R.semente = cl(R.semente, 0, R.sementes.length - 1);
   d.canteiros.forEach(([a, cv2], i) => { R.canteiros[i].aberto = a; R.canteiros[i].covas = cv2; });
-  if (d.voce) { R.agua = d.voce.agua; R.vidas = d.voce.vidas; if (d.voce.caido) { cairLocal(d.voce.caido.quem); R.caido.fora = d.voce.caido.fora; } else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
+  if (d.voce) { R.roupa = d.voce.roupa; R.garrafada = d.voce.garrafada; if (d.voce.broa > 0 && !(R.broa > 0)) R.broa = d.voce.broa; R.agua = d.voce.agua; R.vidas = d.voce.vidas; if (d.voce.caido) { cairLocal(d.voce.caido.quem); R.caido.fora = d.voce.caido.fora; } else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
   if (d.morto && !R.morto) { R.morto = { ...d.morto, t: 0 }; SOM_ORIG.susto(); try { vibrar(500); } catch (e) {} setTimeout(() => R && R.morto && telaFim("morreu"), 2300); }
   if (d.venceu && !R.venceu) { R.venceu = { t: d.venceu.t }; R.lanterna = false; }
   if (!d.morto && !d.venceu && (R.morto || R.venceu)) { R.morto = null; R.venceu = null; }
@@ -1704,7 +2094,7 @@ function atualizarConvidado(dt) {
   moverLocal(dt); atualizarPesca(dt);
   if (R.oleo <= 0) R.lanterna = false;
   R.perto = calcPerto(); musicaPasso(dt);
-  Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .066; enviar({ t: "eu", eu: { x: R.eu.x, y: R.eu.y, dir: R.eu.dir, anda: R.eu.anda, fase: R.eu.fase }, dentro: R.dentro, sala: R.sala, lanterna: R.lanterna, correndo: R.correndo, chapeu: R.chapeu, semente: R.semente }); }
+  Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .066; enviar({ t: "eu", eu: { x: R.eu.x, y: R.eu.y, dir: R.eu.dir, anda: R.eu.anda, fase: R.eu.fase }, dentro: R.dentro, sala: R.sala, lugar: R.lugar, predio: R.predio, andar: R.andar, int: R.int, conv: R.conv, lanterna: R.lanterna, correndo: R.correndo, chapeu: R.chapeu, semente: R.semente }); }
   if (Math.floor(R.t * 2) !== Math.floor((R.t - dt) * 2)) hud();
   const o = oQueFazer(); el.rcAcao.textContent = o ? o.t : "Ação"; el.rcAcao.style.opacity = o ? 1 : .5;
 }
@@ -1766,12 +2156,12 @@ function entrarSala() {
   const ir = () => { st("Procurando a sala..."); netEntrar(inp.value, () => st("Conectado! Esperando o anfitrião começar..."), st); };
   document.getElementById("rcIr").addEventListener("click", ir); inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") ir(); });
 }
-function iniciarJogo(modo) {
+function iniciarJogo(modo, semTutorial) {
   fecharPainel(); novoJogo(); R.online = modo === "solo" ? null : modo; R.cor = modo === "guest" ? 1 : 0;
   if (modo === "guest") { R.eu.x = 14.2; R.eu.y = 12.9; }
-  if (modo === "host") { R.outro = novoOutro(); enviar({ t: "inicio" }); }
+  if (modo === "host") { R.outro = novoOutro(); enviar({ t: "inicio", volta: !!semTutorial }); }
   hud();
-  const comeca = () => { if (!R) return; R.menu = false; tutorial(); };
+  const comeca = () => { if (!R) return; R.menu = false; if (semTutorial) R.tutorial = 1; else tutorial(); };
   if (!ls("roca_hist")) { R.menu = modo === "solo"; historia(comeca); } else comeca();
 }
 
@@ -1794,5 +2184,6 @@ window.rocaVoltar = () => { if (!window.rocaAtiva) return false; if (el.rcChatBa
 window.rocaNet = Net; window.rocaHistoria = () => historia(() => {});
 window.rocaMedir = () => medir(); window.rocaEstado = () => R; // usado nos testes
 window.morrerTeste = () => morrer("seco", "teste", "teste");
+window.telaFimTeste = () => telaFim("morreu");
 })();
 
