@@ -220,15 +220,17 @@ function montarUI() {
   d.innerHTML = `<canvas id="rocaCv"></canvas>
     <div class="rc-hud"><div class="rc-l"><b id="rcMoedas">0</b><span id="rcDia">Dia 1</span></div>
       <div class="rc-barras"><i class="rc-b agua"><s id="rcAgua"></s></i><i class="rc-b oleo"><s id="rcOleo"></s></i><i class="rc-b folego"><s id="rcFolego"></s></i></div>
-      <div class="rc-vidas" id="rcVidas"></div><div class="rc-itens" id="rcItens"></div><button class="rc-menu rc-moch" id="rcMoch" type="button" aria-label="Mochila"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="8" width="18" height="20" rx="6" fill="#8a5a32" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="17" width="11" height="8" rx="2.5" fill="#6a4224" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 19.5h11" stroke="currentColor" stroke-width="1"/><circle cx="16" cy="21.5" r="1.1" fill="#f2c94a"/></svg></button><button class="rc-menu" id="rcMenu" type="button">Pausa</button></div>
-    <div class="rc-obj" id="rcObj"></div>
+      <div class="rc-vidas" id="rcVidas"></div><div class="rc-itens" id="rcItens"></div><button class="rc-menu rc-moch rc-chatbt" id="rcChat" type="button" aria-label="Chat" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-7l-6 5v-5h-3a4 4 0 0 1-4-4z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="11" cy="12.5" r="1.6" fill="currentColor"/><circle cx="16" cy="12.5" r="1.6" fill="currentColor"/><circle cx="21" cy="12.5" r="1.6" fill="currentColor"/></svg><i id="rcChatN" hidden></i></button><button class="rc-menu rc-moch" id="rcMoch" type="button" aria-label="Mochila"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="8" width="18" height="20" rx="6" fill="#8a5a32" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="17" width="11" height="8" rx="2.5" fill="#6a4224" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 19.5h11" stroke="currentColor" stroke-width="1"/><circle cx="16" cy="21.5" r="1.1" fill="#f2c94a"/></svg></button><button class="rc-menu" id="rcMenu" type="button">Pausa</button></div>
+    <div class="rc-obj" id="rcObj"></div><div class="rc-chatlog" id="rcChatLog"></div>
+    <div class="rc-chatbar" id="rcChatBar" hidden><div class="rc-rapidas">${["Socorro!", "Vem aqui!", "Corre!", "Tô indo!", "Apaga a lanterna!", "Vou vender", "Cuidado!", "Valeu!"].map(t => `<button type="button" data-r="${t}">${t}</button>`).join("")}</div>
+      <form id="rcChatF"><input id="rcChatIn" maxlength="80" autocomplete="off" placeholder="Escreva para o seu amigo..."><button type="submit">Enviar</button><button type="button" id="rcChatX" aria-label="Fechar">✕</button></form></div>
     <div class="rc-joy" id="rcJoy"><i id="rcJoyK"></i></div>
     <div class="rc-bts"><button id="rcSem" type="button" class="rc-bt sem"></button><button id="rcLuz" type="button" class="rc-bt luz" aria-label="Lanterna"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 9a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="2"/><rect x="10" y="9" width="12" height="3" rx="1" fill="currentColor"/><path d="M11 12h10l1 11H10z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path class="chama" d="M16 14c2 2.5 2.6 4 2.6 5.3a2.6 2.6 0 0 1-5.2 0c0-1.3.6-2.8 2.6-5.3z" fill="#f2c94a"/><rect x="9" y="23" width="14" height="3" rx="1" fill="currentColor"/></svg></button><button id="rcCorre" type="button" class="rc-bt corre" aria-label="Correr"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="19" cy="6.5" r="3" fill="currentColor"/><path d="M16.5 5.5c-2 1-3 3-3.4 5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="19" cy="3.6" rx="4.6" ry="1.2" fill="currentColor"/><path d="M18 10l-3 7h6z" fill="currentColor"/><path d="M17 11l-5 2.5M19 11l4.5 3.5M16 17l-4.5 4 -3 .5M19 17l2.5 5 4 1.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12h5M2 16h6M4 20h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".6"/></svg></button><button id="rcAcao" type="button" class="rc-bt acao">Ação</button></div>
     <div class="rc-fala" id="rcFala" hidden></div><div class="rc-dica" id="rcDica"></div>
     <div class="rc-painel" id="rcPainel" hidden></div>
     <div class="rc-gire" id="rcGire" hidden><b>Vire o celular</b><span>Este modo é jogado com o celular deitado.</span></div>`;
   document.body.appendChild(d);
-  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcObj", "rcVidas", "rcMoch"].forEach(i => el[i] = document.getElementById(i));
+  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcMoch"].forEach(i => el[i] = document.getElementById(i));
   cv = document.getElementById("rocaCv"); c = cv.getContext("2d"); luzCv = document.createElement("canvas"); lc = luzCv.getContext("2d");
   const st = document.createElement("style"); st.textContent = `
   #roca{position:fixed;inset:0;z-index:300;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;font-family:var(--f-mono,monospace)}
@@ -258,6 +260,13 @@ function montarUI() {
   .rc-caixa.rc-diario table{width:100%;border-collapse:collapse;font:14px var(--f-body,serif)}.rc-caixa.rc-diario td{padding:4px 6px;border-bottom:1px dashed rgba(60,40,20,.3)}.rc-caixa.rc-diario td:last-child{text-align:right;font-weight:700;color:#7a3a10}.rc-caixa.rc-diario h3{margin:10px 0 4px;font:800 16px "Big Shoulders Display",sans-serif;color:#5a1a10;letter-spacing:.04em}
   .rc-caixa.rc-diario ul{margin:0;padding-left:18px}.rc-caixa.rc-diario li{margin-bottom:5px}
   .rc-moch-l{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}.rc-moch-l div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:7px 10px;font:13px var(--f-body,serif)}.rc-moch-l b{color:#f2c94a;font:700 15px var(--f-mono,monospace);float:right}
+  .rc-chatbt{position:relative}.rc-chatbt + .rc-moch{margin-left:0}.rc-chatbt i{position:absolute;top:2px;right:3px;width:9px;height:9px;border-radius:50%;background:#e2483d}
+  .rc-chatlog{position:absolute;left:max(12px,env(safe-area-inset-left));top:84px;max-width:36vw;display:flex;flex-direction:column;gap:3px;pointer-events:none}
+  .rc-chatlog div{background:rgba(6,8,12,.62);color:#f4efe4;border-radius:9px;padding:3px 8px;font:13px/1.3 var(--f-body,serif);transition:opacity .6s;word-break:break-word}.rc-chatlog b{font:700 10.5px var(--f-mono,monospace);color:#9bd86b;margin-right:4px}.rc-chatlog div.eu b{color:#f2c94a}
+  .rc-chatbar{position:absolute;left:50%;transform:translateX(-50%);top:46px;width:min(560px,60vw);background:rgba(10,12,16,.9);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:8px;z-index:3}
+  .rc-rapidas{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}.rc-rapidas button{background:rgba(242,163,58,.16);border:1px solid rgba(242,163,58,.45);color:#f4efe4;border-radius:10px;padding:4px 9px;font:600 12px var(--f-mono,monospace)}
+  .rc-chatbar form{display:flex;gap:6px}.rc-chatbar input{flex:1;min-width:0;background:#05070a;border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#f4efe4;padding:7px 10px;font:15px var(--f-body,serif)}
+  .rc-chatbar form button{background:rgba(242,163,58,.3);border:1px solid rgba(242,163,58,.7);color:#f4efe4;border-radius:10px;padding:0 12px;font:700 12px var(--f-mono,monospace)}.rc-chatbar #rcChatX{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.2)}
   .rc-bts .luz{grid-column:1;grid-row:1}.rc-bts .corre{grid-column:1;grid-row:2}.rc-bts .sem{position:absolute;right:0;bottom:100px;width:88px;height:42px;border-radius:14px}
   .rc-fala{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;width:min(520px,52vw);background:rgba(12,14,18,.88);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px 16px;color:#f4efe4;font:15px/1.4 var(--f-body,serif)}
   .rc-fala small{display:block;margin-top:6px;color:#9bd86b;font:600 10px var(--f-mono,monospace);letter-spacing:.1em;text-transform:uppercase}
@@ -289,7 +298,12 @@ function montarUI() {
   const solta = () => { joy.on = false; joy.dx = joy.dy = 0; el.rcJoyK.style.transform = ""; };
   jz.addEventListener("pointerup", solta); jz.addEventListener("pointercancel", solta);
   const bt = (b, fn) => b.addEventListener("pointerdown", e => { e.preventDefault(); initAudio(); fn(); });
-  bt(el.rcAcao, acao); bt(el.rcLuz, () => alternarLanterna()); bt(el.rcCorre, () => correr()); bt(el.rcMoch, () => { if (R && !R.menu && !painelAberto) abrirMochila(); }); bt(el.rcSem, () => { R.semente = (R.semente + 1) % R.sementes.length; tocarTom(900, .05, { vol: .05 }); hud(); });
+  bt(el.rcAcao, acao); bt(el.rcLuz, () => alternarLanterna()); bt(el.rcCorre, () => correr()); bt(el.rcChat, () => abrirChat(!el.rcChatBar.hidden ? false : true));
+  el.rcChatBar.addEventListener("pointerdown", e => e.stopPropagation()); el.rcChatIn.addEventListener("keydown", e => e.stopPropagation()); el.rcChatIn.addEventListener("keyup", e => e.stopPropagation());
+  el.rcChatF.addEventListener("submit", e => { e.preventDefault(); mandarChat(el.rcChatIn.value); el.rcChatIn.value = ""; abrirChat(false); });
+  el.rcChatX.addEventListener("click", () => abrirChat(false));
+  el.rcChatBar.querySelectorAll("[data-r]").forEach(b => b.addEventListener("click", () => { mandarChat(b.dataset.r); abrirChat(false); }));
+  bt(el.rcMoch, () => { if (R && !R.menu && !painelAberto) abrirMochila(); }); bt(el.rcSem, () => { R.semente = (R.semente + 1) % R.sementes.length; tocarTom(900, .05, { vol: .05 }); hud(); });
   el.rcMenu.addEventListener("click", () => pausar());
   el.rcFala.addEventListener("pointerdown", e => { e.preventDefault(); proximaFala(); });
   addEventListener("keydown", e => { if (document.getElementById("roca").hidden) return; teclas[e.key.toLowerCase()] = true; const k = e.key.toLowerCase(); if (["f", "e", " "].includes(k)) { e.preventDefault(); if (R.msg) proximaFala(); else acao(); } if (k === "r") alternarLanterna(); if (k === "shift") correr(); if (k === "q") el.rcSem.dispatchEvent(new Event("pointerdown")); if (k === "escape") pausar(); });
@@ -533,6 +547,7 @@ function hud() {
   el.rcItens.innerHTML = it.map(x => `<span>${x}</span>`).join("");
   const sm = PLANTAS[R.sementes[R.semente]]; el.rcSem.innerHTML = `<span style="color:${sm.cor}">●</span><br>${sm.nome}`;
   el.rcLuz.classList.toggle("on", R.lanterna); el.rcCorre.classList.toggle("on", R.correndo);
+  const comAmigo = !!(R.online && R.outro && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
   el.rcObj.textContent = R.menu ? "" : "Objetivo: " + objetivo();
   const cor = n => "♥".repeat(Math.max(0, n)) + "♡".repeat(Math.max(0, 2 - n));
   el.rcVidas.innerHTML = R.online && R.outro ? `<span>Você <b>${cor(R.vidas)}</b></span><span>${R.online === "host" ? "Amigo" : "Yasmin"} <b>${cor(R.outro.vidas)}</b></span>` : "";
@@ -1452,6 +1467,7 @@ function desenharFx() {
   if ((a.fase === "anda" || a.fase === "ataque") && !R.dentro) { // olho que mostra o quanto ela já te notou
     const w = Math.min(180, W * .24), x = W / 2 - w / 2, y = 36, v = a.fase === "ataque" ? 1 : a.alerta; c.fillStyle = "rgba(0,0,0,.5)"; c.fillRect(x, y, w, 7); c.fillStyle = v > .7 ? "#e2483d" : v > .35 ? "#f2a33a" : "#e8e2d4"; c.fillRect(x, y, w * v, 7);
     c.strokeStyle = "rgba(255,255,255,.5)"; c.lineWidth = 1.5; c.beginPath(); c.ellipse(x - 14, y + 3.5, 9, 5, 0, 0, 7); c.stroke(); c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(x - 14, y + 3.5, 2.4, 0, 7); c.fill(); }
+  if (!R.dentro) { if (CHAT.meu) balaoChat(R.eu, CHAT.meu); if (CHAT.dele && R.outro && !R.outro.dentro) balaoChat(R.outro.eu, CHAT.dele); }
   if (R.caido) { c.fillStyle = `rgba(120,10,10,${.25 + .1 * Math.sin(performance.now() / 300)})`; c.fillRect(0, 0, W, H); }
 }
 function desenharVitoria(tm) { if (!R.venceu) return; const k = R.venceu.t; if (k < 1) return; c.fillStyle = `rgba(0,0,0,${cl((k - 3) / 1.4, 0, 1)})`; c.fillRect(0, 0, W, H); }
@@ -1624,6 +1640,7 @@ const novoOutro = () => ({ eu: { x: 14.2, y: 12.9, dir: 1, anda: 0, fase: 0 }, d
 function netReceber(d) {
   if (!d || !d.t) return;
   if (d.t === "tchau") return netCaiu();
+  if (d.t === "chat") return receberChat(d.txt);
   if (Net.papel === "host") {
     if (!R || !R.outro) return; const o = R.outro;
     if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); }
@@ -1688,6 +1705,27 @@ function atualizarConvidado(dt) {
   const o = oQueFazer(); el.rcAcao.textContent = o ? o.t : "Ação"; el.rcAcao.style.opacity = o ? 1 : .5;
 }
 
+/* ---------- chat do online ---------- */
+const CHAT = { meu: null, dele: null, log: [] };
+function abrirChat(abrir) { el.rcChatBar.hidden = !abrir; el.rcChatN.hidden = true; if (abrir) setTimeout(() => { try { el.rcChatIn.focus(); } catch (e) {} }, 50); else try { el.rcChatIn.blur(); } catch (e) {} }
+function limparTexto(t) { return String(t || "").replace(/[\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80); }
+function mandarChat(t) { t = limparTexto(t); if (!t || !R || !R.online) return; enviar({ t: "chat", txt: t }); CHAT.meu = { txt: t, t: performance.now() }; logChat(t, true); tocarTom(820, .06, { vol: .04 }); }
+function receberChat(t) { t = limparTexto(t); if (!t || !R || !R.online) return; CHAT.dele = { txt: t, t: performance.now() }; logChat(t, false); tocarTom(660, .08, { tipo: "triangle", vol: .06 }); tocarTom(990, .08, { tipo: "triangle", vol: .05, quando: .09 }); if (el.rcChatBar.hidden) el.rcChatN.hidden = false; }
+function logChat(t, eu) {
+  const d = document.createElement("div"); d.className = eu ? "eu" : ""; const b = document.createElement("b"); b.textContent = eu ? "Você:" : (R.online === "host" ? "Amigo(a):" : "Yasmin:"); d.append(b, document.createTextNode(t));
+  el.rcChatLog.appendChild(d); while (el.rcChatLog.children.length > 4) el.rcChatLog.firstChild.remove();
+  setTimeout(() => { d.style.opacity = "0"; setTimeout(() => d.remove(), 700); }, 12000);
+}
+function balaoChat(p, m) {
+  const idade = (performance.now() - m.t) / 1000; if (idade > 5) return; const a = Math.min(1, (5 - idade) / .6), x = PX(p.x), y = PY(p.y) - TS * 1.55;
+  c.save(); c.globalAlpha = a; c.font = `600 ${Math.round(Math.max(12, TS * .27))}px "Source Serif 4", Georgia, serif`;
+  const pal = m.txt.split(" "), linhas = []; let l = ""; for (const w of pal) { const t2 = l ? l + " " + w : w; if (c.measureText(t2).width > TS * 3.6 && l) { linhas.push(l); l = w; } else l = t2; } if (l) linhas.push(l);
+  const lh = Math.max(14, TS * .32), w = Math.max(...linhas.map(t2 => c.measureText(t2).width)) + 16, h = linhas.length * lh + 10;
+  c.fillStyle = "rgba(244,239,228,.95)"; c.beginPath(); c.roundRect ? c.roundRect(x - w / 2, y - h, w, h, 9) : c.rect(x - w / 2, y - h, w, h); c.fill(); c.beginPath(); c.moveTo(x - 6, y); c.lineTo(x, y + 7); c.lineTo(x + 6, y); c.fill();
+  c.fillStyle = "#1a1410"; c.textAlign = "center"; linhas.forEach((t2, i) => c.fillText(t2, x, y - h + 5 + lh * (i + .78))); c.textAlign = "start"; c.restore();
+}
+window.rocaChat = mandarChat; // usado nos testes
+
 /* ---------- menu do modo: sozinha, criar sala, entrar ---------- */
 function menuInicial() {
   netFechar(); if (!R || !R.menu) { novoJogo(); R.menu = true; R.t = DIA - 20; } hud();
@@ -1747,7 +1785,7 @@ window.sairRoca = function () {
   try { if (window.Android && Android.orientacao) Android.orientacao("retrato"); } catch (e) {}
   if (typeof abrirHub === "function") abrirHub();
 };
-window.rocaVoltar = () => { if (!window.rocaAtiva) return false; if (document.querySelector(".rc-hist")) return true; if (R && R.menu) { if (painelAberto && document.getElementById("rcCancelar")) { netFechar(); menuInicial(); } else { fecharPainel(); sairRoca(); } return true; } if (painelAberto) { if (R && (R.morto || R.venceu)) return true; fecharPainel(); } else pausar(); return true; };
+window.rocaVoltar = () => { if (!window.rocaAtiva) return false; if (el.rcChatBar && !el.rcChatBar.hidden) { abrirChat(false); return true; } if (document.querySelector(".rc-hist")) return true; if (R && R.menu) { if (painelAberto && document.getElementById("rcCancelar")) { netFechar(); menuInicial(); } else { fecharPainel(); sairRoca(); } return true; } if (painelAberto) { if (R && (R.morto || R.venceu)) return true; fecharPainel(); } else pausar(); return true; };
 window.rocaNet = Net; window.rocaHistoria = () => historia(() => {});
 window.rocaEstado = () => R; // usado nos testes
 window.morrerTeste = () => morrer("seco", "teste", "teste");
