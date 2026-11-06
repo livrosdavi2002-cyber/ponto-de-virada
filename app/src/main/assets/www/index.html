@@ -488,7 +488,7 @@ body[data-modo="cherno"] .sob-modo { color: #b8e05a; }
     <div class="place">Histórias em que você decide</div>
     <h1>Última <span>Escolha</span></h1>
     <p>Escolha uma fase. Use fone de ouvido: o som faz parte do jogo.</p>
-    <div class="progresso"><span id="progTotal"></span><span class="grp2"><button id="btnVozHub" type="button">Narração: ligada</button><button id="btnTrocaVoz" type="button" hidden>Trocar voz</button><button id="btnConq" type="button">Conquistas</button></span></div>
+    <div class="progresso"><span id="progTotal"></span><span class="grp2"><button id="btnVozHub" type="button">Narração: ligada</button><button id="btnTrocaVoz" type="button" hidden>Trocar voz</button><button id="btnFps" type="button">Bateria: economia</button><button id="btnConq" type="button">Conquistas</button></span></div>
     <div class="abas" role="tablist"><button type="button" role="tab" id="abaHist" data-aba="hist">Histórias</button><button type="button" role="tab" id="abaInf" data-aba="inf">Modos infinitos <span class="abas-tag">Premium</span></button><button type="button" role="tab" id="abaRoca" data-aba="roca">Roça <span class="abas-tag">Novo</span></button></div>
     <div class="liberar" id="liberar" hidden></div>
     <div class="lista" id="lista"></div>
@@ -758,6 +758,10 @@ function alternarVoz() {
 }
 $("btnVoz").addEventListener("click", alternarVoz);
 $("btnVozHub").addEventListener("click", alternarVoz);
+/* economia de bateria: 30 quadros por segundo (padrão) ou 60 (mais suave, esquenta mais) */
+window.fpsAlvo = () => { try { return localStorage.getItem("pv_fps") === "60" ? 60 : 30; } catch (e) { return 30; } };
+const rotFps = () => { $("btnFps").textContent = fpsAlvo() === 60 ? "Bateria: gráfico suave" : "Bateria: economia"; };
+$("btnFps").addEventListener("click", () => { try { localStorage.setItem("pv_fps", fpsAlvo() === 60 ? "30" : "60"); } catch (e) {} rotFps(); if (window.rocaMedir) rocaMedir(); }); rotFps();
 desenharVoz();
 
 $("btnSom").addEventListener("click", () => {
@@ -1104,6 +1108,7 @@ addEventListener("touchmove", toqueLuz, { passive: true });
 
 function frame(now) {
   if (window.rocaAtiva) { requestAnimationFrame(frame); return; } // o modo Roça tem a própria tela
+  if (ultFrame && now - ultFrame < 1000 / fpsAlvo() - 4) { requestAnimationFrame(frame); return; } // limita os quadros: menos calor e bateria
   const dt = ultFrame ? Math.min(now - ultFrame, 100) : 16.7; ultFrame = now; kv = dt / 16.7;
   /* qualidade adaptativa: se o celular não aguenta, baixa a resolução do fundo */
   if (dt > 30) lento++; else if (lento > 0) lento -= .25;

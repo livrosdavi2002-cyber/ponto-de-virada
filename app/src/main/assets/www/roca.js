@@ -311,9 +311,10 @@ function montarUI() {
   addEventListener("resize", medir);
   document.addEventListener("visibilitychange", () => { if (document.hidden && rodando && R && !R.morto && !R.venceu) pausar(); });
 }
+let VINHETA = null;
 function medir() {
-  if (!cv) return; DPRr = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
-  cv.width = Math.round(W * DPRr); cv.height = Math.round(H * DPRr); luzCv.width = Math.round(W * DPRr * .5); luzCv.height = Math.round(H * DPRr * .5);
+  if (!cv) return; const suave = window.fpsAlvo && fpsAlvo() === 60; DPRr = Math.min(devicePixelRatio || 1, suave ? 2 : 1.5); W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * DPRr); cv.height = Math.round(H * DPRr); luzCv.width = Math.round(W * (suave ? .8 : .5)); luzCv.height = Math.round(H * (suave ? .8 : .5)); VINHETA = null;
   TS = Math.max(30, Math.min(W, H) / 9.2);
   el.rcGire.hidden = !(H > W * 1.1);
 }
@@ -1474,7 +1475,9 @@ function desenharVitoria(tm) { if (!R.venceu) return; const k = R.venceu.t; if (
 function loop(ts) {
   if (!rodando || !R) return;
   requestAnimationFrame(loop); // agenda antes: um erro de desenho não congela o jogo
-  const dt = Math.min(.05, (ts - ultimo) / 1000 || 0); ultimo = ts;
+  const fps = window.fpsAlvo ? fpsAlvo() : 30; if (ultimo && ts - ultimo < 1000 / fps - 4) return; // 30 quadros por segundo bastam: o celular esquenta bem menos
+  const t0 = performance.now(); window.rocaPerfN = (window.rocaPerfN || 0) + 1;
+  const dt = Math.min(.07, (ts - ultimo) / 1000 || 0); ultimo = ts;
   if (R.online === "guest") atualizarConvidado(dt); else atualizar(dt);
   if (R.online === "host" && R.outro) { Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .1; enviar(estadoPara()); } }
   const tm = ts / 1000;
@@ -1483,7 +1486,8 @@ function loop(ts) {
   if (R.venceu && R.venceu.t > 1 && !R.dentro) { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + Math.max(0, R.venceu.t - 1.5) * 2.2); c.globalCompositeOperation = "lighter"; c.fillStyle = "rgba(255,240,200,.18)"; c.beginPath(); c.moveTo(x - TS * .8, y); c.lineTo(x - TS * 2, y + TS * 6); c.lineTo(x + TS * 2, y + TS * 6); c.lineTo(x + TS * .8, y); c.fill(); c.globalCompositeOperation = "source-over"; }
   desenharFx(); desenharSusto(tm); desenharVitoria(tm);
   // vinheta
-  const vg = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.55)"); c.fillStyle = vg; c.fillRect(0, 0, W, H);
+  if (!VINHETA) { VINHETA = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75); VINHETA.addColorStop(0, "rgba(0,0,0,0)"); VINHETA.addColorStop(1, "rgba(0,0,0,.55)"); } c.fillStyle = VINHETA; c.fillRect(0, 0, W, H);
+  window.rocaMs = (window.rocaMs || 0) * .95 + (performance.now() - t0) * .05;
 }
 
 /* ---------- a história antes do jogo ---------- */
@@ -1788,7 +1792,7 @@ window.sairRoca = function () {
 };
 window.rocaVoltar = () => { if (!window.rocaAtiva) return false; if (el.rcChatBar && !el.rcChatBar.hidden) { abrirChat(false); return true; } if (document.querySelector(".rc-hist")) return true; if (R && R.menu) { if (painelAberto && document.getElementById("rcCancelar")) { netFechar(); menuInicial(); } else { fecharPainel(); sairRoca(); } return true; } if (painelAberto) { if (R && (R.morto || R.venceu)) return true; fecharPainel(); } else pausar(); return true; };
 window.rocaNet = Net; window.rocaHistoria = () => historia(() => {});
-window.rocaEstado = () => R; // usado nos testes
+window.rocaMedir = () => medir(); window.rocaEstado = () => R; // usado nos testes
 window.morrerTeste = () => morrer("seco", "teste", "teste");
 })();
 
