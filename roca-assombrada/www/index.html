@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#06070a">
+<meta name="theme-color" content="#5fb4e6">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icones/icone-180.png">
 <link rel="icon" href="icones/icone-192.png">
@@ -32,12 +32,12 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}[hidden
 @keyframes pisca{50%{opacity:.35}}
 #gire{position:fixed;inset:0;z-index:99;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#06070a;font:600 14px var(--f-mono);color:#e8e2d4;text-align:center;padding:20px}
 @media (orientation:portrait) and (pointer:coarse){#gire.vale{display:flex}}
-#dicaIos{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);width:min(520px,88vw);background:rgba(10,12,16,.92);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:10px 14px;font:13px var(--f-body);color:#e8e2d4;z-index:5}
+#dicaIos{position:fixed;z-index:400;left:50%;bottom:16px;transform:translateX(-50%);width:min(520px,88vw);background:rgba(10,12,16,.92);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:10px 14px;font:13px var(--f-body);color:#e8e2d4;z-index:5}
 #dicaIos button{float:right;background:none;border:0;color:#e07a2a;font:700 12px var(--f-mono)}
 </style>
 </head>
 <body>
-<div id="capa"><canvas id="capaCv"></canvas><h1>Roça<span>Assombrada</span></h1><p>Toque para começar</p><small>Yasmin, a gatinha Sombrinha e um sítio cheio de regras. Use fone de ouvido: o som faz parte do jogo.</small></div>
+
 <div id="gire"><svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#e07a2a" stroke-width="3"><rect x="20" y="8" width="24" height="44" rx="4"/><path d="M8 40a24 24 0 0 0 24 18M50 18l6 6-6 6"/></svg>Deite o celular para jogar</div>
 <div id="dicaIos" hidden><button type="button" id="dicaIosX">OK</button>Para instalar no iPhone: toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.</div>
 <script src="base.js"></script>
@@ -45,17 +45,11 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}[hidden
 <script src="roca.js"></script>
 <script>
 (() => {
-  // estrelas e vagalumes na capa
-  const cv = document.getElementById("capaCv"), g = cv.getContext("2d"); let vivo = true;
-  const pts = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random() * .7, f: Math.random() * 9, v: Math.random() < .3 }));
-  const q = t => { if (!vivo) return; const w = cv.width = innerWidth, h = cv.height = innerHeight; g.clearRect(0, 0, w, h);
-    pts.forEach(p => { const a = .4 + .6 * Math.abs(Math.sin(t / 900 + p.f)); g.fillStyle = p.v ? `rgba(200,255,120,${a * .8})` : `rgba(240,240,230,${a * .5})`; g.fillRect(p.x * w + (p.v ? Math.sin(t / 1300 + p.f) * 20 : 0), p.y * h + (p.v ? h * .3 : 0), p.v ? 3 : 1.5, p.v ? 3 : 1.5); });
-    g.fillStyle = "#020203"; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 18) g.lineTo(x, h * .78 - Math.abs(Math.sin(x * .05)) * 60 - (x % 54 === 0 ? 40 : 0)); g.lineTo(w, h); g.fill(); requestAnimationFrame(q); };
-  requestAnimationFrame(q);
-  const capa = document.getElementById("capa");
-  const comecar = () => { if (!vivo) return; vivo = false; initAudio(); capa.remove(); document.getElementById("gire").classList.add("vale"); entrarRoca(); };
-  capa.addEventListener("pointerdown", comecar); addEventListener("keydown", e => { if (vivo) comecar(); });
-  const pad = () => { if (!vivo) return; const l = navigator.getGamepads ? [...navigator.getGamepads()] : []; if (l.some(x => x && x.buttons.some(b => b.pressed))) comecar(); else requestAnimationFrame(pad); }; requestAnimationFrame(pad);
+  // vai direto para a tela inicial do jogo; o som liga no primeiro toque ou tecla
+  const somOk = () => { try { initAudio(); } catch (e) {} removeEventListener("pointerdown", somOk, true); removeEventListener("keydown", somOk, true); };
+  addEventListener("pointerdown", somOk, true); addEventListener("keydown", somOk, true);
+  document.getElementById("gire").classList.add("vale");
+  const ir = () => entrarRoca(); if (document.fonts && document.fonts.ready) Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]).then(ir); else ir();
   // iPhone: dica de instalação e app offline
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent), instalado = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
   try { if (ios && !instalado && !localStorage.getItem("ra_dica_ios")) { const d = document.getElementById("dicaIos"); d.hidden = false; document.getElementById("dicaIosX").onclick = e => { e.stopPropagation(); d.hidden = true; localStorage.setItem("ra_dica_ios", "1"); }; } } catch (e) {}

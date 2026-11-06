@@ -21,11 +21,11 @@ const CASA = { x: 10, y: 7, w: 6, h: 4.4, porta: { x: 13, y: 11.6 } };
 const POCO = { x: 19.5, y: 9.6 }, CAIXOTE = { x: 16.8, y: 12 }, CAMINHONETE = { x: 28.8, y: 31.2 };
 const CEMITERIO = { x0: 39, y0: 24, x1: 45, y1: 31 }, CRUZ = { x: 42, y: 27.2 };
 const GALINHEIRO = { x: 27, y: 6.6, w: 4, h: 3, porta: { x: 29, y: 9.8 } }, CERCADO = { x0: 25.5, y0: 6.2, x1: 33, y1: 12 };
-const CELEIRO = { x: 36, y: 6.5, w: 7, h: 5 }, TRATOR = { x: 44, y: 13.2 };
+const CELEIRO = { x: 36, y: 6.5, w: 7, h: 5 }, TRATOR = { x: 45.2, y: 16.6 };
 const CASINHA = { x: 7.6, y: 9.6 }, CATAVENTO = { x: 23, y: 17.4 }, VARAL = { x0: 17.4, x1: 21.6, y: 6.8 };
 const DOCA = { x: 31.4, y: 27.4 };
 const LAGO = { x0: 32, y0: 24, x1: 38.4, y1: 31 };
-const POMAR = [[36, 16.5], [39, 16.5], [42, 16.5], [36, 19.8], [39, 19.8], [42, 19.8]];
+const POMAR = [[35.6, 16.5], [38.3, 16.5], [42.8, 16.5], [35.6, 19.8], [38.3, 19.8], [42.8, 19.8]];
 const CANTEIROS = [
   { x: 9, y: 15, w: 4, h: 3, preco: 0 }, { x: 14.5, y: 15, w: 4, h: 3, preco: 30 }, { x: 26.4, y: 15, w: 4, h: 3, preco: 60 },
   { x: 9, y: 20, w: 4, h: 3, preco: 100 }, { x: 14.5, y: 20, w: 4, h: 3, preco: 150 }, { x: 26.4, y: 20, w: 4, h: 3, preco: 220 }];
@@ -220,7 +220,9 @@ function detalheChao(g, pc, cx, cy, P) {
   }
 }
 function gerarChao() { CHAO_SITIO = Chao(pintarChaoSitio, MW, MH); }
-function pintarChaoSitio(g) {
+// o chão é pintado aos pedaços: sempre com a mesma semente, para os pedaços casarem e não mexer no sorteio do jogo
+function pintarChaoSitio(g) { const s0 = semente; semente = 4242; try { _pintarChaoSitio(g); } finally { semente = s0; } }
+function _pintarChaoSitio(g) {
   const P = 32;
   g.fillStyle = "#26301a"; g.fillRect(0, 0, MW * P, MH * P);
   g.fillStyle = "#6a7a36"; g.fillRect(CERCA.x0 * P, CERCA.y0 * P, (CERCA.x1 - CERCA.x0) * P, (CERCA.y1 - CERCA.y0) * P);
@@ -230,14 +232,25 @@ function pintarChaoSitio(g) {
   for (let i = 0; i < 4200; i++) { const x = srnd() * MW * P, y = srnd() * MH * P; g.strokeStyle = srnd() < .5 ? "rgba(160,170,86,.5)" : "rgba(46,66,28,.55)"; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (srnd() - .5) * 3, y - 3 - srnd() * 4); g.stroke(); }
   for (let i = 0; i < 900; i++) { const x = srnd() * MW * P, y = srnd() * MH * P; g.fillStyle = ["#c8662a", "#d89a2a", "#a8401e", "#e0b040", "#8a3018"][Math.floor(srnd() * 5)]; g.beginPath(); g.ellipse(x, y, 2.4, 1.4, srnd() * 3, 0, 7); g.fill(); } // folhas secas
   // caminhos de terra com pedrinhas
-  const trilha = (pts, w) => { g.strokeStyle = "#8a6a44"; g.lineWidth = w * P; g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x * P, y * P) : g.moveTo(x * P, y * P)); g.stroke(); g.strokeStyle = "rgba(170,140,96,.45)"; g.lineWidth = w * P * .45; g.stroke(); g.strokeStyle = "rgba(60,40,24,.25)"; g.lineWidth = 2; g.setLineDash([3, 9]); g.stroke(); g.setLineDash([]); };
+  const trilha = (pts, w, escura) => {
+    g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x * P, y * P) : g.moveTo(x * P, y * P));
+    g.strokeStyle = escura ? "rgba(20,14,8,.6)" : "rgba(70,52,30,.55)"; g.lineWidth = w * P * 1.22; g.stroke(); // beirada
+    g.strokeStyle = escura ? "#4a3824" : "#8f6e46"; g.lineWidth = w * P; g.stroke();
+    g.strokeStyle = escura ? "rgba(90,70,46,.5)" : "rgba(186,154,108,.5)"; g.lineWidth = w * P * .5; g.stroke();
+    g.strokeStyle = escura ? "rgba(20,12,6,.35)" : "rgba(92,66,38,.4)"; g.lineWidth = Math.max(1.5, w * P * .09); g.setLineDash([P * .9, P * .25]); g.stroke(); g.setLineDash([]); // sulco no meio
+    for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i], L = Math.hypot(bx - ax, by - ay), nx = -(by - ay) / (L || 1), ny = (bx - ax) / (L || 1);
+      for (let d = 0; d < L; d += .22) { const t = d / L, x = ax + (bx - ax) * t, y = ay + (by - ay) * t, o = (srnd() - .5) * w * .85;
+        if (srnd() < .45) { g.fillStyle = ["#a89070", "#6a5a46", "#c8b090", "#7a6650"][Math.floor(srnd() * 4)]; g.beginPath(); g.ellipse((x + nx * o) * P, (y + ny * o) * P, 1.4 + srnd() * 2.2, 1 + srnd() * 1.4, srnd() * 3, 0, 7); g.fill(); } // pedrinhas
+        if (srnd() < .55) { const lado = srnd() < .5 ? -1 : 1, bx2 = (x + nx * lado * w * (.5 + srnd() * .12)) * P, by2 = (y + ny * lado * w * (.5 + srnd() * .12)) * P; g.strokeStyle = escura ? "rgba(40,54,24,.8)" : "rgba(84,110,40,.85)"; g.lineWidth = 1.3; g.beginPath(); for (let k = 0; k < 3; k++) { g.moveTo(bx2 + k * 2 - 2, by2); g.lineTo(bx2 + k * 2 - 2 + (srnd() - .5) * 3, by2 - 3 - srnd() * 4); } g.stroke(); } // capim na beira
+        if (srnd() < .08) { g.fillStyle = "rgba(60,40,22,.35)"; g.beginPath(); g.ellipse((x + nx * o * .5) * P, (y + ny * o * .5) * P, w * P * .22, w * P * .12, srnd() * 3, 0, 7); g.fill(); } } } // poça seca / buraco
+  };
   trilha([[13, 11.8], [13, 13.6], [25.2, 13.6], [25.2, 30.2]], 1.15);
-  trilha([[13, 13.6], [17.4, 12.6], [19.5, 10.8]], .8); trilha([[13, 12.4], [8.4, 11], [7.8, 10.6]], .6);
-  trilha([[25.2, 13.6], [28.6, 13.4], [28.6, 12.2]], .7); trilha([[28.6, 13.4], [39, 13.4], [39, 12]], .8); trilha([[39, 13.4], [39, 21]], .7);
-  trilha([[25.2, 27.4], [31.2, 27.4]], .7); trilha([[25.2, 24.2], [38.6, 23.6], [42, 25.6]], .7);
+  trilha([[13, 13.6], [17.4, 12.9], [19.5, 10.9]], .8); trilha([[13, 12.4], [9.2, 12.4], [7.8, 10.9]], .6);
+  trilha([[25.2, 13.6], [28.6, 13.4], [28.6, 12.2]], .7); trilha([[28.6, 13.4], [39, 13.4], [39, 12]], .8); trilha([[39, 13.4], [40.55, 14.6], [40.55, 21.2]], .7);
+  trilha([[25.2, 27.4], [31.2, 27.4]], .7); trilha([[25.2, 23.75], [31, 23.5], [38.8, 23.05], [42, 23.3], [42, 24.9]], .7);
   trilha([[25.2, 33], [25.2, 38]], 1.4); // estrada que sai pelo portão
-  g.strokeStyle = "#3a2c1a"; g.lineWidth = 1.5 * P; g.lineCap = "round"; g.beginPath(); g.moveTo(6.6 * P, 16.9 * P); g.lineTo(-P, 17 * P); g.stroke(); trilha([[13, 13.6], [8.4, 13.9], [6.9, 15.1], [6.6, 16.9], [-1, 17]], .85); // trilha escura que entra na mata
-  trilha([[39, 13.4], [50.4, 13.4], [50.4, 22.2], [53.3, 22.2], [53.3, 21]], .8); trilha([[42, 25.6], [44, 23.6], [50.4, 23.6], [50.4, 30.6], [55, 30.6]], .7); trilha([[50.4, 13.4], [53.4, 12.4]], .6);
+  g.strokeStyle = "#3a2c1a"; g.lineWidth = 1.5 * P; g.lineCap = "round"; g.beginPath(); g.moveTo(6.6 * P, 16.9 * P); g.lineTo(-P, 17 * P); g.stroke(); trilha([[8.4, 13.9], [6.9, 15.1], [6.6, 16.9], [-1, 17]], .85, true); trilha([[13, 13.6], [8.4, 13.9]], .85); // trilha escura que entra na mata
+  trilha([[39, 13.4], [50.4, 13.4], [50.4, 22.2], [53.3, 22.2], [53.3, 21]], .8); trilha([[42, 23.2], [44.6, 23.3], [49.7, 23.6], [49.7, 30.4], [55, 30.4]], .7); trilha([[50.4, 13.4], [53.4, 12.4]], .6);
   // milharal: terra arada em fileiras
   g.fillStyle = "#6a5232"; g.fillRect(MILHARAL.x0 * P, MILHARAL.y0 * P, (MILHARAL.x1 - MILHARAL.x0) * P, (MILHARAL.y1 - MILHARAL.y0) * P);
   for (let y = MILHARAL.y0; y < MILHARAL.y1; y += .5) { g.fillStyle = "rgba(40,28,14,.45)"; g.fillRect(MILHARAL.x0 * P, y * P, (MILHARAL.x1 - MILHARAL.x0) * P, 5); }
@@ -276,10 +289,11 @@ function montarUI() {
     <div class="rc-joy" id="rcJoy"><i id="rcJoyK"></i></div>
     <div class="rc-bts"><button id="rcSem" type="button" class="rc-bt sem"></button><button id="rcLuz" type="button" class="rc-bt luz" aria-label="Lanterna"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 9a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="2"/><rect x="10" y="9" width="12" height="3" rx="1" fill="currentColor"/><path d="M11 12h10l1 11H10z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path class="chama" d="M16 14c2 2.5 2.6 4 2.6 5.3a2.6 2.6 0 0 1-5.2 0c0-1.3.6-2.8 2.6-5.3z" fill="#f2c94a"/><rect x="9" y="23" width="14" height="3" rx="1" fill="currentColor"/></svg></button><button id="rcCorre" type="button" class="rc-bt corre" aria-label="Correr"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="19" cy="6.5" r="3" fill="currentColor"/><path d="M16.5 5.5c-2 1-3 3-3.4 5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="19" cy="3.6" rx="4.6" ry="1.2" fill="currentColor"/><path d="M18 10l-3 7h6z" fill="currentColor"/><path d="M17 11l-5 2.5M19 11l4.5 3.5M16 17l-4.5 4 -3 .5M19 17l2.5 5 4 1.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12h5M2 16h6M4 20h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".6"/></svg></button><button id="rcAcao" type="button" class="rc-bt acao">Ação</button></div>
     <div class="rc-fala" id="rcFala" hidden></div><div class="rc-dica" id="rcDica"></div>
+    <div class="rc-titulo" id="rcTitulo" hidden><canvas id="rcTitCv"></canvas><nav class="rc-tit-menu" id="rcTitMenu"></nav><div class="rc-tit-rod" id="rcTitRod"></div></div>
     <div class="rc-painel" id="rcPainel" hidden></div>
     <div class="rc-gire" id="rcGire" hidden><b>Vire o celular</b><span>Este modo é jogado com o celular deitado.</span></div>`;
   document.body.appendChild(d);
-  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcMoch"].forEach(i => el[i] = document.getElementById(i));
+  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcMoch", "rcTitulo", "rcTitMenu", "rcTitRod"].forEach(i => el[i] = document.getElementById(i));
   cv = document.getElementById("rocaCv"); c = cv.getContext("2d"); luzCv = document.createElement("canvas"); lc = luzCv.getContext("2d");
   const st = document.createElement("style"); st.textContent = `
   #roca{position:fixed;inset:0;z-index:300;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;font-family:var(--f-mono,monospace)}
@@ -339,8 +353,63 @@ function montarUI() {
   .rc-pular{position:absolute;top:12px;right:max(14px,env(safe-area-inset-right));background:rgba(10,12,16,.6);border:1px solid rgba(255,255,255,.2);color:#f4efe4;border-radius:12px;padding:8px 14px;font:600 12px var(--f-mono,monospace)}
   .rc-codigo{font:900 54px "Big Shoulders Display",sans-serif;letter-spacing:.18em;color:#f2c94a;text-align:center;background:rgba(242,201,74,.08);border:1px dashed rgba(242,201,74,.5);border-radius:14px;padding:6px 0;margin:6px 0 10px;user-select:text;-webkit-user-select:text}
   .rc-input{width:100%;box-sizing:border-box;background:#0a0c10;border:1px solid rgba(255,255,255,.2);border-radius:12px;color:#f2c94a;font:800 34px "Big Shoulders Display",sans-serif;letter-spacing:.2em;text-align:center;padding:8px;text-transform:uppercase}
+
+  /* ===== visual quadrado: madeira, papel e botões de bloco ===== */
+  #roca{--mad:#2a1b10;--mad2:#3d2816;--borda:#0f0905;--creme:#f6ead0;--ouro:#f2c94a;--abob:#d8641e}
+  .rc-caixa{border-radius:0;background:linear-gradient(rgba(255,255,255,.02),rgba(0,0,0,.08)),repeating-linear-gradient(0deg,#2a1b10 0 38px,#25180e 38px 40px);border:3px solid var(--borda);box-shadow:inset 0 0 0 2px #7a5432,inset 0 0 0 5px var(--borda),8px 8px 0 rgba(0,0,0,.5);padding:22px}
+  .rc-caixa h2{font:800 32px "Big Shoulders Display",sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--creme);text-shadow:3px 3px 0 #000}
+  .rc-caixa p{color:#d8c8a8}
+  .rc-op{border-radius:0;background:var(--mad2);border:2px solid var(--borda);box-shadow:inset 0 2px 0 rgba(255,226,170,.14),inset 0 -4px 0 rgba(0,0,0,.35),3px 3px 0 #000;font:700 16px var(--f-body,serif);color:var(--creme);transition:transform .06s,background .1s;cursor:pointer}
+  .rc-op small{color:#c8b48e}.rc-op:not(:disabled):hover,.rc-op:focus-visible{background:#55381e;border-color:var(--ouro);transform:translate(-1px,-1px);box-shadow:inset 0 2px 0 rgba(255,226,170,.2),inset 0 -4px 0 rgba(0,0,0,.35),4px 4px 0 #000}
+  .rc-op:not(:disabled):active{transform:translate(2px,2px);box-shadow:inset 0 2px 0 rgba(255,226,170,.1),1px 1px 0 #000}
+  .rc-op.dest{background:var(--abob);border-color:var(--borda);color:#fff6e4}.rc-op.dest small{color:#ffe2c0}.rc-op.dest:not(:disabled):hover,.rc-op.dest:focus-visible{background:#ec7a2c}
+  .rc-caixa button:focus-visible,.rc-caixa button:focus{outline:3px solid var(--ouro);outline-offset:0}
+  .rc-caixa.rc-diario{border-radius:0;background:#e2d4b0;box-shadow:inset 0 0 0 2px #a8865a,8px 8px 0 rgba(0,0,0,.5);border-color:#3a2410}
+  .rc-caixa.rc-diario .rc-op{box-shadow:2px 2px 0 rgba(0,0,0,.3);color:#2a1e12}.rc-caixa.rc-diario .rc-op.dest{color:#3a1206}
+  .rc-bicho{border-radius:0;box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+  .rc-moch-l div{border-radius:0;background:rgba(0,0,0,.25);border:2px solid #120a05;box-shadow:inset 0 1px 0 rgba(255,226,170,.1)}
+  .rc-painel{background:rgba(10,6,2,.66);z-index:8}
+  .rc-bt{border-radius:0;border:3px solid #120a05;background:rgba(42,27,16,.82);box-shadow:inset 0 0 0 2px rgba(232,200,138,.28),inset 0 -4px 0 rgba(0,0,0,.35),3px 3px 0 rgba(0,0,0,.6);color:var(--creme)}
+  .rc-bt.acao{background:rgba(216,100,30,.82);box-shadow:inset 0 0 0 2px rgba(255,220,150,.5),inset 0 -5px 0 rgba(0,0,0,.3),3px 3px 0 rgba(0,0,0,.6);border-color:#120a05}
+  .rc-bt.on{background:rgba(242,201,74,.7);color:#2a1a0a}.rc-bt:active{transform:translate(2px,2px);box-shadow:inset 0 0 0 2px rgba(232,200,138,.28),1px 1px 0 rgba(0,0,0,.6)}
+  .rc-bts .sem{border-radius:0}
+  .rc-menu{border-radius:0;border:3px solid #120a05;background:rgba(42,27,16,.85);box-shadow:inset 0 0 0 2px rgba(232,200,138,.25),3px 3px 0 rgba(0,0,0,.6);text-transform:uppercase;letter-spacing:.06em}
+  .rc-joy{border-radius:0;background:rgba(42,27,16,.35);border:3px solid rgba(15,9,5,.7);box-shadow:inset 0 0 0 2px rgba(232,200,138,.22)}
+  .rc-joy::before,.rc-joy::after{content:"";position:absolute;background:rgba(232,200,138,.18)}.rc-joy::before{left:50%;top:12px;bottom:12px;width:3px;margin-left:-1.5px}.rc-joy::after{top:50%;left:12px;right:12px;height:3px;margin-top:-1.5px}
+  .rc-joy i{border-radius:0;background:rgba(246,234,208,.35);border:3px solid rgba(15,9,5,.75);box-shadow:inset 0 -4px 0 rgba(0,0,0,.25);z-index:1}
+  .rc-b{border-radius:0;height:8px;border:2px solid rgba(0,0,0,.7);box-sizing:content-box}.rc-b s{border-radius:0}
+  .rc-itens span{border-radius:0;border:1px solid rgba(0,0,0,.5)}
+  .rc-l b::before{border-radius:0;transform:rotate(45deg) scale(.8)}
+  .rc-obj{font-size:12px;background:rgba(20,12,6,.55);padding:3px 7px;border-left:3px solid var(--ouro)}
+  .rc-dica{font-size:14px;background:rgba(20,12,6,.6);padding:4px 10px}.rc-dica:empty{display:none}
+  .rc-chatlog div,.rc-chatbar,.rc-rapidas button,.rc-chatbar input,.rc-chatbar form button,.rc-codigo,.rc-input,.rc-pular{border-radius:0}
+  .rc-chatbar{border:3px solid #120a05;background:rgba(42,27,16,.95);box-shadow:4px 4px 0 rgba(0,0,0,.5)}
+  /* falas: caixa grande de papel com nome e retrato */
+  .rc-fala{width:max(56vw,min(900px,calc(100vw - 330px)));box-sizing:border-box;border-radius:0;background:#f6ead0;color:#2a1a0c;border:4px solid #2a1a0c;box-shadow:inset 0 0 0 3px #d4b888,7px 7px 0 rgba(0,0,0,.55);padding:20px 22px 12px;font:500 clamp(18px,2.35vw,27px)/1.38 var(--f-body,serif);bottom:14px;cursor:pointer;min-height:3.2em}
+  .rc-fala.com-ret{padding-left:calc(clamp(64px,8vw,96px) + 34px)}
+  .rc-fala p{margin:0}.rc-fala-ret{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:clamp(64px,8vw,96px);height:clamp(64px,8vw,96px);border:3px solid #2a1a0c;box-shadow:3px 3px 0 rgba(0,0,0,.35);image-rendering:auto}
+  .rc-fala-quem{position:absolute;left:12px;top:-17px;background:#d8641e;color:#fff6e4;border:3px solid #2a1a0c;padding:2px 12px;font:800 clamp(14px,1.6vw,19px)/1.2 "Big Shoulders Display",sans-serif;letter-spacing:.08em;text-transform:uppercase;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+  .rc-fala-quem:empty{display:none}.rc-fala.com-ret .rc-fala-quem{left:calc(clamp(64px,8vw,96px) + 30px)}
+  .rc-fala small{display:block;text-align:right;margin-top:6px;color:#9a4a14;font:700 clamp(10px,1.1vw,13px) var(--f-mono,monospace);letter-spacing:.12em;text-transform:uppercase;animation:rcpisca 1.2s steps(2) infinite}
+  .rc-hist-txt{border-radius:0;font-size:clamp(18px,2.3vw,26px);width:min(980px,90vw);background:rgba(246,234,208,.95);color:#2a1a0c;border:4px solid #2a1a0c;box-shadow:inset 0 0 0 3px #d4b888,7px 7px 0 rgba(0,0,0,.55)}.rc-hist-txt small{color:#9a4a14}
+  @keyframes rcpisca{50%{opacity:.35}}
+  /* capa */
+  .rc-titulo{position:absolute;inset:0;z-index:6;background:#5fb4e6;overflow:hidden}
+  .rc-titulo canvas{position:absolute;inset:0;width:100%;height:100%}
+  .rc-tit-menu{position:absolute;right:max(22px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);width:clamp(230px,30vw,340px);display:flex;flex-direction:column;gap:10px;padding:18px 16px 16px;background:repeating-linear-gradient(0deg,#9a6434 0 30px,#8a5a2e 30px 32px);border:4px solid #3a2210;box-shadow:inset 0 0 0 3px #c08a52,8px 8px 0 rgba(30,40,10,.35)}
+  .rc-tit-menu::before,.rc-tit-menu::after{content:"";position:absolute;top:-36px;width:4px;height:36px;background:#7a5a3a}.rc-tit-menu::before{left:22%}.rc-tit-menu::after{right:22%}
+  .rc-tit-menu h3{margin:0 0 2px;text-align:center;font:800 22px "Big Shoulders Display",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#fff4d8;text-shadow:2px 2px 0 #3a1e0a}
+  .rc-tbt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;background:#f6ead0;color:#3a2210;border:3px solid #3a2210;border-radius:0;padding:9px 12px;box-shadow:inset 0 -5px 0 rgba(120,80,40,.25),inset 0 2px 0 #fff,4px 4px 0 #3a2210;font:800 clamp(17px,2vw,22px)/1.05 "Big Shoulders Display",sans-serif;letter-spacing:.06em;text-transform:uppercase;transition:transform .06s}
+  .rc-tbt i{flex:none;width:34px;height:34px;display:grid;place-items:center;background:#3a2210;color:#f6ead0}.rc-tbt svg{width:20px;height:20px;fill:currentColor;shape-rendering:crispEdges}
+  .rc-tbt small{display:block;margin-top:2px;font:600 11px var(--f-mono,monospace);letter-spacing:.02em;text-transform:none;color:#7a5a3a}
+  .rc-tbt.dest{background:#ffd25a}.rc-tbt.dest i{background:#d8641e}
+  .rc-tbt:hover,.rc-tbt:focus-visible{outline:none;background:#fff8e6;transform:translate(-2px,-2px);box-shadow:inset 0 -5px 0 rgba(120,80,40,.25),inset 0 2px 0 #fff,6px 6px 0 #3a2210}.rc-tbt.dest:hover,.rc-tbt.dest:focus-visible{background:#ffe07e}
+  .rc-tbt:focus-visible{border-color:#d8641e}.rc-tbt:active{transform:translate(3px,3px);box-shadow:inset 0 -2px 0 rgba(120,80,40,.25),1px 1px 0 #3a2210}
+  .rc-tit-rod{position:absolute;left:max(14px,env(safe-area-inset-left));bottom:10px;display:flex;gap:14px;flex-wrap:wrap;font:600 11px var(--f-mono,monospace);color:#1e3a10;text-shadow:0 1px 0 rgba(255,255,255,.5)}.rc-tit-rod span{background:rgba(246,234,208,.75);padding:3px 8px;border:2px solid rgba(58,34,16,.6)}
+  @media (max-height:430px){.rc-tit-menu{gap:7px;padding:12px 12px 12px}.rc-tbt{padding:6px 10px}.rc-tbt i{width:28px;height:28px}.rc-tbt small{display:none}}
   @keyframes rcgira{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}`;
   document.head.appendChild(st);
+  addEventListener("keydown", e => { if (!el.rcTitulo || el.rcTitulo.hidden || painelAberto) return; const k = e.key; if (k === "ArrowDown" || k === "ArrowUp" || k === "s" || k === "w") { e.preventDefault(); moverFoco(k === "ArrowDown" || k === "s" ? 1 : -1); } if (k === "Escape") { const v = document.getElementById("rcTVolta"); if (v) v.click(); } });
   // joystick
   const jz = el.rcJoy, pos = e => { const r = jz.getBoundingClientRect(); return [e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)]; };
   const mover = e => { const [x, y] = pos(e), m = Math.hypot(x, y), k = Math.min(1, m / 48); joy.dx = m ? x / m * k : 0; joy.dy = m ? y / m * k : 0; el.rcJoyK.style.transform = `translate(${joy.dx * 40}px,${joy.dy * 40}px)`; };
@@ -373,7 +442,7 @@ function medir() {
 
 /* ---------- falas (gato e placas) ---------- */
 function falar(lista, depois, quem = "Sombrinha") { R.msg = { lista: [...lista], depois, quem }; mostrarFala(); }
-function mostrarFala() { if (!R.msg) { el.rcFala.hidden = true; return; } el.rcFala.hidden = false; el.rcFala.innerHTML = `${R.msg.lista[0]}<small>${R.msg.quem} · toque para continuar</small>`; }
+function mostrarFala() { if (!R.msg) { el.rcFala.hidden = true; return; } el.rcFala.hidden = false; const rt = retrato(R.msg.quem || ""); el.rcFala.classList.toggle("com-ret", !!rt); el.rcFala.innerHTML = `${rt}<b class="rc-fala-quem">${R.msg.quem || ""}</b><p>${R.msg.lista[0]}</p><small>${R.msg.lista.length > 1 ? "continuar" : "fechar"} ▶</small>`; }
 function proximaFala() { if (!R.msg) return; R.msg.lista.shift(); tocarTom(700, .04, { vol: .04 }); if (!R.msg.lista.length) { const d = R.msg.depois; R.msg = null; el.rcFala.hidden = true; d && d(); } else mostrarFala(); }
 
 /* ---------- ações ---------- */
@@ -1094,18 +1163,7 @@ function desenharVoce(x, y, tm, o = {}) {
   c.restore();
   if (o.nome) { c.fillStyle = "rgba(240,235,220,.85)"; c.font = `700 ${Math.round(Math.max(10, TS * .2))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.6)"; c.lineWidth = 3; c.strokeText(o.nome, x, y - 58 * s); c.fillText(o.nome, x, y - 58 * s); c.textAlign = "start"; }
 }
-function desenharGato(g, tm) {
-  const s = TS / 48, x = PX(g.x), y = PY(g.y); sombra(x, y, 9 * s, 3 * s);
-  c.save(); c.translate(x, y); c.scale((g.dir || 1) * s, s); const pa = g.anda ? Math.sin(tm * 14) * 2 : 0;
-  c.fillStyle = "#2a2a30"; c.fillRect(-7 + pa, -5, 2.5, 5); c.fillRect(4 - pa, -5, 2.5, 5);
-  c.beginPath(); c.ellipse(0, -8, 9, 5, 0, 0, 7); c.fill(); c.beginPath(); c.arc(8, -13, 5, 0, 7); c.fill();
-  c.beginPath(); c.moveTo(5, -16); c.lineTo(6, -21); c.lineTo(9, -17); c.moveTo(9, -17); c.lineTo(12, -21); c.lineTo(12, -15); c.fill();
-  c.strokeStyle = "#2a2a30"; c.lineWidth = 3; c.lineCap = "round"; c.beginPath(); c.moveTo(-8, -9); c.quadraticCurveTo(-15, -14 + Math.sin(tm * 2) * 3, -13, -20); c.stroke();
-  c.fillStyle = "#c8e86a"; c.fillRect(9, -14, 1.6, 1.6); c.fillRect(12, -14, 1.6, 1.6); c.fillStyle = "#d88a8a"; c.fillRect(12.5, -11.5, 1.2, 1);
-  c.fillStyle = "#e86a9a"; c.beginPath(); c.moveTo(5, -10); c.lineTo(2.5, -12.5); c.lineTo(2.5, -7.5); c.closePath(); c.moveTo(5, -10); c.lineTo(7.5, -12.5); c.lineTo(7.5, -7.5); c.closePath(); c.fill(); c.fillStyle = "#c84a7a"; c.beginPath(); c.arc(5, -10, 1.2, 0, 7); c.fill(); // lacinho da Sombrinha
-  c.strokeStyle = "rgba(230,230,230,.5)"; c.lineWidth = .6; c.beginPath(); c.moveTo(12, -12); c.lineTo(16, -13); c.moveTo(12, -11.4); c.lineTo(16, -11); c.stroke(); // bigodes
-  c.restore();
-}
+function desenharGato(g, tm) { const s = TS / 48, x = PX(g.x), y = PY(g.y); sombra(x, y, 9 * s, 3 * s); gatoEm(x, y, s, g.dir, g.anda, tm); }
 function desenharGalinha(g, tm) {
   const s = TS / 48, x = PX(g.x), y = PY(g.y); if (!naTela(x, y, 30)) return; sombra(x, y, 6 * s, 2 * s);
   c.save(); c.translate(x, y); c.scale((g.dir || 1) * s, s); const bic = g.anda ? 0 : Math.max(0, Math.sin(tm * 5 + g.x * 3)) * 3;
@@ -1145,9 +1203,9 @@ function desenharCemiterio(tm) {
   for (let i = 0; i < 9; i++) { const gx = C.x0 + .8 + (i % 3) * 1.9, gy = C.y0 + 1.6 + Math.floor(i / 3) * 1.9; if (Math.abs(gx - CRUZ.x) < 1 && Math.abs(gy - CRUZ.y) < 1) continue; const x = PX(gx), y = PY(gy); if (!naTela(x, y)) continue; sombra(x, y, TS * .2, TS * .06);
     if (i % 2) { c.fillStyle = "#7a7a7a"; c.beginPath(); c.moveTo(x - TS * .2, y); c.lineTo(x - TS * .2, y - TS * .5); c.arc(x, y - TS * .5, TS * .2, PI, 0); c.lineTo(x + TS * .2, y); c.fill(); c.fillStyle = "rgba(0,0,0,.3)"; c.fillRect(x - TS * .1, y - TS * .5, TS * .2, 2); }
     else { c.fillStyle = "#4a3420"; c.fillRect(x - 2, y - TS * .7, 4, TS * .7); c.fillRect(x - TS * .18, y - TS * .55, TS * .36, 4); } }
-  const ce = desenharCerca(); for (let x = C.x0; x <= C.x1; x += 1) { [C.y0, C.y1].forEach(y => { const sx = PX(x), sy = PY(y); if (!naTela(sx, sy)) return; c.fillStyle = "#2a2a2e"; c.fillRect(sx - 1.5, sy - TS * .4, 3, TS * .4); c.beginPath(); c.moveTo(sx - 3, sy - TS * .4); c.lineTo(sx, sy - TS * .5); c.lineTo(sx + 3, sy - TS * .4); c.fill(); }); }
+  const ce = desenharCerca(); for (let x = C.x0; x <= C.x1; x += 1) { [C.y0, C.y1].forEach(y => { if (y === C.y0 && x === 42) return; const sx = PX(x), sy = PY(y); if (!naTela(sx, sy)) return; c.fillStyle = "#2a2a2e"; c.fillRect(sx - 1.5, sy - TS * .4, 3, TS * .4); c.beginPath(); c.moveTo(sx - 3, sy - TS * .4); c.lineTo(sx, sy - TS * .5); c.lineTo(sx + 3, sy - TS * .4); c.fill(); }); }
   for (let y = C.y0; y <= C.y1; y++) [C.x0, C.x1].forEach(x => { const sx = PX(x), sy = PY(y); if (!naTela(sx, sy)) return; c.fillStyle = "#2a2a2e"; c.fillRect(sx - 1.5, sy - TS * .4, 3, TS * .4); });
-  c.strokeStyle = "#2a2a2e"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(PX(C.x0), PY(C.y0) - TS * .3); c.lineTo(PX(C.x1), PY(C.y0) - TS * .3); c.stroke();
+  c.strokeStyle = "#2a2a2e"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(PX(C.x0), PY(C.y0) - TS * .3); c.lineTo(PX(41.4), PY(C.y0) - TS * .3); c.moveTo(PX(42.6), PY(C.y0) - TS * .3); c.lineTo(PX(C.x1), PY(C.y0) - TS * .3); c.stroke(); c.fillStyle = "#2a2a2e"; for (const gx of [41.4, 42.6]) c.fillRect(PX(gx) - 2.5, PY(C.y0) - TS * .65, 5, TS * .65); c.lineWidth = 2; c.beginPath(); c.arc(PX(42), PY(C.y0) - TS * .62, TS * .6, PI * 1.15, PI * 1.85); c.stroke(); // portãozinho
 }
 function _desenharSeco(s, tm) {
   if (s.fase === "longe" || s.fase === "aviso") { if (s.fase === "aviso") { const x = PX(s.x), y = PY(s.y); if (naTela(x, y)) { c.fillStyle = "rgba(255,150,70,.9)"; c.fillRect(x - 4, y - TS * .5, 2.5, 2.5); c.fillRect(x + 2, y - TS * .5, 2.5, 2.5); } } return; }
@@ -2007,8 +2065,8 @@ function pintarChaoVila(g) {
     for (let y = y0; y < y1; y += .42) for (let x = x0 + ((Math.round(y / .42) % 2) * .3); x < x1; x += .6) g.strokeRect(x * P, y * P, .6 * P, .42 * P);
     for (let i = 0; i < (x1 - x0) * (y1 - y0) * 2; i++) { g.fillStyle = r() < .5 ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.08)"; g.fillRect((x0 + r() * (x1 - x0)) * P, (y0 + r() * (y1 - y0)) * P, .6 * P, .42 * P); }
     for (let i = 0; i < (x1 - x0) * .6; i++) { g.strokeStyle = "rgba(90,110,40,.6)"; const xx = (x0 + r() * (x1 - x0)) * P, yy = (y0 + r() * (y1 - y0)) * P; g.beginPath(); g.moveTo(xx, yy); g.lineTo(xx + 2, yy - 5); g.stroke(); } };
-  pedra(1, 27.6, VW - 1, 30.3); pedra(1, 35.9, VW - 1, 38.5); pedra(21.6, 21.4, 24.4, 40.6); pedra(16.6, 30.3, 29.4, 35.9, "#7a7262"); pedra(17, 45.6, 29, 48.8, "#7a7262");
-  g.fillStyle = "#8a8478"; for (const yy of [27.45, 30.3, 35.75, 38.5]) g.fillRect(1 * P, yy * P, (VW - 2) * P, .15 * P); // meio-fio
+  pedra(1, 27.5, VW - 1, 29.55); pedra(1, 35.9, VW - 1, 38.5); pedra(21.6, 21.4, 24.4, 40.6); pedra(16.6, 29.55, 29.4, 35.9, "#7a7262"); pedra(17, 45.6, 29, 48.8, "#7a7262");
+  g.fillStyle = "#8a8478"; for (const yy of [27.35, 29.55, 35.75, 38.5]) g.fillRect(1 * P, yy * P, (VW - 2) * P, .15 * P); // meio-fio
   [[17, 30.6], [28.4, 30.6], [17, 34.8], [28.4, 34.8]].forEach(([x, y]) => { g.fillStyle = "#3a2a1a"; g.fillRect(x * P, y * P, .9 * P, .9 * P); for (let i = 0; i < 8; i++) { g.fillStyle = ["#a02a2a", "#e8d8a0", "#8a3a8a", "#e8e2d8"][i % 4]; g.beginPath(); g.arc((x + .15 + r() * .6) * P, (y + .15 + r() * .6) * P, 3, 0, 7); g.fill(); } }); // canteiros murchos
   g.fillStyle = "#3a3222"; g.fillRect(VCEM.x0 * P, VCEM.y0 * P, (VCEM.x1 - VCEM.x0) * P, (VCEM.y1 - VCEM.y0) * P);
   g.fillStyle = "rgba(60,40,20,.55)"; g.fillRect((CARROCA.x - 1.2) * P, (CARROCA.y + .1) * P, 2.4 * P, .5 * P);
@@ -2873,24 +2931,124 @@ function balaoChat(p, m) {
 window.rocaChat = mandarChat; // usado nos testes
 
 /* ---------- menu do modo: sozinha, criar sala, entrar ---------- */
+/* ---------- tela inicial: o sítio de dia, a Yasmin e a Sombrinha ---------- */
+let TIT = null;
+function gatoEm(x, y, s, dir, anda, tm, cx = c) {
+  cx.save(); cx.translate(x, y); cx.scale((dir || 1) * s, s); const pa = anda ? Math.sin(tm * 14) * 2 : 0;
+  cx.fillStyle = "#2a2a30"; cx.fillRect(-7 + pa, -5, 2.5, 5); cx.fillRect(4 - pa, -5, 2.5, 5);
+  cx.beginPath(); cx.ellipse(0, -8, 9, 5, 0, 0, 7); cx.fill(); cx.beginPath(); cx.arc(8, -13, 5, 0, 7); cx.fill();
+  cx.beginPath(); cx.moveTo(5, -16); cx.lineTo(6, -21); cx.lineTo(9, -17); cx.moveTo(9, -17); cx.lineTo(12, -21); cx.lineTo(12, -15); cx.fill();
+  cx.strokeStyle = "#2a2a30"; cx.lineWidth = 3; cx.lineCap = "round"; cx.beginPath(); cx.moveTo(-8, -9); cx.quadraticCurveTo(-15, -14 + Math.sin(tm * 2) * 3, -13, -20); cx.stroke();
+  cx.fillStyle = "#c8e86a"; cx.fillRect(9, -14, 1.6, Math.sin(tm * .7) > .97 ? .4 : 1.6); cx.fillRect(12, -14, 1.6, Math.sin(tm * .7) > .97 ? .4 : 1.6); cx.fillStyle = "#d88a8a"; cx.fillRect(12.5, -11.5, 1.2, 1);
+  cx.fillStyle = "#e86a9a"; cx.beginPath(); cx.moveTo(5, -10); cx.lineTo(2.5, -12.5); cx.lineTo(2.5, -7.5); cx.closePath(); cx.moveTo(5, -10); cx.lineTo(7.5, -12.5); cx.lineTo(7.5, -7.5); cx.closePath(); cx.fill(); cx.fillStyle = "#c84a7a"; cx.beginPath(); cx.arc(5, -10, 1.2, 0, 7); cx.fill();
+  cx.strokeStyle = "rgba(230,230,230,.5)"; cx.lineWidth = .6; cx.beginPath(); cx.moveTo(12, -12); cx.lineTo(16, -13); cx.moveTo(12, -11.4); cx.lineTo(16, -11); cx.stroke();
+  cx.restore();
+}
+const yasminMenu = () => ({ eu: { dir: 1, anda: 0, fase: 0 }, perto: 0, cor: 0, chapeu: null });
+function comCtx(g, fn) { const c0 = c; c = g; try { fn(); } finally { c = c0; } }
+// retratinho de quem fala (para a caixa de fala)
+const RETRATOS = {};
+function retrato(quem) {
+  const k = /yasmin/i.test(quem) ? "y" : /sombrinha/i.test(quem) ? "g" : null; if (!k) return "";
+  if (!RETRATOS[k]) { const cv2 = document.createElement("canvas"); cv2.width = cv2.height = 112; const g = cv2.getContext("2d");
+    g.fillStyle = k === "y" ? "#f2c66a" : "#9ac8e8"; g.fillRect(0, 0, 112, 112); g.fillStyle = "rgba(255,255,255,.25)"; for (let i = 0; i < 112; i += 14) g.fillRect(i, 0, 7, 112);
+    if (k === "y") comCtx(g, () => desenharVoce(50, 182, 0, { q: yasminMenu(), s: 150, anda: 0 })); else gatoEm(26, 120, 5.2, 1, 0, 0, g);
+    RETRATOS[k] = cv2.toDataURL(); }
+  return `<img class="rc-fala-ret" alt="" src="${RETRATOS[k]}">`;
+}
+function nuvem(g, x, y, r) { g.fillStyle = "#e4eef4"; [[0, .2, 1], [-1, .35, .7], [1, .35, .75], [-.5, 0, .8], [.55, -.05, .7]].forEach(([dx, dy, k]) => { g.beginPath(); g.arc(x + dx * r, y + dy * r + 4, r * k, 0, 7); g.fill(); }); g.fillStyle = "#fff"; [[0, .1, 1], [-1, .3, .7], [1, .3, .75], [-.5, -.1, .8], [.55, -.15, .7]].forEach(([dx, dy, k]) => { g.beginPath(); g.arc(x + dx * r, y + dy * r, r * k, 0, 7); g.fill(); }); }
+function desenharTitulo(g, w, h, t) {
+  let sd = 3; const r2 = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  // céu e sol
+  const ceu = g.createLinearGradient(0, 0, 0, h * .7); ceu.addColorStop(0, "#5fb4e6"); ceu.addColorStop(.55, "#a8dcf0"); ceu.addColorStop(1, "#fff0c6"); g.fillStyle = ceu; g.fillRect(0, 0, w, h);
+  const sx = w * .09, sy = h * .16, sr = h * .07; const gl = g.createRadialGradient(sx, sy, sr * .5, sx, sy, sr * 4); gl.addColorStop(0, "rgba(255,240,170,.9)"); gl.addColorStop(1, "rgba(255,240,170,0)"); g.fillStyle = gl; g.fillRect(0, 0, sx + sr * 4, sy + sr * 4);
+  g.save(); g.translate(sx, sy); g.rotate(t * .1); g.fillStyle = "rgba(255,226,120,.55)"; for (let i = 0; i < 12; i++) { g.rotate(PI / 6); g.fillRect(sr * 1.2, -sr * .08, sr * .55, sr * .16); } g.restore();
+  g.fillStyle = "#ffe27a"; g.beginPath(); g.arc(sx, sy, sr, 0, 7); g.fill(); g.fillStyle = "#fff3b8"; g.beginPath(); g.arc(sx - sr * .25, sy - sr * .25, sr * .45, 0, 7); g.fill();
+  for (let i = 0; i < 6; i++) { const v = 8 + i * 3, x = ((i * 337 + t * v) % (w + 400)) - 200, y = h * (.08 + (i % 3) * .09), r = h * (.035 + (i % 2) * .02); nuvem(g, x, y, r); }
+  g.strokeStyle = "#3a4a5a"; g.lineWidth = 2; for (let i = 0; i < 4; i++) { const x = (w * .3 + t * 40 + i * 38) % (w + 100) - 50, y = h * .2 + Math.sin(t * .8 + i) * 12 + i * 9, a = Math.sin(t * 9 + i) * 4; g.beginPath(); g.moveTo(x - 7, y - a); g.lineTo(x, y); g.lineTo(x + 7, y - a); g.stroke(); } // passarinhos
+  // serras e morros
+  const morro = (base, amp, fr, fase, cor) => { g.fillStyle = cor; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 8) g.lineTo(x, h * base - Math.sin(x / w * fr + fase) * h * amp - Math.sin(x / w * fr * 2.7 + fase) * h * amp * .35); g.lineTo(w, h); g.fill(); };
+  morro(.5, .07, 5, 1, "#9cc4d4"); morro(.56, .06, 7, 3, "#86b48e");
+  // árvores redondas nos morros
+  for (let i = 0; i < 26; i++) { const x = r2() * w, y = h * (.53 + r2() * .06), rr = h * (.018 + r2() * .016); g.fillStyle = "#5a3a22"; g.fillRect(x - 2, y, 4, rr); g.fillStyle = ["#5e9a4a", "#4e8a40", "#6aa852"][i % 3]; g.beginPath(); g.arc(x, y, rr, 0, 7); g.fill(); g.fillStyle = "rgba(255,255,255,.15)"; g.beginPath(); g.arc(x - rr * .3, y - rr * .3, rr * .45, 0, 7); g.fill(); }
+  morro(.64, .035, 4, 5, "#7cba52");
+  // plantação em fileiras no morro da direita
+  g.save(); g.beginPath(); g.moveTo(w * .62, h * .66); g.lineTo(w, h * .6); g.lineTo(w, h * .76); g.lineTo(w * .7, h * .78); g.closePath(); g.clip(); g.fillStyle = "#8ab048"; g.fillRect(0, 0, w, h); g.strokeStyle = "#6a9a3a"; g.lineWidth = 3; for (let i = 0; i < 16; i++) { g.beginPath(); g.moveTo(w * .6, h * (.64 + i * .012)); g.lineTo(w, h * (.58 + i * .014)); g.stroke(); } g.restore();
+  // a casa do sítio
+  const cx2 = w * .5, cy2 = h * .67, cw = h * .3, chh = h * .17;
+  g.fillStyle = "rgba(0,0,0,.15)"; g.beginPath(); g.ellipse(cx2, cy2 + 2, cw * .62, h * .02, 0, 0, 7); g.fill();
+  g.fillStyle = "#f4ead6"; g.fillRect(cx2 - cw / 2, cy2 - chh, cw, chh); g.fillStyle = "#d8c8a8"; g.fillRect(cx2 - cw / 2, cy2 - chh * .12, cw, chh * .12);
+  g.fillStyle = "#c8583a"; g.beginPath(); g.moveTo(cx2 - cw * .6, cy2 - chh + 2); g.lineTo(cx2 - cw * .4, cy2 - chh * 1.7); g.lineTo(cx2 + cw * .4, cy2 - chh * 1.7); g.lineTo(cx2 + cw * .6, cy2 - chh + 2); g.fill();
+  g.strokeStyle = "rgba(90,30,20,.35)"; g.lineWidth = 2; for (let i = 1; i < 5; i++) { const yy = cy2 - chh - i * chh * .14; g.beginPath(); g.moveTo(cx2 - cw * (.6 - i * .04), yy); g.lineTo(cx2 + cw * (.6 - i * .04), yy); g.stroke(); }
+  g.fillStyle = "#8a4a2a"; g.fillRect(cx2 + cw * .22, cy2 - chh * 1.95, cw * .08, chh * .4);
+  for (let i = 0; i < 4; i++) { const k = ((t * .35 + i * .25) % 1); g.fillStyle = `rgba(255,255,255,${.6 * (1 - k)})`; g.beginPath(); g.arc(cx2 + cw * .26 + Math.sin(k * 6 + i) * 8, cy2 - chh * 2 - k * h * .14, h * (.012 + k * .02), 0, 7); g.fill(); } // fumacinha do fogão
+  g.fillStyle = "#6a3a22"; g.fillRect(cx2 - cw * .08, cy2 - chh * .62, cw * .16, chh * .62); g.fillStyle = "#f2c94a"; g.fillRect(cx2 + cw * .04, cy2 - chh * .32, 3, 3);
+  [[-.34], [.22]].forEach(([fx]) => { const jx = cx2 + cw * fx, jy = cy2 - chh * .72; g.fillStyle = "#3a6a8a"; g.fillRect(jx, jy, cw * .13, chh * .34); g.fillStyle = "#a8d8f0"; g.fillRect(jx + 2, jy + 2, cw * .13 - 4, chh * .34 - 4); g.fillStyle = "#3a6a8a"; g.fillRect(jx + cw * .063, jy, 2, chh * .34); g.fillStyle = "#2e7a3a"; g.fillRect(jx - 4, jy - 2, 4, chh * .38); g.fillRect(jx + cw * .13, jy - 2, 4, chh * .38); g.fillStyle = "#e86a6a"; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(jx + 4 + i * cw * .03, jy + chh * .38, 3, 0, 7); g.fill(); } }); // janelas com floreira
+  // catavento
+  const kx = w * .66, ky = h * .69; g.strokeStyle = "#7a7a7a"; g.lineWidth = 3; g.beginPath(); g.moveTo(kx - h * .03, ky); g.lineTo(kx, ky - h * .22); g.lineTo(kx + h * .03, ky); g.stroke();
+  g.save(); g.translate(kx, ky - h * .22); g.rotate(t * 1.6); for (let i = 0; i < 8; i++) { g.rotate(PI / 4); g.fillStyle = i % 2 ? "#e8e4d8" : "#d84a3a"; g.beginPath(); g.moveTo(0, 0); g.lineTo(h * .07, -h * .012); g.lineTo(h * .075, h * .012); g.fill(); } g.fillStyle = "#4a4a4a"; g.beginPath(); g.arc(0, 0, 4, 0, 7); g.fill(); g.restore();
+  // cerca
+  g.fillStyle = "#c8a06a"; const fy = h * .76; g.fillRect(0, fy - h * .045, w, h * .012); g.fillRect(0, fy - h * .02, w, h * .012); for (let x = 10; x < w; x += h * .07) { g.fillRect(x, fy - h * .07, h * .016, h * .075); g.fillStyle = "#a8804a"; g.fillRect(x, fy - h * .07, h * .016, 3); g.fillStyle = "#c8a06a"; }
+  // girassóis balançando
+  for (let i = 0; i < 9; i++) { const x = w * (.36 + i * .035), b = Math.sin(t * 1.4 + i) * 4, hh = h * (.13 + (i % 3) * .025), y = fy + h * .02; g.strokeStyle = "#4a8a2a"; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + b * .5, y - hh * .5, x + b, y - hh); g.stroke(); g.fillStyle = "#5a9a32"; g.beginPath(); g.ellipse(x + 6, y - hh * .45, 8, 3.5, -.5, 0, 7); g.fill();
+    g.save(); g.translate(x + b, y - hh); g.rotate(b * .03); g.fillStyle = "#f6c21e"; for (let p = 0; p < 12; p++) { g.rotate(PI / 6); g.beginPath(); g.ellipse(h * .02, 0, h * .016, h * .006, 0, 0, 7); g.fill(); } g.fillStyle = "#6a3a12"; g.beginPath(); g.arc(0, 0, h * .013, 0, 7); g.fill(); g.restore(); }
+  // gramado da frente com caminho de terra
+  const gr = g.createLinearGradient(0, h * .74, 0, h); gr.addColorStop(0, "#78b84a"); gr.addColorStop(1, "#4e8e36"); g.fillStyle = gr; g.beginPath(); g.moveTo(0, h * .79); g.quadraticCurveTo(w * .5, h * .75, w, h * .8); g.lineTo(w, h); g.lineTo(0, h); g.fill();
+  g.fillStyle = "#c89a62"; g.beginPath(); g.moveTo(cx2 - cw * .06, h * .772); g.quadraticCurveTo(cx2 - cw * .1, h * .86, w * .36, h); g.lineTo(w * .58, h); g.quadraticCurveTo(cx2 + cw * .05, h * .86, cx2 + cw * .06, h * .772); g.fill();
+  g.fillStyle = "rgba(255,255,255,.18)"; g.beginPath(); g.moveTo(cx2 - cw * .02, h * .78); g.quadraticCurveTo(cx2 - cw * .03, h * .87, w * .45, h); g.lineTo(w * .5, h); g.quadraticCurveTo(cx2 + cw * .01, h * .87, cx2 + cw * .02, h * .78); g.fill();
+  for (let i = 0; i < 26; i++) { const k = r2(), x = mix(cx2, w * .47, k) + (r2() - .5) * (40 + k * 120), y = h * (.78 + k * .21); g.fillStyle = r2() < .5 ? "#a87a48" : "#e0c08a"; g.beginPath(); g.ellipse(x, y, 2 + k * 4, 1.2 + k * 2.2, 0, 0, 7); g.fill(); } // pedrinhas
+  for (let i = 0; i < 160; i++) { const x = r2() * w, y = h * (.78 + r2() * .22), k = (y / h - .76) * 4, bb = Math.sin(t * 1.8 + x * .02) * 2 * k; if (x > w * .38 && x < w * .58 && y > h * .8) continue; g.strokeStyle = r2() < .5 ? "#5e9e3a" : "#8acb5a"; g.lineWidth = 1.5 + k; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 3 * k + bb, y - 8 * k - 4); g.moveTo(x, y); g.lineTo(x + 3 * k + bb, y - 7 * k - 3); g.stroke(); }
+  for (let i = 0; i < 40; i++) { const x = r2() * w, y = h * (.8 + r2() * .19); if (x > w * .38 && x < w * .58) continue; const cor = ["#fff", "#f6d24a", "#f28ab0", "#c8a0f0"][i % 4], rr = 2.5 + (y / h - .8) * 14; g.fillStyle = cor; for (let p = 0; p < 5; p++) { const a = p / 5 * PI * 2; g.beginPath(); g.arc(x + Math.cos(a) * rr * .8, y + Math.sin(a) * rr * .8, rr * .55, 0, 7); g.fill(); } g.fillStyle = "#f2a020"; g.beginPath(); g.arc(x, y, rr * .45, 0, 7); g.fill(); } // florzinhas
+  // a Yasmin e a Sombrinha
+  const ys = h * .36, yx = w * .25, yy = h * .95 + Math.abs(Math.sin(t * 2.2)) * -h * .006;
+  g.fillStyle = "rgba(0,40,0,.25)"; g.beginPath(); g.ellipse(yx, h * .955, ys * .3, ys * .07, 0, 0, 7); g.fill();
+  comCtx(g, () => desenharVoce(yx, yy, t, { q: yasminMenu(), s: ys, anda: 0, dir: 1 }));
+  const gx = w * .34, gy = h * .955; g.fillStyle = "rgba(0,40,0,.25)"; g.beginPath(); g.ellipse(gx, gy, h * .05, h * .012, 0, 0, 7); g.fill(); gatoEm(gx, gy, h * .0062, -1, 0, t, g);
+  // borboletas
+  for (let i = 0; i < 4; i++) { const bx = w * (.15 + i * .14) + Math.sin(t * .7 + i * 2) * w * .05, by = h * (.72 + Math.sin(t * 1.1 + i) * .06), a = Math.abs(Math.sin(t * 12 + i)); g.fillStyle = ["#f28a3a", "#f2e04a", "#8ac8f0", "#f28ab0"][i]; g.beginPath(); g.ellipse(bx - 5 * a, by, 6 * a + 1, 4, -.4, 0, 7); g.ellipse(bx + 5 * a, by, 6 * a + 1, 4, .4, 0, 7); g.fill(); g.fillStyle = "#2a1a10"; g.fillRect(bx - 1, by - 4, 2, 8); }
+  // placa de madeira com o nome do jogo, pendurada por cordas
+  const lw = Math.min(w * .42, h * .78, 560), lh = lw * .34, lx = w * .33 - lw / 2, balanca = Math.sin(t * .9) * .012, ly = h * .05;
+  g.save(); g.translate(lx + lw / 2, 0); g.rotate(balanca); g.translate(-lw / 2, 0);
+  g.strokeStyle = "#7a5a3a"; g.lineWidth = 4; g.beginPath(); g.moveTo(lw * .15, 0); g.lineTo(lw * .15, ly + 6); g.moveTo(lw * .85, 0); g.lineTo(lw * .85, ly + 6); g.stroke();
+  g.fillStyle = "rgba(0,0,0,.3)"; g.fillRect(10, ly + 10, lw, lh);
+  g.fillStyle = "#3a2210"; g.fillRect(-4, ly - 4, lw + 8, lh + 8);
+  for (let i = 0; i < 3; i++) { g.fillStyle = ["#a8703e", "#9a6434", "#b07a46"][i]; g.fillRect(0, ly + i * lh / 3, lw, lh / 3 - 2); g.fillStyle = "rgba(60,30,10,.25)"; for (let k = 0; k < 6; k++) g.fillRect(r2() * lw, ly + i * lh / 3 + r2() * lh / 3, lw * (.1 + r2() * .2), 2); }
+  g.fillStyle = "#5a5a5a"; [[10, 10], [lw - 16, 10], [10, lh - 16], [lw - 16, lh - 16]].forEach(([x, y]) => { g.fillRect(x, ly + y, 6, 6); g.fillStyle = "#9a9a9a"; g.fillRect(x + 1, ly + y + 1, 2, 2); g.fillStyle = "#5a5a5a"; }); // pregos
+  g.textAlign = "center"; g.lineJoin = "round";
+  const t1 = Math.round(lh * .52); g.font = `800 ${t1}px "Big Shoulders Display", Impact, sans-serif`; g.lineWidth = Math.max(5, t1 * .14); g.strokeStyle = "#3a1e0a"; g.strokeText("ROÇA", lw / 2, ly + lh * .55); g.fillStyle = "#fff4d8"; g.fillText("ROÇA", lw / 2, ly + lh * .55); g.fillStyle = "rgba(255,255,255,.5)"; g.fillText("ROÇA", lw / 2, ly + lh * .55 - 2); g.fillStyle = "#fff4d8"; g.fillText("ROÇA", lw / 2, ly + lh * .55 - 1);
+  const t2 = Math.round(lh * .25); g.font = `800 ${t2}px "Big Shoulders Display", Impact, sans-serif`; g.lineWidth = Math.max(4, t2 * .16); g.strokeText("ASSOMBRADA", lw / 2, ly + lh * .87); g.fillStyle = "#ffd25a"; g.fillText("ASSOMBRADA", lw / 2, ly + lh * .87);
+  g.textAlign = "start";
+  g.restore();
+}
+function musicaTitulo(t) { // musiquinha de caixinha de música + passarinhos
+  if (!AC || mudo || !TIT) return; const bpm = .32, notas = [0, 4, 7, 12, 9, 7, 4, 7, 5, 9, 12, 9, 7, 4, 2, 4], base = 392;
+  while (TIT.prox < t + .3) { const i = TIT.n++ % notas.length, q = TIT.prox - t; tocarTom(base * Math.pow(2, notas[i] / 12), .5, { tipo: "triangle", vol: .035, quando: Math.max(0, q), lp: 3000 }); if (i % 4 === 0) tocarTom(base / 2 * Math.pow(2, [0, 5, 7, 5][(i / 4) % 4] / 12), .9, { tipo: "sine", vol: .03, quando: Math.max(0, q) }); TIT.prox += bpm; }
+  if (Math.random() < .006) { const f0 = rnd(2400, 3400); for (let k = 0; k < 3; k++) tocarTom(f0 + k * 120, .07, { vol: .02, ate: f0 * 1.2, quando: k * .1 }); }
+}
+function mostrarTitulo(on) {
+  const d = el.rcTitulo; if (!d) return; d.hidden = !on;
+  if (!on) { TIT = null; return; }
+  if (TIT) return; TIT = { t0: performance.now(), n: 0, prox: 0 }; const cv2 = document.getElementById("rcTitCv"), g = cv2.getContext("2d");
+  const q = now => { if (!TIT || d.hidden) return; const dpr = Math.min(2, devicePixelRatio || 1), w = innerWidth, h = innerHeight; if (cv2.width !== Math.round(w * dpr)) { cv2.width = Math.round(w * dpr); cv2.height = Math.round(h * dpr); } g.setTransform(dpr, 0, 0, dpr, 0, 0); const t = (now - TIT.t0) / 1000; if (!TIT.prox) TIT.prox = t + .5; desenharTitulo(g, w, h, t); musicaTitulo(t); requestAnimationFrame(q); };
+  requestAnimationFrame(q);
+}
+const ICS_MENU = { jogar: '<svg viewBox="0 0 16 16"><path d="M4 2h2v2h2v2h2v2h-2v2h-2v2h-2z"/></svg>', online: '<svg viewBox="0 0 16 16"><path d="M3 3h4v4h-4zM9 3h4v4h-4zM2 9h6v4h-6zM8 9h6v4h-6z"/></svg>', hist: '<svg viewBox="0 0 16 16"><path d="M2 3h5v10h-5zM9 3h5v10h-5zM3 5h3v1h-3zM10 5h3v1h-3zM3 7h3v1h-3zM10 7h3v1h-3z"/></svg>', opc: '<svg viewBox="0 0 16 16"><path d="M7 1h2v3h-2zM7 12h2v3h-2zM1 7h3v2h-3zM12 7h3v2h-3zM5 5h6v6h-6zM7 7h2v2h-2z" fill-rule="evenodd"/></svg>', sair: '<svg viewBox="0 0 16 16"><path d="M3 2h7v3h-2v-1h-3v8h3v-1h2v3h-7zM10 6h1v-2h2v2h1v4h-1v2h-2v-2h-1z"/></svg>', voltar: '<svg viewBox="0 0 16 16"><path d="M2 8l4-4v3h8v2h-8v3z"/></svg>', criar: '<svg viewBox="0 0 16 16"><path d="M7 2h2v5h5v2h-5v5h-2v-5h-5v-2h5z"/></svg>', entrar: '<svg viewBox="0 0 16 16"><path d="M2 7h7v-3l5 4-5 4v-3h-7z"/></svg>' };
+function telaTituloMenu(sub) {
+  const m = el.rcTitMenu, b = (id, ic, txt, sm, cls = "") => `<button type="button" class="rc-tbt ${cls}" id="${id}"><i>${ICS_MENU[ic]}</i><span>${txt}${sm ? `<small>${sm}</small>` : ""}</span></button>`;
+  if (sub === "online") m.innerHTML = `<h3>Jogar com amigo</h3>${b("rcCriar", "criar", "Criar sala", "Gera um código")}${b("rcEntrarSala", "entrar", "Entrar numa sala", "Digite o código")}${b("rcTVolta", "voltar", "Voltar")}`;
+  else m.innerHTML = `${b("rcSolo", "jogar", "Jogar", "Você e a Sombrinha", "dest")}${b("rcTOn", "online", "Jogar com amigo", "Pela internet")}${b("rcHistBt", "hist", "A história", "Como tudo começou")}${window.ROCA_SOLO ? b("rcOpcoes", "opc", "Opções") : ""}${window.ROCA_SOLO ? (window.PC || (window.Android && Android.sair) ? b("rcSair", "sair", "Sair do jogo") : "") : b("rcSair", "voltar", "Voltar ao menu")}`;
+  const on = (id, fn) => { const e = document.getElementById(id); if (e) e.addEventListener("click", () => { initAudio(); tocarTom(660, .06, { tipo: "square", vol: .04 }); fn(); }); };
+  on("rcSolo", () => iniciarJogo("solo")); on("rcTOn", () => telaTituloMenu("online")); on("rcTVolta", () => telaTituloMenu());
+  on("rcCriar", criarSala); on("rcEntrarSala", entrarSala); on("rcHistBt", () => { mostrarTitulo(false); historia(menuInicial); }); on("rcOpcoes", opcoes);
+  on("rcSair", () => { if (window.ROCA_SOLO) { if (window.PC) PC.sair(); else if (window.Android && Android.sair) Android.sair(); return; } mostrarTitulo(false); sairRoca(); });
+  const pc = matchMedia("(pointer: fine)").matches;
+  el.rcTitRod.innerHTML = `<span>versão ${window.ROCA_VERSAO || "1"}</span>${pc ? `<span><b>WASD</b> andar · <b>E</b> ação · <b>R</b> lanterna · <b>Shift</b> correr · <b>M</b> mochila · <b>Q</b> semente · <b>T</b> chat</span>` : `<span>Use fone de ouvido: o som faz parte do jogo.</span>`}`;
+  setTimeout(() => { const f = m.querySelector("button"); if (f && (pc || CONTROLE.usado)) f.focus(); }, 30);
+}
+
 function menuInicial() {
   netFechar(); if (!R || !R.menu) { novoJogo(); R.menu = true; R.t = DIA - 20; } hud();
-  painelAberto = true; el.rcPainel.hidden = false;
-  el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Roça Assombrada</h2><p>Yasmin, a gatinha Sombrinha e um sítio cheio de regras. Jogue sozinha ou chame um amigo pela internet.</p>
-    <div class="rc-grade"><button type="button" class="rc-op dest" id="rcSolo">Jogar sozinha<small>Você e a Sombrinha</small></button>
-    <button type="button" class="rc-op" id="rcCriar">Criar sala online<small>Gera um código para mandar ao amigo</small></button>
-    <button type="button" class="rc-op" id="rcEntrarSala">Entrar numa sala<small>Digite o código do amigo</small></button>
-    <button type="button" class="rc-op" id="rcHistBt">Ver a história<small>Como tudo começou</small></button></div>
-    ${matchMedia("(pointer: fine)").matches ? `<p style="font-size:12.5px;color:#b8b2a4">No computador: <b>WASD</b> ou setas andam · <b>E</b>/espaço = ação · <b>R</b> = lanterna · <b>Shift</b> = correr · <b>Q</b> = semente · <b>M</b> = mochila · <b>Enter</b> = chat · <b>Esc</b> = pausa</p>` : ""}
-    ${matchMedia("(pointer: fine)").matches || navigator.getGamepads && [...navigator.getGamepads()].some(Boolean) ? `<p style="font-size:12.5px;color:#b8b2a4">Controle: <b>analógico</b> anda · <b>A</b> ação · <b>B</b> lanterna · <b>X</b> correr · <b>Y</b> semente · <b>Select</b> mochila · <b>Start</b> pausa</p>` : ""}
-    <div class="rc-linha">${window.ROCA_SOLO ? `<button type="button" class="rc-op" id="rcOpcoes">Opções</button>${window.PC || (window.Android && Android.sair) ? `<button type="button" class="rc-op" id="rcSair">Sair do jogo</button>` : ""}` : `<button type="button" class="rc-op" id="rcSair">Voltar ao menu do jogo</button>`}</div></div>`;
-  document.getElementById("rcSolo").addEventListener("click", () => iniciarJogo("solo"));
-  document.getElementById("rcCriar").addEventListener("click", criarSala);
-  document.getElementById("rcEntrarSala").addEventListener("click", entrarSala);
-  document.getElementById("rcHistBt").addEventListener("click", () => { fecharPainel(); historia(menuInicial); });
-  const bs = document.getElementById("rcSair"); if (bs) bs.addEventListener("click", () => { if (window.ROCA_SOLO) { if (window.PC) PC.sair(); else if (window.Android && Android.sair) Android.sair(); return; } fecharPainel(); sairRoca(); });
-  const bo = document.getElementById("rcOpcoes"); if (bo) bo.addEventListener("click", opcoes);
-  focarPrimeiro();
+  fecharPainel(); mostrarTitulo(true); telaTituloMenu();
 }
 function opcoes() { // só na versão separada da Roça (no jogo antigo isso fica no menu principal)
   const lig = v => v ? "ligada" : "desligada", fps = window.fpsAlvo ? fpsAlvo() : 30;
@@ -2914,8 +3072,9 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
 }
 /* ---------- controle (Xbox, PlayStation, Steam Deck) ---------- */
 const CONTROLE = { b: [], dx: 0, dy: 0, eixo: 0, usado: false };
-function focarPrimeiro() { if (!CONTROLE.usado) return; setTimeout(() => { const b = el.rcPainel.querySelector("button:not([disabled]), input"); if (b) b.focus(); }, 30); }
-function moverFoco(d) { const l = [...el.rcPainel.querySelectorAll("button:not([disabled]), input")]; if (!l.length) return; let i = l.indexOf(document.activeElement); i = i < 0 ? 0 : (i + d + l.length) % l.length; l[i].focus(); l[i].scrollIntoView({ block: "nearest" }); }
+const caixaFoco = () => painelAberto || el.rcTitulo.hidden ? el.rcPainel : el.rcTitMenu;
+function focarPrimeiro() { if (!CONTROLE.usado) return; setTimeout(() => { const b = caixaFoco().querySelector("button:not([disabled]), input"); if (b) b.focus(); }, 30); }
+function moverFoco(d) { const l = [...caixaFoco().querySelectorAll("button:not([disabled]), input")]; if (!l.length) return; let i = l.indexOf(document.activeElement); i = i < 0 ? 0 : (i + d + l.length) % l.length; l[i].focus(); l[i].scrollIntoView({ block: "nearest" }); }
 function lerControle() {
   const gps = navigator.getGamepads ? navigator.getGamepads() : []; let g = null; for (const x of gps) if (x && x.connected) { g = x; break; }
   CONTROLE.dx = CONTROLE.dy = 0; if (!g) return;
@@ -2931,6 +3090,7 @@ function lerControle() {
     if (novo(0)) { const a = document.activeElement; if (a && el.rcPainel.contains(a) && a.tagName === "BUTTON") a.click(); else moverFoco(0); }
     if (novo(1) || novo(9)) { if (window.rocaVoltar) rocaVoltar(); } return;
   }
+  if (!el.rcTitulo.hidden) { if (novo(12) || novo(14) || (eixoNovo && eixoV < 0)) moverFoco(-1); if (novo(13) || novo(15) || (eixoNovo && eixoV > 0)) moverFoco(1); if (novo(0)) { const a = document.activeElement; if (a && el.rcTitMenu.contains(a)) a.click(); else moverFoco(0); } if (novo(1)) { const v = document.getElementById("rcTVolta"); if (v) v.click(); } return; }
   if (!R || R.menu) return;
   let dx = Math.abs(ax) > .22 ? ax : 0, dy = Math.abs(ay) > .22 ? ay : 0; if (b(14)) dx = -1; if (b(15)) dx = 1; if (b(12)) dy = -1; if (b(13)) dy = 1; CONTROLE.dx = dx; CONTROLE.dy = dy;
   if (novo(0)) acao(); if (novo(1)) alternarLanterna(); if (novo(2) || novo(10)) correr(); if (novo(3)) el.rcSem.dispatchEvent(new Event("pointerdown")); if (novo(9)) pausar(); if (novo(8)) abrirMochila(); if (novo(5) && R.online && R.outro) abrirChat(true);
@@ -2956,7 +3116,7 @@ function entrarSala() {
   document.getElementById("rcIr").addEventListener("click", ir); inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") ir(); });
 }
 function iniciarJogo(modo, semTutorial) {
-  fecharPainel(); novoJogo(); R.online = modo === "solo" ? null : modo; R.cor = modo === "guest" ? 1 : 0;
+  fecharPainel(); mostrarTitulo(false); novoJogo(); R.online = modo === "solo" ? null : modo; R.cor = modo === "guest" ? 1 : 0;
   if (modo === "guest") { R.eu.x = 14.2; R.eu.y = 12.9; }
   if (modo === "host") { R.outro = novoOutro(); enviar({ t: "inicio", volta: !!semTutorial }); }
   hud();
@@ -2981,7 +3141,7 @@ window.sairRoca = function () {
 };
 window.rocaVoltar = () => { if (!window.rocaAtiva) return false; if (el.rcChatBar && !el.rcChatBar.hidden) { abrirChat(false); return true; } if (document.querySelector(".rc-hist")) return true; if (R && R.menu) { if (painelAberto && document.getElementById("rcCancelar")) { netFechar(); menuInicial(); } else { fecharPainel(); sairRoca(); } return true; } if (painelAberto) { if (R && (R.morto || R.venceu)) return true; fecharPainel(); } else pausar(); return true; };
 window.rocaNet = Net; window.rocaHistoria = () => historia(() => {});
-window.rocaMedir = () => medir(); window.rocaEstado = () => R; window.rocaTeste = { bancada: () => abrirBancada(), loja: n => abrirLoja(NPCS.find(x => x.id === n)) }; // usado nos testes
+window.rocaMedir = () => medir(); window.rocaEstado = () => R; window.rocaTeste = { chao: g => CHAO_SITIO.pintar(g), vila: () => { montarVila(); return VILA; }, chaoVila: g => CHAO_VILA.pintar(g), bancada: () => abrirBancada(), loja: n => abrirLoja(NPCS.find(x => x.id === n)) }; // usado nos testes
 window.morrerTeste = () => morrer("seco", "teste", "teste");
 window.telaFimTeste = () => telaFim("morreu");
 })();
