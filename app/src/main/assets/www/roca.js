@@ -306,7 +306,7 @@ function montarUI() {
   bt(el.rcMoch, () => { if (R && !R.menu && !painelAberto) abrirMochila(); }); bt(el.rcSem, () => { R.semente = (R.semente + 1) % R.sementes.length; tocarTom(900, .05, { vol: .05 }); hud(); });
   el.rcMenu.addEventListener("click", () => pausar());
   el.rcFala.addEventListener("pointerdown", e => { e.preventDefault(); proximaFala(); });
-  addEventListener("keydown", e => { if (document.getElementById("roca").hidden) return; teclas[e.key.toLowerCase()] = true; const k = e.key.toLowerCase(); if (["f", "e", " "].includes(k)) { e.preventDefault(); if (R.msg) proximaFala(); else acao(); } if (k === "r") alternarLanterna(); if (k === "shift") correr(); if (k === "q") el.rcSem.dispatchEvent(new Event("pointerdown")); if (k === "escape") pausar(); });
+  addEventListener("keydown", e => { if (document.getElementById("roca").hidden) return; teclas[e.key.toLowerCase()] = true; const k = e.key.toLowerCase(); if (["f", "e", " "].includes(k)) { e.preventDefault(); if (R.msg) proximaFala(); else acao(); } if (k === "r") alternarLanterna(); if (k === "shift") correr(); if (k === "q") el.rcSem.dispatchEvent(new Event("pointerdown")); if (k === "escape") { if (!el.rcChatBar.hidden) abrirChat(false); else if (painelAberto && document.getElementById("rcFechar")) fecharPainel(); else pausar(); } if (k === "enter" && R && R.online && R.outro && el.rcChatBar.hidden) { e.preventDefault(); abrirChat(true); } if ((k === "m" || k === "tab") && R && !R.menu && !painelAberto) { e.preventDefault(); abrirMochila(); } });
   addEventListener("keyup", e => { teclas[e.key.toLowerCase()] = false; });
   addEventListener("resize", medir);
   document.addEventListener("visibilitychange", () => { if (document.hidden && rodando && R && !R.morto && !R.venceu) pausar(); });
@@ -1707,7 +1707,7 @@ function atualizarConvidado(dt) {
 
 /* ---------- chat do online ---------- */
 const CHAT = { meu: null, dele: null, log: [] };
-function abrirChat(abrir) { el.rcChatBar.hidden = !abrir; el.rcChatN.hidden = true; if (abrir) setTimeout(() => { try { el.rcChatIn.focus(); } catch (e) {} }, 50); else try { el.rcChatIn.blur(); } catch (e) {} }
+function abrirChat(abrir) { el.rcChatBar.hidden = !abrir; el.rcChatN.hidden = true; if (abrir) { try { el.rcChatIn.focus(); } catch (e) {} setTimeout(() => { try { el.rcChatIn.focus(); } catch (e) {} }, 50); } else try { el.rcChatIn.blur(); } catch (e) {} }
 function limparTexto(t) { return String(t || "").replace(/[\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80); }
 function mandarChat(t) { t = limparTexto(t); if (!t || !R || !R.online) return; enviar({ t: "chat", txt: t }); CHAT.meu = { txt: t, t: performance.now() }; logChat(t, true); tocarTom(820, .06, { vol: .04 }); }
 function receberChat(t) { t = limparTexto(t); if (!t || !R || !R.online) return; CHAT.dele = { txt: t, t: performance.now() }; logChat(t, false); tocarTom(660, .08, { tipo: "triangle", vol: .06 }); tocarTom(990, .08, { tipo: "triangle", vol: .05, quando: .09 }); if (el.rcChatBar.hidden) el.rcChatN.hidden = false; }
@@ -1735,6 +1735,7 @@ function menuInicial() {
     <button type="button" class="rc-op" id="rcCriar">Criar sala online<small>Gera um código para mandar ao amigo</small></button>
     <button type="button" class="rc-op" id="rcEntrarSala">Entrar numa sala<small>Digite o código do amigo</small></button>
     <button type="button" class="rc-op" id="rcHistBt">Ver a história<small>Como tudo começou</small></button></div>
+    ${matchMedia("(pointer: fine)").matches ? `<p style="font-size:12.5px;color:#b8b2a4">No computador: <b>WASD</b> ou setas andam · <b>E</b>/espaço = ação · <b>R</b> = lanterna · <b>Shift</b> = correr · <b>Q</b> = semente · <b>M</b> = mochila · <b>Enter</b> = chat · <b>Esc</b> = pausa</p>` : ""}
     <div class="rc-linha"><button type="button" class="rc-op" id="rcSair">Voltar ao menu do jogo</button></div></div>`;
   document.getElementById("rcSolo").addEventListener("click", () => iniciarJogo("solo"));
   document.getElementById("rcCriar").addEventListener("click", criarSala);
