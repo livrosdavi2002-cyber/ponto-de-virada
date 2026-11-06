@@ -220,6 +220,26 @@ function detalheChao(g, pc, cx, cy, P) {
   }
 }
 function gerarChao() { CHAO_SITIO = Chao(pintarChaoSitio, MW, MH); }
+// caminho de terra com beirada irregular, grama invadindo a beira, pedrinhas e marcas de pé
+const CORES_TERRA = { sitio: ["rgba(64,84,28,.28)", "#b98f5c", "#d3b07a", "#9c7546"], mata: ["rgba(10,14,6,.45)", "#5a4428", "#6c5434", "#46341e"], vila: ["rgba(50,60,24,.3)", "#9a7a4e", "#b4946a", "#7e6040"] };
+function caminhoTerra(g, P, pts, w, tipo = "sitio") {
+  let sd = Math.round(pts[0][0] * 131 + pts[0][1] * 977 + w * 50) + 7; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  const [cBorda, cBase, cClaro, cEscuro] = CORES_TERRA[tipo], am = [];
+  for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i], L = Math.hypot(bx - ax, by - ay) || 1, nx = -(by - ay) / L, ny = (bx - ax) / L; for (let d = 0; d < L; d += .14) { const t = d / L; am.push({ x: ax + (bx - ax) * t, y: ay + (by - ay) * t, nx, ny, d: am.length * .14 }); } }
+  am.push({ x: pts[pts.length - 1][0], y: pts[pts.length - 1][1], nx: 0, ny: 1, d: am.length * .14 });
+  const ond = (p, k) => 1 + .13 * Math.sin(p.d * 2.3 + k) + .07 * Math.sin(p.d * 6.1 + k * 2);
+  const bola = (p, rr, cor) => { g.fillStyle = cor; g.beginPath(); g.arc(p.x * P, p.y * P, rr * P, 0, 7); g.fill(); };
+  am.forEach(p => bola(p, w * .64 * ond(p, 1), cBorda)); // grama amassada em volta
+  am.forEach(p => bola(p, w * .5 * ond(p, 3), cBase));
+  am.forEach(p => { const o = Math.sin(p.d * 1.3) * w * .08; g.fillStyle = cClaro; g.beginPath(); g.arc((p.x + p.nx * o) * P, (p.y + p.ny * o) * P, w * .27 * ond(p, 5) * P, 0, 7); g.fill(); });
+  am.forEach((p, i) => { // textura, pedrinhas e capim
+    for (let k = 0; k < 2; k++) { const o = (r() - .5) * w * .9; g.fillStyle = r() < .5 ? "rgba(255,240,210,.16)" : "rgba(70,46,22,.18)"; g.fillRect((p.x + p.nx * o) * P, (p.y + p.ny * o) * P, 1.5 + r() * 2, 1.5); }
+    if (r() < .28) { const o = (r() - .5) * w * .8, px = (p.x + p.nx * o) * P, py = (p.y + p.ny * o) * P, rr = 1.6 + r() * 2.4; g.fillStyle = "rgba(40,26,12,.3)"; g.beginPath(); g.ellipse(px + .8, py + 1, rr, rr * .7, 0, 0, 7); g.fill(); g.fillStyle = ["#c8b498", "#a8987e", "#e0ceb0", "#8a7c66"][Math.floor(r() * 4)]; g.beginPath(); g.ellipse(px, py, rr, rr * .7, r() * 3, 0, 7); g.fill(); g.fillStyle = "rgba(255,255,255,.35)"; g.fillRect(px - rr * .4, py - rr * .4, 1.2, 1.2); }
+    if (r() < .5) { const lado = r() < .5 ? -1 : 1, o = lado * w * (.4 + r() * .12), bx = (p.x + p.nx * o) * P, by = (p.y + p.ny * o) * P; g.strokeStyle = tipo === "mata" ? "rgba(40,56,22,.9)" : "#6a9a34"; g.lineWidth = 1.4; g.beginPath(); for (let k = 0; k < 3; k++) { g.moveTo(bx + (k - 1) * 2, by + 1); g.lineTo(bx + (k - 1) * 3 + (r() - .5) * 2, by - 4 - r() * 4); } g.stroke(); }
+    if (w > 1 && i % 9 === 0) { g.strokeStyle = tipo === "mata" ? "rgba(40,56,22,.6)" : "rgba(106,154,52,.75)"; g.lineWidth = 1.2; const bx = p.x * P, by = p.y * P; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx - 2, by - 4); g.moveTo(bx + 1, by); g.lineTo(bx + 3, by - 4); g.stroke(); } // capinzinho no meio da estrada larga
+    if (i % 23 === 11 && tipo !== "mata") { g.fillStyle = cEscuro; const o = (r() - .5) * w * .4; g.globalAlpha = .35; g.beginPath(); g.ellipse((p.x + p.nx * o) * P, (p.y + p.ny * o) * P, 3, 2, 0, 0, 7); g.ellipse((p.x + p.nx * (o + .14)) * P, (p.y + p.ny * (o + .14)) * P + 6, 3, 2, 0, 0, 7); g.globalAlpha = 1; g.fill(); } // pegadas
+  });
+}
 // o chão é pintado aos pedaços: sempre com a mesma semente, para os pedaços casarem e não mexer no sorteio do jogo
 function pintarChaoSitio(g) { const s0 = semente; semente = 4242; try { _pintarChaoSitio(g); } finally { semente = s0; } }
 function _pintarChaoSitio(g) {
@@ -232,24 +252,14 @@ function _pintarChaoSitio(g) {
   for (let i = 0; i < 4200; i++) { const x = srnd() * MW * P, y = srnd() * MH * P; g.strokeStyle = srnd() < .5 ? "rgba(160,170,86,.5)" : "rgba(46,66,28,.55)"; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (srnd() - .5) * 3, y - 3 - srnd() * 4); g.stroke(); }
   for (let i = 0; i < 900; i++) { const x = srnd() * MW * P, y = srnd() * MH * P; g.fillStyle = ["#c8662a", "#d89a2a", "#a8401e", "#e0b040", "#8a3018"][Math.floor(srnd() * 5)]; g.beginPath(); g.ellipse(x, y, 2.4, 1.4, srnd() * 3, 0, 7); g.fill(); } // folhas secas
   // caminhos de terra com pedrinhas
-  const trilha = (pts, w, escura) => {
-    g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x * P, y * P) : g.moveTo(x * P, y * P));
-    g.strokeStyle = escura ? "rgba(20,14,8,.6)" : "rgba(70,52,30,.55)"; g.lineWidth = w * P * 1.22; g.stroke(); // beirada
-    g.strokeStyle = escura ? "#4a3824" : "#8f6e46"; g.lineWidth = w * P; g.stroke();
-    g.strokeStyle = escura ? "rgba(90,70,46,.5)" : "rgba(186,154,108,.5)"; g.lineWidth = w * P * .5; g.stroke();
-    g.strokeStyle = escura ? "rgba(20,12,6,.35)" : "rgba(92,66,38,.4)"; g.lineWidth = Math.max(1.5, w * P * .09); g.setLineDash([P * .9, P * .25]); g.stroke(); g.setLineDash([]); // sulco no meio
-    for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i], L = Math.hypot(bx - ax, by - ay), nx = -(by - ay) / (L || 1), ny = (bx - ax) / (L || 1);
-      for (let d = 0; d < L; d += .22) { const t = d / L, x = ax + (bx - ax) * t, y = ay + (by - ay) * t, o = (srnd() - .5) * w * .85;
-        if (srnd() < .45) { g.fillStyle = ["#a89070", "#6a5a46", "#c8b090", "#7a6650"][Math.floor(srnd() * 4)]; g.beginPath(); g.ellipse((x + nx * o) * P, (y + ny * o) * P, 1.4 + srnd() * 2.2, 1 + srnd() * 1.4, srnd() * 3, 0, 7); g.fill(); } // pedrinhas
-        if (srnd() < .55) { const lado = srnd() < .5 ? -1 : 1, bx2 = (x + nx * lado * w * (.5 + srnd() * .12)) * P, by2 = (y + ny * lado * w * (.5 + srnd() * .12)) * P; g.strokeStyle = escura ? "rgba(40,54,24,.8)" : "rgba(84,110,40,.85)"; g.lineWidth = 1.3; g.beginPath(); for (let k = 0; k < 3; k++) { g.moveTo(bx2 + k * 2 - 2, by2); g.lineTo(bx2 + k * 2 - 2 + (srnd() - .5) * 3, by2 - 3 - srnd() * 4); } g.stroke(); } // capim na beira
-        if (srnd() < .08) { g.fillStyle = "rgba(60,40,22,.35)"; g.beginPath(); g.ellipse((x + nx * o * .5) * P, (y + ny * o * .5) * P, w * P * .22, w * P * .12, srnd() * 3, 0, 7); g.fill(); } } } // poça seca / buraco
-  };
+  const trilha = (pts, w, escura) => caminhoTerra(g, P, pts, w * 1.12, escura ? "mata" : "sitio");
+
   trilha([[13, 11.8], [13, 13.6], [25.2, 13.6], [25.2, 30.2]], 1.15);
   trilha([[13, 13.6], [17.4, 12.9], [19.5, 10.9]], .8); trilha([[13, 12.4], [9.2, 12.4], [7.8, 10.9]], .6);
   trilha([[25.2, 13.6], [28.6, 13.4], [28.6, 12.2]], .7); trilha([[28.6, 13.4], [39, 13.4], [39, 12]], .8); trilha([[39, 13.4], [40.55, 14.6], [40.55, 21.2]], .7);
   trilha([[25.2, 27.4], [31.2, 27.4]], .7); trilha([[25.2, 23.75], [31, 23.5], [38.8, 23.05], [42, 23.3], [42, 24.9]], .7);
   trilha([[25.2, 33], [25.2, 38]], 1.4); // estrada que sai pelo portão
-  g.strokeStyle = "#3a2c1a"; g.lineWidth = 1.5 * P; g.lineCap = "round"; g.beginPath(); g.moveTo(6.6 * P, 16.9 * P); g.lineTo(-P, 17 * P); g.stroke(); trilha([[8.4, 13.9], [6.9, 15.1], [6.6, 16.9], [-1, 17]], .85, true); trilha([[13, 13.6], [8.4, 13.9]], .85); // trilha escura que entra na mata
+  trilha([[8.4, 13.9], [6.9, 15.1], [6.6, 16.9], [-1, 17]], .85, true); trilha([[13, 13.6], [8.4, 13.9]], .85); // trilha escura que entra na mata
   trilha([[39, 13.4], [50.4, 13.4], [50.4, 22.2], [53.3, 22.2], [53.3, 21]], .8); trilha([[42, 23.2], [44.6, 23.3], [49.7, 23.6], [49.7, 30.4], [55, 30.4]], .7); trilha([[50.4, 13.4], [53.4, 12.4]], .6);
   // milharal: terra arada em fileiras
   g.fillStyle = "#6a5232"; g.fillRect(MILHARAL.x0 * P, MILHARAL.y0 * P, (MILHARAL.x1 - MILHARAL.x0) * P, (MILHARAL.y1 - MILHARAL.y0) * P);
@@ -385,12 +395,12 @@ function montarUI() {
   .rc-chatlog div,.rc-chatbar,.rc-rapidas button,.rc-chatbar input,.rc-chatbar form button,.rc-codigo,.rc-input,.rc-pular{border-radius:0}
   .rc-chatbar{border:3px solid #120a05;background:rgba(42,27,16,.95);box-shadow:4px 4px 0 rgba(0,0,0,.5)}
   /* falas: caixa grande de papel com nome e retrato */
-  .rc-fala{width:max(56vw,min(900px,calc(100vw - 330px)));box-sizing:border-box;border-radius:0;background:#f6ead0;color:#2a1a0c;border:4px solid #2a1a0c;box-shadow:inset 0 0 0 3px #d4b888,7px 7px 0 rgba(0,0,0,.55);padding:20px 22px 12px;font:500 clamp(18px,2.35vw,27px)/1.38 var(--f-body,serif);bottom:14px;cursor:pointer;min-height:3.2em}
-  .rc-fala.com-ret{padding-left:calc(clamp(64px,8vw,96px) + 34px)}
-  .rc-fala p{margin:0}.rc-fala-ret{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:clamp(64px,8vw,96px);height:clamp(64px,8vw,96px);border:3px solid #2a1a0c;box-shadow:3px 3px 0 rgba(0,0,0,.35);image-rendering:auto}
-  .rc-fala-quem{position:absolute;left:12px;top:-17px;background:#d8641e;color:#fff6e4;border:3px solid #2a1a0c;padding:2px 12px;font:800 clamp(14px,1.6vw,19px)/1.2 "Big Shoulders Display",sans-serif;letter-spacing:.08em;text-transform:uppercase;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
-  .rc-fala-quem:empty{display:none}.rc-fala.com-ret .rc-fala-quem{left:calc(clamp(64px,8vw,96px) + 30px)}
-  .rc-fala small{display:block;text-align:right;margin-top:6px;color:#9a4a14;font:700 clamp(10px,1.1vw,13px) var(--f-mono,monospace);letter-spacing:.12em;text-transform:uppercase;animation:rcpisca 1.2s steps(2) infinite}
+  .rc-fala{width:max(64vw,min(1040px,calc(100vw - 290px)));box-sizing:border-box;border-radius:0;background:#f6ead0;color:#2a1a0c;border:4px solid #2a1a0c;box-shadow:inset 0 0 0 3px #d4b888,7px 7px 0 rgba(0,0,0,.55);padding:24px 26px 14px;font:500 clamp(21px,2.9vw,34px)/1.36 var(--f-body,serif);bottom:12px;cursor:pointer;min-height:4.1em}
+  .rc-fala.com-ret{padding-left:calc(clamp(78px,10.5vw,132px) + 36px)}
+  .rc-fala p{margin:0}.rc-fala-ret{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:clamp(78px,10.5vw,132px);height:clamp(78px,10.5vw,132px);border:3px solid #2a1a0c;box-shadow:3px 3px 0 rgba(0,0,0,.35);image-rendering:auto}
+  .rc-fala-quem{position:absolute;left:12px;top:-20px;background:#d8641e;color:#fff6e4;border:3px solid #2a1a0c;padding:3px 14px;font:800 clamp(16px,2vw,23px)/1.2 "Big Shoulders Display",sans-serif;letter-spacing:.08em;text-transform:uppercase;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+  .rc-fala-quem:empty{display:none}.rc-fala.com-ret .rc-fala-quem{left:calc(clamp(78px,10.5vw,132px) + 32px)}
+  .rc-fala small{display:block;text-align:right;margin-top:6px;color:#9a4a14;font:700 clamp(11px,1.3vw,15px) var(--f-mono,monospace);letter-spacing:.12em;text-transform:uppercase;animation:rcpisca 1.2s steps(2) infinite}
   .rc-hist-txt{border-radius:0;font-size:clamp(18px,2.3vw,26px);width:min(980px,90vw);background:rgba(246,234,208,.95);color:#2a1a0c;border:4px solid #2a1a0c;box-shadow:inset 0 0 0 3px #d4b888,7px 7px 0 rgba(0,0,0,.55)}.rc-hist-txt small{color:#9a4a14}
   @keyframes rcpisca{50%{opacity:.35}}
   /* capa */
@@ -2048,8 +2058,7 @@ function pintarChaoVila(g) {
   for (let i = 0; i < 1400; i++) { g.fillStyle = ["#c8662a", "#8a3018", "#d89a2a", "#6a4a1a"][Math.floor(r() * 4)]; g.beginPath(); g.ellipse(r() * VW * P, r() * VH * P, 2.4, 1.3, r() * 3, 0, 7); g.fill(); } // folhas secas
   // a estrada de terra com sulcos de roda
   g.lineCap = "round"; g.lineJoin = "round"; const caminho = () => { g.beginPath(); ESTRADA.forEach(([x, y], i) => i ? g.lineTo(x * P, y * P) : g.moveTo(x * P, y * P)); };
-  g.strokeStyle = "#5a4630"; g.lineWidth = 2 * P; caminho(); g.stroke(); g.strokeStyle = "#7a5e3e"; g.lineWidth = 1.6 * P; caminho(); g.stroke();
-  g.strokeStyle = "rgba(60,40,24,.45)"; g.lineWidth = 4; g.setLineDash([]); g.save(); g.translate(-9, 0); caminho(); g.stroke(); g.restore(); g.save(); g.translate(9, 0); caminho(); g.stroke(); g.restore();
+  caminhoTerra(g, P, ESTRADA, 1.9, "vila");
   for (let i = 0; i < 160; i++) { const k = r() * (ESTRADA.length - 1.001), j = Math.floor(k), f = k - j, [ax, ay] = ESTRADA[j], [bx, by] = ESTRADA[j + 1]; g.fillStyle = r() < .5 ? "#8a7a66" : "#5a4a3a"; g.beginPath(); g.ellipse((mix(ax, bx, f) + (r() - .5) * 1.2) * P, mix(ay, by, f) * P, 2 + r() * 3, 1.5 + r() * 2, 0, 0, 7); g.fill(); } // pedrinhas
   // clareiras
   CLAREIRAS().forEach(([x, y, rr]) => { g.fillStyle = "rgba(90,100,50,.55)"; g.beginPath(); g.ellipse(x * P, y * P, rr * P * .9, rr * P * .7, 0, 0, 7); g.fill(); });
@@ -2142,7 +2151,7 @@ function pintarChaoMata(g) {
   g.fillStyle = "rgba(70,74,36,.5)"; g.beginPath(); g.ellipse(CLAREIRA_M.x * P, CLAREIRA_M.y * P, CLAREIRA_M.rx * P * .85, CLAREIRA_M.ry * P * .8, 0, 0, 7); g.fill();
   // trilha de terra com raízes atravessando
   g.lineCap = g.lineJoin = "round"; const tr = (w, cor) => { g.strokeStyle = cor; g.lineWidth = w * P; g.beginPath(); TRILHA_M.forEach(([x, y], i) => i ? g.lineTo(x * P, y * P) : g.moveTo(x * P, y * P)); g.stroke(); };
-  tr(2.1, "#2a2014"); tr(1.6, "#4a3824"); tr(.7, "rgba(100,80,54,.45)");
+  caminhoTerra(g, P, TRILHA_M, 1.75, "mata");
   g.strokeStyle = "#2a1c10"; g.lineWidth = 3; for (let i = 1; i < TRILHA_M.length; i++) { const [ax, ay] = TRILHA_M[i - 1], [bx, by] = TRILHA_M[i]; for (let k = .2; k < 1; k += .3) { const x = (ax + (bx - ax) * k) * P, y = (ay + (by - ay) * k) * P, a = Math.atan2(by - ay, bx - ax) + PI / 2 + (r2() - .5); g.beginPath(); g.moveTo(x - Math.cos(a) * P, y - Math.sin(a) * P); g.quadraticCurveTo(x + (r2() - .5) * 10, y + (r2() - .5) * 10, x + Math.cos(a) * P, y + Math.sin(a) * P); g.stroke(); } }
   // lago escuro com lama na beira
   g.fillStyle = "#2a2416"; g.beginPath(); g.ellipse(LAGO_M.x * P, LAGO_M.y * P, (LAGO_M.rx + .5) * P, (LAGO_M.ry + .45) * P, 0, 0, 7); g.fill();
@@ -2487,27 +2496,47 @@ const apagaUm = i => { const k = R.t % CICLO; return k > DIA + 1 + i * .6; };
 function desenharNpc(n, x, y, s, tm, o = {}) {
   if (n.look.gemeas && !o.uma) { desenharNpc(n, x - s * .17, y, s, tm, { ...o, uma: 1 }); desenharNpc(n, x + s * .17, y + 1, s, tm + 1.3, { ...o, uma: 1 }); return; }
   if (n.look.fantasma) { c.save(); c.globalAlpha = .6 + .2 * Math.sin(tm * 2); y -= 4 + Math.sin(tm * 1.5) * 3; }
-  const L = n.look, k = s / 48 * (L.crianca ? .78 : L.grande ? 1.12 : 1), dir = o.dir || 1, an = o.anda ? Math.sin(tm * 9 + n.id.length) : 0;
-  sombra(x, y, 12 * k, 4 * k); c.save(); c.translate(x, y); c.scale(dir * k, k); if (L.velho) c.rotate(.06 * dir);
-  c.fillStyle = "#2a2018"; c.fillRect(-5 + an * 3, -12, 4, 12); c.fillRect(1 - an * 3, -12, 4, 12);
-  c.fillStyle = L.roupa; const larg = L.magra ? 7 : L.grande ? 11 : 9; c.fillRect(-larg, L.batina ? -32 : -32, larg * 2, L.batina ? 31 : 21);
-  if (L.avental) { c.fillStyle = L.avental; c.fillRect(-larg + 2, -24, larg * 2 - 4, 16); }
-  c.fillStyle = L.pele; c.fillRect(larg - 1, -30 + an * 2, 4, 13); c.fillRect(-larg - 3, -30 - an * 2, 4, 13);
+  const L = n.look, k = s / 48 * (L.crianca ? .8 : L.grande ? 1.1 : 1), dir = o.dir || 1, an = o.anda ? Math.sin(tm * 9 + n.id.length) : 0, bob = o.anda ? Math.abs(an) * 1.2 : Math.sin(tm * 2 + n.id.length) * .35;
+  const rr = (x0, y0, w, h, r) => { c.beginPath(); c.roundRect ? c.roundRect(x0, y0, w, h, r) : c.rect(x0, y0, w, h); c.fill(); };
+  const escurece = (hex, f = .72) => { const v = parseInt(hex.slice(1), 16); return `rgb(${Math.round((v >> 16) * f)},${Math.round(((v >> 8) & 255) * f)},${Math.round((v & 255) * f)})`; };
+  sombra(x, y, 12 * k, 4 * k); c.save(); c.translate(x, y); c.scale(dir * k, k); if (L.velho) c.rotate(.05 * dir);
+  const larg = L.magra ? 7 : L.grande ? 10.5 : 8.5, sapato = "#3a2214";
+  // pernas e sapatos
+  if (!L.batina) { c.fillStyle = L.crianca || L.saia ? L.pele : (L.calca || "#3e3a44"); c.fillRect(-5 + an * 2.4, -12, 4, 9); c.fillRect(1 - an * 2.4, -12, 4, 9); if (L.crianca) { c.fillStyle = "#e8e4d8"; c.fillRect(-5 + an * 2.4, -6, 4, 3); c.fillRect(1 - an * 2.4, -6, 4, 3); } }
+  c.fillStyle = sapato; rr(-6.5 + an * 2.4, -3.5, 6.5, 3.5, 1.5); rr(-.5 - an * 2.4, -3.5, 6.5, 3.5, 1.5);
+  // corpo
+  c.fillStyle = L.roupa; if (L.batina) rr(-larg, -31 - bob, larg * 2, 29, 4); else rr(-larg, -31 - bob, larg * 2, 20, 4.5);
+  if (L.saia) { c.beginPath(); c.moveTo(-larg + 1, -18 - bob); c.lineTo(larg - 1, -18 - bob); c.lineTo(larg + 2, -9 - bob * .5); c.lineTo(-larg - 2, -9 - bob * .5); c.fill(); }
+  c.fillStyle = "rgba(255,255,255,.16)"; c.fillRect(-larg + 2, -30 - bob, larg * 2 - 4, 2); c.fillStyle = "rgba(0,0,0,.14)"; c.fillRect(-larg, -14 - bob, larg * 2, 3); // luz e sombra na roupa
+  c.fillStyle = escurece(L.roupa, .6); c.beginPath(); c.moveTo(-3, -31 - bob); c.lineTo(0, -27 - bob); c.lineTo(3, -31 - bob); c.fill(); // golinha
+  if (!L.avental && !L.batina) { c.fillStyle = "rgba(255,255,255,.55)"; c.fillRect(-.6, -26 - bob, 1.2, 1.2); c.fillRect(-.6, -22 - bob, 1.2, 1.2); }
+  if (L.batina) { c.fillStyle = "#e8e2d8"; c.fillRect(-2, -31 - bob, 4, 2.5); c.fillStyle = "#c8a050"; c.fillRect(-.7, -24 - bob, 1.4, 6); c.fillRect(-2.5, -22 - bob, 5, 1.4); }
+  if (L.avental) { c.fillStyle = L.avental; rr(-larg + 2, -25 - bob, larg * 2 - 4, 16, 3); c.fillStyle = escurece(L.avental, .82); c.fillRect(-3, -19 - bob, 6, 4); c.fillRect(-larg + 2, -25 - bob, larg * 2 - 4, 1.5); }
+  // braços com mãozinhas
+  [[larg - .5, an * .5], [-larg + .5, -an * .5]].forEach(([bx, rot]) => { c.save(); c.translate(bx, -29.5 - bob); c.rotate(rot); c.fillStyle = L.roupa; rr(-2.8, 0, 5.6, 7, 2.2); c.fillStyle = L.pele; c.beginPath(); c.arc(0, 9.5, 2.4, 0, 7); c.fill(); c.restore(); });
   if (L.pa) { c.strokeStyle = "#6a4a2a"; c.lineWidth = 2; c.beginPath(); c.moveTo(larg + 2, -34); c.lineTo(larg + 5, -2); c.stroke(); c.fillStyle = "#7a7a7a"; c.fillRect(larg + 2, -4, 7, 6); }
-  c.fillStyle = L.pele; c.beginPath(); c.arc(0, -39, 8, 0, 7); c.fill();
-  if (!L.careca) { c.fillStyle = L.cabelo; c.beginPath(); c.arc(0, -41, 8.4, PI, 0); c.fill(); if (L.coque) { c.beginPath(); c.arc(-4, -48, 4, 0, 7); c.fill(); } }
-  else { c.fillStyle = L.cabelo; c.fillRect(-8.5, -40, 3, 5); }
-  if (L.lenco) { c.fillStyle = L.lenco; c.beginPath(); c.arc(0, -41, 8.8, PI, 0); c.fill(); c.fillRect(-9, -42, 18, 3); }
-  if (L.chapeu || L.palha) { c.fillStyle = L.chapeu || "#c8a050"; c.fillRect(-12, -46, 24, 3); c.fillRect(-7, -52, 14, 7); }
-  if (L.bone) { c.fillStyle = L.bone; c.beginPath(); c.arc(0, -42, 8.6, PI, 0); c.fill(); c.fillRect(0, -43, 12, 3); }
-  // olhos que seguem a menina
-  const olha = Math.sign((R.predio ? R.int.x : R.eu.x) - (o.wx ?? 0)) * dir; c.fillStyle = "#1a1210"; c.fillRect(2 + olha, -41, 2, 2.2); c.fillRect(6 + olha, -41, 2, 2.2);
-  if (L.oculos) { c.strokeStyle = "#c8c8c8"; c.lineWidth = 1; c.strokeRect(1, -42.5, 4, 4); c.strokeRect(5.5, -42.5, 4, 4); }
-  if (L.bigode) { c.fillStyle = L.cabelo === "#c8c8c8" ? "#d8d8d8" : "#1a1210"; c.fillRect(3, -36.5, 7, 1.8); }
-  if (L.barba) { c.fillStyle = L.cabelo; c.beginPath(); c.arc(3, -34, 7, 0, PI); c.fill(); }
-  c.strokeStyle = "#5a2a1a"; c.lineWidth = 1; c.beginPath(); c.moveTo(4, -34.5); c.lineTo(8, -34.5); c.stroke(); // boca reta. ninguém sorri aqui
-  if (L.bolsa) { c.fillStyle = "#6a4a2a"; c.fillRect(-12, -24, 8, 9); c.strokeStyle = "#4a3018"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-8, -24); c.lineTo(5, -33); c.stroke(); c.fillStyle = "#e8e2d0"; c.fillRect(-11, -26, 6, 3); }
-  if (L.fantasma) { c.fillStyle = "#050507"; c.fillRect(1.5, -42, 3, 3.5); c.fillRect(5.5, -42, 3, 3.5); c.fillStyle = L.cabelo; for (const k2 of [-1, 1]) { c.beginPath(); c.ellipse(k2 * 7, -33, 2.4, 8, 0, 0, 7); c.fill(); } }
+  if (L.bolsa) { c.fillStyle = "#6a4a2a"; rr(-13, -24, 8, 9, 2); c.strokeStyle = "#4a3018"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-8, -24); c.lineTo(5, -33); c.stroke(); c.fillStyle = "#e8e2d0"; c.fillRect(-11, -26, 6, 3); }
+  // cabeça (do mesmo jeitinho da Yasmin)
+  const hy = -38 - bob; c.fillStyle = L.pele; c.beginPath(); c.arc(0, hy, 8.2, 0, 7); c.fill();
+  if (!L.careca) { c.fillStyle = L.cabelo; c.beginPath(); c.arc(-1, hy - 1.5, 8.6, PI * .95, PI * 2.12); c.fill(); c.beginPath(); c.ellipse(-6, hy + 2, 3.4, L.curto ? 4 : 6, .2, 0, 7); c.fill(); if (L.coque) { c.beginPath(); c.arc(-5, hy - 9, 4.2, 0, 7); c.fill(); c.fillStyle = "rgba(255,255,255,.18)"; c.beginPath(); c.arc(-6, hy - 10, 1.6, 0, 7); c.fill(); } }
+  else { c.fillStyle = L.cabelo; c.beginPath(); c.ellipse(-6.6, hy + 1, 2.4, 3.6, .2, 0, 7); c.fill(); c.fillStyle = "rgba(255,255,255,.25)"; c.beginPath(); c.ellipse(-1, hy - 5.5, 3, 1.4, -.3, 0, 7); c.fill(); }
+  c.fillStyle = L.pele; c.beginPath(); c.ellipse(3.5, hy + 1.5, 5.2, 5, 0, 0, 7); c.fill(); // rosto
+  if (!L.careca) { c.fillStyle = L.cabelo; c.beginPath(); c.ellipse(4, hy - 4.6, 5.4, 2.2, -.1, PI, 0); c.fill(); } // franjinha
+  const olha = Math.sign((R.predio ? R.int.x : R.eu.x) - (o.wx ?? 0)) * dir * .5, pisca = Math.sin(tm * 1.3 + n.id.length * 2) > .985;
+  if (L.fantasma) { c.fillStyle = "#050507"; c.beginPath(); c.ellipse(2.6, hy, 1.7, 2.3, 0, 0, 7); c.ellipse(6.6, hy, 1.5, 2.1, 0, 0, 7); c.fill(); }
+  else if (pisca) { c.strokeStyle = "#1a1210"; c.lineWidth = 1; c.beginPath(); c.moveTo(1.4, hy); c.lineTo(3.8, hy); c.moveTo(5.5, hy); c.lineTo(7.7, hy); c.stroke(); }
+  else { const ol = L.velho ? 1.05 : 1.35; c.fillStyle = "#1a1210"; c.beginPath(); c.arc(2.6 + olha, hy, ol, 0, 7); c.arc(6.6 + olha, hy, ol * .9, 0, 7); c.fill(); c.fillStyle = "#fff"; c.beginPath(); c.arc(3 + olha, hy - .6, .5, 0, 7); c.arc(7 + olha, hy - .6, .45, 0, 7); c.fill(); }
+  c.strokeStyle = L.careca ? "rgba(60,40,30,.7)" : escurece(L.cabelo, .8); c.lineWidth = .9; c.beginPath(); c.moveTo(1.3, hy - 2.6); c.lineTo(3.7, hy - 2.9); c.moveTo(5.6, hy - 2.9); c.lineTo(7.8, hy - 2.6); c.stroke(); // sobrancelhas
+  if (L.velho) { c.strokeStyle = "rgba(120,70,50,.45)"; c.lineWidth = .7; c.beginPath(); c.moveTo(8.6, hy - .5); c.lineTo(9.6, hy - 1.2); c.moveTo(8.6, hy + .6); c.lineTo(9.6, hy + .9); c.stroke(); }
+  c.fillStyle = "rgba(230,110,100,.38)"; c.beginPath(); c.arc(.8, hy + 3, 1.7, 0, 7); c.arc(8, hy + 3, 1.3, 0, 7); c.fill(); // bochechas
+  c.strokeStyle = "#8a3a2a"; c.lineWidth = 1; c.beginPath(); c.moveTo(3.3, hy + 3.9); c.quadraticCurveTo(4.6, hy + 4.3, 5.9, hy + 3.9); c.stroke(); // boquinha séria
+  if (L.oculos) { c.strokeStyle = "#5a5a62"; c.lineWidth = .9; c.beginPath(); c.arc(2.6, hy, 2.3, 0, 7); c.moveTo(8.9, hy); c.arc(6.6, hy, 2.3, 0, 7); c.moveTo(4.9, hy); c.lineTo(4.3, hy); c.stroke(); c.fillStyle = "rgba(255,255,255,.2)"; c.beginPath(); c.arc(2, hy - .8, 1, 0, 7); c.fill(); }
+  if (L.bigode) { c.fillStyle = L.cabelo === "#c8c8c8" ? "#e0e0e0" : escurece(L.cabelo, .9); c.beginPath(); c.ellipse(3.6, hy + 3.1, 2.4, 1.2, .2, 0, 7); c.ellipse(6.4, hy + 3.1, 2.2, 1.1, -.2, 0, 7); c.fill(); }
+  if (L.barba) { c.fillStyle = L.cabelo; c.beginPath(); c.ellipse(4, hy + 4.6, 5.6, 3.4, 0, 0, PI); c.fill(); c.beginPath(); c.ellipse(-.5, hy + 2.5, 1.8, 3, 0, 0, 7); c.fill(); }
+  if (L.lenco) { c.fillStyle = L.lenco; c.beginPath(); c.arc(0, hy - 1.8, 9, PI * .9, PI * 2.08); c.fill(); c.beginPath(); c.moveTo(-8, hy); c.lineTo(-12, hy + 4); c.lineTo(-9, hy + 5); c.fill(); c.fillStyle = "rgba(255,255,255,.35)"; for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(-5 + i * 3.4, hy - 6 + Math.abs(i - 1.5) * .8, .8, 0, 7); c.fill(); } }
+  if (L.chapeu || L.palha) { const ch = L.chapeu || "#d8b060"; c.fillStyle = ch; c.beginPath(); c.ellipse(0, hy - 7, 13.5, 3.4, 0, 0, 7); c.fill(); c.beginPath(); c.ellipse(0, hy - 10.5, 7.2, 5.2, 0, PI, 0); c.fill(); c.fillRect(-7.2, hy - 10.5, 14.4, 4); c.fillStyle = escurece(ch, .6); c.fillRect(-7.2, hy - 8.6, 14.4, 1.8); if (L.palha) { c.strokeStyle = "rgba(0,0,0,.15)"; c.lineWidth = .8; for (let i = -12; i < 13; i += 4) { c.beginPath(); c.moveTo(i, hy - 8); c.lineTo(i * .9, hy - 6); c.stroke(); } } }
+  if (L.bone) { c.fillStyle = L.bone; c.beginPath(); c.arc(0, hy - 2.5, 8.7, PI, 0); c.fill(); c.beginPath(); c.ellipse(8, hy - 3, 6.5, 1.8, .05, 0, 7); c.fill(); c.fillStyle = "rgba(255,255,255,.3)"; c.beginPath(); c.arc(0, hy - 11, 1.2, 0, 7); c.fill(); }
+  if (L.fantasma) { c.fillStyle = L.cabelo; for (const k2 of [-1, 1]) { c.beginPath(); c.ellipse(k2 * 7, hy + 5, 2.4, 8, 0, 0, 7); c.fill(); } }
   c.restore(); if (L.fantasma) c.restore();
 }
 function desenharPredioFora(p, tm) {
@@ -2949,10 +2978,11 @@ function comCtx(g, fn) { const c0 = c; c = g; try { fn(); } finally { c = c0; } 
 // retratinho de quem fala (para a caixa de fala)
 const RETRATOS = {};
 function retrato(quem) {
-  const k = /yasmin/i.test(quem) ? "y" : /sombrinha/i.test(quem) ? "g" : null; if (!k) return "";
+  const np = typeof NPCS !== "undefined" ? NPCS.find(n => n.nome === quem) : null;
+  const k = /yasmin/i.test(quem) ? "y" : /sombrinha/i.test(quem) ? "g" : np ? "n:" + np.id : null; if (!k) return "";
   if (!RETRATOS[k]) { const cv2 = document.createElement("canvas"); cv2.width = cv2.height = 112; const g = cv2.getContext("2d");
-    g.fillStyle = k === "y" ? "#f2c66a" : "#9ac8e8"; g.fillRect(0, 0, 112, 112); g.fillStyle = "rgba(255,255,255,.25)"; for (let i = 0; i < 112; i += 14) g.fillRect(i, 0, 7, 112);
-    if (k === "y") comCtx(g, () => desenharVoce(50, 182, 0, { q: yasminMenu(), s: 150, anda: 0 })); else gatoEm(26, 120, 5.2, 1, 0, 0, g);
+    g.fillStyle = k === "y" ? "#f2c66a" : k === "g" ? "#9ac8e8" : ["#b8d89a", "#e8b8a8", "#c8b8e8", "#e8d898"][k.length % 4]; g.fillRect(0, 0, 112, 112); g.fillStyle = "rgba(255,255,255,.25)"; for (let i = 0; i < 112; i += 14) g.fillRect(i, 0, 7, 112);
+    if (k === "y") comCtx(g, () => desenharVoce(50, 182, 0, { q: yasminMenu(), s: 150, anda: 0 })); else if (np) { const kk = np.look.crianca ? .8 : np.look.grande ? 1.1 : 1, ss = 150 / kk; comCtx(g, () => { const sb = sombra; desenharNpc(np.look.gemeas ? { ...np, look: { ...np.look, gemeas: 0 } } : np, 50, 182, ss, 0, { uma: 1, wx: -1e9 }); }); } else gatoEm(26, 120, 5.2, 1, 0, 0, g);
     RETRATOS[k] = cv2.toDataURL(); }
   return `<img class="rc-fala-ret" alt="" src="${RETRATOS[k]}">`;
 }
@@ -3141,7 +3171,7 @@ window.sairRoca = function () {
 };
 window.rocaVoltar = () => { if (!window.rocaAtiva) return false; if (el.rcChatBar && !el.rcChatBar.hidden) { abrirChat(false); return true; } if (document.querySelector(".rc-hist")) return true; if (R && R.menu) { if (painelAberto && document.getElementById("rcCancelar")) { netFechar(); menuInicial(); } else { fecharPainel(); sairRoca(); } return true; } if (painelAberto) { if (R && (R.morto || R.venceu)) return true; fecharPainel(); } else pausar(); return true; };
 window.rocaNet = Net; window.rocaHistoria = () => historia(() => {});
-window.rocaMedir = () => medir(); window.rocaEstado = () => R; window.rocaTeste = { chao: g => CHAO_SITIO.pintar(g), vila: () => { montarVila(); return VILA; }, chaoVila: g => CHAO_VILA.pintar(g), bancada: () => abrirBancada(), loja: n => abrirLoja(NPCS.find(x => x.id === n)) }; // usado nos testes
+window.rocaMedir = () => medir(); window.rocaEstado = () => R; window.rocaTeste = { npcs: () => NPCS, npcEm: (g, n, x, y, s) => comCtx(g, () => desenharNpc(n, x, y, s, 1, { wx: -1e9 })), chao: g => CHAO_SITIO.pintar(g), vila: () => { montarVila(); return VILA; }, chaoVila: g => CHAO_VILA.pintar(g), bancada: () => abrirBancada(), loja: n => abrirLoja(NPCS.find(x => x.id === n)) }; // usado nos testes
 window.morrerTeste = () => morrer("seco", "teste", "teste");
 window.telaFimTeste = () => telaFim("morreu");
 })();
