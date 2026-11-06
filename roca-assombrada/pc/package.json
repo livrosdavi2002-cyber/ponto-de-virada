@@ -20,10 +20,43 @@
     "appId": "com.rocaassombrada.jogo",
     "productName": "Roça Assombrada",
     "executableName": "RocaAssombrada",
-    "directories": { "output": "dist" },
-    "files": ["main.js", "preload.js", "www/**/*"],
-    "win": { "icon": "icone.png", "target": ["dir"] },
-    "linux": { "icon": "icone.png", "target": ["dir"], "category": "Game" },
-    "asar": true
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "www/**/*"
+    ],
+    "win": {
+      "icon": "icone.png",
+      "target": [
+        "dir",
+        "nsis"
+      ]
+    },
+    "linux": {
+      "icon": "icone.png",
+      "target": [
+        "dir"
+      ],
+      "category": "Game"
+    },
+    "asar": true,
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Roça Assombrada",
+      "uninstallDisplayName": "Roça Assombrada",
+      "installerLanguages": [
+        "pt_BR"
+      ],
+      "language": "1046",
+      "artifactName": "RocaAssombrada-Instalador-${version}.${ext}",
+      "runAfterFinish": true
+    }
   }
 }

@@ -76,8 +76,14 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: |
           npm install --no-audit --no-fund
-          npx electron-builder --${{ matrix.alvo }} dir --x64 --publish never
+          if [ "${{ matrix.alvo }}" = win ]; then npx electron-builder --win dir nsis --x64 --publish never; else npx electron-builder --linux dir --x64 --publish never; fi
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.nome }}
           path: roca-assombrada/pc/dist/${{ matrix.pasta }}
+      # instalador do Windows (Setup.exe): instala, cria atalho na área de trabalho e no menu Iniciar
+      - uses: actions/upload-artifact@v4
+        if: matrix.alvo == 'win'
+        with:
+          name: RocaAssombrada-Instalador-Windows
+          path: roca-assombrada/pc/dist/*.exe
