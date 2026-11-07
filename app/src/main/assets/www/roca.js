@@ -169,7 +169,7 @@ function novoJogo() {
   for (let i = 0; i < 70; i++) { const x = rnd(CERCA.x0 + .5, CERCA.x1 - .5), y = rnd(CERCA.y0 + .5, CERCA.y1 - .5); if (solido[Math.floor(y)][Math.floor(x)]) continue; (i % 3 === 0 ? pedras : i % 3 === 1 ? flores : cogumelos).push({ x, y, k: Math.random() }); }
   R = {
     t: 18, dia: 1, vidas: 1, lugar: "sitio", predio: null, andar: 0, int: { x: 4.5, y: 5.2, dir: 1 }, roupa: null, garrafada: 0, broa: 0, conv: {}, fade: 0,
-    enxada: false, lampiao: false, ferradura: false, sal: false, arruda: false, aguaBenta: 0, missoes: {}, mprog: {}, apito: false, guizo: false, isca: false, medalha: false, cor: 0, semente: 0, caido: null, outro: null, online: null, eu: { x: 13, y: 12.8, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5, y: 5.6 },
+    enxada: false, lampiao: false, ferradura: false, sal: false, arruda: false, aguaBenta: 0, missoes: {}, mprog: {}, apito: false, guizo: false, isca: false, medalha: false, cor: 0, semente: 0, caido: null, outros: [], online: null, eu: { x: 13, y: 12.8, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5, y: 5.6 },
     solido, caixas, arvores, pedras, flores, cogumelos, moedas: 0, agua: 5, aguaMax: 5, oleo: 100, lanterna: false, folego: 100, correndo: false, vel: 3.1,
     diario: !!ls("roca_diario"), lanternaBoa: false, sementes: ["milho", "mandioca"], semente: 0, canteiros: CANTEIROS.map((k, i) => ({ ...k, aberto: i === 0, covas: Array.from({ length: k.w * k.h }, () => null) })),
     inv: { graveto: 0, folha: 0 }, colheita: {}, peixes: {}, extra: {}, vara: false, pecas: 0, vela: null, velaCom: false, velaEntregue: false, velaHoje: false,
@@ -343,7 +343,7 @@ function montarUI() {
   .rc-bt svg{width:34px;height:34px;display:block;margin:auto}.rc-bt.luz.on .chama{filter:drop-shadow(0 0 4px #f2c94a)}.rc-bt.luz:not(.on) .chama{fill:rgba(255,255,255,.25)}
   .rc-moch{margin-left:auto;padding:4px 8px}.rc-moch svg{width:28px;height:28px;display:block}.rc-moch + .rc-menu{margin-left:0}
   .rc-obj{position:absolute;left:max(12px,env(safe-area-inset-left));top:52px;max-width:38vw;color:#f2c94a;font:600 10.5px/1.3 var(--f-mono,monospace);text-shadow:0 1px 4px #000;pointer-events:none;letter-spacing:.02em}
-  .rc-sala{color:#f4efe4;font-size:11px;text-shadow:0 1px 4px #000;background:#0008;border:1px solid #ffffff30;padding:2px 6px;align-self:flex-start;pointer-events:auto;cursor:pointer;letter-spacing:.5px}.rc-sala b{color:#f2c94c;font-size:13px;letter-spacing:2px}.rc-vidas{display:flex;flex-direction:column;gap:2px;color:#f4efe4;font-size:10px;text-shadow:0 1px 4px #000}.rc-vidas b{color:#e2483d;font-size:13px;letter-spacing:1px}
+  .rc-codigo.peq{font-size:38px;padding:0;margin:4px 0 6px}.rc-lobby{display:flex;flex-direction:column;gap:5px;margin:10px 0}.rc-lob-j{display:flex;align-items:center;gap:10px;background:#0006;border:1px solid #ffffff22;padding:7px 10px;font-size:15px}.rc-lob-j.eu{border-color:#f2c94c88}.rc-lob-j i{width:14px;height:14px;flex:none;border:1px solid #0008}.rc-lob-j span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rc-lob-j small{opacity:.6;font-size:11px}.rc-lob-j b{font-size:12px;opacity:.75;font-weight:600}.rc-lob-j b.ok{color:#9bd86b;opacity:1}.rc-lob-j.vaga{opacity:.4;border-style:dashed}.rc-lob-nome{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:8px}.rc-lob-nome .rc-input{flex:1;font-size:16px;padding:6px 8px;margin:0;letter-spacing:0;text-transform:none;text-align:left}#rcComecar:disabled{opacity:.45;filter:grayscale(.7);cursor:not-allowed}#rcPronto.ok{background:#3a7a2a;border-color:#9bd86b}.rc-sala{color:#f4efe4;font-size:11px;text-shadow:0 1px 4px #000;background:#0008;border:1px solid #ffffff30;padding:2px 6px;align-self:flex-start;pointer-events:auto;cursor:pointer;letter-spacing:.5px}.rc-sala b{color:#f2c94c;font-size:13px;letter-spacing:2px}.rc-vidas{display:flex;flex-flow:row wrap;column-gap:9px;row-gap:1px;max-width:170px;color:#f4efe4;font-size:10px;text-shadow:0 1px 4px #000}.rc-vidas b{color:#e2483d;font-size:13px;letter-spacing:1px}
   .rc-dia-pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.rc-bicho{display:flex;gap:10px;background:#e8dcc0;color:#2a1e12;border-radius:6px;padding:8px;box-shadow:0 2px 0 rgba(0,0,0,.3)}
   .rc-bicho canvas{width:84px;height:100px;flex:none;background:#111;border:4px solid #f4efe4;border-bottom-width:12px;transform:rotate(-2deg);filter:sepia(.55) contrast(1.15) grayscale(.2)}
   .rc-bicho b{display:block;font:800 17px "Big Shoulders Display",sans-serif;color:#5a1a10}.rc-bicho span{font:13px/1.35 var(--f-body,serif)}.rc-bicho i{display:block;font:italic 12px/1.3 var(--f-body,serif);color:#6a5a40;margin-top:4px}
@@ -453,7 +453,7 @@ function montarUI() {
   bt(el.rcMoch, () => { if (R && !R.menu && !painelAberto) abrirMochila(); }); bt(el.rcSem, () => { R.semente = (R.semente + 1) % R.sementes.length; tocarTom(900, .05, { vol: .05 }); hud(); });
   el.rcMenu.addEventListener("click", () => pausar());
   el.rcFala.addEventListener("pointerdown", e => { e.preventDefault(); proximaFala(); });
-  addEventListener("keydown", e => { if (document.getElementById("roca").hidden) return; teclas[e.key.toLowerCase()] = true; const k = e.key.toLowerCase(); if (["f", "e", " "].includes(k)) { e.preventDefault(); if (R.msg) proximaFala(); else acao(); } if (k === "r") alternarLanterna(); if (k === "shift") correr(); if (k === "q") el.rcSem.dispatchEvent(new Event("pointerdown")); if (k === "escape") { if (!el.rcChatBar.hidden) abrirChat(false); else if (painelAberto && document.getElementById("rcFechar")) fecharPainel(); else pausar(); } if (k === "enter" && R && R.online && R.outro && el.rcChatBar.hidden) { e.preventDefault(); abrirChat(true); } if ((k === "m" || k === "tab") && R && !R.menu && !painelAberto) { e.preventDefault(); abrirMochila(); } });
+  addEventListener("keydown", e => { if (document.getElementById("roca").hidden) return; teclas[e.key.toLowerCase()] = true; const k = e.key.toLowerCase(); if (["f", "e", " "].includes(k)) { e.preventDefault(); if (R.msg) proximaFala(); else acao(); } if (k === "r") alternarLanterna(); if (k === "shift") correr(); if (k === "q") el.rcSem.dispatchEvent(new Event("pointerdown")); if (k === "escape") { if (!el.rcChatBar.hidden) abrirChat(false); else if (painelAberto && document.getElementById("rcFechar")) fecharPainel(); else pausar(); } if (k === "enter" && R && R.online && outros().length && el.rcChatBar.hidden) { e.preventDefault(); abrirChat(true); } if ((k === "m" || k === "tab") && R && !R.menu && !painelAberto) { e.preventDefault(); abrirMochila(); } });
   addEventListener("keyup", e => { teclas[e.key.toLowerCase()] = false; });
   addEventListener("resize", medir);
   document.addEventListener("visibilitychange", () => { if (document.hidden && rodando && R && !R.morto && !R.venceu) pausar(); });
@@ -501,7 +501,7 @@ function oQueFazer() {
     return null;
   }
   const p = R.eu;
-  if (R.outro && R.outro.caido && !R.outro.caido.fora && !R.outro.dentro && (R.outro.lugar || "sitio") === (R.lugar || "sitio") && dist(p, R.outro.eu) < 1.4) return { t: "Levantar", fn: () => { R.outro.caido = null; S.colher(); efeito("De pé! Corre!", "#9bd86b"); } };
+  { const ca = outros().find(o => o.caido && !o.caido.fora && !o.dentro && (o.lugar || "sitio") === (R.lugar || "sitio") && dist(p, o.eu) < 1.4); if (ca) return { t: "Levantar", fn: () => { ca.caido = null; S.colher(); efeito("De pé! Corre!", "#9bd86b"); } }; }
   if (dist(p, CASA.porta) < 1.1) return { t: "Entrar", fn: entrar, loc: 1 };
   if (dist(p, CAIXOTE) < 1.2) { const v = valorVenda(); return { t: v ? `Vender ${v}` : "Caixote", fn: vender }; }
   if (dist(p, POCO) < 1.4) return { t: "Tirar água", fn: tirarAgua };
@@ -774,7 +774,7 @@ function pausar() {
   if (!R || R.morto || R.venceu) return; painelAberto = true; el.rcPainel.hidden = false;
   el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Pausa</h2><p>Dia ${R.dia}. Se sair agora, a partida é perdida.</p>
     <p style="font-size:13px">Controles: mexa com o círculo da esquerda. <b>Ação</b> faz o que aparece escrito (plantar, regar, colher, vender, entrar...). <b>Lanterna</b> gasta óleo. <b>Correr</b> vai até o fôlego acabar. O botão da semente troca o que você planta.</p>
-    ${R.online ? `<p style="font-size:13px;color:#9bd86b">Jogando online${R.online === "host" ? (R.outro ? " · amigo conectado" : " · sozinha agora") : " · na sala do amigo"}. O jogo não para no online.</p>` : ""}
+    ${R.online ? `<p style="font-size:13px;color:#9bd86b">Jogando online${R.online === "host" ? (outros().length ? ` · ${outros().length + 1} jogadores` : " · sozinha agora (sala aberta)") : " · na sala do amigo"}. O jogo não para no online.</p>` : ""}
     <div class="rc-linha"><button type="button" class="rc-op dest" id="rcVoltar">Continuar</button><button type="button" class="rc-op" id="rcSair">Sair da partida</button></div></div>`;
   document.getElementById("rcVoltar").addEventListener("click", fecharPainel);
   el.rcPainel.querySelector("#rcSair").addEventListener("click", () => { fecharPainel(); R.menu = true; menuInicial(); });
@@ -785,10 +785,10 @@ function telaFim(tipo) {
   const verdade = Object.keys(pistas()).length >= NPISTAS;
   const txt = tipo === "venceu" ? `<h2 style="color:#9bd86b">Você foi embora</h2><p>A caminhonete pega na terceira tentativa. Pelo retrovisor, o sítio fica pequeno... e alguém acena da janela da casa vazia.</p>${verdade ? `<p style="color:#f2c94a">Você sabe a verdade: a mata cobra alguém do sítio a cada trinta anos, e a vó foi duas vezes para que não fosse você. Na porteira, uma voz igual à do seu pai chama o seu nome. Você não olha para trás.</p>` : `<p style="font-size:13px;color:#b8b2a4">Ainda há perguntas sem resposta na Vila Sossego.</p>`}<p>Dia ${R.dia} · ${mins} min ${segs} s</p>`
     : `<h2 style="color:#e2483d">Você morreu</h2><p>${R.morto.porque}</p><p style="font-size:13px;color:#9bd86b">${R.morto.dica}</p><p>Chegou ao dia ${R.dia}.</p>`;
-  const conv = R.online === "guest", reinicia = R.online === "host" && R.outro && tipo === "morreu";
-  if (reinicia) setTimeout(() => { if (R && R.morto && R.online === "host" && R.outro) { fecharPainel(); iniciarJogo("host", true); } }, 6500);
+  const conv = R.online === "guest", reinicia = R.online === "host" && outros().length && tipo === "morreu";
+  if (reinicia) setTimeout(() => { if (R && R.morto && R.online === "host" && outros().length) { fecharPainel(); iniciarJogo("host", true); } }, 6500);
   el.rcPainel.innerHTML = `<div class="rc-caixa">${txt}${conv ? `<p style="font-size:13px">${tipo === "morreu" ? "As duas caíram. A sala continua aberta: o sítio volta para o dia 1 em instantes..." : "Esperando o anfitrião começar outra partida..."}</p>` : reinicia ? `<p style="font-size:13px;color:#f2c94a">As duas caíram. A sala continua aberta: voltando para o dia 1 em 6 segundos...</p>` : ""}<div class="rc-linha">${conv ? "" : `<button type="button" class="rc-op dest" id="rcDeNovo">Jogar de novo</button>`}<button type="button" class="rc-op" id="rcSair">Menu</button></div></div>`;
-  if (!conv) document.getElementById("rcDeNovo").addEventListener("click", () => { const m = R.online && R.outro ? "host" : "solo"; fecharPainel(); iniciarJogo(m); });
+  if (!conv) document.getElementById("rcDeNovo").addEventListener("click", () => { const m = R.online === "host" ? "host" : "solo"; fecharPainel(); iniciarJogo(m); });
   el.rcPainel.querySelector("#rcSair").addEventListener("click", () => { fecharPainel(); R.menu = true; menuInicial(); });
 }
 function morrer(quem, porque, dica) { if (R.morto || R.venceu || R.caido) return;
@@ -811,12 +811,12 @@ function hud() {
   el.rcItens.innerHTML = it.map(x => `<span>${x}</span>`).join("");
   const sm = PLANTAS[R.sementes[R.semente]]; if (el.rcSem.dataset.k !== sm.nome) { el.rcSem.dataset.k = sm.nome; el.rcSem.innerHTML = `${icDe(sm.nome)}<br>${sm.nome}`; }
   el.rcLuz.classList.toggle("on", R.lanterna); el.rcCorre.classList.toggle("on", R.correndo);
-  const comAmigo = !!(R.online && R.outro && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
+  const comAmigo = !!(R.online && outros().length && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
   el.rcObj.textContent = R.menu ? "" : "Objetivo: " + objetivo();
   const cor = n => n > 0 ? "♥" : "♡";
-  const sala = R.online && Net.codigo && !R.menu ? `SALA <b>${Net.codigo}</b>${R.online === "host" ? (R.outro ? " · amigo junto" : " · esperando amigo") : ""}` : "";
+  const sala = R.online && Net.codigo && !R.menu ? `SALA <b>${Net.codigo}</b> · ${outros().length + 1}/${MAXJ}${R.online === "host" && !outros().length ? " · esperando amigos" : ""}` : "";
   if (el.rcSala.dataset.k !== sala) { el.rcSala.dataset.k = sala; el.rcSala.innerHTML = sala; el.rcSala.hidden = !sala; }
-  el.rcVidas.innerHTML = R.online && R.outro ? `<span>Você <b>${cor(R.vidas)}</b></span><span>${R.online === "host" ? "Amigo" : "Yasmin"} <b>${cor(R.outro.vidas)}</b></span>` : "";
+  el.rcVidas.innerHTML = R.online && outros().length ? `<span>Você <b>${cor(R.vidas)}</b></span>` + outros().map(o => `<span><i style="color:${CORES_J[o.slot] || "#ccc"};font-style:normal">■</i> ${escH(o.nome || "Amigo")} <b>${cor(o.vidas)}</b></span>`).join("") : "";
 }
 function objetivo() {
   const np = Object.keys(pistas()).length, pp = np < NPISTAS ? ` · pistas ${np}/${NPISTAS} na vila` : "";
@@ -875,8 +875,8 @@ function atualizar(dt) {
   if (antesNoite && !agoraNoite) amanhece();
   moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); if (MATA || jogadores().some(J => J.lugar === "mata")) { if (!MATA) montarMata(); atualizarMata(dt); }
   const nLuz = jogadores().filter(P => P.lanterna).length;
-  if (nLuz) { R.oleo -= (R.lanternaBoa ? .5 : .9) * (R.lampiao ? .5 : 1) * dt * nLuz; if (R.oleo <= 0) { R.oleo = 0; if (R.lanterna) efeito("A lanterna apagou", "#f2a33a"); R.lanterna = false; if (R.outro) R.outro.lanterna = false; } }
-  if (R.outro && R.outro.regando > 0) R.outro.regando -= dt;
+  if (nLuz) { R.oleo -= (R.lanternaBoa ? .5 : .9) * (R.lampiao ? .5 : 1) * dt * nLuz; if (R.oleo <= 0) { R.oleo = 0; if (R.lanterna) efeito("A lanterna apagou", "#f2a33a"); R.lanterna = false; outros().forEach(o => o.lanterna = false); } }
+  outros().forEach(o => { if (o.regando > 0) o.regando -= dt; });
   // plantas, pomar e galinhas
   for (const k of R.canteiros) k.covas.forEach((cv2, i) => { if (!cv2 || cv2.seca || cv2.est >= 3) return; cv2.t += dt * (R.enxada ? 1.35 : 1); if (cv2.t >= PLANTAS[cv2.tipo].tempo) { cv2.est++; cv2.t = 0; if (cv2.est < 3) cv2.seca = true; else S.pronto(k.x + i % k.w, k.y + Math.floor(i / k.w)); } });
   R.frutas.forEach(f => { if (f.n >= 3) return; f.t += dt; if (f.t > 45) { f.t = 0; f.n++; } });
@@ -907,8 +907,8 @@ function comecaNoite() { R.velaHoje = true; R.velaEntregue = false; R.velaT = rn
   R.velaT = rnd(3, 40); efeito("Anoiteceu", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
 function amanhece() {
   if (R.velaHoje && !R.velaEntregue && jogadores().some(P => (P.lugar || "sitio") === "sitio")) { R.alma = { t: 0 }; return; } // a alma vem cobrar (só se tem alguém no sítio)
-  R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; if (R.outro) R.outro.velaCom = false; R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false;
-  jogadores().forEach(P => { P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : .5); P.eu.y = CASA.porta.y + .7; if (P !== R) enviar({ t: "pos", x: P.eu.x, y: P.eu.y }); } });
+  R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false;
+  jogadores().forEach(P => { P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : (P.slot || 1) * .45 - .1); P.eu.y = CASA.porta.y + .7; if (P !== R) enviarPara(P.nid, { t: "pos", x: P.eu.x, y: P.eu.y }); } });
   if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a");
   Object.assign(R.esp, { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste" }); if (R.aranha.fase !== "longe") R.aranha.fase = "sai"; R.mula.fase = "longe";
 
@@ -977,20 +977,20 @@ function atualizarCasa(dt) {
 }
 
 /* ---------- jogadores (sozinha ou online) ---------- */
-// No online, o anfitrião simula tudo. O convidado é guardado em R.outro com os mesmos campos do jogador local,
+// No online, o anfitrião simula tudo. O convidado é guardado em R.outros (até 3 amigos) com os mesmos campos do jogador local,
 // e comJogador troca os campos por um instante para reaproveitar as regras escritas para R.eu.
 const CAMPOS = ["lugar", "predio", "andar", "int", "roupa", "garrafada", "broa", "conv", "agua", "vidas", "eu", "dentro", "sala", "lanterna", "correndo", "regando", "velaCom", "pesca", "perto", "caido", "folego", "chapeu", "semente", "cor"];
-const jogadores = () => R.outro && R.online === "host" ? [R, R.outro] : [R];
+const jogadores = () => R.online === "host" && R.outros && R.outros.length ? [R, ...R.outros] : [R];
 function comJogador(P, fn) {
-  if (!P || P === R || !R.outro) return fn();
-  const o = R.outro; for (const k of CAMPOS) { const v = R[k]; R[k] = o[k]; o[k] = v; } R.trocado = true;
-  try { return fn(); } finally { for (const k of CAMPOS) { const v = R[k]; R[k] = o[k]; o[k] = v; } R.trocado = false; }
+  if (!P || P === R || R.trocado) return fn();
+  const o = P; for (const k of CAMPOS) { const v = R[k]; R[k] = o[k]; o[k] = v; } R.trocado = true; R.trocadoCom = o;
+  try { return fn(); } finally { for (const k of CAMPOS) { const v = R[k]; R[k] = o[k]; o[k] = v; } R.trocado = false; R.trocadoCom = null; }
 }
 function comAlvo(P, fn) { comJogador(P, () => { if ((R.lugar || "sitio") === "sitio") return fn(); const d = R.dentro; R.dentro = true; try { fn(); } finally { R.dentro = d; } }); } // na vila os bichos agem como se você estivesse trancada em casa
 function alvoPara(x, y) { // quem a assombração persegue: o mais perto, de preferência do lado de fora
   let melhor = R, md = 1e9; for (const P of jogadores()) { if (P.caido) continue; const d = Math.hypot(P.eu.x - x, P.eu.y - y) + (P.dentro ? 40 : 0) + ((P.lugar || "sitio") !== "sitio" ? 1e5 : 0); if (d < md) { md = d; melhor = P; } } return melhor;
 }
-const velaNaMao = () => R.velaCom || (R.outro && R.outro.velaCom);
+const velaNaMao = () => R.velaCom || outros().some(o => o.velaCom);
 const noMilharal = p => p.x > MILHARAL.x0 && p.x < MILHARAL.x1 && p.y > MILHARAL.y0 && p.y < MILHARAL.y1;
 const progNoite = () => cl(((R.t % CICLO) - DIA) / NOITE, 0, 1);
 const raioLuz = P => P.lanterna ? (R.lanternaBoa ? 5.4 : 4.4) + (R.lampiao ? 1 : 0) : 1.7;
@@ -1023,12 +1023,12 @@ function atualizarAranha(dt) {
       const v = ((J.lanterna ? 1.3 : 0) + (J.eu.anda > .15 ? (J.correndo ? 1.2 : .7) : 0)) * (1 - d / 11); if (v > viu) { viu = v; quem = J; } }
     a.alerta = cl(a.alerta + (viu ? viu * .85 * (R.medalha ? .6 : 1) : -.22) * dt, 0, 1);
     if (a.t % 1.6 < dt) S.juntas(a.x, a.y, .6);
-    if (a.alerta >= 1 && quem) { a.fase = "ataque"; a.t = 0; a.quem = quem === R ? 0 : 1; S.gritoAranha(a.x, a.y); R.tremor = .8; efeito("Ela te viu!", "#e2483d"); }
+    if (a.alerta >= 1 && quem) { a.fase = "ataque"; a.t = 0; a.quem = Math.max(0, jogadores().indexOf(quem)); S.gritoAranha(a.x, a.y); R.tremor = .8; efeito("Ela te viu!", "#e2483d"); }
     if (a.t > 30) { a.fase = "sai"; a.t = 0; a.alvo = BORDA(); }
     return;
   }
   if (a.fase === "ataque") {
-    const P = a.quem ? (R.outro || R) : R; const alvo = (P.dentro || (P.lugar || "sitio") !== "sitio") ? { x: CASA.porta.x, y: CASA.porta.y + 1.2 } : P.eu;
+    const P = jogadores()[a.quem] || R; const alvo = (P.dentro || (P.lugar || "sitio") !== "sitio") ? { x: CASA.porta.x, y: CASA.porta.y + 1.2 } : P.eu;
     irAte(a, alvo, 6.1, dt); a.passo += dt * 7; if (a.t % .9 < dt) S.juntas(a.x, a.y, 1);
     if (!(P.dentro || (P.lugar || "sitio") !== "sitio") && !P.caido && dist(a, P.eu) < 1.25) comJogador(P, () => morrer("aranha", "A Pernuda te viu. Lá do alto, a boca abriu até o chão.", "Quando as juntas estalarem, apague a lanterna e fique parada. Ou se esconda no milharal."));
     if (P.caido || ((P.dentro || (P.lugar || "sitio") !== "sitio") && a.t > 5) || a.t > 13) { a.fase = "sai"; a.t = 0; a.alvo = BORDA(); }
@@ -1160,7 +1160,7 @@ function desenharPlanta(cv2, x, y, tm) {
   if (e >= 3) { c.fillStyle = `rgba(255,240,180,${.35 + .25 * Math.sin(tm * 4 + x)})`; c.beginPath(); c.arc(x, y - s * .5, 2, 0, 7); c.fill(); }
 }
 // Yasmin (e quem joga com ela): menina de tranças, jardineira e chapéu. q = jogador desenhado.
-const ROUPAS = [{ jard: "#b8485a", jard2: "#963848", blusa: "#e8c860", cabelo: "#3a2216", fita: "#e2483d", pele: "#e8c0a0" }, { jard: "#3a6a9a", jard2: "#2e5478", blusa: "#e8e4d8", cabelo: "#1a1210", fita: "#f2c94a", pele: "#c8946a" }];
+const ROUPAS = [{ jard: "#b8485a", jard2: "#963848", blusa: "#e8c860", cabelo: "#3a2216", fita: "#e2483d", pele: "#e8c0a0" }, { jard: "#3a6a9a", jard2: "#2e5478", blusa: "#e8e4d8", cabelo: "#1a1210", fita: "#f2c94a", pele: "#c8946a" }, { jard: "#4a7a3a", jard2: "#3a602c", blusa: "#f0d8b0", cabelo: "#6a3a1a", fita: "#e8e4d8", pele: "#f0cca8" }, { jard: "#7a4a9a", jard2: "#603a7a", blusa: "#a8d8e0", cabelo: "#2a1a10", fita: "#f2a33a", pele: "#8a5a3a" }];
 function desenharVoce(x, y, tm, o = {}) {
   let q = o.q || R, s = (o.s || TS) / 48, e = q.eu, dir = o.dir ?? (q.dentro ? (q.sala && q.sala.dir) || 1 : e.dir || 1), andaK = o.anda ?? (e.anda || 0), f = e.fase || 0, p = q.perto || 0, rp = ROUPAS[q.cor || 0];
   const ch = (COSMETICOS.find(k => k[0] === q.chapeu) || COSMETICOS[0])[3]; { const rl = q.roupa && ROUPAS_LOJA.find(x => x[0] === q.roupa); if (rl) rp = { ...rp, jard: rl[2], jard2: rl[3] }; }
@@ -1658,7 +1658,7 @@ function desenharMundo(tm) {
   if (R.aranha.fase !== "longe") obj.push([R.aranha.y, () => desenharAranha(R.aranha, tm)]);
   if (R.mula.fase === "corre") obj.push([R.mula.y, () => desenharMula(R.mula, tm)]);
   if (R.saci.fase !== "longe") obj.push([R.saci.y, () => desenharSaci(R.saci, tm)]);
-  const ou = R.outro; if (ou && !ou.dentro && (ou.lugar || "sitio") === "sitio" && !(R.venceu && R.venceu.t > 1)) obj.push([ou.eu.y, () => { desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" }); if (ou.velaCom) desenharVela(PX(ou.eu.x) - TS * .28, PY(ou.eu.y) - TS * .35, tm); }]);
+  for (const ou of outros()) if (!ou.dentro && (ou.lugar || "sitio") === "sitio" && !(R.venceu && R.venceu.t > 1)) obj.push([ou.eu.y, () => { desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: ou.nome || "Amigo(a)" }); if (ou.velaCom) desenharVela(PX(ou.eu.x) - TS * .28, PY(ou.eu.y) - TS * .35, tm); }]);
   obj.push([GALINHEIRO.y + GALINHEIRO.h, () => desenharGalinheiro(tm)]);
   obj.push([CELEIRO.y + CELEIRO.h, () => desenharCeleiro(tm)]);
   obj.push([TRATOR.y, () => desenharTrator()]); obj.push([CASINHA.y + .7, () => desenharCasinha()]); obj.push([CATAVENTO.y + .6, () => desenharCatavento(tm)]); obj.push([VARAL.y, () => desenharVaral(tm)]);
@@ -1702,7 +1702,7 @@ function desenharLuz(tm) {
   const lit = R.lamparinas.filter(v => v).length / 3;
   if (lit) [[.2, .53], [.8, .53]].forEach(([fx, fy]) => furo(PX(CASA.x + CASA.w * fx), PY(CASA.y + CASA.h * fy) + TS * .6, TS * 1.7 * lit, .8));
   furo(PX(CASA.x + CASA.w * .62), PY(CASA.y + CASA.h * .5), TS * 1.1, .8); // lampião da porta
-  const ou = R.outro; if (ou && !ou.dentro && (ou.lugar || "sitio") === "sitio") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
+  for (const ou of outros()) if (!ou.dentro && (ou.lugar || "sitio") === "sitio") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   furo(PX(CAPELA.porta.x), PY(CAPELA.porta.y) - 6, TS * 1.5, .75); // velinhas da capela
   if (R.mula.fase === "corre") furo(PX(R.mula.x), PY(R.mula.y) - TS, TS * 2.4, 1);
   if (R.mula.fase === "aviso") { if (R.mula.horiz) for (let x = CERCA.x0; x < CERCA.x1; x += 2) furo(PX(x), PY(R.mula.linha), TS * 1.1, .5); else for (let y = CERCA.y0; y < CERCA.y1; y += 2) furo(PX(R.mula.linha), PY(y), TS * 1.1, .5); }
@@ -1720,7 +1720,7 @@ function desenharLuz(tm) {
   if (R.mula.fase === "corre") brilho(PX(R.mula.x), PY(R.mula.y) - TS * 1.2, TS * 1.6, "255,120,30", .5);
   if (R.aranha.fase !== "longe") brilho(PX(R.aranha.x) + (R.aranha.dir || 1) * TS * 1.9, PY(R.aranha.y) - TS * 4.6, TS * .9, "230,60,40", (.2 + R.aranha.alerta * .4) * nt);
   if (R.esp.fase === "vivo") brilho(PX(R.esp.x), PY(R.esp.y) - TS * 1.1, TS * .35, "255,40,30", .6 * nt);
-  if (ou && ou.lanterna && !ou.dentro && (ou.lugar || "sitio") === "sitio") brilho(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * 3, "255,200,120", .14 * nt);
+  for (const ou of outros()) if (ou.lanterna && !ou.dentro && (ou.lugar || "sitio") === "sitio") brilho(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * 3, "255,200,120", .14 * nt);
   if (R.cachorro) brilho(PX(R.cachorro.x) + (R.cachorro.dir || 1) * TS * .35, PY(R.cachorro.y) - TS * (R.cachorro.fase === "lobo" ? 1.2 : .45), TS * .35, "255,40,30", .6 * nt);
   c.globalCompositeOperation = "source-over";
   if (R.mula.fase === "aviso") desenharMula(R.mula, tm);
@@ -1828,7 +1828,7 @@ function desenharDentro(tm) {
   }
   { const bx = X(5), by = Y(3.35), u = s / 40; c.save(); c.translate(bx, by); c.rotate(-.12); c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(-15 * u, -8 * u, 32 * u, 20 * u); c.fillStyle = "#5a2a1a"; c.fillRect(-16 * u, -10 * u, 32 * u, 20 * u); c.fillStyle = "#e8dcc0"; c.fillRect(-14 * u, -8.5 * u, 13 * u, 17 * u); c.fillRect(1 * u, -8.5 * u, 13 * u, 17 * u); c.strokeStyle = "rgba(60,40,20,.6)"; c.lineWidth = 1; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(-12 * u, (-5 + i * 3) * u); c.lineTo(-3 * u, (-5 + i * 3) * u); c.moveTo(3 * u, (-5 + i * 3) * u); c.lineTo(12 * u, (-5 + i * 3) * u); c.stroke(); }
     if (!R.diario) { c.strokeStyle = `rgba(242,201,74,${.4 + .4 * Math.sin(tm * 4)})`; c.lineWidth = 2; c.strokeRect(-18 * u, -12 * u, 36 * u, 24 * u); } c.restore(); } // o diário da vó em cima da mesa
-  const ou = R.outro; if (ou && ou.dentro && ou.sala) desenharVoce(X(ou.sala.x), Y(ou.sala.y), tm, { q: ou, dir: ou.sala.dir || 1, s: s * 1.05, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" });
+  for (const ou of outros()) if (ou.dentro && ou.sala) desenharVoce(X(ou.sala.x), Y(ou.sala.y), tm, { q: ou, dir: ou.sala.dir || 1, s: s * 1.05, nome: ou.nome || "Amigo(a)" });
   desenharVoce(X(R.sala.x), Y(R.sala.y), tm, { dir: R.sala.dir || 1, s: s * 1.05 });
   // escuridão conforme as lamparinas
   const lit = R.lamparinas.filter(v => v).length;
@@ -1978,7 +1978,7 @@ function desenharFx() {
   if ((a.fase === "anda" || a.fase === "ataque") && !R.dentro && (R.lugar || "sitio") === "sitio") { // olho que mostra o quanto ela já te notou
     const w = Math.min(180, W * .24), x = W / 2 - w / 2, y = 36, v = a.fase === "ataque" ? 1 : a.alerta; c.fillStyle = "rgba(0,0,0,.5)"; c.fillRect(x, y, w, 7); c.fillStyle = v > .7 ? "#e2483d" : v > .35 ? "#f2a33a" : "#e8e2d4"; c.fillRect(x, y, w * v, 7);
     c.strokeStyle = "rgba(255,255,255,.5)"; c.lineWidth = 1.5; c.beginPath(); c.ellipse(x - 14, y + 3.5, 9, 5, 0, 0, 7); c.stroke(); c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(x - 14, y + 3.5, 2.4, 0, 7); c.fill(); }
-  if (!R.dentro && !R.predio) { if (CHAT.meu) balaoChat(R.eu, CHAT.meu); if (CHAT.dele && R.outro && !R.outro.dentro && !R.outro.predio && R.outro.lugar === R.lugar) balaoChat(R.outro.eu, CHAT.dele); }
+  if (!R.dentro && !R.predio) { if (CHAT.meu) balaoChat(R.eu, CHAT.meu); for (const ou of outros()) { const m = CHAT.de[ou.slot]; if (m && !ou.dentro && !ou.predio && ou.lugar === R.lugar) balaoChat(ou.eu, m); } }
   if (R.caido) { c.fillStyle = `rgba(120,10,10,${.25 + .1 * Math.sin(performance.now() / 300)})`; c.fillRect(0, 0, W, H); }
 }
 function desenharVitoria(tm) { if (!R.venceu) return; const k = R.venceu.t; if (k < 1) return; c.fillStyle = `rgba(0,0,0,${cl((k - 3) / 1.4, 0, 1)})`; c.fillRect(0, 0, W, H); }
@@ -1989,7 +1989,7 @@ function loop(ts) {
   const t0 = performance.now(); window.rocaPerfN = (window.rocaPerfN || 0) + 1;
   const dt = Math.min(.07, (ts - ultimo) / 1000 || 0); ultimo = ts;
   if (R.online === "guest") atualizarConvidado(dt); else atualizar(dt);
-  if (R.online === "host" && R.outro) { Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .1; enviar(estadoPara()); } }
+  if (R.online === "host" && outros().length) { Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .1; enviarTodos(estadoPara()); } }
   const tm = ts / 1000;
   c.setTransform(DPRr, 0, 0, DPRr, 0, 0);
   if (R.lugar === "esgoto") desenharEsgoto(tm);
@@ -2426,7 +2426,7 @@ function desenharEsgoto(tm) {
     else if (h.tipo === "cano") { c.fillStyle = "#4a4a44"; c.beginPath(); c.arc(x, y - TS * .35, TS * .42, 0, 7); c.fill(); c.fillStyle = "#0a0a08"; c.beginPath(); c.arc(x, y - TS * .35, TS * .32, 0, 7); c.fill(); c.strokeStyle = "rgba(255,255,255,.12)"; c.lineWidth = 2; c.beginPath(); c.arc(x, y - TS * .35, TS * .38, PI * 1.1, PI * 1.7); c.stroke(); if (dentro) { c.fillStyle = "rgba(240,240,230,.9)"; c.fillRect(x - TS * .06, y - TS * .4, 2, 2); c.fillRect(x + TS * .04, y - TS * .4, 2, 2); } }
     else { c.fillStyle = "#14100c"; c.fillRect(x - TS * .32, y - TS * .9, TS * .64, TS * .85); c.strokeStyle = "#5a4232"; c.lineWidth = 3; c.strokeRect(x - TS * .32, y - TS * .9, TS * .64, TS * .85); c.strokeStyle = "#6a6a62"; c.lineWidth = 2; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(x - TS * .24 + i * TS * .16, y - TS * .88); c.lineTo(x - TS * .24 + i * TS * .16, y - TS * .08); c.stroke(); } if (dentro) { c.fillStyle = "rgba(240,240,230,.9)"; c.fillRect(x - TS * .06, y - TS * .55, 2, 2); c.fillRect(x + TS * .04, y - TS * .55, 2, 2); } } }]));
   ESG.ratos.forEach(rt => obj.push([rt.y, () => { const x = PX(rt.x + Math.sin(tm * .7 + rt.f) * .8), y = PY(rt.y + .3); if (!naTela(x, y)) return; c.fillStyle = "#3a3430"; c.beginPath(); c.ellipse(x, y, TS * .1, TS * .05, 0, 0, 7); c.fill(); c.strokeStyle = "#5a4a44"; c.lineWidth = 1; c.beginPath(); c.moveTo(x - TS * .1, y); c.quadraticCurveTo(x - TS * .2, y - TS * .05, x - TS * .25, y + TS * .02); c.stroke(); c.fillStyle = "#e82020"; c.fillRect(x + TS * .07, y - TS * .02, 1.5, 1.5); }]));
-  const ou = R.outro; if (ou && ou.lugar === "esgoto") obj.push([ou.eu.y, () => desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" })]);
+  for (const ou of outros()) if (ou.lugar === "esgoto") obj.push([ou.eu.y, () => desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: ou.nome || "Amigo(a)" })]);
   if (R.tin && R.tin.fase !== "longe") obj.push([R.tin.y, () => desenharTinhoso(R.tin, tm)]);
   if (!R.escondido) obj.push([R.eu.y, () => desenharVoce(PX(R.eu.x), PY(R.eu.y), tm)]);
   obj.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
@@ -2434,7 +2434,7 @@ function desenharEsgoto(tm) {
   const lw = luzCv.width, lh = luzCv.height, k = lw / W; lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = "rgba(1,2,2,.93)"; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
   const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
   const ex = PX(R.eu.x), ey = PY(R.eu.y) - TS * .4; furo(ex, ey, TS * (R.escondido ? 1.3 : R.lanterna ? (R.lanternaBoa ? 5.4 : 4.6) : 3) * (1 + Math.sin(tm * 9) * .01), R.lanterna ? 1 : .85);
-  furo(PX(ESG.escada.x), PY(ESG.escada.y) - TS, TS * 2.2, .55); if (ou && ou.lugar === "esgoto") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * 2.4, .8);
+  furo(PX(ESG.escada.x), PY(ESG.escada.y) - TS, TS * 2.2, .55); for (const ou of outros()) if (ou.lugar === "esgoto") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * 2.4, .8);
   c.drawImage(luzCv, 0, 0, W, H);
   if (R.tin && R.tin.fase !== "longe") { const x = PX(R.tin.x), y = PY(R.tin.y) - TS * 2.2, a = .55 + .35 * Math.sin(tm * 8); c.fillStyle = `rgba(255,40,10,${a})`; c.beginPath(); c.arc(x - TS * .09, y, 2.5, 0, 7); c.arc(x + TS * .09, y, 2.5, 0, 7); c.fill(); } // os olhos brilham no escuro
   if (R.escondido) { c.fillStyle = "rgba(0,0,0,.55)"; c.fillRect(0, 0, W, H); c.fillStyle = "#000"; for (let i = 0; i < 9; i++) c.fillRect(0, i * H / 9, W, H / 9 * .62); c.fillStyle = "rgba(240,230,210,.75)"; c.font = `600 ${Math.round(Math.max(13, H * .028))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText(R.tin && R.tin.fase === "fareja" ? "Ele está farejando aqui perto. Não se mexe." : "Escondida. Saia quando ficar quieto.", W / 2, H * .9); c.textAlign = "start"; }
@@ -2761,13 +2761,13 @@ function desenharPorao(tm) {
   // marcadores do que ainda falta olhar
   PORAO_COISAS.forEach(o => { if (o.k === "escada" || vistos.includes(o.k === "mesa" ? "mapa" : o.k)) return; c.fillStyle = `rgba(242,201,74,${.35 + .3 * Math.sin(tm * 3 + o.x)})`; c.beginPath(); c.arc(X(o.x), Y(o.y - .25), .06 * s, 0, 7); c.fill(); });
   // gente
-  const ou = R.outro; if (ou && ou.lugar === "mata" && ou.predio === "porao") desenharVoce(X(ou.int.x), Y(ou.int.y), tm, { q: ou, dir: ou.int.dir || 1, s: s * 1.05, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" });
+  for (const ou of outros()) if (ou.lugar === "mata" && ou.predio === "porao") desenharVoce(X(ou.int.x), Y(ou.int.y), tm, { q: ou, dir: ou.int.dir || 1, s: s * 1.05, nome: ou.nome || "Amigo(a)" });
   desenharVoce(X(R.int.x), Y(R.int.y), tm, { dir: R.int.dir || 1, s: s * 1.05 });
   // escuro: só a luz da lanterna, do lampião e do alçapão
   const lw = luzCv.width, lh = luzCv.height, k = lw / W; lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = "rgba(2,2,4,.9)"; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
   const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
   furo(X(R.int.x), Y(R.int.y - .5), s * (R.lanterna ? 3.6 : 2.3) * (1 + Math.sin(tm * 9) * .01), R.lanterna ? 1 : .85); furo(X(1.25), Y(.8), s * 1.8, .7); furo(X(4.87), Y(3.1), s * 1.5 * (.95 + .05 * Math.sin(tm * 11)), .8);
-  if (ou && ou.lugar === "mata" && ou.predio === "porao") furo(X(ou.int.x), Y(ou.int.y - .5), s * 2.2, .8);
+  for (const ou of outros()) if (ou.lugar === "mata" && ou.predio === "porao") furo(X(ou.int.x), Y(ou.int.y - .5), s * 2.2, .8);
   c.drawImage(luzCv, 0, 0, W, H);
   c.fillStyle = "rgba(240,230,210,.6)"; c.font = `600 ${Math.round(Math.max(11, s * .16))}px "JetBrains Mono", monospace`; c.textAlign = "center"; const falta = PORAO_COISAS.length - 1 - PORAO_COISAS.filter(o => o.k !== "escada" && vistos.includes(o.k === "mesa" ? "mapa" : o.k)).length; c.fillText(falta ? `Ainda tem ${falta} coisa(s) pra vasculhar aqui embaixo.` : "Você viu tudo. Sobe. Agora.", W / 2, Y(PORAO.h + .75)); c.textAlign = "start";
 }
@@ -2786,7 +2786,7 @@ function oQueFazerMata() {
     const l = paginasVo(); for (let i = 0; i < PAGINAS_VO.length; i++) { const p = PAGINAS_VO[i]; if (Math.hypot(s.x - p.x, s.y - p.y) < 1.05) return { t: l.includes(i) ? "Reler página" : "Procurar", fn: () => lerPagina(i), loc: 1 }; }
     return null; }
   const p = R.eu;
-  if (R.outro && R.outro.caido && !R.outro.caido.fora && R.outro.lugar === "mata" && !R.outro.predio && dist(p, R.outro.eu) < 1.4) return { t: "Levantar", fn: () => { R.outro.caido = null; S.colher(); efeito("De pé! Corre!", "#9bd86b"); } };
+  { const ca = outros().find(o => o.caido && !o.caido.fora && o.lugar === "mata" && !o.predio && dist(p, o.eu) < 1.4); if (ca) return { t: "Levantar", fn: () => { ca.caido = null; S.colher(); efeito("De pé! Corre!", "#9bd86b"); } }; }
   if (dist(p, CABANA.porta) < 1.2) return { t: "Entrar", fn: entrarCabana, loc: 1 };
   if (dist(p, CADEIRA_M) < 1.1) return { t: "Olhar", loc: 1, fn: () => falar(ehNoite() ? ["A cadeira do vô está balançando. Virada pro lago. Como se alguém estivesse esperando alguém sair da água."] : ["A cadeira de balanço do vô, virada pro lago. A vó dizia que ele passava a tarde toda aqui, olhando a água.", "Do que ele tinha tanto medo que saísse dali?"], null, "Yasmin") };
   if (dist(p, BARCO_M) < 1.6) return { t: "Olhar", loc: 1, fn: () => falar(["Um barquinho afundado pela metade. Tem arranhão de unha por dentro do casco. Muitos."], null, "Yasmin") };
@@ -2875,7 +2875,7 @@ function desenharMata(tm) {
   obj.push([PIER_M.y - .6, () => { const x = PX(PIER_M.x - 1.3), y = PY(PIER_M.y - .6); if (!naTela(x, y)) return; c.fillStyle = "#3a2a1a"; c.fillRect(x - 2, y - TS * .8, 4, TS * .8); c.fillStyle = "#c8b898"; c.fillRect(x - TS * .45, y - TS * 1.05, TS * .9, TS * .32); c.fillStyle = "#7a1a1a"; c.font = `700 ${Math.round(TS * .11)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText("NÃO NADE", x, y - TS * .9); c.fillText("NÃO RESPONDA", x, y - TS * .78); c.textAlign = "start"; }]);
   obj.push([PIER_M.y - .2, () => { const x = PX(PIER_M.x), y = PY(PIER_M.y), L = (PIER_FIM.y - PIER_M.y + .5) * TS; c.fillStyle = "#4a3620"; c.fillRect(x - TS * .45, y - TS * .2, TS * .9, L); c.fillStyle = "rgba(0,0,0,.3)"; for (let i = 0; i * TS * .3 < L; i++) c.fillRect(x - TS * .45, y - TS * .2 + i * TS * .3, TS * .9, 2); c.fillStyle = "#2a1e12"; for (const yy of [L * .45, L - TS * .3]) { c.fillRect(x - TS * .5, y + yy, 5, TS * .4); c.fillRect(x + TS * .45, y + yy, 5, TS * .4); } c.fillStyle = "#6a5a3a"; c.fillRect(x + TS * .1, y + L - TS * .6, TS * .25, TS * .18); }]);
   const placa = { x: 43.6, y: 23.4 }; obj.push([placa.y, () => { const x = PX(placa.x), y = PY(placa.y); if (!naTela(x, y)) return; c.fillStyle = "#3a2a1a"; c.fillRect(x - 2, y - TS * .9, 4, TS * .9); c.fillStyle = "#5a4630"; c.fillRect(x - TS * .5, y - TS * 1.1, TS, TS * .34); c.fillStyle = "#e8dcb8"; c.font = `700 ${Math.round(TS * .13)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText("LAGO ←", x, y - TS * .88); c.textAlign = "start"; }]);
-  const ou = R.outro; if (ou && ou.lugar === "mata" && !ou.predio) obj.push([ou.eu.y, () => desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" })]);
+  for (const ou of outros()) if (ou.lugar === "mata" && !ou.predio) obj.push([ou.eu.y, () => desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: ou.nome || "Amigo(a)" })]);
   if (R.curu && R.curu.fase !== "longe") obj.push([R.curu.y, () => desenharCurupira(R.curu, tm)]);
   if (!R.predio) obj.push([R.eu.y, () => desenharVoce(PX(R.eu.x), PY(R.eu.y), tm)]);
   obj.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
@@ -2886,7 +2886,7 @@ function desenharMata(tm) {
   lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(4,8,6,${esc})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
   const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
   if (R.predio) furo(PX(CABANA.porta.x), PY(CABANA.porta.y + .6), TS * 2, .5); else furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * raioLuz(R) * (R.lanterna ? 1 : 1.3), R.lanterna ? 1 : .75);
-  if (ou && ou.lugar === "mata" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
+  for (const ou of outros()) if (ou.lugar === "mata" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   if (nt > .3) furo(PX(CABANA.x + CABANA.w / 2), PY(CABANA.y + CABANA.h * .7), TS * 3, .6);
   if (R.curu && R.curu.fase === "vem") furo(PX(R.curu.x), PY(R.curu.y) - TS, TS * 1.3, .8); // o cabelo de fogo ilumina
   c.drawImage(luzCv, 0, 0, W, H);
@@ -2919,7 +2919,7 @@ function desenharCabanaDentro(tm) {
   c.fillStyle = "rgba(240,230,200,.6)"; c.font = `700 ${Math.round(s * .17)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText("PORTA", X(CAB.porta.x), Y(CAB.h + .5)); c.fillText(`PÁGINAS ${l.length}/${PAGINAS_VO.length}`, X(CAB.w / 2), Y(-.25)); c.textAlign = "start";
   // poeira no ar e escuro nos cantos
   for (let i = 0; i < 30; i++) { c.fillStyle = "rgba(230,220,190,.25)"; c.fillRect(X((i * 1.37 + tm * .05) % CAB.w), Y(.9 + ((i * .73 + tm * .03) % (CAB.h - .9))), 1.5, 1.5); }
-  const ou = R.outro; if (ou && ou.lugar === "mata" && ou.predio === "cabana") desenharVoce(X(ou.int.x), Y(ou.int.y), tm, { q: ou, dir: ou.int.dir || 1, s: s * 1.05, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" });
+  for (const ou of outros()) if (ou.lugar === "mata" && ou.predio === "cabana") desenharVoce(X(ou.int.x), Y(ou.int.y), tm, { q: ou, dir: ou.int.dir || 1, s: s * 1.05, nome: ou.nome || "Amigo(a)" });
   desenharVoce(X(R.int.x), Y(R.int.y), tm, { dir: R.int.dir || 1, s: s * 1.05 });
   const vg = c.createRadialGradient(X(4.5), Y(1), s, X(4), Y(3), s * 6); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, `rgba(0,0,0,${.55 + .25 * nt})`); c.fillStyle = vg; c.fillRect(0, 0, W, H);
 }
@@ -3173,7 +3173,7 @@ function desenharVilaObjetos(tm) {
   VILA.tumulos.forEach(t => obj.push([t.y, () => { const x = PX(t.x), y = PY(t.y); if (!naTela(x, y)) return; if (t.aberta) { c.fillStyle = "#140c06"; c.fillRect(x - TS * .3, y - TS * .2, TS * .6, TS * .9); c.fillStyle = "#5a4a30"; c.fillRect(x + TS * .35, y, TS * .5, TS * .3); c.fillStyle = "#e8e2d0"; c.font = `700 ${Math.round(TS * .14)}px "JetBrains Mono", monospace`; c.fillText("2026", x - TS * .25, y - TS * .3); return; }
     c.fillStyle = t.k > .5 ? "#7a7468" : "#5a564e"; if (t.k > .7) { c.fillRect(x - 2.5, y - TS * .7, 5, TS * .7); c.fillRect(x - TS * .2, y - TS * .55, TS * .4, 4); } else { c.beginPath(); c.moveTo(x - TS * .2, y); c.lineTo(x - TS * .2, y - TS * .4); c.arc(x, y - TS * .4, TS * .2, PI, 0); c.lineTo(x + TS * .2, y); c.fill(); } }]));
   NPCS.forEach(n => { const o = npcOnde(n); if (o.dentro || o.ausente) return; obj.push([o.y, () => { desenharNpc(n, PX(o.x), PY(o.y), TS, tm, { dir: o.dir, anda: o.anda, wx: o.x }); if (dist(o, R.eu) < 3.2) { c.fillStyle = "rgba(240,235,220,.8)"; c.font = `700 ${Math.round(Math.max(10, TS * .2))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText(n.nome, PX(o.x), PY(o.y) - TS * 1.25); c.textAlign = "start"; } }]); });
-  const ou = R.outro; if (ou && ou.lugar === "vila" && !ou.predio) obj.push([ou.eu.y, () => desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" })]);
+  for (const ou of outros()) if (ou.lugar === "vila" && !ou.predio) obj.push([ou.eu.y, () => desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: ou.nome || "Amigo(a)" })]);
   obj.push([R.eu.y, () => desenharVoce(PX(R.eu.x), PY(R.eu.y), tm)]);
   obj.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
 }
@@ -3199,7 +3199,7 @@ function desenharLuzVila(tm) {
   lc.globalCompositeOperation = "destination-out";
   const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
   furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * raioLuz(R), R.lanterna ? 1 : .7);
-  const ou = R.outro; if (ou && ou.lugar === "vila" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
+  for (const ou of outros()) if (ou.lugar === "vila" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   { const m = npcOnde(npc("maria")); if (!m.ausente) furo(PX(m.x), PY(m.y) - TS * .6, TS * 1.6, .8); if (ehNoite()) furo(PX(CAPELINHA.x), PY(CAPELINHA.y) - 6, TS * 1.5, .7); }
   if (luzesVila()) { VPOSTES.forEach(([px, py], i) => { if (!apagaUm(i * .4)) furo(PX(px + .35), PY(py) - TS * 1.5, TS * 2.2, .85); }); VPREDIOS.forEach((p, i) => { if (!apagaUm(i)) furo(PX(p.x + p.w / 2), PY(p.y + p.h * .55), TS * 2.6, .7); }); }
   c.drawImage(luzCv, 0, 0, W, H);
@@ -3289,7 +3289,7 @@ function desenharPredio(tm) {
       cab(o.x - .45, o.y - .45); if (n.look.gemeas) cab(3.55, 1.25); c.fillStyle = "rgba(0,0,0,.25)"; c.fillRect(X(o.x - .7), Y(o.y - .2), 1.2 * s, .5 * s);
       c.fillStyle = "rgba(230,230,240,.7)"; c.font = `700 ${Math.round(s * .2)}px "JetBrains Mono", monospace`; c.fillText("z".repeat(1 + Math.floor(tm * 1.5) % 3), X(o.x - .1), Y(o.y - .8)); return; }
     desenharNpc(n, X(o.x), Y(o.y + .35), s * 1.05, tm, { dir: o.dir, wx: o.x }); });
-  const ou = R.outro; if (ou && ou.lugar === "vila" && ou.predio === R.predio && ou.andar === A) desenharVoce(X(ou.int.x), Y(ou.int.y), tm, { q: ou, dir: ou.int.dir || 1, s: s * 1.05, nome: R.online === "host" ? "Amigo(a)" : "Yasmin" });
+  for (const ou of outros()) if (ou.lugar === "vila" && ou.predio === R.predio && ou.andar === A) desenharVoce(X(ou.int.x), Y(ou.int.y), tm, { q: ou, dir: ou.int.dir || 1, s: s * 1.05, nome: ou.nome || "Amigo(a)" });
   desenharVoce(X(R.int.x), Y(R.int.y), tm, { dir: R.int.dir || 1, s: s * 1.05 });
   if (noite) { const x = X(R.int.x), y = Y(R.int.y) - s * .4, r = s * (R.lanterna ? 3.6 : 2.4), g = c.createRadialGradient(x, y, r * .2, x, y, r); g.addColorStop(0, "rgba(3,4,8,0)"); g.addColorStop(1, "rgba(3,4,8,.84)"); c.fillStyle = g; c.fillRect(0, 0, W, H); }
   c.fillStyle = "rgba(240,235,220,.6)"; c.font = `700 ${Math.round(Math.max(11, s * .2))}px "JetBrains Mono", monospace`; c.textAlign = "right"; c.fillText(p.nome + (A ? " · quarto" : ""), X(ROOM.w), Y(ROOM.h) + Math.max(14, s * .3)); c.textAlign = "start";
@@ -3410,93 +3410,127 @@ function historia(depois) {
 /* ---------- online: salas com código (PeerJS) ---------- */
 // Quem cria a sala é o anfitrião e roda o jogo; o amigo manda os movimentos e recebe o mundo ~10 vezes por segundo.
 // Nos testes automáticos (?bc) a conexão é feita por BroadcastChannel entre duas abas.
-const Net = { peer: null, conn: null, bc: null, papel: null, envT: 0 };
+const Net = { peer: null, conn: null, bc: null, papel: null, envT: 0, codigo: "", meuId: "", jog: new Map(), lobby: [] };
+const MAXJ = 4; // anfitrião + 3 amigos
 const PREFIXO = "ultimaescolha-roca-";
 const usarBC = () => /[?&]bc\b/.test(location.search);
 const novoCodigo = () => Array.from({ length: 5 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 31)]).join("");
 const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }, { urls: "stun:global.stun.twilio.com:3478" }] };
-function enviar(o) { try { if (Net.bc) Net.bc.postMessage(o); else if (Net.conn && Net.conn.open) Net.conn.send(o); } catch (e) {} }
-function netFechar() { try { if (Net.conn) Net.conn.close(); } catch (e) {} try { if (Net.peer) Net.peer.destroy(); } catch (e) {} try { if (Net.bc) { Net.bc.postMessage({ t: "tchau" }); Net.bc.close(); } } catch (e) {} Net.peer = Net.conn = Net.bc = null; Net.papel = null; Net.ligado = false; Net.codigo = ""; }
+const CORES_J = ["#e2483d", "#4a8ad8", "#5aa84a", "#a868d0"];
+const escH = t => String(t ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+const limparNome = t => String(t || "").replace(/[\u0000-\u001f<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 12);
+const meuNome = () => limparNome(ls("roca_nome")) || "";
+const outros = () => (R && R.outros) || [];
+// anfitrião: manda para um amigo só, ou para todos
+function enviarPara(id, o) { try { if (Net.bc) Net.bc.postMessage({ ...o, h: 1, para: id }); else { const j = Net.jog.get(id); if (j && j.conn && j.conn.open) j.conn.send(o); } } catch (e) {} }
+function enviarTodos(o) { try { if (Net.bc) Net.bc.postMessage({ ...o, h: 1 }); else Net.jog.forEach(j => { if (j.conn && j.conn.open) j.conn.send(o); }); } catch (e) {} }
+function enviar(o) {
+  if (Net.papel === "host") { if (R && R.trocado && R.trocadoCom && R.trocadoCom.nid) enviarPara(R.trocadoCom.nid, o); else enviarTodos(o); return; }
+  try { if (Net.bc) Net.bc.postMessage({ ...o, de: Net.meuId }); else if (Net.conn && Net.conn.open) Net.conn.send(o); } catch (e) {}
+}
+function netFechar() {
+  if (Net.papel === "host") { enviarTodos({ t: "tchau" }); Net.jog.forEach(j => { try { j.conn && j.conn.close(); } catch (e) {} }); }
+  else if (Net.papel === "guest" && Net.bc) { try { Net.bc.postMessage({ t: "tchau", de: Net.meuId }); } catch (e) {} }
+  try { if (Net.conn) Net.conn.close(); } catch (e) {} try { if (Net.peer) Net.peer.destroy(); } catch (e) {} try { if (Net.bc) Net.bc.close(); } catch (e) {}
+  Net.peer = Net.conn = Net.bc = null; Net.papel = null; Net.codigo = ""; Net.jog = new Map(); Net.lobby = []; Net.meuSlot = 0; Net.pronto = false;
+}
 function ligarConn(conn, aoAbrir) { Net.conn = conn; conn.on("open", () => aoAbrir && aoAbrir()); conn.on("data", netReceber); conn.on("close", netCaiu); conn.on("error", netCaiu); }
-function netCriar(aoCodigo, aoEntrar, aoErro) {
-  netFechar(); Net.papel = "host"; const cod = novoCodigo(); Net.codigo = cod;
-  if (usarBC()) { Net.bc = new BroadcastChannel("roca-" + cod); Net.bc.onmessage = e => { if (e.data && e.data.t === "oi" && !Net.ligado) { Net.ligado = true; aoEntrar(); } else netReceber(e.data); }; setTimeout(() => aoCodigo(cod), 50); return; }
+function netCriar(aoCodigo, aoMudou, aoErro) {
+  netFechar(); Net.papel = "host"; const cod = novoCodigo(); Net.codigo = cod; Net.aoMudou = aoMudou;
+  if (usarBC()) { Net.bc = new BroadcastChannel("roca-" + cod); Net.bc.onmessage = e => { const d = e.data; if (!d || d.h || !d.de) return; hostReceber(d.de, d, null); }; setTimeout(() => aoCodigo(cod), 50); return; }
   if (typeof Peer !== "function") return aoErro("O online não carregou. Confira a internet e tente de novo.");
   const peer = new Peer(PREFIXO + cod, { debug: 0, config: ICE }); Net.peer = peer;
   peer.on("open", () => aoCodigo(cod));
-  peer.on("connection", conn => { if (Net.conn && Net.conn.open) { conn.on("open", () => { conn.send({ t: "cheia" }); setTimeout(() => conn.close(), 300); }); return; } ligarConn(conn, () => { Net.ligado = true; aoEntrar(); }); });
+  peer.on("connection", conn => { const id = conn.peer; conn.on("data", d => hostReceber(id, d, conn)); conn.on("close", () => hostSaiu(id)); conn.on("error", () => hostSaiu(id)); });
   peer.on("disconnected", () => { try { peer.reconnect(); } catch (e) {} });
-  peer.on("error", e => { if (e.type === "unavailable-id") return netCriar(aoCodigo, aoEntrar, aoErro); aoErro(e.type === "network" || e.type === "server-error" || e.type === "socket-error" ? "Sem conexão com o servidor do online. Confira a internet." : "Erro no online: " + e.type); });
+  peer.on("error", e => { if (e.type === "unavailable-id") return netCriar(aoCodigo, aoMudou, aoErro); if (e.type === "peer-unavailable") return; aoErro(e.type === "network" || e.type === "server-error" || e.type === "socket-error" ? "Sem conexão com o servidor do online. Confira a internet." : "Erro no online: " + e.type); });
+}
+const jogoRodando = () => !!(R && window.rocaAtiva && R.online === "host" && el.rcTitulo.hidden);
+const listaLobby = () => [{ id: "host", slot: 0, nome: meuNome() || "Jogador 1", pronto: true, host: true }, ...[...Net.jog.values()].map(j => ({ id: j.id, slot: j.slot, nome: j.nome, pronto: j.pronto }))].sort((a, b) => a.slot - b.slot);
+function avisarLobby() { Net.lobby = listaLobby(); enviarTodos({ t: "lobby", codigo: Net.codigo, jogadores: Net.lobby, jogando: jogoRodando() }); Net.aoMudou && Net.aoMudou(); }
+function hostReceber(id, d, conn) {
+  if (!d || !d.t || Net.papel !== "host") return;
+  let j = Net.jog.get(id);
+  if (d.t === "oi") {
+    if (!j) {
+      if (Net.jog.size >= MAXJ - 1) { if (conn) { try { conn.send({ t: "cheia" }); } catch (e) {} setTimeout(() => { try { conn.close(); } catch (e) {} }, 400); } else enviarPara(id, { t: "cheia" }); return; }
+      const usados = new Set([...Net.jog.values()].map(x => x.slot)); let slot = 1; while (usados.has(slot)) slot++;
+      j = { id, conn, slot, nome: limparNome(d.nome) || "Jogador " + (slot + 1), pronto: false }; Net.jog.set(id, j);
+      if (jogoRodando()) { // a partida já começou: entra direto
+        j.pronto = true; R.outros.push(novoOutro(j)); enviarPara(id, { t: "inicio", volta: false, slot }); hud(); S.colher && S.colher(); efeito(`${j.nome} entrou na sala!`, "#9bd86b");
+      }
+    }
+    avisarLobby(); return;
+  }
+  if (!j) return;
+  if (d.t === "tchau") return hostSaiu(id);
+  if (d.t === "pronto") { j.pronto = !!d.v; avisarLobby(); return; }
+  if (d.t === "nome") { j.nome = limparNome(d.nome) || j.nome; const o = outros().find(x => x.nid === id); if (o) o.nome = j.nome; avisarLobby(); return; }
+  if (d.t === "chat") { const txt = limparTexto(d.txt); if (!txt) return; enviarTodos({ t: "chat", txt, nome: j.nome, slot: j.slot }); receberChat(txt, j.nome, j.slot); return; }
+  if (!R || R.online !== "host") return; const o = outros().find(x => x.nid === id); if (!o) return;
+  if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; o.lugar = ["vila", "mata", "esgoto"].includes(d.lugar) ? d.lugar : "sitio"; o.predio = d.predio || null; o.andar = d.andar | 0; if (d.int) o.int = d.int; o.conv = d.conv || {}; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); }
+  else if (d.t === "acao") { comJogador(o, () => { const a = oQueFazer(); if (a && !a.loc && a.t.split(" ")[0] === String(d.nome).split(" ")[0]) a.fn(); }); hud(); }
+  else if (d.t === "compra") { const op = comJogador(o, () => (d.loja ? opcoesLoja(d.loja) : opcoesBancada())).find(x => x.nome.replace(/^✓ /, "") === d.nome); if (op && op.ok) { R.moedas -= op.preco; comJogador(o, op.fn); S.moedas(); hud(); } }
+  else if (d.t === "missao") { comJogador(o, () => aplicarMissao(d.id, d.op, d.alvo)); }
+  else if (d.t === "peixe") { R.peixes[d.nome] = (R.peixes[d.nome] || 0) + 1; hud(); }
+}
+function hostSaiu(id) {
+  const j = Net.jog.get(id); if (!j) return; Net.jog.delete(id); try { j.conn && j.conn.close(); } catch (e) {}
+  if (R && R.online === "host") { const i = R.outros.findIndex(x => x.nid === id); if (i >= 0) { R.outros.splice(i, 1); if (window.rocaAtiva) { hud(); efeito(`${j.nome} saiu. A sala ${Net.codigo} continua aberta.`, "#e8e2d4"); } } }
+  if (Net.papel === "host") avisarLobby();
 }
 function netEntrar(cod, aoConectar, aoErro) {
   netFechar(); Net.papel = "guest"; cod = cod.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (cod.length !== 5) return aoErro("O código tem 5 letras/números."); Net.codigo = cod;
-  if (usarBC()) { Net.bc = new BroadcastChannel("roca-" + cod); Net.bc.onmessage = e => netReceber(e.data); Net.bc.postMessage({ t: "oi" }); aoConectar(); return; }
+  if (usarBC()) { Net.meuId = "g" + Math.random().toString(36).slice(2, 9); Net.bc = new BroadcastChannel("roca-" + cod); Net.bc.onmessage = e => { const d = e.data; if (!d || !d.h || (d.para && d.para !== Net.meuId)) return; netReceber(d); }; enviar({ t: "oi", nome: meuNome() }); aoConectar(); return; }
   if (typeof Peer !== "function") return aoErro("O online não carregou. Confira a internet e tente de novo.");
   const peer = new Peer(undefined, { debug: 0, config: ICE }); Net.peer = peer; let ok = false;
   const desiste = setTimeout(() => { if (!ok) aoErro("Não consegui falar com essa sala. Às vezes a rede (4G ou Wi-Fi) bloqueia; tente outra rede."); }, 20000);
-  peer.on("open", () => ligarConn(peer.connect(PREFIXO + cod, { reliable: true, serialization: "json" }), () => { ok = true; clearTimeout(desiste); enviar({ t: "oi" }); aoConectar(); }));
-  peer.on("error", e => { clearTimeout(desiste); aoErro(e.type === "peer-unavailable" ? "Não achei essa sala. Confira o código (e se o amigo ainda está esperando)." : e.type === "network" || e.type === "server-error" || e.type === "socket-error" ? "Sem conexão com o servidor do online. Confira a internet." : "Erro no online: " + e.type); });
+  peer.on("open", id => { Net.meuId = id; ligarConn(peer.connect(PREFIXO + cod, { reliable: true, serialization: "json" }), () => { ok = true; clearTimeout(desiste); enviar({ t: "oi", nome: meuNome() }); aoConectar(); }); });
+  peer.on("error", e => { clearTimeout(desiste); aoErro(e.type === "peer-unavailable" ? "Não achei essa sala. Confira o código (e se o anfitrião ainda está com a sala aberta)." : e.type === "network" || e.type === "server-error" || e.type === "socket-error" ? "Sem conexão com o servidor do online. Confira a internet." : "Erro no online: " + e.type); });
 }
-function netCaiu() {
-  if (!Net.papel) return; const era = Net.papel;
-  if (era === "host" && R && window.rocaAtiva && R.online === "host") {
-    // a sala continua aberta: o amigo pode voltar com o mesmo código
-    if (!Net.ligado && !Net.conn) return;
-    try { if (Net.conn) Net.conn.close(); } catch (e) {} Net.conn = null; Net.ligado = false;
-    R.outro = null; abrirChat && el.rcChatBar && !el.rcChatBar.hidden && abrirChat(false); hud();
-    efeito(`Seu amigo saiu. A sala ${Net.codigo} continua aberta.`, "#e8e2d4"); return;
-  }
-  netFechar();
-  if (!R || !window.rocaAtiva) return;
-  if (era === "host") { R.outro = null; R.online = null; efeito("Seu amigo saiu. Você continua sozinha.", "#e8e2d4"); return; }
-  painelAberto = true; el.rcPainel.hidden = false; el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>A conexão caiu</h2><p>Perdemos o contato com a sala do seu amigo.</p><div class="rc-linha"><button type="button" class="rc-op dest" id="rcSair">Voltar</button></div></div>`;
+function netCaiu() { // só o convidado cai: o anfitrião trata cada amigo em hostSaiu
+  if (Net.papel !== "guest") return; netFechar();
+  if (!window.rocaAtiva) return;
+  painelAberto = true; el.rcPainel.hidden = false; el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>A conexão caiu</h2><p>Perdemos o contato com a sala (o anfitrião saiu ou a internet caiu).</p><div class="rc-linha"><button type="button" class="rc-op dest" id="rcSair">Voltar</button></div></div>`;
   el.rcPainel.querySelector("#rcSair").addEventListener("click", () => { fecharPainel(); menuInicial(); });
 }
-const novoOutro = () => ({ eu: { x: 14.2, y: 12.9, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5.6, y: 5.6, dir: 1 }, lanterna: false, correndo: false, regando: 0, velaCom: false, pesca: null, perto: 0, caido: null, folego: 100, chapeu: "palha", semente: 0, cor: 1, agua: 5, vidas: 1, lugar: "sitio", predio: null, andar: 0, int: { x: 4.5, y: 5.2, dir: 1 }, roupa: null, garrafada: 0, broa: 0, conv: {} });
+const novoOutro = j => ({ nid: j.id, slot: j.slot, nome: j.nome, eu: { x: 14.2 + (j.slot - 1) * .7, y: 12.9 + (j.slot === 2 ? .5 : 0), dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5.6, y: 5.6, dir: 1 }, lanterna: false, correndo: false, regando: 0, velaCom: false, pesca: null, perto: 0, caido: null, folego: 100, chapeu: "palha", semente: 0, cor: j.slot, agua: 5, vidas: 1, lugar: "sitio", predio: null, andar: 0, int: { x: 4.5, y: 5.2, dir: 1 }, roupa: null, garrafada: 0, broa: 0, conv: {} });
 function netReceber(d) {
-  if (!d || !d.t) return;
+  if (!d || !d.t || Net.papel !== "guest") return;
   if (d.t === "tchau") return netCaiu();
-  if (d.t === "chat") return receberChat(d.txt);
-  if (Net.papel === "host") {
-    if (!R || !R.outro) return; const o = R.outro;
-    if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; o.lugar = ["vila", "mata", "esgoto"].includes(d.lugar) ? d.lugar : "sitio"; o.predio = d.predio || null; o.andar = d.andar | 0; if (d.int) o.int = d.int; o.conv = d.conv || {}; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); }
-    else if (d.t === "acao") { comJogador(o, () => { const a = oQueFazer(); if (a && !a.loc && a.t.split(" ")[0] === String(d.nome).split(" ")[0]) a.fn(); }); hud(); }
-    else if (d.t === "compra") { const op = comJogador(o, () => (d.loja ? opcoesLoja(d.loja) : opcoesBancada())).find(x => x.nome.replace(/^✓ /, "") === d.nome); if (op && op.ok) { R.moedas -= op.preco; comJogador(o, op.fn); S.moedas(); hud(); } }
-    else if (d.t === "missao") { comJogador(o, () => aplicarMissao(d.id, d.op, d.alvo)); }
-    else if (d.t === "peixe") { R.peixes[d.nome] = (R.peixes[d.nome] || 0) + 1; hud(); }
-    return;
-  }
-  if (Net.papel === "guest") {
-    if (d.t === "cheia") { aoErroLobby && aoErroLobby("Essa sala já tem dois jogadores."); netFechar(); return; }
-    if (d.t === "inicio") { iniciarJogo("guest", d.volta); return; }
-    if (!R || R.online !== "guest") return;
-    if (d.t === "s") aplicarEstado(d);
-    else if (d.t === "som" && SOM_ORIG[d.k]) SOM_ORIG[d.k](...(d.a || []));
-    else if (d.t === "caiu") cairLocal(d.quem);
-    else if (d.t === "pos") { R.eu.x = d.x; R.eu.y = d.y; R.dentro = false; R.caido = null; }
-  }
+  if (d.t === "chat") { if (d.slot !== Net.meuSlot) receberChat(d.txt, d.nome, d.slot); return; }
+  if (d.t === "cheia") { aoErroLobby && aoErroLobby("Essa sala já está cheia (máximo de 4 jogadores)."); netFechar(); return; }
+  if (d.t === "lobby") { Net.lobby = d.jogadores || []; const eu = Net.lobby.find(x => x.id === Net.meuId); if (eu) Net.meuSlot = eu.slot; if (!(R && R.online === "guest")) telaLobbyConvidado(); else hud(); return; }
+  if (d.t === "inicio") { Net.meuSlot = d.slot || Net.meuSlot || 1; iniciarJogo("guest", d.volta); return; }
+  if (!R || R.online !== "guest") return;
+  if (d.t === "s") aplicarEstado(d);
+  else if (d.t === "som" && SOM_ORIG[d.k]) SOM_ORIG[d.k](...(d.a || []));
+  else if (d.t === "caiu") cairLocal(d.quem);
+  else if (d.t === "pos") { R.eu.x = d.x; R.eu.y = d.y; R.dentro = false; R.caido = null; }
 }
 let aoErroLobby = null;
 // os sons do anfitrião tocam também no celular do amigo (menos os passos)
-const SOM_ORIG = {}; Object.keys(S).forEach(k => { SOM_ORIG[k] = S[k]; if (k === "passo") return; S[k] = (...a) => { SOM_ORIG[k](...a); if (R && R.online === "host" && R.outro) enviar({ t: "som", k, a }); }; });
+const SOM_ORIG = {}; Object.keys(S).forEach(k => { SOM_ORIG[k] = S[k]; if (k === "passo") return; S[k] = (...a) => { SOM_ORIG[k](...a); if (R && R.online === "host" && R.outros && R.outros.length) enviarTodos({ t: "som", k, a }); }; });
 function cairLocal(quem) { if (R.caido) return; R.caido = { quem, t: 0 }; R.dentro = false; R.lanterna = false; R.correndo = false; SOM_ORIG.susto(); try { vibrar(400); } catch (e) {} }
 function estadoPara() {
-  const pl = q => ({ lugar: q.lugar, predio: q.predio, andar: q.andar, int: q.int, roupa: q.roupa, eu: { x: q.eu.x, y: q.eu.y, dir: q.eu.dir, anda: q.eu.anda, fase: q.eu.fase }, dentro: q.dentro, sala: q.sala, lanterna: q.lanterna, regando: q.regando, chapeu: q.chapeu, caido: q.caido ? { quem: q.caido.quem, fora: q.caido.fora } : null, velaCom: q.velaCom, cor: q.cor, perto: q.perto, vidas: q.vidas, agua: q.agua });
-  const o = R.outro;
+  const pl = q => ({ lugar: q.lugar, predio: q.predio, andar: q.andar, int: q.int, roupa: q.roupa, eu: { x: q.eu.x, y: q.eu.y, dir: q.eu.dir, anda: q.eu.anda, fase: q.eu.fase }, dentro: q.dentro, sala: q.sala, lanterna: q.lanterna, regando: q.regando, chapeu: q.chapeu, caido: q.caido ? { quem: q.caido.quem, fora: q.caido.fora } : null, velaCom: q.velaCom, cor: q.cor, perto: q.perto, vidas: q.vidas, agua: q.agua, slot: q === R ? 0 : q.slot, nome: q === R ? R.nome : q.nome });
+  const vs = {}; outros().forEach(o => { vs[o.slot] = { roupa: o.roupa, garrafada: o.garrafada, broa: o.broa, caido: o.caido ? { quem: o.caido.quem, fora: o.caido.fora } : null, velaCom: o.velaCom, regando: o.regando, agua: o.agua, vidas: o.vidas }; });
   return { t: "s", T: R.t, dia: R.dia, moedas: R.moedas, agua: R.agua, aguaMax: R.aguaMax, oleo: R.oleo, vel: R.vel, lanternaBoa: R.lanternaBoa, sementes: R.sementes, vara: R.vara, pecas: R.pecas, peneira: R.peneira,
     missoes: R.missoes, mprog: R.mprog, apito: R.apito, guizo: R.guizo, isca: R.isca, medalha: R.medalha, enxada: R.enxada, lampiao: R.lampiao, ferradura: R.ferradura, sal: R.sal, arruda: R.arruda, aguaBenta: R.aguaBenta, inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
     gato: R.gato, cachorro: R.cachorro, seco: R.seco, vulto: R.vulto, vela: R.vela, velaEntregue: R.velaEntregue, velaHoje: R.velaHoje, alma: R.alma, galinhas: R.galinhas, porcos: R.porcos,
     aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, curu: R.curu, cuca: R.cuca, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
-    outro: pl(R), voce: o ? { roupa: o.roupa, garrafada: o.garrafada, broa: o.broa, caido: o.caido ? { quem: o.caido.quem, fora: o.caido.fora } : null, velaCom: o.velaCom, regando: o.regando, agua: o.agua, vidas: o.vidas } : null };
+    jogs: jogadores().map(pl), vs };
 }
 const SUAVE = ["gato", "cachorro", "seco", "aranha", "esp", "saci", "vulto", "mula", "curu", "cuca"];
 function aplicarEstado(d) {
   const suave = (velho, novo) => { if (velho && novo && novo.x != null && velho.x != null && Math.hypot(novo.x - velho.x, novo.y - velho.y) < 4) { novo.ax = novo.x; novo.ay = novo.y; novo.x = velho.x; novo.y = velho.y; } };
   SUAVE.forEach(k => suave(R[k], d[k])); ["galinhas", "porcos"].forEach(k => d[k] && d[k].forEach((g, i) => suave(R[k] && R[k][i], g)));
-  if (d.outro && R.outro) { const a = d.outro.eu, b = R.outro.eu; suave(b, a); if (d.outro.sala && R.outro.sala) suave(R.outro.sala, d.outro.sala); }
+  const velhos = R.outros || []; R.outros = (d.jogs || []).filter(j => j.slot !== R.slot);
+  R.outros.forEach(j => { const v = velhos.find(x => x.slot === j.slot); if (v) { suave(v.eu, j.eu); if (v.sala && j.sala) suave(v.sala, j.sala); } });
+  d.voce = d.vs && d.vs[R.slot];
   ["missoes", "mprog", "apito", "guizo", "isca", "medalha", "enxada", "lampiao", "ferradura", "sal", "arruda", "aguaBenta", "dia", "moedas", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
-    "gato", "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "outro", "tempoTotal"].forEach(k => { R[k] = d[k]; });
+    "gato", "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "tempoTotal"].forEach(k => { R[k] = d[k]; });
   R.t = d.T; R.fxR = d.fx || []; R.semente = cl(R.semente, 0, R.sementes.length - 1);
   d.canteiros.forEach(([a, cv2], i) => { R.canteiros[i].aberto = a; R.canteiros[i].covas = cv2; });
   if (d.voce) { R.roupa = d.voce.roupa; R.garrafada = d.voce.garrafada; if (d.voce.broa > 0 && !(R.broa > 0)) R.broa = d.voce.broa; R.agua = d.voce.agua; R.vidas = d.voce.vidas; if (d.voce.caido) { cairLocal(d.voce.caido.quem); R.caido.fora = d.voce.caido.fora; } else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
@@ -3510,7 +3544,7 @@ function atualizarConvidado(dt) {
   R.poeira.forEach(q => { q.t += dt; q.y -= dt * .3; }); R.poeira = R.poeira.filter(q => q.t < .8);
   if (R.susto > 0) R.susto -= dt; if (R.tremor > 0) R.tremor -= dt;
   const k = Math.min(1, dt * 10), lerp = o => { if (o && o.ax != null) { o.x = mix(o.x, o.ax, k); o.y = mix(o.y, o.ay, k); } };
-  SUAVE.forEach(n => lerp(R[n])); R.galinhas.forEach(lerp); R.porcos.forEach(lerp); if (R.outro) { lerp(R.outro.eu); lerp(R.outro.sala); }
+  SUAVE.forEach(n => lerp(R[n])); R.galinhas.forEach(lerp); R.porcos.forEach(lerp); outros().forEach(o => { lerp(o.eu); lerp(o.sala); });
   if (R.morto) { R.morto.t += dt; return; }
   if (R.venceu) { R.venceu.t += dt; if (R.venceu.t > 4.5 && !R.venceu.tela) { R.venceu.tela = true; telaFim("venceu"); } return; }
   if (R.caido) R.caido.t += dt;
@@ -3524,13 +3558,13 @@ function atualizarConvidado(dt) {
 }
 
 /* ---------- chat do online ---------- */
-const CHAT = { meu: null, dele: null, log: [] };
+const CHAT = { meu: null, de: {}, log: [] };
 function abrirChat(abrir) { el.rcChatBar.hidden = !abrir; el.rcChatN.hidden = true; if (abrir) { try { el.rcChatIn.focus(); } catch (e) {} setTimeout(() => { try { el.rcChatIn.focus(); } catch (e) {} }, 50); } else try { el.rcChatIn.blur(); } catch (e) {} }
 function limparTexto(t) { return String(t || "").replace(/[\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80); }
-function mandarChat(t) { t = limparTexto(t); if (!t || !R || !R.online) return; enviar({ t: "chat", txt: t }); CHAT.meu = { txt: t, t: performance.now() }; logChat(t, true); tocarTom(820, .06, { vol: .04 }); }
-function receberChat(t) { t = limparTexto(t); if (!t || !R || !R.online) return; CHAT.dele = { txt: t, t: performance.now() }; logChat(t, false); tocarTom(660, .08, { tipo: "triangle", vol: .06 }); tocarTom(990, .08, { tipo: "triangle", vol: .05, quando: .09 }); if (el.rcChatBar.hidden) el.rcChatN.hidden = false; }
-function logChat(t, eu) {
-  const d = document.createElement("div"); d.className = eu ? "eu" : ""; const b = document.createElement("b"); b.textContent = eu ? "Você:" : (R.online === "host" ? "Amigo(a):" : "Yasmin:"); d.append(b, document.createTextNode(t));
+function mandarChat(t) { t = limparTexto(t); if (!t || !R || !R.online) return; enviar({ t: "chat", txt: t, nome: R.nome, slot: R.slot || 0 }); CHAT.meu = { txt: t, t: performance.now() }; logChat(t, true); tocarTom(820, .06, { vol: .04 }); }
+function receberChat(t, nome, slot) { t = limparTexto(t); if (!t || !R || !R.online) return; CHAT.de[slot | 0] = { txt: t, t: performance.now() }; logChat(t, false, limparNome(nome) || "Amigo(a)", slot); tocarTom(660, .08, { tipo: "triangle", vol: .06 }); tocarTom(990, .08, { tipo: "triangle", vol: .05, quando: .09 }); if (el.rcChatBar.hidden) el.rcChatN.hidden = false; }
+function logChat(t, eu, nome, slot) {
+  const d = document.createElement("div"); d.className = eu ? "eu" : ""; const b = document.createElement("b"); b.textContent = eu ? "Você:" : nome + ":"; if (!eu && CORES_J[slot]) b.style.color = CORES_J[slot]; d.append(b, document.createTextNode(t));
   el.rcChatLog.appendChild(d); while (el.rcChatLog.children.length > 4) el.rcChatLog.firstChild.remove();
   setTimeout(() => { d.style.opacity = "0"; setTimeout(() => d.remove(), 700); }, 12000);
 }
@@ -3653,8 +3687,8 @@ function mostrarTitulo(on) {
 const ICS_MENU = { jogar: '<svg viewBox="0 0 16 16"><path d="M4 2h2v2h2v2h2v2h-2v2h-2v2h-2z"/></svg>', online: '<svg viewBox="0 0 16 16"><path d="M3 3h4v4h-4zM9 3h4v4h-4zM2 9h6v4h-6zM8 9h6v4h-6z"/></svg>', hist: '<svg viewBox="0 0 16 16"><path d="M2 3h5v10h-5zM9 3h5v10h-5zM3 5h3v1h-3zM10 5h3v1h-3zM3 7h3v1h-3zM10 7h3v1h-3z"/></svg>', opc: '<svg viewBox="0 0 16 16"><path d="M7 1h2v3h-2zM7 12h2v3h-2zM1 7h3v2h-3zM12 7h3v2h-3zM5 5h6v6h-6zM7 7h2v2h-2z" fill-rule="evenodd"/></svg>', sair: '<svg viewBox="0 0 16 16"><path d="M3 2h7v3h-2v-1h-3v8h3v-1h2v3h-7zM10 6h1v-2h2v2h1v4h-1v2h-2v-2h-1z"/></svg>', voltar: '<svg viewBox="0 0 16 16"><path d="M2 8l4-4v3h8v2h-8v3z"/></svg>', criar: '<svg viewBox="0 0 16 16"><path d="M7 2h2v5h5v2h-5v5h-2v-5h-5v-2h5z"/></svg>', entrar: '<svg viewBox="0 0 16 16"><path d="M2 7h7v-3l5 4-5 4v-3h-7z"/></svg>' };
 function telaTituloMenu(sub) {
   const m = el.rcTitMenu, b = (id, ic, txt, sm, cls = "") => `<button type="button" class="rc-tbt ${cls}" id="${id}"><i>${ICS_MENU[ic]}</i><span>${txt}${sm ? `<small>${sm}</small>` : ""}</span></button>`;
-  if (sub === "online") m.innerHTML = `<h3>Jogar com amigo</h3>${b("rcCriar", "criar", "Criar sala", "Gera um código")}${b("rcEntrarSala", "entrar", "Entrar numa sala", "Digite o código")}${b("rcTVolta", "voltar", "Voltar")}`;
-  else m.innerHTML = `${b("rcSolo", "jogar", "Jogar", "Você e a Sombrinha", "dest")}${b("rcTOn", "online", "Jogar com amigo", "Pela internet")}${b("rcHistBt", "hist", "A história", "Como tudo começou")}${window.ROCA_SOLO ? b("rcOpcoes", "opc", "Opções") : ""}${window.ROCA_SOLO ? (window.PC || (window.Android && Android.sair) ? b("rcTSair", "sair", "Sair do jogo") : "") : b("rcTSair", "voltar", "Voltar ao menu")}`;
+  if (sub === "online") m.innerHTML = `<h3>Jogar online (até 4)</h3>${b("rcCriar", "criar", "Criar sala", "Gera um código")}${b("rcEntrarSala", "entrar", "Entrar numa sala", "Digite o código")}${b("rcTVolta", "voltar", "Voltar")}`;
+  else m.innerHTML = `${b("rcSolo", "jogar", "Jogar", "Você e a Sombrinha", "dest")}${b("rcTOn", "online", "Jogar online", "Até 4 pessoas")}${b("rcHistBt", "hist", "A história", "Como tudo começou")}${window.ROCA_SOLO ? b("rcOpcoes", "opc", "Opções") : ""}${window.ROCA_SOLO ? (window.PC || (window.Android && Android.sair) ? b("rcTSair", "sair", "Sair do jogo") : "") : b("rcTSair", "voltar", "Voltar ao menu")}`;
   const on = (id, fn) => { const e = document.getElementById(id); if (e) e.addEventListener("click", () => { initAudio(); tocarTom(660, .06, { tipo: "square", vol: .04 }); fn(); }); };
   on("rcSolo", () => iniciarJogo("solo")); on("rcTOn", () => telaTituloMenu("online")); on("rcTVolta", () => telaTituloMenu());
   on("rcCriar", criarSala); on("rcEntrarSala", entrarSala); on("rcHistBt", () => { mostrarTitulo(false); historia(menuInicial); }); on("rcOpcoes", opcoes);
@@ -3736,42 +3770,78 @@ function lerControle() {
   if (!el.rcTitulo.hidden) { if (novo(12) || novo(14) || (eixoNovo && eixoV < 0)) moverFoco(-1); if (novo(13) || novo(15) || (eixoNovo && eixoV > 0)) moverFoco(1); if (novo(0)) { const a = document.activeElement; if (a && el.rcTitMenu.contains(a)) a.click(); else moverFoco(0); } if (novo(1)) { const v = document.getElementById("rcTVolta"); if (v) v.click(); } return; }
   if (!R || R.menu) return;
   let dx = Math.abs(ax) > .22 ? ax : 0, dy = Math.abs(ay) > .22 ? ay : 0; if (b(14)) dx = -1; if (b(15)) dx = 1; if (b(12)) dy = -1; if (b(13)) dy = 1; CONTROLE.dx = dx; CONTROLE.dy = dy;
-  if (novo(0)) acao(); if (novo(1)) alternarLanterna(); if (novo(2) || novo(10)) correr(); if (novo(3)) el.rcSem.dispatchEvent(new Event("pointerdown")); if (novo(9)) pausar(); if (novo(8)) abrirMochila(); if (novo(5) && R.online && R.outro) abrirChat(true);
+  if (novo(0)) acao(); if (novo(1)) alternarLanterna(); if (novo(2) || novo(10)) correr(); if (novo(3)) el.rcSem.dispatchEvent(new Event("pointerdown")); if (novo(9)) pausar(); if (novo(8)) abrirMochila(); if (novo(5) && R.online && outros().length) abrirChat(true);
   if (CONTROLE.usado && g.vibrationActuator && R.tremor > .5 && !CONTROLE.vib) { CONTROLE.vib = true; try { g.vibrationActuator.playEffect("dual-rumble", { duration: 300, strongMagnitude: .8, weakMagnitude: .5 }); } catch (e) {} setTimeout(() => CONTROLE.vib = false, 600); }
 }
 function telaSala(html) { painelAberto = true; el.rcPainel.hidden = false; el.rcPainel.innerHTML = `<div class="rc-caixa">${html}<div class="rc-linha"><button type="button" class="rc-op" id="rcCancelar">Cancelar</button></div></div>`; document.getElementById("rcCancelar").addEventListener("click", () => { netFechar(); menuInicial(); }); }
+function linhasLobby(lista) {
+  const l = [...lista]; const vagas = MAXJ - l.length;
+  return l.map(j => `<div class="rc-lob-j${j.id === Net.meuId || (j.host && Net.papel === "host") ? " eu" : ""}"><i style="background:${CORES_J[j.slot] || "#888"}"></i><span>${escH(j.nome)}${j.host ? " <small>(anfitrião)</small>" : ""}</span><b class="${j.pronto ? "ok" : ""}">${j.host ? "dono da sala" : j.pronto ? "✓ Pronto" : "esperando..."}</b></div>`).join("")
+    + Array.from({ length: Math.max(0, vagas) }, () => `<div class="rc-lob-j vaga"><i></i><span>vaga livre</span><b></b></div>`).join("");
+}
+function campoNome(aoMudar) {
+  const inp = document.getElementById("rcNome"); if (!inp) return;
+  inp.addEventListener("keydown", e => e.stopPropagation());
+  inp.addEventListener("change", () => { const n = limparNome(inp.value); inp.value = n; ls("roca_nome", n); aoMudar && aoMudar(n); });
+}
 function criarSala() {
   telaSala(`<h2>Criando sala...</h2><p id="rcSt">Conectando ao servidor do online.</p>`);
   const st = t => { const e = document.getElementById("rcSt"); if (e) e.textContent = t; };
-  netCriar(cod => telaSala(`<h2>Sala criada</h2><p>Mande este código para o seu amigo. Ele abre a Roça Assombrada, toca em <b>Entrar numa sala</b> e digita:</p>
-      <div class="rc-codigo" id="rcCodigo">${cod}</div><p id="rcSt" style="font-size:13px">Esperando o amigo entrar... (os dois precisam de internet)</p>
-      <div class="rc-linha"><button type="button" class="rc-op dest" id="rcComecar">Começar a jogar agora</button></div>
-      <p style="font-size:12px;opacity:.8">Pode começar sozinha: o amigo entra depois, no meio do jogo. O código fica no canto da tela.</p>`) || ligarComecar(),
-    amigoEntrou, err => st(err));
+  netCriar(cod => {
+    telaSala(`<h2>Sala ${cod}</h2><p>Mande o código para até 3 amigos. Eles tocam em <b>Entrar numa sala</b> e digitam:</p>
+      <div class="rc-codigo peq" id="rcCodigo">${cod}</div>
+      <label class="rc-lob-nome">Seu nome <input class="rc-input" id="rcNome" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Jogador 1" value="${escH(meuNome())}"></label>
+      <div class="rc-lobby" id="rcLobby"></div>
+      <div class="rc-linha"><button type="button" class="rc-op dest" id="rcComecar">Iniciar a partida</button></div>
+      <p id="rcSt" style="font-size:12px;opacity:.85"></p>`);
+    campoNome(() => avisarLobby());
+    document.getElementById("rcComecar").addEventListener("click", () => { if (prontosTodos()) iniciarJogo("host"); });
+    avisarLobby();
+  }, () => atualizarLobbyHost(), err => st(err));
 }
-function ligarComecar() { const b = document.getElementById("rcComecar"); if (b) b.addEventListener("click", () => iniciarJogo("host")); }
-function amigoEntrou() {
-  if (R && window.rocaAtiva && R.online === "host" && el.rcTitulo.hidden) {
-    R.outro = novoOutro(); enviar({ t: "inicio", volta: false }); hud();
-    S.colher && S.colher(); efeito("Seu amigo entrou na sala!", "#9bd86b"); return;
+const prontosTodos = () => [...Net.jog.values()].every(j => j.pronto);
+function atualizarLobbyHost() {
+  const box = document.getElementById("rcLobby"); if (!box || Net.papel !== "host") return;
+  box.innerHTML = linhasLobby(Net.lobby.length ? Net.lobby : listaLobby());
+  const n = Net.jog.size, pr = [...Net.jog.values()].filter(j => j.pronto).length, ok = prontosTodos(), b = document.getElementById("rcComecar"), st = document.getElementById("rcSt");
+  if (b) { b.disabled = !ok; b.textContent = n ? (ok ? `Iniciar a partida (${n + 1} jogadores)` : `Esperando todos (${pr}/${n} prontos)`) : "Iniciar sozinha"; }
+  if (st) st.textContent = n ? (ok ? "Todo mundo pronto! Pode iniciar." : "Quando todos tocarem em Pronto, o botão libera.") : "Esperando amigos entrarem... Pode iniciar sozinha: quem entrar depois cai direto no jogo.";
+}
+function telaLobbyConvidado() {
+  if (!document.getElementById("rcLobby") || !document.getElementById("rcPronto")) {
+    telaSala(`<h2>Sala ${escH(Net.codigo)}</h2><p>Você entrou! Toque em <b>Estou pronto</b>. Quando todos estiverem prontos, o anfitrião começa a partida.</p>
+      <label class="rc-lob-nome">Seu nome <input class="rc-input" id="rcNome" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Seu nome" value="${escH(meuNome())}"></label>
+      <div class="rc-lobby" id="rcLobby"></div>
+      <div class="rc-linha"><button type="button" class="rc-op dest" id="rcPronto">Estou pronto</button></div><p id="rcSt" style="font-size:12px;opacity:.85"></p>`);
+    campoNome(n => enviar({ t: "nome", nome: n }));
+    document.getElementById("rcPronto").addEventListener("click", () => { Net.pronto = !Net.pronto; enviar({ t: "pronto", v: Net.pronto }); atualizarLobbyConvidado(); });
+    aoErroLobby = t => { const e = document.getElementById("rcSt"); if (e) e.textContent = t; };
   }
-  iniciarJogo("host");
+  atualizarLobbyConvidado();
+}
+function atualizarLobbyConvidado() {
+  const box = document.getElementById("rcLobby"); if (box) box.innerHTML = linhasLobby(Net.lobby);
+  const eu = Net.lobby.find(x => x.id === Net.meuId); if (eu) Net.pronto = !!eu.pronto;
+  const b = document.getElementById("rcPronto"); if (b) { b.textContent = Net.pronto ? "✓ Pronto! (tocar para cancelar)" : "Estou pronto"; b.classList.toggle("ok", Net.pronto); }
+  const st = document.getElementById("rcSt"), faltam = Net.lobby.filter(x => !x.pronto).length;
+  if (st) st.textContent = faltam ? `Esperando ${faltam} jogador(es) ficar(em) pronto(s)...` : "Todos prontos! Esperando o anfitrião iniciar.";
 }
 function entrarSala() {
-  telaSala(`<h2>Entrar numa sala</h2><p>Digite o código de 5 letras que seu amigo recebeu ao criar a sala.</p>
+  telaSala(`<h2>Entrar numa sala</h2><p>Digite o código de 5 letras que o anfitrião recebeu ao criar a sala.</p>
     <input class="rc-input" id="rcCod" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC12">
     <div class="rc-linha"><button type="button" class="rc-op dest" id="rcIr">Entrar</button></div><p id="rcSt" style="font-size:13px"></p>`);
   const inp = document.getElementById("rcCod"), st = t => { const e = document.getElementById("rcSt"); if (e) e.textContent = t; };
   inp.addEventListener("input", () => { inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); });
   setTimeout(() => { try { inp.focus(); } catch (e) {} }, 100);
   aoErroLobby = st;
-  const ir = () => { st("Procurando a sala..."); netEntrar(inp.value, () => st("Conectado! Esperando o anfitrião começar..."), st); };
+  const ir = () => { st("Procurando a sala..."); netEntrar(inp.value, () => st("Conectado! Entrando no lobby..."), st); };
   document.getElementById("rcIr").addEventListener("click", ir); inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") ir(); });
 }
 function iniciarJogo(modo, semTutorial) {
-  fecharPainel(); mostrarTitulo(false); novoJogo(); R.online = modo === "solo" ? null : modo; R.cor = modo === "guest" ? 1 : 0;
-  if (modo === "guest") { R.eu.x = 14.2; R.eu.y = 12.9; }
-  if (modo === "host") { R.outro = Net.ligado ? novoOutro() : null; if (R.outro) enviar({ t: "inicio", volta: !!semTutorial }); }
+  fecharPainel(); mostrarTitulo(false); novoJogo(); R.online = modo === "solo" ? null : modo;
+  R.slot = modo === "guest" ? (Net.meuSlot || 1) : 0; R.cor = R.slot; R.nome = meuNome() || "Jogador " + (R.slot + 1);
+  if (modo === "guest") { R.eu.x = 14.2 + (R.slot - 1) * .7; R.eu.y = 12.9 + (R.slot === 2 ? .5 : 0); }
+  if (modo === "host") { Net.jog.forEach(j => j.pronto = true); R.outros = [...Net.jog.values()].map(novoOutro); R.outros.forEach(o => enviarPara(o.nid, { t: "inicio", volta: !!semTutorial, slot: o.slot })); avisarLobby(); }
   hud();
   const comeca = () => { if (!R) return; R.menu = false; if (semTutorial) R.tutorial = 1; else tutorial(); };
   if (!ls("roca_hist")) { R.menu = modo === "solo"; historia(comeca); } else comeca();
