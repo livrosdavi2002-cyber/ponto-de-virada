@@ -623,6 +623,7 @@ const BICHOS = [
   ["saci", "Saci", "Redemoinho assobiando de dia. Seca a plantação e rouba moedas. Com a peneira da bancada, entre no redemoinho e pegue ele: ele paga para ser solto.", "Deixe um fuminho na janela e ele fica mais manso."],
   ["pisadeira", "Pisadeira", "Dentro de casa, as lamparinas apagam com o tempo. Quando a última apagar, ela sai de baixo da cama. Mantenha as lamparinas acesas (use óleo na mesa) ou saia de casa.", "Ela gosta de quem dorme de barriga cheia."],
   ["alma", "A alma da vela", "Toda noite aparece uma vela acesa em algum lugar do sítio. Siga o som do sininho, pegue a vela e deixe na cruz do cemitério antes de amanhecer. Se esquecer, ela vem buscar todo mundo.", "É a bisa. Ela só quer companhia."],
+  ["cuca", "A Cuca", "Algumas noites ela sai do mato cantando cantiga de ninar, com um saco nas costas. É lenta e quase cega: se perde no escuro. Mas ouve tudo. Lanterna acesa ou correr perto dela faz ela disparar atrás de você. Ouviu a cantiga? Apague a luz e ande devagar.", "Cabeça de jacaré, cabelo de palha. A vó cantava a música dela pra eu dormir. Agora eu sei por quê."],
   ["tinhoso", "O Tinhoso", "Mora no esgoto da vila, embaixo da rua de baixo. Bate casco na pedra. É mais rápido que você, até correndo: se ele te ver, corra até um barril, um cano ou um buraco na parede e se esconda até ele ir embora. O mapa do Seu Valdemar ajuda a não se perder.", "Chifre de bode, cara de caveira e olho de brasa. O Valdemar diz que ele vigia alguém lá embaixo."],
   ["curupira", "Curupira", "Mora na mata, depois da cerca da esquerda. De dia só assobia e deixa pegada ao contrário. DE NOITE ele caça na trilha, mais rápido que você andando: corra para a casinha do lago (ele não entra) ou volte para o sítio.", "O Sebastião dizia que ele é o dono da mata. E que dono cobra."],
   ["poco", "O rosto do poço", "De noite, às vezes tem alguém olhando lá do fundo do poço. Ele não sobe. Só assusta.", "Não responda quando ele chamar seu nome."]];
@@ -878,14 +879,17 @@ function atualizar(dt) {
   R.frutas.forEach(f => { if (f.n >= 3) return; f.t += dt; if (f.t > 45) { f.t = 0; f.n++; } });
   R.galinhas.forEach(g => { g.t -= dt; if (!g.alvo || g.t <= 0) { g.alvo = { x: rnd(26, 31.6), y: rnd(9.9, 10.9) }; g.t = rnd(1.5, 4); } const d = dist(g, g.alvo); if (d > .1) { g.x += (g.alvo.x - g.x) / d * .9 * dt; g.y += (g.alvo.y - g.y) / d * .9 * dt; g.dir = g.alvo.x > g.x ? 1 : -1; g.anda = 1; } else g.anda = 0; if (Math.random() < dt * .04) { const [v, pn] = somEm(g.x, g.y); tocarTom(rnd(700, 900), .09, { tipo: "square", vol: .012 * v, ate: 1200, lp: 1800, pan: pn }); } });
   atualizarPesca(dt);
+  const naFaz = jogadores().some(P => (P.lugar || "sitio") === "sitio"); // ninguém no sítio = os bichos de lá esperam
   // o vulto parado na beira da mata à noite (só olha; some quando você chega perto ou ilumina)
-  if (ehNoite() && !R.dentro) { R.vultoT -= dt; if (!R.vulto && R.vultoT <= 0) { const lado = Math.floor(rnd(0, 3)); R.vulto = lado === 0 ? { x: CERCA.x0 - .7, y: rnd(10, 28) } : lado === 1 ? { x: CERCA.x1 + .7, y: rnd(10, 28) } : { x: rnd(10, 40), y: CERCA.y0 - .7 }; R.vulto.t = 0; } if (R.vulto) { R.vulto.t += dt; const d = dist(R.vulto, R.eu); if (d < (R.lanterna ? 7 : 4) || R.vulto.t > 14) { R.vulto = null; R.vultoT = rnd(25, 45); } } } else R.vulto = null;
+  if (naFaz && ehNoite() && !R.dentro) { R.vultoT -= dt; if (!R.vulto && R.vultoT <= 0) { const lado = Math.floor(rnd(0, 3)); R.vulto = lado === 0 ? { x: CERCA.x0 - .7, y: rnd(10, 28) } : lado === 1 ? { x: CERCA.x1 + .7, y: rnd(10, 28) } : { x: rnd(10, 40), y: CERCA.y0 - .7 }; R.vulto.t = 0; } if (R.vulto) { R.vulto.t += dt; const d = dist(R.vulto, R.eu); if (d < (R.lanterna ? 7 : 4) || R.vulto.t > 14) { R.vulto = null; R.vultoT = rnd(25, 45); } } } else R.vulto = null;
   atualizarGato(dt);
-  comAlvo(alvoPara(R.seco.x, R.seco.y), () => atualizarSeco(dt));
-  if (R.cachorro) comAlvo(alvoPara(R.cachorro.x, R.cachorro.y), () => atualizarCachorro(dt));
-  atualizarAlma(dt);
-  comJogador(jogadores().find(P => P.dentro && !P.caido) || R, () => atualizarCasa(dt));
-  atualizarAranha(dt); atualizarMula(dt); atualizarSaci(dt); atualizarEspantalho(dt); atualizarBichos(dt);
+  if (naFaz) {
+    comAlvo(alvoPara(R.seco.x, R.seco.y), () => atualizarSeco(dt));
+    if (R.cachorro) comAlvo(alvoPara(R.cachorro.x, R.cachorro.y), () => atualizarCachorro(dt));
+    atualizarAlma(dt);
+    comJogador(jogadores().find(P => P.dentro && !P.caido) || R, () => atualizarCasa(dt));
+    atualizarAranha(dt); atualizarMula(dt); atualizarSaci(dt); atualizarEspantalho(dt); atualizarBichos(dt); atualizarCuca(dt);
+  }
   R.perto = calcPerto();
   musicaPasso(dt);
   if (Math.floor(R.t * 2) !== Math.floor((R.t - dt) * 2)) hud();
@@ -896,9 +900,10 @@ function comecaNoite() { R.velaHoje = true; R.velaEntregue = false; R.velaT = rn
   R.aranha.hoje = R.dia >= 2 && Math.random() < .65; R.aranha.prox = rnd(4, 70);
   R.mula.hoje = R.dia >= 2 && Math.random() < (R.dia >= 3 ? .6 : .3); R.mula.prox = rnd(6, 60); R.mula.vezes = 0; R.mula.max = 1 + Math.floor(Math.random() * 3);
   R.esp.dorme = !(R.dia >= 2 && Math.random() < .6); R.esp.limiar = rnd(.1, .65);
+  R.cuca = R.cuca || { fase: "longe" }; R.cuca.hoje = R.dia >= 2 && Math.random() < .4; R.cuca.prox = rnd(20, 100);
   R.velaT = rnd(3, 40); efeito("Anoiteceu", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
 function amanhece() {
-  if (R.velaHoje && !R.velaEntregue) { R.alma = { t: 0 }; return; } // a alma vem cobrar
+  if (R.velaHoje && !R.velaEntregue && jogadores().some(P => (P.lugar || "sitio") === "sitio")) { R.alma = { t: 0 }; return; } // a alma vem cobrar (só se tem alguém no sítio)
   R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; if (R.outro) R.outro.velaCom = false; R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false;
   jogadores().forEach(P => { P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : .5); P.eu.y = CASA.porta.y + .7; if (P !== R) enviar({ t: "pos", x: P.eu.x, y: P.eu.y }); } });
   if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a");
@@ -1284,14 +1289,7 @@ function _desenharCachorro(k, tm) {
   const cresce = vira ? cl(k.t / 1.3, 0, 1) : lobo ? 1 : 0;
   sombra(x, y, (11 + cresce * 8) * sc, 4 * sc, .42); c.save(); c.translate(x + (vira ? Math.sin(tm * 60) * 2 : 0), y); c.scale((k.dir || 1) * sc, sc); c.lineCap = "round"; c.lineJoin = "round";
   const f = tm * (lobo ? 14 : 8), sw = Math.sin(f) * (k.anda ? 4 : 0);
-  if (!lobo && cresce < .5) { // cachorro preto: magro demais, pernas compridas demais, sorriso
-    c.fillStyle = "#0e0e10"; c.strokeStyle = "#0e0e10"; c.lineWidth = 2.6; [[-9, sw], [-5, -sw], [6, -sw], [10, sw]].forEach(([lx, s2]) => { c.beginPath(); c.moveTo(lx, -10); c.lineTo(lx + s2 * .5, -5); c.lineTo(lx + s2, 0); c.stroke(); });
-    c.beginPath(); c.ellipse(0, -13, 12, 5.5, 0, 0, 7); c.fill(); c.strokeStyle = "rgba(60,60,70,.6)"; c.lineWidth = .8; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(-3 + i * 3, -17); c.lineTo(-4 + i * 3, -10); c.stroke(); }
-    c.fillStyle = "#0e0e10"; c.beginPath(); c.ellipse(12, -19, 6, 5, .2, 0, 7); c.fill(); c.beginPath(); c.moveTo(14, -18); c.lineTo(22, -16); c.lineTo(15, -13); c.fill();
-    c.beginPath(); c.moveTo(9, -23); c.lineTo(10, -29); c.lineTo(13, -23); c.fill(); c.strokeStyle = "#0e0e10"; c.lineWidth = 3; c.beginPath(); c.moveTo(-11, -14); c.quadraticCurveTo(-17, -17, -18, -11); c.stroke();
-    c.strokeStyle = "#e8e0d0"; c.lineWidth = .9; c.beginPath(); c.moveTo(15, -15.4); c.quadraticCurveTo(18, -14, 21, -15.5); c.stroke(); // sorriso
-    c.fillStyle = `rgba(230,40,30,${vira ? 1 : .85})`; c.fillRect(14, -21, 1.9, 1.9); c.fillStyle = "rgba(230,40,30,.25)"; c.beginPath(); c.arc(15, -20, 5, 0, 7); c.fill();
-    if (vira) { c.fillStyle = "rgba(230,40,30,.18)"; c.beginPath(); c.arc(0, -16, 22 + Math.sin(tm * 30) * 4, 0, 7); c.fill(); }
+  if (!lobo && cresce < .5) { cachorroMagro(sw, vira, tm);
   } else { // lobisomem: corcunda, peludo, braços até o chão, focinho aberto
     c.save(); const e = (.7 + .3 * cresce) * 1.25; c.scale(e, e);
     const pelo = "#17120e", pelo2 = "#2a2018", m = (pts, w, cor = pelo) => { c.strokeStyle = cor; c.lineWidth = w; c.beginPath(); pts.forEach(([px, py], i) => i ? c.lineTo(px, py) : c.moveTo(px, py)); c.stroke(); };
@@ -1317,7 +1315,7 @@ function _desenharCachorro(k, tm) {
   }
   c.restore();
 }
-function _desenharVulto(v, tm) { const x = PX(v.x), y = PY(v.y); if (!naTela(x, y)) return; const a = Math.min(1, v.t / 2) * .95; c.save(); c.globalAlpha = a; c.fillStyle = "#020203"; c.beginPath(); c.ellipse(x, y - TS * 1.1, TS * .22, TS * .9, 0, 0, 7); c.fill(); c.beginPath(); c.arc(x, y - TS * 2.1, TS * .16, 0, 7); c.fill(); c.strokeStyle = "#020203"; c.lineWidth = 3; c.beginPath(); c.moveTo(x - TS * .2, y - TS * 1.6); c.lineTo(x - TS * .3, y - TS * .5); c.moveTo(x + TS * .2, y - TS * 1.6); c.lineTo(x + TS * .3, y - TS * .5); c.stroke(); c.fillStyle = "rgba(240,240,235,.95)"; c.fillRect(x - 4, y - TS * 2.14, 2.6, 2.6); c.fillRect(x + 1.6, y - TS * 2.14, 2.6, 2.6); c.restore(); }
+function _desenharVulto(v, tm) { _desenharVultoNovo(v, tm); }
 function desenharVela(x, y, tm) { c.fillStyle = "#e8e2d0"; c.fillRect(x - 3, y - 14, 6, 14); c.fillStyle = "rgba(200,190,170,.8)"; c.fillRect(x - 3, y - 14, 2, 8); c.fillStyle = `rgba(255,${200 + Math.sin(tm * 20) * 30},90,.95)`; c.beginPath(); c.ellipse(x + Math.sin(tm * 9) * .8, y - 18, 2.6, 4.5, 0, 0, 7); c.fill(); }
 function desenharCruz(tm) {
   const x = PX(CRUZ.x), y = PY(CRUZ.y); if (!naTela(x, y)) return; sombra(x, y, TS * .3, TS * .1);
@@ -1335,6 +1333,154 @@ const desenharEspantalho = (o, tm) => maior(_desenharEspantalho, o, 1.4, tm);
 const desenharAranha = (o, tm) => o.fase === "longe" ? 0 : maior(_desenharAranha, o, 1.3, tm);
 const desenharMula = (o, tm) => o.fase === "corre" ? maior(_desenharMula, o, 1.35, tm) : _desenharMula(o, tm);
 const desenharVulto = (o, tm) => maior(_desenharVulto, o, 1.3, tm);
+/* ---------- desenhos novos dos bichos: menos bola, mais osso, casca, rasgo e garra ---------- */
+const poli = (pts, cor) => { c.fillStyle = cor; c.beginPath(); pts.forEach(([px, py], i) => i ? c.lineTo(px, py) : c.moveTo(px, py)); c.closePath(); c.fill(); };
+const traco = (pts, cor, w) => { c.strokeStyle = cor; c.lineWidth = w; c.beginPath(); pts.forEach(([px, py], i) => i ? c.lineTo(px, py) : c.moveTo(px, py)); c.stroke(); };
+function chamas(x0, y0, larg, alt, tm, n = 9, cores = ["#7a0e06", "#d8320e", "#ff7a1e", "#ffd25a"]) { // fogo em pontas, nada de bolinhas
+  cores.forEach((cor, camada) => { const k = 1 - camada * .2; c.fillStyle = cor; c.beginPath(); c.moveTo(x0 - larg / 2 * k, y0);
+    for (let i = 0; i <= n; i++) { const t = i / n, px = x0 - larg / 2 * k + larg * k * t, osc = Math.sin(tm * 17 + i * 2.1 + camada) * .2 + Math.sin(tm * 9 + i) * .15, h = alt * k * (.55 + .45 * Math.sin(t * PI)) * (1 + osc); c.lineTo(px - larg * k / n * .25, y0 - h * (i % 2 ? .45 : 1)); }
+    c.lineTo(x0 + larg / 2 * k, y0); c.closePath(); c.fill(); });
+  for (let i = 0; i < 4; i++) { const f = (tm * .9 + i * .27) % 1; c.fillStyle = `rgba(255,${150 + i * 20},60,${1 - f})`; c.fillRect(x0 + Math.sin(tm * 3 + i * 2) * larg * .4, y0 - alt * (1 + f * 1.2), 1.6, 1.6); } // brasas subindo
+}
+function desenharCurupira(cu, tm) {
+  const x = PX(cu.x), y = PY(cu.y); if (!naTela(x, y, 220)) return; const s = TS / 48 * 1.55, f = cu.fase2 || 0, sw = Math.sin(f), d = cu.dir || 1, corre = cu.fase === "vem";
+  c.save(); c.translate(x, y); c.globalCompositeOperation = "lighter"; const lz = c.createRadialGradient(0, -62 * s, 4, 0, -62 * s, 70 * s); lz.addColorStop(0, "rgba(255,110,30,.28)"); lz.addColorStop(1, "rgba(255,110,30,0)"); c.fillStyle = lz; c.fillRect(-80 * s, -140 * s, 160 * s, 160 * s); c.globalCompositeOperation = "source-over"; c.restore();
+  sombra(x, y, 22 * s, 5 * s, .55); c.save(); c.translate(x, y); c.scale(d * s, s); c.lineCap = "round"; c.lineJoin = "round";
+  const casca = "#3a2e1a", casca2 = "#2a2012", musgo = "#3e5a22";
+  // pernas finas com joelho saltado e pés virados pra trás (calcanhar na frente, dedos atrás)
+  [[-1, sw], [1, -sw]].forEach(([l, a]) => { const hx = l * 3, kx = hx + 5 + a * 6, ky = -16 - Math.max(0, a) * 3, fx = hx + a * 9;
+    traco([[hx, -34], [kx, ky], [fx, -2]], l < 0 ? casca2 : casca, 4.2); c.fillStyle = casca2; c.beginPath(); c.arc(kx, ky, 2.6, 0, 7); c.fill();
+    poli([[fx + 3, -3], [fx - 9, -2], [fx - 11, 0], [fx + 4, 0]], "#1e160c"); for (let k = 0; k < 3; k++) traco([[fx - 9, -1], [fx - 13 - k, -1 + k * .8]], "#1e160c", 1.2); });
+  // tronco de casca de árvore, magro, costelas e cipó
+  poli([[-8, -34], [-11, -46], [-9, -60], [-5, -66], [6, -66], [10, -58], [9, -46], [7, -34], [0, -31]], casca);
+  c.strokeStyle = casca2; c.lineWidth = .9; for (let i = 0; i < 7; i++) { c.beginPath(); c.moveTo(-8 + i * 2.6, -64); c.lineTo(-9 + i * 2.6 + (i % 2), -36); c.stroke(); } // veios da casca
+  traco([[-9, -44], [-2, -41], [8, -44]], casca2, 1.2); traco([[-9, -49], [-1, -46], [9, -49]], casca2, 1.2); traco([[-8, -54], [0, -51], [9, -54]], casca2, 1.2); // costelas
+  poli([[-9, -58], [-4, -55], [-6, -50], [-11, -52]], musgo); poli([[4, -40], [9, -42], [8, -36], [3, -36]], musgo); // musgo
+  c.strokeStyle = "#4a6a2a"; c.lineWidth = 1.4; c.beginPath(); c.moveTo(-9, -36); c.bezierCurveTo(3, -42, -6, -52, 9, -60); c.stroke(); for (let i = 0; i < 4; i++) poli([[-5 + i * 4, -42 - i * 5], [-2 + i * 4, -45 - i * 5], [-1 + i * 4, -41 - i * 5]], "#5a8a2a"); // cipó com folhinhas
+  // braços compridos esticados pra frente com dedos de galho
+  const alc = corre ? 1 : .5; [[-1, -sw * .4, casca2], [1, sw * .4, casca]].forEach(([l, a, cor]) => { const ox = l * 6, oy = -62, ex = ox + 16 + alc * 10 + a * 4, ey = -50 + a * 6, mx = ex + 13 + alc * 6, my = -44 + a * 8;
+    traco([[ox, oy], [ex, ey], [mx, my]], cor, 3.2); c.fillStyle = cor; c.beginPath(); c.arc(ex, ey, 2, 0, 7); c.fill();
+    for (let k = -2; k <= 2; k++) { traco([[mx, my], [mx + 6, my + k * 2.6], [mx + 10, my + k * 3.6 + (k % 2) * 2]], "#1e160c", 1.1); traco([[mx + 6, my + k * 2.6], [mx + 8, my + k * 2.6 - 2]], "#1e160c", .8); } });
+  // cabeça: crânio comprido, órbitas fundas com brasa, presas pra cima
+  c.save(); c.translate(4, -72); c.rotate(corre ? .2 : .05);
+  poli([[-8, 4], [-9, -6], [-5, -12], [5, -12], [10, -6], [12, 2], [10, 8], [3, 11], [-4, 9]], "#4a3a22");
+  c.strokeStyle = "rgba(20,14,6,.7)"; c.lineWidth = .8; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(-6 + i * 4, -11); c.lineTo(-7 + i * 4, -4); c.stroke(); }
+  poli([[1, -5], [5, -6], [5, -1], [1, -1]], "#050200"); poli([[7, -5], [10, -5], [10, -1], [7, -1]], "#050200");
+  const br = .7 + .3 * Math.sin(tm * 11); c.fillStyle = `rgba(255,${corre ? 60 : 150},20,${br})`; c.fillRect(2.4, -4, 2, 2); c.fillRect(8, -4, 1.8, 1.8);
+  poli([[8, 1], [13, 2], [12, 4]], "#2a1c0e"); // narina de bicho
+  poli([[0, 5], [12, 4], [11, 9], [1, 10]], "#140804"); c.fillStyle = "#e8dcc0"; for (let i = 0; i < 6; i++) poli([[1.5 + i * 1.8, 5], [2.4 + i * 1.8, 7.5], [3.3 + i * 1.8, 5]], "#e8dcc0");
+  poli([[2, 10], [0, 1], [3.5, 9]], "#efe2c0"); poli([[10, 9], [12, 0], [11.8, 9]], "#efe2c0"); // presas
+  // cabelo de fogo em pontas
+  c.save(); c.rotate(-.15); chamas(1, -10, 26, 22 + (corre ? 8 : 0), tm, 11); c.restore();
+  c.restore();
+  c.restore();
+}
+function espantalhoCorpo(e, tm, vivo) { // usa TS como unidade, igual ao desenho antigo
+  const T = TS; c.lineJoin = "round";
+  // casaco esfarrapado com barra rasgada e remendos
+  poli([[-T * .22, -T * .98], [T * .22, -T * .98], [T * .26, -T * .55], [T * .2, -T * .5], [T * .16, -T * .42], [T * .1, -T * .5], [T * .03, -T * .4], [-T * .04, -T * .5], [-T * .1, -T * .42], [-T * .16, -T * .5], [-T * .24, -T * .46]], "#3a4a5a");
+  poli([[-T * .08, -T * .9], [T * .02, -T * .9], [T * .02, -T * .78], [-T * .08, -T * .78]], "#7a3a2a"); poli([[T * .08, -T * .7], [T * .17, -T * .72], [T * .18, -T * .62], [T * .09, -T * .6]], "#8a7a4a");
+  c.strokeStyle = "rgba(230,220,190,.6)"; c.lineWidth = 1; c.setLineDash([2, 2]); c.strokeRect(-T * .08, -T * .9, T * .1, T * .12); c.setLineDash([]);
+  c.strokeStyle = "#c8a050"; c.lineWidth = 1.2; for (let i = 0; i < 9; i++) { const bx = -T * .22 + i * T * .055; c.beginPath(); c.moveTo(bx, -T * .47 - (i % 2) * 4); c.lineTo(bx + (i % 3 - 1) * 2, -T * .36 + (vivo ? Math.sin(tm * 14 + i) * 2 : 0)); c.stroke(); } // palha saindo da barra
+  // braços de pau com palha, e uma foice enferrujada
+  c.fillStyle = "#4a3018"; c.fillRect(-T * .46, -T * .96, T * .92, 4);
+  for (const l of [-1, 1]) { c.strokeStyle = "#c8a050"; c.lineWidth = 1.3; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(l * T * .44, -T * .95); c.lineTo(l * T * (.52 + (i % 3) * .03), -T * .98 + i * 3 + (vivo ? Math.sin(tm * 12 + i) * 2 : 0)); c.stroke(); } }
+  if (vivo) { c.save(); c.translate(T * .5, -T * .95); c.rotate(Math.sin(tm * 6) * .3); c.fillStyle = "#4a3018"; c.fillRect(-2, 0, 4, T * .35); c.fillStyle = "#7a6a5a"; c.beginPath(); c.moveTo(0, T * .33); c.quadraticCurveTo(T * .3, T * .35, T * .32, T * .1); c.quadraticCurveTo(T * .22, T * .28, 0, T * .27); c.fill(); c.fillStyle = "rgba(120,40,20,.6)"; c.fillRect(T * .12, T * .27, 4, 3); c.restore(); }
+  // cabeça de saco torta, costurada
+  c.save(); c.translate(0, -T * 1.12); c.rotate(vivo ? Math.sin(tm * 5) * .2 : .18);
+  poli([[-T * .15, T * .1], [-T * .17, -T * .04], [-T * .12, -T * .16], [T * .02, -T * .19], [T * .15, -T * .12], [T * .17, T * .02], [T * .12, T * .12], [0, T * .14]], "#b8a478");
+  c.strokeStyle = "rgba(80,60,30,.5)"; c.lineWidth = .8; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(-T * .15, -T * .12 + i * T * .05); c.lineTo(T * .15, -T * .13 + i * T * .05); c.stroke(); } // trama do saco
+  c.strokeStyle = "#3a2a1a"; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-T * .14, T * .1); c.lineTo(T * .13, T * .11); c.stroke(); for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(-T * .12 + i * T * .05, T * .08); c.lineTo(-T * .11 + i * T * .05, T * .13); c.stroke(); } // amarrado no pescoço
+  const olhos = horaNoite() > .5 && (e.fase === "vivo" || Math.sin(tm * .6) > .8);
+  poli([[-T * .1, -T * .06], [-T * .03, -T * .07], [-T * .06, 0]], olhos ? "#ff5a1e" : "#140c06"); poli([[T * .03, -T * .07], [T * .1, -T * .05], [T * .06, 0]], olhos ? "#ff5a1e" : "#140c06");
+  if (olhos) { c.fillStyle = "rgba(255,90,30,.25)"; c.beginPath(); c.arc(0, -T * .04, T * .14, 0, 7); c.fill(); }
+  c.fillStyle = "#140806"; c.beginPath(); c.moveTo(-T * .1, T * .04); c.quadraticCurveTo(0, T * (vivo ? .12 : .08), T * .11, T * .03); c.quadraticCurveTo(0, T * .07, -T * .1, T * .04); c.fill();
+  c.strokeStyle = "#d8ccb0"; c.lineWidth = .9; for (let i = 0; i < 8; i++) { c.beginPath(); c.moveTo(-T * .09 + i * T * .026, T * .02); c.lineTo(-T * .09 + i * T * .026, T * .09); c.stroke(); } // a boca costurada com linha
+  // chapéu rasgado
+  poli([[-T * .3, -T * .13], [T * .28, -T * .16], [T * .2, -T * .11], [-T * .24, -T * .09]], "#a8843a"); poli([[-T * .13, -T * .14], [-T * .11, -T * .3], [T * .02, -T * .33], [T * .13, -T * .25], [T * .12, -T * .15]], "#b89448");
+  c.fillStyle = "#3a2a14"; c.beginPath(); c.arc(T * .04, -T * .24, T * .03, 0, 7); c.fill(); c.strokeStyle = "rgba(60,40,20,.6)"; c.lineWidth = 1; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(-T * .28 + i * T * .15, -T * .12); c.lineTo(-T * .3 + i * T * .15, -T * .06); c.stroke(); }
+  c.restore();
+  // um corvo no braço
+  if (!vivo) { const cx2 = -T * .38, cy2 = -T * .98; poli([[cx2 - 6, cy2], [cx2 + 4, cy2 - 1], [cx2 + 7, cy2 - 6], [cx2 + 2, cy2 - 9], [cx2 - 4, cy2 - 6]], "#0e0e12"); poli([[cx2 + 6, cy2 - 7], [cx2 + 11, cy2 - 6], [cx2 + 6, cy2 - 5]], "#3a3a3a"); c.fillStyle = horaNoite() > .5 ? "#e2483d" : "#c8c8c8"; c.fillRect(cx2 + 4, cy2 - 8, 1.4, 1.4); poli([[cx2 - 6, cy2 - 1], [cx2 - 12, cy2 + 2], [cx2 - 5, cy2 - 3]], "#0e0e12"); }
+}
+function _desenharVultoNovo(v, tm) { const x = PX(v.x), y = PY(v.y); if (!naTela(x, y)) return; const a = Math.min(1, v.t / 2) * .95, T = TS;
+  c.save(); c.globalAlpha = a; c.translate(x, y);
+  const borda = []; for (let i = 0; i <= 12; i++) borda.push([-T * .32 + i * T * .053, -T * (.02 + (i % 2) * .14 + Math.abs(Math.sin(tm * 2 + i)) * .08)]); // barra rasgada que se mexe
+  poli([[-T * .14, -T * 1.9], [T * .14, -T * 1.9], [T * .22, -T * 1.2], [T * .32, -T * .1], ...borda.reverse(), [-T * .32, -T * .1], [-T * .22, -T * 1.2]], "#030304");
+  for (const l of [-1, 1]) { traco([[l * T * .15, -T * 1.75], [l * T * .3, -T * 1.1], [l * T * .27, -T * .45]], "#030304", 3); for (let k = -1; k <= 1; k++) traco([[l * T * .27, -T * .45], [l * T * (.27 + k * .04), -T * .2]], "#030304", 1.4); } // braços com dedos compridos
+  c.save(); c.translate(0, -T * 2.08); c.rotate(.25 + Math.sin(tm * .7) * .05); poli([[-T * .14, T * .1], [-T * .15, -T * .08], [-T * .05, -T * .18], [T * .08, -T * .16], [T * .15, -T * .05], [T * .12, T * .12]], "#030304");
+  c.fillStyle = "rgba(240,240,235,.95)"; c.fillRect(-T * .07, -T * .04, 2.6, 3.4); c.fillRect(T * .04, -T * .04, 2.6, 3.4); c.fillStyle = "rgba(200,200,200,.5)"; c.fillRect(-T * .04, T * .05, T * .08, 1.4); c.restore();
+  for (let i = 0; i < 5; i++) { const f = (tm * .5 + i * .2) % 1; c.fillStyle = `rgba(10,10,14,${.5 * (1 - f)})`; c.beginPath(); c.moveTo(-T * .1 + i * T * .05, -T * (1 + f)); c.lineTo(-T * .07 + i * T * .05, -T * (1.15 + f)); c.lineTo(-T * .04 + i * T * .05, -T * (1 + f)); c.fill(); } // fiapos de sombra subindo
+  c.restore(); }
+function cachorroMagro(sw, vira, tm) { // o cachorro preto: osso, espinha, pernas compridas demais e um sorriso de gente
+  const preto = "#0c0c0e";
+  [[-10, sw], [-6, -sw], [7, -sw], [11, sw]].forEach(([lx, s2]) => { traco([[lx, -12], [lx - 2 + s2 * .5, -6], [lx + s2, 0]], preto, 2); c.fillStyle = preto; c.beginPath(); c.arc(lx - 2 + s2 * .5, -6, 1.3, 0, 7); c.fill(); });
+  poli([[-14, -13], [-12, -17], [-4, -18], [4, -17], [10, -18], [14, -15], [12, -11], [4, -11], [-2, -9], [-8, -11]], preto);
+  for (let i = 0; i < 7; i++) poli([[-11 + i * 3.4, -17.5], [-9.6 + i * 3.4, -20.5], [-8.2 + i * 3.4, -17.5]], preto); // espinha saltada
+  c.strokeStyle = "rgba(80,80,90,.7)"; c.lineWidth = .7; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(-3 + i * 2.6, -16.5); c.lineTo(-4 + i * 2.6, -11.5); c.stroke(); } // costelas
+  traco([[-13, -15], [-19, -18], [-21, -12]], preto, 1.6); // rabo pelado
+  poli([[11, -16], [13, -23], [17, -24], [26, -19], [26, -16], [16, -14]], preto); poli([[13, -22], [13, -30], [16, -23]], preto); poli([[16, -23], [18, -29], [19, -22]], preto); // cabeça comprida e orelhas
+  c.strokeStyle = "#e8e0d0"; c.lineWidth = .8; c.beginPath(); c.moveTo(15, -17); c.quadraticCurveTo(20, -14.5, 25.5, -17); c.stroke(); c.fillStyle = "#e8e0d0"; for (let i = 0; i < 6; i++) poli([[15.5 + i * 1.7, -16.8 + (i > 2 ? .3 : 0)], [16.2 + i * 1.7, -15.6], [16.9 + i * 1.7, -16.6]], "#e8e0d0"); // sorriso cheio de dente
+  c.fillStyle = `rgba(230,40,30,${vira ? 1 : .9})`; c.fillRect(18, -21.5, 2, 1.6); c.fillStyle = "rgba(230,40,30,.25)"; c.beginPath(); c.arc(19, -21, 5, 0, 7); c.fill();
+  if (vira) { c.fillStyle = "rgba(230,40,30,.18)"; c.beginPath(); c.arc(0, -16, 22 + Math.sin(tm * 30) * 4, 0, 7); c.fill(); }
+}
+function mulaCorpo(gal, tm) {
+  const couro = "#24180f", osso = "#d8ccb0";
+  const perna = (px, fz, cor) => { const a = Math.sin(gal + fz), b = Math.sin(gal + fz + 1); traco([[px, -24], [px + a * 8, -12], [px + b * 10, -1]], cor, 3.6); c.fillStyle = cor; c.beginPath(); c.arc(px + a * 8, -12, 2.2, 0, 7); c.fill(); poli([[px + b * 10 - 3, -2], [px + b * 10 + 3, -2], [px + b * 10 + 4, 1], [px + b * 10 - 4, 1]], "#8a8a8a"); if (b > .8) { c.fillStyle = "#ffd25a"; c.fillRect(px + b * 10 + 4, -1, 2, 2); c.fillRect(px + b * 10 + 7, -3, 1.4, 1.4); } };
+  perna(-15, 0, "#170f0a"); perna(9, 3, "#170f0a");
+  poli([[-24, -30], [-20, -38], [-6, -40], [8, -39], [18, -40], [24, -34], [22, -24], [12, -22], [-2, -24], [-14, -22], [-22, -24]], couro);
+  c.strokeStyle = "rgba(0,0,0,.6)"; c.lineWidth = 1.1; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(-6 + i * 3.6, -37); c.quadraticCurveTo(-4 + i * 3.6, -31, -7 + i * 3.6, -25); c.stroke(); } // costelas
+  poli([[-22, -36], [-18, -42], [-14, -36]], osso); poli([[-20, -27], [-17, -31], [-14, -26]], "#3a2a1c"); // osso do quadril saindo
+  for (let i = 0; i < 5; i++) poli([[-14 + i * 6, -39.5], [-12 + i * 6, -42], [-10 + i * 6, -39.5]], couro); // espinha
+  perna(-9, 2, couro); perna(15, 5, couro);
+  traco([[-23, -32], [-32, -30 + Math.sin(gal) * 4], [-35, -16]], "#140c08", 2.4); for (let i = 0; i < 4; i++) traco([[-35, -16], [-37 + i * 1.6, -9 + (i % 2) * 2]], "#140c08", 1); // rabo desfiado
+  poli([[14, -38], [20, -48], [26, -54], [33, -49], [28, -40], [22, -28]], couro); // pescoço sem cabeça
+  poli([[24, -53], [33, -50], [31, -47], [25, -50]], "#7a1a10"); c.fillStyle = osso; c.beginPath(); c.arc(29, -50.5, 1.6, 0, 7); c.fill(); // o toco, com o osso aparecendo
+  c.strokeStyle = "#7a7a72"; c.lineWidth = 1.4; for (let i = 0; i < 6; i++) { c.beginPath(); c.ellipse(19 + i * 1.6, -36 - i * 2.4, 2.2, 1.4, .8, 0, 7); c.stroke(); } traco([[29, -24], [32, -14 + Math.sin(gal * 2) * 3], [30, -4]], "#7a7a72", 1.3); // corrente arrastando
+  c.save(); c.translate(29, -52); c.rotate(.5); chamas(0, 0, 14, 30, tm, 7); c.restore();
+}
+/* ---------- bicho novo: a Cuca ---------- */
+// De noite, a partir do segundo dia, às vezes ela sai do mato cantando a cantiga de ninar. Ela é lenta,
+// mas ouve barulho: se você corre ou está de lanterna acesa perto dela, ela dispara. Parada e no escuro, ela se perde.
+function atualizarCuca(dt) {
+  const k = R.cuca || (R.cuca = { fase: "longe", prox: rnd(30, 90), t: 0, x: 0, y: 0 });
+  if (!ehNoite()) { if (k.fase !== "longe") { k.fase = "longe"; } k.prox = rnd(25, 80); return; }
+  const fora = jogadores().filter(P => (P.lugar || "sitio") === "sitio" && !P.dentro && !P.caido);
+  if (k.fase === "longe") { if (R.dia < 2 || !k.hoje) return; k.prox -= dt; if (k.prox > 0 || !fora.length) return; const J = fora[0], lado = Math.random() < .5 ? -1 : 1;
+    Object.assign(k, { fase: "anda", t: 0, x: cl(J.eu.x + lado * 12, CERCA.x0 + 1, CERCA.x1 - 1), y: cl(J.eu.y + rnd(-5, 5), CERCA.y0 + 1, CERCA.y1 - 1), canto: 0 }); efeito("Alguém está cantando... uma cantiga de ninar.", "#c8b8e8"); return; }
+  k.t += dt; if (k.t > 45 || !fora.length) { k.fase = "longe"; k.prox = rnd(40, 110); return; }
+  let alvo = fora[0], md = 1e9; fora.forEach(P => { const d = dist(P.eu, k); if (d < md) { md = d; alvo = P; } });
+  const barulho = (alvo.correndo || alvo.lanterna) && md < 8; k.fase = barulho ? "ataca" : "anda";
+  const v = barulho ? 4.1 : (md < 3 ? .6 : 1.5), ang = Math.atan2(alvo.eu.y - k.y, alvo.eu.x - k.x) + (barulho ? 0 : Math.sin(k.t * .7) * .9);
+  k.x += Math.cos(ang) * v * dt; k.y += Math.sin(ang) * v * dt; k.dir = Math.cos(ang) > 0 ? 1 : -1; k.passo = (k.passo || 0) + dt * v * 3;
+  k.canto -= dt; if (k.canto <= 0) { k.canto = 2.6; const [vv, pn] = somEm(k.x, k.y); [0, 3, 7, 3, 5, 3].forEach((n, i) => tocarTom(330 * Math.pow(2, n / 12) * (barulho ? 1.06 : 1), .36, { tipo: "triangle", vol: .06 * vv, pan: pn, wet: .7, quando: i * .38 })); }
+  if (md < .8) comJogador(alvo, () => morrer("cuca", "A Cuca te pegou. \"Nana, neném, que a Cuca vem pegar...\" Ela cantou até o fim.", "Quando ouvir a cantiga, apague a lanterna e não corre: ela é lenta e se perde no escuro. Só dispara atrás de barulho e de luz."));
+}
+function desenharCuca(k, tm) {
+  if (!k || k.fase === "longe") return; const x = PX(k.x), y = PY(k.y); if (!naTela(x, y, 200)) return; const s = TS / 48 * 1.5, p = k.passo || 0, sw = Math.sin(p), d = k.dir || 1, ataca = k.fase === "ataca";
+  sombra(x, y, 20 * s, 5 * s, .5); c.save(); c.translate(x, y); c.scale(d * s, s); c.lineCap = "round"; c.lineJoin = "round";
+  const pele = "#4a5a2a", pele2 = "#34421c", ventre = "#a8a070";
+  [[-4, sw], [4, -sw]].forEach(([lx, a]) => { traco([[lx, -26], [lx + a * 5 + 3, -12], [lx + a * 7, -1]], pele2, 4); poli([[lx + a * 7 - 2, -2], [lx + a * 7 + 7, -1], [lx + a * 7 + 8, 1], [lx + a * 7 - 3, 1]], pele2); for (let i = 0; i < 3; i++) traco([[lx + a * 7 + 6, 0], [lx + a * 7 + 10, -1 + i]], "#d8ccb0", 1); });
+  poli([[-12, -26], [-10, -40], [-14, -52], [-8, -58], [6, -58], [10, -48], [12, -36], [10, -24], [4, -14], [-4, -12], [-10, -16]], "#3a2a3a"); // vestido velho
+  for (let i = 0; i < 9; i++) poli([[-10 + i * 2.4, -14 + (i % 2) * 2], [-9 + i * 2.4, -9 - (i % 3)], [-8 + i * 2.4, -14]], "#3a2a3a"); // barra rasgada
+  c.fillStyle = "rgba(200,180,140,.25)"; for (let i = 0; i < 6; i++) c.fillRect(-8 + (i * 3.1) % 14, -50 + i * 5, 3, 1.2); // remendos
+  poli([[-16, -54], [-22, -44], [-20, -30], [-12, -28], [-10, -44]], "#6a5a3a"); traco([[-14, -52], [-6, -58]], "#3a2a1a", 1.2); c.fillStyle = "rgba(40,30,20,.5)"; c.fillRect(-19, -42, 6, 1.2); // o saco nas costas
+  // braços compridos com garras
+  [[-1, -sw * .4, pele2], [1, sw * .4, pele]].forEach(([l, a, cor]) => { const ox = 4 + l * 2, ex = ox + 10 + (ataca ? 8 : 2), ey = -42 + a * 6, mx = ex + (ataca ? 12 : 4), my = ataca ? -46 : -30 + a * 4; traco([[ox, -54], [ex, ey], [mx, my]], cor, 3); for (let i = -1; i <= 1; i++) traco([[mx, my], [mx + 5, my + i * 2.5 + 2], [mx + 7, my + i * 3 + 4]], "#d8ccb0", 1); });
+  // cabeça de jacaré com cabelo de palha
+  c.save(); c.translate(4, -66); c.rotate(ataca ? .15 : -.05 + Math.sin(tm * 1.3) * .05); const ab = ataca ? .3 + .3 * Math.abs(Math.sin(tm * 9)) : .08;
+  for (let i = 0; i < 14; i++) traco([[-6 + i * .9, -6], [-14 + i * 1.2 + Math.sin(tm * 2 + i) * 1.5, 6 + (i % 4) * 4]], i % 2 ? "#b8b0a0" : "#8a8478", 1.3); // cabelo comprido e ralo
+  poli([[-8, -2], [-7, -9], [0, -12], [8, -9], [24, -6], [30, -3], [29, 0], [8, 1]], pele); // focinho comprido de cima
+  c.fillStyle = pele2; for (let i = 0; i < 6; i++) poli([[2 + i * 4, -9 + i * .5], [4 + i * 4, -12 + i * .5], [6 + i * 4, -8.5 + i * .5]], pele2); // escamas em ponta
+  c.save(); c.translate(6, 1); c.rotate(ab); poli([[0, 0], [24, 0], [22, 4], [0, 5]], pele2); c.fillStyle = "#e8e0c8"; for (let i = 0; i < 8; i++) poli([[1 + i * 2.8, 0], [2.2 + i * 2.8, -3], [3.4 + i * 2.8, 0]], "#e8e0c8"); c.restore();
+  c.fillStyle = "#e8e0c8"; for (let i = 0; i < 9; i++) poli([[6 + i * 2.6, 0], [7.2 + i * 2.6, 3.5 + (i % 3 === 0 ? 1.5 : 0)], [8.4 + i * 2.6, 0]], "#e8e0c8");
+  c.fillStyle = "#1a1408"; c.beginPath(); c.arc(28, -3, .9, 0, 7); c.fill();
+  poli([[0, -8], [6, -9], [5, -5], [0, -5]], "#e8c820"); c.fillStyle = "#050200"; c.fillRect(2.6, -8.6, 1, 3.6); // olho de cobra
+  c.strokeStyle = pele2; c.lineWidth = 1; c.beginPath(); c.moveTo(-1, -9.5); c.lineTo(6.5, -10.5); c.stroke();
+  c.restore();
+  c.restore();
+}
+
 /* ---------- lado leste e detalhes novos ---------- */
 function desenharCapela(tm) {
   const x = PX(CAPELA.x), y = PY(CAPELA.y), w = CAPELA.w * TS, h = CAPELA.h * TS; if (!naTela(x + w / 2, y + h / 2, w * 1.4)) return;
@@ -1412,13 +1558,7 @@ function _desenharEspantalho(e, tm) {
   sombra(x, y, TS * .3, TS * .1); c.save(); c.translate(x + tr, y); c.rotate(inc);
   if (e.fase === "poste") { c.fillStyle = "#5a3a22"; c.fillRect(-2, -TS * 1.2, 4, TS * 1.2); c.fillRect(-TS * .4, -TS * .95, TS * .8, 4); }
   else { c.strokeStyle = "#5a4a30"; c.lineWidth = 3; const pe = vivo ? Math.sin(tm * 9) * TS * .12 : 0; c.beginPath(); c.moveTo(0, -TS * .5); c.lineTo(-TS * .12 + pe, 0); c.moveTo(0, -TS * .5); c.lineTo(TS * .12 - pe, 0); c.stroke(); } // pernas de palha
-  c.fillStyle = "#4a6a8a"; c.fillRect(-TS * .18, -TS * .95, TS * .36, TS * .45); c.fillStyle = "#3a5070"; c.fillRect(-TS * .18, -TS * .6, TS * .36, TS * .1);
-  c.strokeStyle = "#c8a050"; c.lineWidth = 1.5; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(-TS * .4, -TS * .93 + i * 1.5); c.lineTo(-TS * .5, -TS * .9 + i * 3 + (vivo ? Math.sin(tm * 12 + i) * 2 : 0)); c.moveTo(TS * .4, -TS * .93 + i * 1.5); c.lineTo(TS * .5, -TS * .9 + i * 3); c.stroke(); } // palha nas mãos
-  c.fillStyle = "#5a3a22"; c.fillRect(-TS * .4, -TS * .95, TS * .8, 4);
-  c.fillStyle = "#d8c8a0"; c.beginPath(); c.arc(0, -TS * 1.1, TS * .15, 0, 7); c.fill(); c.strokeStyle = "rgba(90,70,40,.6)"; c.lineWidth = .8; c.beginPath(); c.moveTo(-TS * .14, -TS * 1.05); c.lineTo(TS * .14, -TS * 1.12); c.stroke(); // saco
-  c.fillStyle = "#c8a050"; c.beginPath(); c.ellipse(0, -TS * 1.2, TS * .27, TS * .06, 0, 0, 7); c.fill(); c.fillRect(-TS * .13, -TS * 1.36, TS * .26, TS * .14);
-  const olhos = horaNoite() > .5 && (e.fase === "vivo" || Math.sin(tm * .6) > .8); c.fillStyle = olhos ? "#e2483d" : "#1a1a1a"; c.fillRect(-4, -TS * 1.13, 2.4, 2.4); c.fillRect(2, -TS * 1.13, 2.4, 2.4);
-  c.strokeStyle = "#1a1a1a"; c.lineWidth = 1; c.beginPath(); c.moveTo(-5, -TS * 1.04); for (let i = 0; i < 6; i++) c.lineTo(-5 + i * 2, -TS * 1.04 + (i % 2) * 2 + (vivo ? 1 : 0)); c.stroke(); // boca costurada
+  espantalhoCorpo(e, tm, vivo);
   c.restore();
 }
 function _desenharAranha(a, tm) {
@@ -1462,12 +1602,7 @@ function _desenharMula(m, tm) {
   if (m.fase !== "corre") return; const x = PX(m.x), y = PY(m.y); if (!naTela(x, y, 200)) return;
   const k = TS / 48 * 1.3, dx = m.horiz ? m.dir : 1, gal = tm * 26;
   sombra(x, y, 26 * k, 6 * k, .5); c.save(); c.translate(x, y); c.scale(dx * k, k); c.lineCap = "round";
-  const perna = (px, f) => { c.strokeStyle = "#1a1210"; c.lineWidth = 4.5; c.beginPath(); c.moveTo(px, -22); c.lineTo(px + Math.sin(gal + f) * 8, -10); c.lineTo(px + Math.sin(gal + f + 1) * 10, 0); c.stroke(); c.fillStyle = "#c8c8c8"; c.fillRect(px + Math.sin(gal + f + 1) * 10 - 3, -1, 6, 2.5); };
-  perna(-14, 0); perna(-8, 2); perna(10, 3); perna(16, 5);
-  c.fillStyle = "#2a1e16"; c.beginPath(); c.ellipse(0, -28, 22, 10, 0, 0, 7); c.fill(); c.strokeStyle = "#2a1e16"; c.lineWidth = 3; c.beginPath(); c.moveTo(-21, -30); c.quadraticCurveTo(-34, -28 + Math.sin(gal) * 4, -36, -14); c.stroke(); // rabo
-  c.fillStyle = "#2a1e16"; c.beginPath(); c.moveTo(14, -34); c.lineTo(26, -50); c.lineTo(32, -44); c.lineTo(20, -26); c.fill(); // pescoço sem cabeça
-  for (let i = 0; i < 9; i++) { const ff = (tm * 6 + i * .37) % 1; c.fillStyle = `rgba(255,${120 + i * 14},30,${.9 * (1 - ff)})`; c.beginPath(); c.ellipse(29 + Math.sin(i * 2.3 + tm * 9) * 4 + ff * 10, -48 - ff * 26, (6 - ff * 4) * 1.2, (10 - ff * 6) * 1.2, .3, 0, 7); c.fill(); } // fogo saindo do pescoço
-  c.fillStyle = "#5a4a3a"; c.fillRect(-8, -38, 12, 3); c.restore();
+  mulaCorpo(gal, tm); c.restore();
 }
 function desenharSaci(s, tm) {
   if (s.fase === "longe") return; const x = PX(s.x), y = PY(s.y); if (!naTela(x, y, 120)) return; const g = s.giro || 0;
@@ -1539,7 +1674,7 @@ function desenharMundo(tm) {
   for (let y = 6; y <= 11; y++) { obj.push([y, () => ce.post(25.5, y)]); obj.push([y, () => ce.post(32.5, y)]); } for (let x = 25.5; x <= 32.5; x++) if (x < 28 || x > 29.5) obj.push([11.6, () => ce.post(x, 11.6)]); // cercadinho
   obj.push([R.gato.y, () => desenharGato(R.gato, tm)]);
   if (R.cachorro) obj.push([R.cachorro.y, () => desenharCachorro(R.cachorro, tm)]);
-  obj.push([R.seco.y, () => desenharSeco(R.seco, tm)]);
+  obj.push([R.seco.y, () => desenharSeco(R.seco, tm)]); if (R.cuca && R.cuca.fase !== "longe") obj.push([R.cuca.y, () => desenharCuca(R.cuca, tm)]);
   if (R.vulto) obj.push([R.vulto.y, () => desenharVulto(R.vulto, tm)]);
   if (R.vela && !velaNaMao()) obj.push([R.vela.y, () => desenharVela(PX(R.vela.x), PY(R.vela.y), tm)]);
   if (!R.dentro && !(R.venceu && R.venceu.t > 1)) obj.push([R.eu.y, () => { desenharVoce(PX(R.eu.x), PY(R.eu.y), tm); if (R.velaCom) desenharVela(PX(R.eu.x) - TS * .28, PY(R.eu.y) - TS * .35, tm); }]);
@@ -1777,6 +1912,13 @@ function rostoMonstro(quem, r, ab, tm) { // desenha o rosto centrado na origem (
     olhos(r * .22, -r * .1, r * .08, "255,230,160"); c.fillStyle = "#1a0a06"; c.beginPath(); c.ellipse(0, r * .3, r * .32, r * .14 + r * .08 * ab, 0, 0, Math.PI); c.fill(); dentes(r * .3, r * .5, 6, r * .08, true);
     c.fillStyle = "#c89a5a"; c.fillRect(r * .25, r * .32, r * .5, r * .06); c.fillRect(r * .68, r * .18, r * .12, r * .18); c.fillStyle = `rgba(255,140,40,${.6 + .4 * Math.sin(tm * 8)})`; c.beginPath(); c.arc(r * .74, r * .17, r * .05, 0, 7); c.fill();
     c.fillStyle = "rgba(200,200,200,.3)"; for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(r * (.8 + i * .08), r * (.05 - i * .14), r * (.06 + i * .03), 0, 7); c.fill(); }
+  } else if (quem === "cuca") { // jacaré velho de boca aberta
+    for (let i = 0; i < 26; i++) { c.strokeStyle = i % 2 ? "#b8b0a0" : "#8a8478"; c.lineWidth = r * .02; c.beginPath(); c.moveTo(-r * .5 + i * r * .04, -r * .55); c.quadraticCurveTo(-r * .9 + i * r * .07, r * .1, -r * .95 + i * r * .075 + Math.sin(tm * 2 + i) * r * .03, r * .9); c.stroke(); }
+    const pg = c.createLinearGradient(0, -r * .7, 0, r * .9); pg.addColorStop(0, "#5a6a32"); pg.addColorStop(1, "#2a3416"); c.fillStyle = pg; c.beginPath(); c.moveTo(-r * .55, -r * .2); c.lineTo(-r * .4, -r * .65); c.lineTo(r * .4, -r * .65); c.lineTo(r * .55, -r * .2); c.lineTo(r * .5, r * .2); c.lineTo(-r * .5, r * .2); c.fill();
+    c.fillStyle = "#2a3416"; for (let i = 0; i < 8; i++) { c.beginPath(); c.moveTo(-r * .38 + i * r * .11, -r * .62); c.lineTo(-r * .33 + i * r * .11, -r * .8); c.lineTo(-r * .28 + i * r * .11, -r * .62); c.fill(); } // escamas em ponta
+    for (const l of [-1, 1]) { c.fillStyle = "#e8c820"; c.beginPath(); c.ellipse(l * r * .26, -r * .35, r * .14, r * .1, 0, 0, 7); c.fill(); c.fillStyle = "#050200"; c.fillRect(l * r * .26 - r * .02, -r * .44, r * .04, r * .18); }
+    c.fillStyle = "#120404"; c.beginPath(); c.moveTo(-r * .48, r * .15); c.lineTo(r * .48, r * .15); c.lineTo(r * .4, r * .35 + r * .3 * ab); c.lineTo(-r * .4, r * .35 + r * .3 * ab); c.fill(); dentes(r * .17, r * .9, 13, r * .14, true); dentes(r * .33 + r * .3 * ab, r * .8, 12, r * .12, false);
+    c.fillStyle = "#3a4a1e"; c.beginPath(); c.moveTo(-r * .45, r * .36 + r * .3 * ab); c.lineTo(r * .45, r * .36 + r * .3 * ab); c.lineTo(r * .35, r * .55 + r * .3 * ab); c.lineTo(-r * .35, r * .55 + r * .3 * ab); c.fill();
   } else if (quem === "tinhoso") { // caveira de bode, chifres, olho de brasa
     for (const l of [-1, 1]) { c.strokeStyle = "#140c0a"; c.lineWidth = r * .16; c.lineCap = "round"; c.beginPath(); c.moveTo(l * r * .3, -r * .45); c.bezierCurveTo(l * r * 1.1, -r * .9, l * r * 1.15, -r * 1.6, l * r * .45, -r * 1.75); c.stroke(); c.strokeStyle = "rgba(255,255,255,.12)"; c.lineWidth = r * .03; for (let k = 0; k < 6; k++) { c.beginPath(); c.arc(l * r * (.55 + k * .08), -r * (.65 + k * .17), r * .1, 0, PI); c.stroke(); } }
     const gc = c.createRadialGradient(0, -r * .2, r * .1, 0, 0, r * .8); gc.addColorStop(0, "#e0d4b8"); gc.addColorStop(1, "#8a7a5a"); c.fillStyle = gc; c.beginPath(); c.moveTo(-r * .5, -r * .5); c.quadraticCurveTo(-r * .65, r * .2, -r * .22, r * .85); c.lineTo(r * .22, r * .85); c.quadraticCurveTo(r * .65, r * .2, r * .5, -r * .5); c.quadraticCurveTo(0, -r * .8, -r * .5, -r * .5); c.fill();
@@ -2670,19 +2812,6 @@ function atualizarMata(dt) {
   if (Math.random() < dt * .6) { const [vv, pn] = somEm(cu.x, cu.y); S.assobio && S.assobio(vv, pn); }
   if (d < .8) comJogador(alvo, () => R.terco ? (R.terco = 0, cu.fase = "sai", cu.t = 0, S.susto(), R.tremor = .8, efeito("O terço do vô esquentou na sua mão. Ele recuou!", "#f2c94a"), hud()) : morrer("curupira", "O Curupira te alcançou. Os pés dele apontavam pro lado errado, mas ele sabia muito bem onde você estava.", "De noite, não fique na mata. Se ouvir o assobio, corra pra casinha do lago ou volte pro sítio."));
 }
-function desenharCurupira(cu, tm) {
-  const x = PX(cu.x), y = PY(cu.y); if (!naTela(x, y, 200)) return; const s = TS * 1.35, pulo = Math.abs(Math.sin((cu.fase2 || 0))) * s * .08, d = cu.dir || 1;
-  sombra(x, y, s * .35, s * .1, .5); c.save(); c.translate(x, y - pulo); c.scale(d, 1);
-  c.fillStyle = "#2a4a1e"; c.fillRect(-s * .12, -s * .3, s * .08, s * .3); c.fillRect(s * .04, -s * .3, s * .08, s * .3); // pernas
-  c.fillStyle = "#1e3a14"; c.beginPath(); c.ellipse(-s * .14, -s * .01, s * .12, s * .05, 0, 0, 7); c.ellipse(s * .02, -s * .01, s * .12, s * .05, 0, 0, 7); c.fill(); // pés pra trás
-  c.fillStyle = "#3a5a24"; c.beginPath(); c.moveTo(-s * .2, -s * .3); c.lineTo(s * .2, -s * .3); c.lineTo(s * .16, -s * .75); c.lineTo(-s * .16, -s * .75); c.fill(); // corpo magro
-  c.strokeStyle = "#3a5a24"; c.lineWidth = s * .06; c.beginPath(); c.moveTo(-s * .16, -s * .7); c.lineTo(-s * .36, -s * .4 + Math.sin(tm * 14) * s * .05); c.lineTo(-s * .42, -s * .28); c.moveTo(s * .16, -s * .7); c.lineTo(s * .4, -s * .45); c.lineTo(s * .5, -s * .5 + Math.sin(tm * 14 + 2) * s * .05); c.stroke();
-  c.fillStyle = "#4a6a2a"; c.beginPath(); c.ellipse(0, -s * .88, s * .17, s * .19, 0, 0, 7); c.fill();
-  for (let i = 0; i < 9; i++) { const a = -PI / 2 + (i - 4) * .3, fl = .9 + .3 * Math.sin(tm * 18 + i); c.fillStyle = i % 2 ? "#ff6a1e" : "#e0281e"; c.beginPath(); c.moveTo(Math.cos(a) * s * .14, -s * .88 + Math.sin(a) * s * .14); c.quadraticCurveTo(Math.cos(a) * s * .34 * fl, -s * .95 + Math.sin(a) * s * .38 * fl, Math.cos(a + .2) * s * .18, -s * .9 + Math.sin(a + .2) * s * .2); c.fill(); } // cabelo de fogo
-  c.fillStyle = "#fff6b0"; c.beginPath(); c.arc(-s * .06, -s * .9, s * .035, 0, 7); c.arc(s * .07, -s * .9, s * .035, 0, 7); c.fill(); c.fillStyle = "#1a0a0a"; c.beginPath(); c.ellipse(0, -s * .8, s * .07, s * .03, 0, 0, 7); c.fill(); c.fillStyle = "#e8e0c8"; c.fillRect(-s * .06, -s * .8, s * .025, s * .05); c.fillRect(s * .035, -s * .8, s * .025, s * .05);
-  c.restore();
-  if (R.lugar === "mata" && !R.predio) { const dd = dist(cu, R.eu); if (dd < 7) { c.fillStyle = `rgba(255,60,20,${.12 * (1 - dd / 7)})`; c.fillRect(0, 0, W, H); } }
-}
 function arvoreMata(a, tm) {
   const x = PX(a.x), y = PY(a.y), r = a.r * TS; if (x < -r * 2 || x > W + r * 2 || y < -r * 3.2 || y > H + r * 2) return;
   sombra(x + r * .2, y + r * .05, r * .9, r * .35, .45);
@@ -3347,16 +3476,16 @@ function estadoPara() {
   return { t: "s", T: R.t, dia: R.dia, moedas: R.moedas, agua: R.agua, aguaMax: R.aguaMax, oleo: R.oleo, vel: R.vel, lanternaBoa: R.lanternaBoa, sementes: R.sementes, vara: R.vara, pecas: R.pecas, peneira: R.peneira,
     missoes: R.missoes, mprog: R.mprog, apito: R.apito, guizo: R.guizo, isca: R.isca, medalha: R.medalha, enxada: R.enxada, lampiao: R.lampiao, ferradura: R.ferradura, sal: R.sal, arruda: R.arruda, aguaBenta: R.aguaBenta, inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
     gato: R.gato, cachorro: R.cachorro, seco: R.seco, vulto: R.vulto, vela: R.vela, velaEntregue: R.velaEntregue, velaHoje: R.velaHoje, alma: R.alma, galinhas: R.galinhas, porcos: R.porcos,
-    aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, curu: R.curu, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
+    aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, curu: R.curu, cuca: R.cuca, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
     outro: pl(R), voce: o ? { roupa: o.roupa, garrafada: o.garrafada, broa: o.broa, caido: o.caido ? { quem: o.caido.quem, fora: o.caido.fora } : null, velaCom: o.velaCom, regando: o.regando, agua: o.agua, vidas: o.vidas } : null };
 }
-const SUAVE = ["gato", "cachorro", "seco", "aranha", "esp", "saci", "vulto", "mula", "curu"];
+const SUAVE = ["gato", "cachorro", "seco", "aranha", "esp", "saci", "vulto", "mula", "curu", "cuca"];
 function aplicarEstado(d) {
   const suave = (velho, novo) => { if (velho && novo && novo.x != null && velho.x != null && Math.hypot(novo.x - velho.x, novo.y - velho.y) < 4) { novo.ax = novo.x; novo.ay = novo.y; novo.x = velho.x; novo.y = velho.y; } };
   SUAVE.forEach(k => suave(R[k], d[k])); ["galinhas", "porcos"].forEach(k => d[k] && d[k].forEach((g, i) => suave(R[k] && R[k][i], g)));
   if (d.outro && R.outro) { const a = d.outro.eu, b = R.outro.eu; suave(b, a); if (d.outro.sala && R.outro.sala) suave(R.outro.sala, d.outro.sala); }
   ["missoes", "mprog", "apito", "guizo", "isca", "medalha", "enxada", "lampiao", "ferradura", "sal", "arruda", "aguaBenta", "dia", "moedas", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
-    "gato", "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "queimado", "sinoT", "sinoUsado", "outro", "tempoTotal"].forEach(k => { R[k] = d[k]; });
+    "gato", "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "outro", "tempoTotal"].forEach(k => { R[k] = d[k]; });
   R.t = d.T; R.fxR = d.fx || []; R.semente = cl(R.semente, 0, R.sementes.length - 1);
   d.canteiros.forEach(([a, cv2], i) => { R.canteiros[i].aberto = a; R.canteiros[i].covas = cv2; });
   if (d.voce) { R.roupa = d.voce.roupa; R.garrafada = d.voce.garrafada; if (d.voce.broa > 0 && !(R.broa > 0)) R.broa = d.voce.broa; R.agua = d.voce.agua; R.vidas = d.voce.vidas; if (d.voce.caido) { cairLocal(d.voce.caido.quem); R.caido.fora = d.voce.caido.fora; } else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
@@ -3644,7 +3773,9 @@ window.sairRoca = function () {
 };
 window.rocaVoltar = () => { if (!window.rocaAtiva) return false; if (el.rcChatBar && !el.rcChatBar.hidden) { abrirChat(false); return true; } if (document.querySelector(".rc-hist")) return true; if (R && R.menu) { if (painelAberto && document.getElementById("rcCancelar")) { netFechar(); menuInicial(); } else { fecharPainel(); sairRoca(); } return true; } if (painelAberto) { if (R && (R.morto || R.venceu)) return true; fecharPainel(); } else pausar(); return true; };
 window.rocaNet = Net; window.rocaHistoria = () => historia(() => {});
-window.rocaMedir = () => medir(); window.rocaEstado = () => R; window.rocaTeste = { icone: (g, S, modo) => desenharIcone(g, S, modo), esg: () => ESG, bench: (qual) => { const ch = qual === "vila" ? (montarVila(), CHAO_VILA) : qual === "mata" ? (montarMata(), CHAO_MATA) : CHAO_SITIO, P = 72, out = {}; let t = performance.now(); const pc = document.createElement("canvas"); pc.width = pc.height = CHUNK * P; const g = pc.getContext("2d"); g.scale(P / 32, P / 32); g.translate(-2 * CHUNK * 32, -1 * CHUNK * 32); g.beginPath(); g.rect(2 * CHUNK * 32, 1 * CHUNK * 32, CHUNK * 32, CHUNK * 32); g.clip(); CLIPV = [2 * CHUNK * 32, 1 * CHUNK * 32, 3 * CHUNK * 32, 2 * CHUNK * 32]; ch.pintar(g); CLIPV = null; out.pintar = performance.now() - t; t = performance.now(); pc.ch = ch; detalheChao(g, pc, 2, 1, P); out.det = performance.now() - t; t = performance.now(); ch.base = null; baseChao(ch); out.base = performance.now() - t; return out; }, npcs: () => NPCS, npcEm: (g, n, x, y, s) => comCtx(g, () => desenharNpc(n, x, y, s, 1, { wx: -1e9 })), chao: g => CHAO_SITIO.pintar(g), vila: () => { montarVila(); return VILA; }, chaoVila: g => CHAO_VILA.pintar(g), bancada: () => abrirBancada(), loja: n => abrirLoja(NPCS.find(x => x.id === n)) }; // usado nos testes
+window.rocaMedir = () => medir(); window.rocaEstado = () => R; window.rocaTeste = { folhaMonstros: (g, Wd, Hd, tm = 1.3) => { const cS = c, WS = W, HS = H, TSs = TS, cx = cam.x, cy = cam.y; c = g; W = Wd; H = Hd; TS = 64; cam.x = 0; cam.y = 0; const P = (i, j) => ({ x: (i - 3.5) * 3.2, y: (j - .5) * 4.2 + 1.2 });
+    try { g.fillStyle = "#3a4a2a"; g.fillRect(0, 0, Wd, Hd); const L = [[0, 0, () => desenharSeco({ fase: "caca", ...P(0, 0), dir: 1, fase2: 1 }, tm)], [1, 0, () => desenharCachorro({ fase: "anda", anda: 1, ...P(1, 0), dir: 1 }, tm)], [2, 0, () => desenharCachorro({ fase: "lobo", anda: 1, ...P(2, 0), dir: 1 }, tm)], [3, 0, () => desenharEspantalho({ fase: "vivo", ...P(3, 0) }, tm)], [4, 0, () => desenharVulto({ t: 3, ...P(4, 0) }, tm)], [5, 0, () => desenharSaci({ fase: "perto", giro: 2, ...P(5, 0) }, tm)], [6, 0, () => desenharCurupira({ fase: "vem", dir: 1, fase2: 1, ...P(6, 0) }, tm)], [0, 1, () => desenharTinhoso({ fase: "caca", dir: 1, fase2: 1, ...P(0, 1) }, tm)], [2, 1, () => desenharMula({ fase: "corre", ...P(2, 1), dir: 1, t: 1 }, tm)], [4, 1, () => desenharAranha({ fase: "anda", ...P(4, 1), dir: 1, passo: 1 }, tm)], [1, 1, () => desenharCuca({ fase: "ataca", ...P(1, 1), dir: 1, passo: 1 }, tm)], [3, 1, () => desenharEspantalho({ fase: "poste", ...P(3, 1) }, tm)], [6, 1, () => desenharPisadeira({ t: 3, x: 0, y: 0, dir: 1 }, x => PX(P(6, 1).x) + x * 0, y => PY(P(6, 1).y) + y * 0, 64 * 2, tm)]];
+      L.forEach(([i, j, f]) => { try { f(); } catch (e) { console.log("erro", i, j, e.message); } }); } finally { c = cS; W = WS; H = HS; TS = TSs; cam.x = cx; cam.y = cy; } }, icone: (g, S, modo) => desenharIcone(g, S, modo), esg: () => ESG, bench: (qual) => { const ch = qual === "vila" ? (montarVila(), CHAO_VILA) : qual === "mata" ? (montarMata(), CHAO_MATA) : CHAO_SITIO, P = 72, out = {}; let t = performance.now(); const pc = document.createElement("canvas"); pc.width = pc.height = CHUNK * P; const g = pc.getContext("2d"); g.scale(P / 32, P / 32); g.translate(-2 * CHUNK * 32, -1 * CHUNK * 32); g.beginPath(); g.rect(2 * CHUNK * 32, 1 * CHUNK * 32, CHUNK * 32, CHUNK * 32); g.clip(); CLIPV = [2 * CHUNK * 32, 1 * CHUNK * 32, 3 * CHUNK * 32, 2 * CHUNK * 32]; ch.pintar(g); CLIPV = null; out.pintar = performance.now() - t; t = performance.now(); pc.ch = ch; detalheChao(g, pc, 2, 1, P); out.det = performance.now() - t; t = performance.now(); ch.base = null; baseChao(ch); out.base = performance.now() - t; return out; }, npcs: () => NPCS, npcEm: (g, n, x, y, s) => comCtx(g, () => desenharNpc(n, x, y, s, 1, { wx: -1e9 })), chao: g => CHAO_SITIO.pintar(g), vila: () => { montarVila(); return VILA; }, chaoVila: g => CHAO_VILA.pintar(g), bancada: () => abrirBancada(), loja: n => abrirLoja(NPCS.find(x => x.id === n)) }; // usado nos testes
 window.morrerTeste = () => morrer("seco", "teste", "teste");
 window.telaFimTeste = () => telaFim("morreu");
 })();
