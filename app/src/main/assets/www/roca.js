@@ -173,7 +173,7 @@ function novoJogo() {
     solido, caixas, arvores, pedras, flores, cogumelos, moedas: 0, agua: 5, aguaMax: 5, oleo: 100, lanterna: false, folego: 100, correndo: false, vel: 3.1,
     diario: !!ls("roca_diario"), lanternaBoa: false, sementes: ["milho", "mandioca"], semente: 0, canteiros: CANTEIROS.map((k, i) => ({ ...k, aberto: i === 0, covas: Array.from({ length: k.w * k.h }, () => null) })),
     inv: { graveto: 0, folha: 0 }, colheita: {}, peixes: {}, extra: {}, vara: false, pecas: 0, vela: null, velaCom: false, velaEntregue: false, velaHoje: false,
-    gato: { x: 15, y: 12.6, alvo: null, prox: 25 }, cachorro: null, seco: { prox: rnd(45, 150), fase: "longe", t: 0, x: 0, y: 0 },
+    gato: { x: 15, y: 12.6, alvo: null, prox: 25 }, cachorro: null, seco: { prox: rnd(80, 190), fase: "longe", t: 0, x: 0, y: 0 },
     galinhas: Array.from({ length: 5 }, (_, i) => ({ x: 26.5 + i * 1.1, y: 10.4 + (i % 2) * .5, alvo: null, t: rnd(0, 3), dir: 1 })), ovos: 2,
     frutas: POMAR.map(() => ({ n: 1, t: rnd(0, 20) })), vulto: null, vultoT: 40,
     lamparinas: [1, 1, 1], lampT: 0, pisadeira: null, pesca: null, fx: [], msg: null, tutorial: 0, morto: null, venceu: null, tempoTotal: 0, ouro: +(ls("roca_ouro") || 0),
@@ -580,9 +580,11 @@ function entregarVela() { R.velaCom = false; R.vela = null; R.velaEntregue = tru
 function irEmbora() { R.venceu = { t: 0 }; R.lanterna = false; S.motor(); setTimeout(S.vitoria, 1600); const best = +(ls("roca_melhor") || 0); if (!best || R.tempoTotal < best) ls("roca_melhor", Math.round(R.tempoTotal)); ls("roca_venceu", 1); }
 
 /* ---------- bancada (melhorias, vara, peças, visual) ---------- */
+const caro = p => p ? Math.round(p * 1.5 / 5) * 5 : 0; // preços da loja (mais caros)
+const PECAS = [["Bateria nova", 150], ["Pneu", 210], ["Motor de arranque", 300]];
 function opcoesBancada() {
   const o = [];
-  const item = (nome, desc, preco, ok, fn, dest) => o.push({ nome, desc, preco, ok: ok && R.moedas >= preco, fn, dest });
+  const item = (nome, desc, preco, ok, fn, dest) => { if (!dest) preco = caro(preco); o.push({ nome, desc, preco, ok: ok && R.moedas >= preco, fn, dest }); };
   if (!R.vara) o.push({ nome: "Vara de pesca", desc: `3 gravetos e 2 folhas · tem ${R.inv.graveto} e ${R.inv.folha}`, preco: 0, ok: R.inv.graveto >= 3 && R.inv.folha >= 2, fn: () => { R.inv.graveto -= 3; R.inv.folha -= 2; R.vara = true; } });
   item("Óleo da lanterna", "Enche a lanterna e as lamparinas", 5, R.oleo < 100, () => { R.oleo = 100; });
   if (R.aguaMax < 10) item("Regador grande", "Carrega 10 de água", 25, true, () => { R.aguaMax = 10; R.agua = 10; });
@@ -591,7 +593,7 @@ function opcoesBancada() {
   if (!R.lanternaBoa) item("Lanterna reforçada", "Ilumina mais e gasta menos óleo", 35, true, () => { R.lanternaBoa = true; });
   if (!R.peneira) item("Peneira", "Para pegar o Saci no redemoinho", 20, true, () => { R.peneira = true; });
   Object.entries(PLANTAS).forEach(([k, p]) => { if (p.custo && !R.sementes.includes(k)) item(`Sementes de ${p.nome.toLowerCase()}`, `Vende por ${p.preco} cada`, p.custo, true, () => { R.sementes.push(k); }); });
-  const nomesPecas = [["Bateria nova", 120], ["Pneu", 170], ["Motor de arranque", 240]];
+  const nomesPecas = PECAS;
   if (R.pecas < 3) item(`Peça: ${nomesPecas[R.pecas][0]}`, `Caminhonete ${R.pecas}/3 · leve até ela para ir embora`, nomesPecas[R.pecas][1], true, () => { R.pecas++; }, true);
   return o;
 }
@@ -644,12 +646,12 @@ function abrirDiario(aba = "bichos") {
   if (aba === "esg") { const l = achadosEsgoto(); corpo = `<p>O que o pai deixou no esgoto da vila (${l.filter(k => EVID_ESG[k]).length}/5).</p>${Object.entries(EVID_ESG).map(([k, e]) => l.includes(k) ? `<h3>${e.nome}</h3>${e.txt.map(t => `<p style="font-style:italic">${t}</p>`).join("")}` : "").join("")}`; }
   if (aba === "vo") { const l = paginasVo(); corpo = (ls("roca_fita") ? `<h3>A fita do porão</h3>${FITA_VO.map(t => `<p style="font-style:italic">${t}</p>`).join("")}<h3>As páginas</h3>` : "") + `<p>Páginas do diário do vô, achadas na casinha do lago (${l.length}/${PAGINAS_VO.length}).</p>${PAGINAS_VO.map((p, i) => l.includes(i) ? `<p style="font-style:italic">"${p.txt}"</p>` : "").join("")}${l.length < PAGINAS_VO.length ? `<p style="opacity:.7">Ainda falta coisa na casinha. Procure perto dos móveis.</p>` : ""}`; }
   if (aba === "precos") corpo = `<p>Tudo se vende no caixote do lado da porta. Venda antes de escurecer.</p>
-    <h3>Da horta</h3><table>${Object.values(PLANTAS).map(p => `<tr><td>${p.nome}${p.custo ? ` <small>(semente ${p.custo} moedas na bancada)</small>` : ""}</td><td>${p.preco} moedas</td></tr>`).join("")}</table>
+    <h3>Da horta</h3><table>${Object.values(PLANTAS).map(p => `<tr><td>${p.nome}${p.custo ? ` <small>(semente ${caro(p.custo)} moedas na bancada)</small>` : ""}</td><td>${p.preco} moedas</td></tr>`).join("")}</table>
     <h3>Do sítio</h3><table><tr><td>Ovo (galinheiro, toda manhã)</td><td>${EXTRAS.ovo[1]} moedas</td></tr><tr><td>Laranja (pomar, amadurece de novo)</td><td>${EXTRAS.laranja[1]} moedas</td></tr><tr><td>Mel (colmeias depois do riacho, 1 por dia cada)</td><td>${EXTRAS.mel[1]} moedas</td></tr></table>
     <h3>Do lago</h3><table>${PEIXES.map(p => `<tr><td>${p[0]}</td><td>${p[1]} moedas</td></tr>`).join("")}</table>`;
   if (aba === "guia") corpo = `<ul>
     <li><b>Água:</b> o regador enche no poço. Planta sem água não cresce.</li>
-    <li><b>Óleo:</b> a lanterna e as lamparinas de casa gastam óleo. Quando acabar, compre <b>Óleo da lanterna</b> na bancada (dentro de casa) por 5 moedas. Lamparina apagada? Chegue perto da mesa e acenda (gasta um pouco de óleo).</li>
+    <li><b>Óleo:</b> a lanterna e as lamparinas de casa gastam óleo. Quando acabar, compre <b>Óleo da lanterna</b> na bancada (dentro de casa) por 10 moedas. Lamparina apagada? Chegue perto da mesa e acenda (gasta um pouco de óleo).</li>
     <li><b>Lanterna:</b> serve para ver de noite e congelar o espantalho, mas a Pernuda enxerga a luz. Saiba a hora de apagar.</li>
     <li><b>Fôlego:</b> correr cansa. Ande um pouco que ele volta.</li>
     <li><b>Gravetos e folhas:</b> a Sombrinha traz quando passeia. Com 3 gravetos e 2 folhas a bancada faz a vara de pesca. A doca fica no lago.</li>
@@ -813,6 +815,7 @@ function hud() {
   el.rcLuz.classList.toggle("on", R.lanterna); el.rcCorre.classList.toggle("on", R.correndo);
   const comAmigo = !!(R.online && outros().length && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
   el.rcObj.textContent = R.menu ? "" : "Objetivo: " + objetivo();
+  el.rcObj.style.marginTop = R.online && outros().length >= 2 ? "16px" : "";
   const cor = n => n > 0 ? "♥" : "♡";
   const sala = R.online && Net.codigo && !R.menu ? `SALA <b>${Net.codigo}</b> · ${outros().length + 1}/${MAXJ}${R.online === "host" && !outros().length ? " · esperando amigos" : ""}` : "";
   if (el.rcSala.dataset.k !== sala) { el.rcSala.dataset.k = sala; el.rcSala.innerHTML = sala; el.rcSala.hidden = !sala; }
@@ -825,7 +828,7 @@ function objetivo() {
   if (R.lugar === "mata") return `achar o diário do vô na casinha do lago (páginas ${paginasVo().length}/${PAGINAS_VO.length})` + (ehNoite() ? " · DE NOITE NÃO: o Curupira anda na trilha" : "");
   if (R.lugar === "vila") return `descobrir o que aconteceu (pistas ${np}/${NPISTAS})` + (ehNoite() ? " · a vila dorme: volte de dia" : "");
   if (R.pecas >= 3) return "leve tudo até a caminhonete no portão e vá embora!";
-  const falta = [["Bateria nova", 120], ["Pneu", 170], ["Motor de arranque", 240]][R.pecas];
+  const falta = PECAS[R.pecas];
   return `juntar ${falta[1]} moedas e comprar ${falta[0].toLowerCase()} na bancada (peças ${R.pecas}/3)` + (ehNoite() ? " · sobreviva até amanhecer" : "") + pp;
 }
 
@@ -885,7 +888,7 @@ function atualizar(dt) {
   const naFaz = jogadores().some(P => (P.lugar || "sitio") === "sitio"); // ninguém no sítio = os bichos de lá esperam
   // o vulto parado na beira da mata à noite (só olha; some quando você chega perto ou ilumina)
   if (naFaz && ehNoite() && !R.dentro) { R.vultoT -= dt; if (!R.vulto && R.vultoT <= 0) { const lado = Math.floor(rnd(0, 3)); R.vulto = lado === 0 ? { x: CERCA.x0 - .7, y: rnd(10, 28) } : lado === 1 ? { x: CERCA.x1 + .7, y: rnd(10, 28) } : { x: rnd(10, 40), y: CERCA.y0 - .7 }; R.vulto.t = 0; } if (R.vulto) { R.vulto.t += dt; const d = dist(R.vulto, R.eu); if (d < (R.lanterna ? 7 : 4) || R.vulto.t > 14) { R.vulto = null; R.vultoT = rnd(25, 45); } } } else R.vulto = null;
-  atualizarGato(dt);
+  jogadores().forEach(P => comJogador(P, () => atualizarGato(dt)));
   if (naFaz) {
     comAlvo(alvoPara(R.seco.x, R.seco.y), () => atualizarSeco(dt));
     if (R.cachorro) comAlvo(alvoPara(R.cachorro.x, R.cachorro.y), () => atualizarCachorro(dt));
@@ -898,16 +901,16 @@ function atualizar(dt) {
   if (Math.floor(R.t * 2) !== Math.floor((R.t - dt) * 2)) hud();
   const o = oQueFazer(); el.rcAcao.textContent = o ? o.t : "Ação"; el.rcAcao.style.opacity = o ? 1 : .5;
 }
-function comecaNoite() { R.velaHoje = true; R.velaEntregue = false; R.velaT = rnd(8, 18); R.sinoUsado = false;
+function comecaNoite() { R.velaHoje = R.dia === 1 || (!R.velaOntem && Math.random() < .4); R.velaOntem = R.velaHoje; R.velaEntregue = false; R.velaT = rnd(8, 18); R.sinoUsado = false;
   // cada noite é sorteada: quem vem, quando vem e quantas vezes (nada de padrão)
-  R.aranha.hoje = R.dia >= 2 && Math.random() < .65; R.aranha.prox = rnd(4, 70);
-  R.mula.hoje = R.dia >= 2 && Math.random() < (R.dia >= 3 ? .6 : .3); R.mula.prox = rnd(6, 60); R.mula.vezes = 0; R.mula.max = 1 + Math.floor(Math.random() * 3);
-  R.esp.dorme = !(R.dia >= 2 && Math.random() < .6); R.esp.limiar = rnd(.1, .65);
-  R.cuca = R.cuca || { fase: "longe" }; R.cuca.hoje = R.dia >= 2 && Math.random() < .4; R.cuca.prox = rnd(20, 100);
-  R.velaT = rnd(3, 40); efeito("Anoiteceu", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
+  R.aranha.hoje = R.dia >= 2 && Math.random() < .45; R.aranha.prox = rnd(4, 70);
+  R.mula.hoje = R.dia >= 2 && Math.random() < (R.dia >= 3 ? .4 : .2); R.mula.prox = rnd(6, 60); R.mula.vezes = 0; R.mula.max = 1 + Math.floor(Math.random() * 2);
+  R.esp.dorme = !(R.dia >= 2 && Math.random() < .45); R.esp.limiar = rnd(.1, .65);
+  R.cuca = R.cuca || { fase: "longe" }; R.cuca.hoje = R.dia >= 2 && Math.random() < .3; R.cuca.prox = rnd(20, 100);
+  R.velaT = rnd(3, 40); efeito(R.velaHoje ? "Anoiteceu... o sino vai tocar" : "Anoiteceu · hoje o sino está quieto", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
 function amanhece() {
   if (R.velaHoje && !R.velaEntregue && jogadores().some(P => (P.lugar || "sitio") === "sitio")) { R.alma = { t: 0 }; return; } // a alma vem cobrar (só se tem alguém no sítio)
-  R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false;
+  R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false; R.saci.hoje = Math.random() < .5; R.saci.prox = rnd(60, 200);
   jogadores().forEach(P => { P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : (P.slot || 1) * .45 - .1); P.eu.y = CASA.porta.y + .7; if (P !== R) enviarPara(P.nid, { t: "pos", x: P.eu.x, y: P.eu.y }); } });
   if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a");
   Object.assign(R.esp, { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste" }); if (R.aranha.fase !== "longe") R.aranha.fase = "sai"; R.mula.fase = "longe";
@@ -938,7 +941,7 @@ function atualizarSeco(dt) {
     if (s.t > 22) { s.fase = "sai"; s.t = 0; S.suspiro(s.x, s.y); }
     return;
   }
-  if (s.fase === "sai") { const dd = s.x < (CERCA.x0 + CERCA.x1) / 2 ? -1 : 1; s.x += dd * 3.6 * dt; s.dir = dd; s.fase2 = (s.fase2 || 0) + dt * 11; if (s.t > 6) { s.fase = "longe"; s.prox = Math.random() < .2 ? rnd(25, 60) : rnd(70, 260) - Math.min(50, R.dia * 6); /* sem padrão: às vezes volta logo */ efeito("Ouviu o suspiro. Já pode sair.", "#9aa8c8"); } }
+  if (s.fase === "sai") { const dd = s.x < (CERCA.x0 + CERCA.x1) / 2 ? -1 : 1; s.x += dd * 3.6 * dt; s.dir = dd; s.fase2 = (s.fase2 || 0) + dt * 11; if (s.t > 6) { s.fase = "longe"; s.prox = Math.random() < .1 ? rnd(50, 90) : rnd(130, 320) - Math.min(40, R.dia * 5); /* sem padrão: às vezes volta logo */ efeito("Ouviu o suspiro. Já pode sair.", "#9aa8c8"); } }
 }
 function atualizarCachorro(dt) {
   const k = R.cachorro; if (!k) return; k.t += dt; if (k.calma > 0) k.calma -= dt;
@@ -979,7 +982,7 @@ function atualizarCasa(dt) {
 /* ---------- jogadores (sozinha ou online) ---------- */
 // No online, o anfitrião simula tudo. O convidado é guardado em R.outros (até 3 amigos) com os mesmos campos do jogador local,
 // e comJogador troca os campos por um instante para reaproveitar as regras escritas para R.eu.
-const CAMPOS = ["lugar", "predio", "andar", "int", "roupa", "garrafada", "broa", "conv", "agua", "vidas", "eu", "dentro", "sala", "lanterna", "correndo", "regando", "velaCom", "pesca", "perto", "caido", "folego", "chapeu", "semente", "cor"];
+const CAMPOS = ["lugar", "predio", "andar", "int", "roupa", "garrafada", "broa", "conv", "agua", "vidas", "eu", "dentro", "sala", "lanterna", "correndo", "regando", "velaCom", "pesca", "perto", "caido", "folego", "chapeu", "semente", "cor", "gato"];
 const jogadores = () => R.online === "host" && R.outros && R.outros.length ? [R, ...R.outros] : [R];
 function comJogador(P, fn) {
   if (!P || P === R || R.trocado) return fn();
@@ -1058,7 +1061,7 @@ function atualizarMula(dt) {
 /* Saci: redemoinho de dia. Seca a plantação e rouba moedas. Com peneira, dá para pegar. */
 function atualizarSaci(dt) {
   const s = R.saci; if (R.tutorial === 0) return; s.t += dt; s.giro = (s.giro || 0) + dt * 9;
-  if (s.fase === "longe") { if (ehNoite() || R.dia < 2 || s.pego) return; s.prox -= dt; if (s.prox > 0) return; Object.assign(s, BORDA(), { fase: "anda", t: 0, alvo: null, secou: 0 }); S.assobio(s.x, s.y); efeito("Um assobio no vento...", "#e8e2d4"); return; }
+  if (s.fase === "longe") { if (ehNoite() || R.dia < 2 || s.pego || s.hoje === false) return; s.prox -= dt; if (s.prox > 0) return; Object.assign(s, BORDA(), { fase: "anda", t: 0, alvo: null, secou: 0 }); S.assobio(s.x, s.y); efeito("Um assobio no vento...", "#e8e2d4"); return; }
   if (s.fase === "anda") {
     if (!s.alvo || dist(s, s.alvo) < .4) { const pl = []; R.canteiros.forEach(k => k.covas.forEach((cv2, i) => { if (cv2 && cv2.est < 3) pl.push({ x: k.x + i % k.w + .5, y: k.y + Math.floor(i / k.w) + .5 }); }));
       const P = alvoPara(s.x, s.y); s.alvo = pl.length && Math.random() < .7 ? pl[Math.floor(Math.random() * pl.length)] : { x: P.eu.x + rnd(-1, 1), y: P.eu.y + rnd(-1, 1) }; }
@@ -1069,10 +1072,10 @@ function atualizarSaci(dt) {
     for (const J of jogadores()) { if (J.dentro || J.caido || (J.lugar || "sitio") !== "sitio" || dist(J.eu, s) > .8) continue;
       if (R.peneira) { R.moedas += 30; s.pego = true; s.fase = "longe"; s.prox = 999; S.risada(s.x, s.y); S.moedas(); R.fx.push({ txt: "Pegou o Saci na peneira! +30", cor: "#f2c94a", t: 0, x: s.x, y: s.y }); hud(); return; }
       const n = R.arruda ? 0 : Math.min(15, Math.ceil(R.moedas * .15)); R.moedas -= n; S.risada(s.x, s.y); R.fx.push({ txt: n ? `O Saci levou ${n} moedas!` : "O Saci riu de você", cor: "#e2483d", t: 0, x: s.x, y: s.y }); s.fase = "sai"; s.t = 0; s.alvo = BORDA(); hud(); return; }
-    if (s.t > 38 || ehNoite()) { s.fase = "sai"; s.t = 0; s.alvo = BORDA(); }
+    if (s.t > 28 || ehNoite()) { s.fase = "sai"; s.t = 0; s.alvo = BORDA(); }
     return;
   }
-  if (s.fase === "sai") { irAte(s, s.alvo, 4, dt); if (s.t > 5) { s.fase = "longe"; s.prox = rnd(30, 170); } }
+  if (s.fase === "sai") { irAte(s, s.alvo, 4, dt); if (s.t > 5) { s.fase = "longe"; s.hoje = false; } } // só uma visita por dia
 }
 /* Espantalho: só anda no escuro. Com a luz da lanterna em cima, congela. */
 function atualizarEspantalho(dt) {
@@ -1208,7 +1211,7 @@ function desenharVoce(x, y, tm, o = {}) {
   c.restore();
   if (o.nome) { c.fillStyle = "rgba(240,235,220,.85)"; c.font = `700 ${Math.round(Math.max(10, TS * .2))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.6)"; c.lineWidth = 3; c.strokeText(o.nome, x, y - 58 * s); c.fillText(o.nome, x, y - 58 * s); c.textAlign = "start"; }
 }
-function desenharGato(g, tm) { const s = TS / 48, x = PX(g.x), y = PY(g.y); sombra(x, y, 9 * s, 3 * s); gatoEm(x, y, s, g.dir, g.anda, tm); }
+function desenharGato(g, tm, ck) { const s = TS / 48, x = PX(g.x), y = PY(g.y); sombra(x, y, 9 * s, 3 * s); gatoEm(x, y, s, g.dir, g.anda, tm, c, ck); }
 function desenharGalinha(g, tm) {
   const s = TS / 48, x = PX(g.x), y = PY(g.y); if (!naTela(x, y, 30)) return; sombra(x, y, 6 * s, 2 * s);
   c.save(); c.translate(x, y); c.scale((g.dir || 1) * s, s); const bic = g.anda ? 0 : Math.max(0, Math.sin(tm * 5 + g.x * 3)) * 3;
@@ -1676,6 +1679,7 @@ function desenharMundo(tm) {
   for (let y = CERCA.y0; y <= CERCA.y1; y++) { if (y !== 17) obj.push([y, () => ce.post(CERCA.x0, y)]); obj.push([y, () => ce.post(CERCA.x1, y)]); if (y < CERCA.y1) { if (y < 15.5 || y > 17.5) obj.push([y + 1, () => ce.trilho(CERCA.x0, y, CERCA.x0, y + 1)]); obj.push([y + 1, () => ce.trilho(CERCA.x1, y, CERCA.x1, y + 1)]); } }
   for (let y = 6; y <= 11; y++) { obj.push([y, () => ce.post(25.5, y)]); obj.push([y, () => ce.post(32.5, y)]); } for (let x = 25.5; x <= 32.5; x++) if (x < 28 || x > 29.5) obj.push([11.6, () => ce.post(x, 11.6)]); // cercadinho
   obj.push([R.gato.y, () => desenharGato(R.gato, tm)]);
+  for (const ou of outros()) if (ou.gato) obj.push([ou.gato.y, () => desenharGato(ou.gato, tm, ou.gato.cor)]);
   if (R.cachorro) obj.push([R.cachorro.y, () => desenharCachorro(R.cachorro, tm)]);
   obj.push([R.seco.y, () => desenharSeco(R.seco, tm)]); if (R.cuca && R.cuca.fase !== "longe") obj.push([R.cuca.y, () => desenharCuca(R.cuca, tm)]);
   if (R.vulto) obj.push([R.vulto.y, () => desenharVulto(R.vulto, tm)]);
@@ -2989,11 +2993,11 @@ function oQueFazerVila() {
   return null;
 }
 function opcoesLoja(id) {
-  const l = [], item = (nome, desc, preco, ok, fn) => l.push({ nome, desc, preco, ok: ok && R.moedas >= preco, fn });
+  const l = [], item = (nome, desc, preco, ok, fn) => { preco = caro(preco); l.push({ nome, desc, preco, ok: ok && R.moedas >= preco, fn }); };
   if (id === "armazem") { const v = Math.round(valorVenda() * 1.25); l.push({ nome: "Vender tudo", desc: v ? `O Joaquim paga ${v} moedas (25% a mais)` : "Você não tem nada para vender", preco: 0, ok: v > 0, fn: () => { R.moedas += Math.round(valorVenda() * 1.25); R.colheita = {}; R.peixes = {}; R.extra = {}; if (R.vara) { R.inv.graveto = 0; R.inv.folha = 0; } } });
     item("Lata de óleo", "Enche a lanterna e as lamparinas", 4, R.oleo < 100, () => { R.oleo = 100; R.lamparinas = R.lamparinas.map(() => 1); }); item("Sal grosso", "Na soleira: a Pisadeira demora o dobro para vir", 25, !R.sal, () => { R.sal = true; }); }
   if (id === "padaria") item("Broa de milho", "Fôlego sem fim por um tempo", 6, !(R.broa > 0), () => { R.broa = 45; });
-  if (id === "costura") ROUPAS_LOJA.forEach(([k, nome, cor, , preco]) => { const tem = roupasCompradas().includes(k); l.push({ cor, nome: (R.roupa === k ? "✓ " : "") + nome, desc: tem ? "Já é sua: toque para vestir" : "Vestido feito no seu tamanho", preco: tem ? 0 : preco, ok: R.roupa !== k && (tem || R.moedas >= preco), fn: () => { R.roupa = k; const c2 = roupasCompradas(); if (!c2.includes(k)) { c2.push(k); ls("roca_roupas", JSON.stringify(c2)); } } }); });
+  if (id === "costura") ROUPAS_LOJA.forEach(([k, nome, cor, , preco0]) => { const preco = caro(preco0); const tem = roupasCompradas().includes(k); l.push({ cor, nome: (R.roupa === k ? "✓ " : "") + nome, desc: tem ? "Já é sua: toque para vestir" : "Vestido feito no seu tamanho", preco: tem ? 0 : preco, ok: R.roupa !== k && (tem || R.moedas >= preco), fn: () => { R.roupa = k; const c2 = roupasCompradas(); if (!c2.includes(k)) { c2.push(k); ls("roca_roupas", JSON.stringify(c2)); } } }); });
   if (id === "ferreiro") { item("Enxada de aço", "As plantas crescem mais rápido", 70, !R.enxada, () => { R.enxada = true; }); item("Lampião de ferro", "Ilumina mais e gasta metade do óleo", 90, !R.lampiao, () => { R.lampiao = true; }); item("Ferradura na porta", "O lobisomem não vira perto da casa", 50, !R.ferradura, () => { R.ferradura = true; }); }
   if (id === "botica") { item("Garrafada", "Se um bicho te pegar, você volta uma vez", 40, !(R.garrafada > 0), () => { R.garrafada = 1; }); item("Raminho de arruda", "O Saci não rouba mais suas moedas", 30, !R.arruda, () => { R.arruda = true; }); }
   if (id === "igreja") item("Água benta", "O Corpo-Seco foge em vez de te pegar (uma vez)", 20, !(R.aguaBenta > 0), () => { R.aguaBenta = 1; });
@@ -3455,7 +3459,7 @@ function hostReceber(id, d, conn) {
     if (!j) {
       if (Net.jog.size >= MAXJ - 1) { if (conn) { try { conn.send({ t: "cheia" }); } catch (e) {} setTimeout(() => { try { conn.close(); } catch (e) {} }, 400); } else enviarPara(id, { t: "cheia" }); return; }
       const usados = new Set([...Net.jog.values()].map(x => x.slot)); let slot = 1; while (usados.has(slot)) slot++;
-      j = { id, conn, slot, nome: limparNome(d.nome) || "Jogador " + (slot + 1), pronto: false }; Net.jog.set(id, j);
+      j = { id, conn, slot, nome: limparNome(d.nome) || "Jogador " + (slot + 1), pronto: false, gc: GATO_CORES[d.gc] ? d.gc : "preto" }; Net.jog.set(id, j);
       if (jogoRodando()) { // a partida já começou: entra direto
         j.pronto = true; R.outros.push(novoOutro(j)); enviarPara(id, { t: "inicio", volta: false, slot }); hud(); S.colher && S.colher(); efeito(`${j.nome} entrou na sala!`, "#9bd86b");
       }
@@ -3468,7 +3472,7 @@ function hostReceber(id, d, conn) {
   if (d.t === "nome") { j.nome = limparNome(d.nome) || j.nome; const o = outros().find(x => x.nid === id); if (o) o.nome = j.nome; avisarLobby(); return; }
   if (d.t === "chat") { const txt = limparTexto(d.txt); if (!txt) return; enviarTodos({ t: "chat", txt, nome: j.nome, slot: j.slot }); receberChat(txt, j.nome, j.slot); return; }
   if (!R || R.online !== "host") return; const o = outros().find(x => x.nid === id); if (!o) return;
-  if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; o.lugar = ["vila", "mata", "esgoto"].includes(d.lugar) ? d.lugar : "sitio"; o.predio = d.predio || null; o.andar = d.andar | 0; if (d.int) o.int = d.int; o.conv = d.conv || {}; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); }
+  if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; o.lugar = ["vila", "mata", "esgoto"].includes(d.lugar) ? d.lugar : "sitio"; o.predio = d.predio || null; o.andar = d.andar | 0; if (d.int) o.int = d.int; o.conv = d.conv || {}; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); if (o.gato && GATO_CORES[d.gc]) o.gato.cor = d.gc; }
   else if (d.t === "acao") { comJogador(o, () => { const a = oQueFazer(); if (a && !a.loc && a.t.split(" ")[0] === String(d.nome).split(" ")[0]) a.fn(); }); hud(); }
   else if (d.t === "compra") { const op = comJogador(o, () => (d.loja ? opcoesLoja(d.loja) : opcoesBancada())).find(x => x.nome.replace(/^✓ /, "") === d.nome); if (op && op.ok) { R.moedas -= op.preco; comJogador(o, op.fn); S.moedas(); hud(); } }
   else if (d.t === "missao") { comJogador(o, () => aplicarMissao(d.id, d.op, d.alvo)); }
@@ -3482,11 +3486,11 @@ function hostSaiu(id) {
 function netEntrar(cod, aoConectar, aoErro) {
   netFechar(); Net.papel = "guest"; cod = cod.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (cod.length !== 5) return aoErro("O código tem 5 letras/números."); Net.codigo = cod;
-  if (usarBC()) { Net.meuId = "g" + Math.random().toString(36).slice(2, 9); Net.bc = new BroadcastChannel("roca-" + cod); Net.bc.onmessage = e => { const d = e.data; if (!d || !d.h || (d.para && d.para !== Net.meuId)) return; netReceber(d); }; enviar({ t: "oi", nome: meuNome() }); aoConectar(); return; }
+  if (usarBC()) { Net.meuId = "g" + Math.random().toString(36).slice(2, 9); Net.bc = new BroadcastChannel("roca-" + cod); Net.bc.onmessage = e => { const d = e.data; if (!d || !d.h || (d.para && d.para !== Net.meuId)) return; netReceber(d); }; enviar({ t: "oi", nome: meuNome(), gc: ls("roca_gato_cor") || "preto" }); aoConectar(); return; }
   if (typeof Peer !== "function") return aoErro("O online não carregou. Confira a internet e tente de novo.");
   const peer = new Peer(undefined, { debug: 0, config: ICE }); Net.peer = peer; let ok = false;
   const desiste = setTimeout(() => { if (!ok) aoErro("Não consegui falar com essa sala. Às vezes a rede (4G ou Wi-Fi) bloqueia; tente outra rede."); }, 20000);
-  peer.on("open", id => { Net.meuId = id; ligarConn(peer.connect(PREFIXO + cod, { reliable: true, serialization: "json" }), () => { ok = true; clearTimeout(desiste); enviar({ t: "oi", nome: meuNome() }); aoConectar(); }); });
+  peer.on("open", id => { Net.meuId = id; ligarConn(peer.connect(PREFIXO + cod, { reliable: true, serialization: "json" }), () => { ok = true; clearTimeout(desiste); enviar({ t: "oi", nome: meuNome(), gc: ls("roca_gato_cor") || "preto" }); aoConectar(); }); });
   peer.on("error", e => { clearTimeout(desiste); aoErro(e.type === "peer-unavailable" ? "Não achei essa sala. Confira o código (e se o anfitrião ainda está com a sala aberta)." : e.type === "network" || e.type === "server-error" || e.type === "socket-error" ? "Sem conexão com o servidor do online. Confira a internet." : "Erro no online: " + e.type); });
 }
 function netCaiu() { // só o convidado cai: o anfitrião trata cada amigo em hostSaiu
@@ -3495,7 +3499,7 @@ function netCaiu() { // só o convidado cai: o anfitrião trata cada amigo em ho
   painelAberto = true; el.rcPainel.hidden = false; el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>A conexão caiu</h2><p>Perdemos o contato com a sala (o anfitrião saiu ou a internet caiu).</p><div class="rc-linha"><button type="button" class="rc-op dest" id="rcSair">Voltar</button></div></div>`;
   el.rcPainel.querySelector("#rcSair").addEventListener("click", () => { fecharPainel(); menuInicial(); });
 }
-const novoOutro = j => ({ nid: j.id, slot: j.slot, nome: j.nome, eu: { x: 14.2 + (j.slot - 1) * .7, y: 12.9 + (j.slot === 2 ? .5 : 0), dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5.6, y: 5.6, dir: 1 }, lanterna: false, correndo: false, regando: 0, velaCom: false, pesca: null, perto: 0, caido: null, folego: 100, chapeu: "palha", semente: 0, cor: j.slot, agua: 5, vidas: 1, lugar: "sitio", predio: null, andar: 0, int: { x: 4.5, y: 5.2, dir: 1 }, roupa: null, garrafada: 0, broa: 0, conv: {} });
+const novoOutro = j => ({ nid: j.id, slot: j.slot, nome: j.nome, eu: { x: 14.2 + (j.slot - 1) * .7, y: 12.9 + (j.slot === 2 ? .5 : 0), dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5.6, y: 5.6, dir: 1 }, lanterna: false, correndo: false, regando: 0, velaCom: false, pesca: null, perto: 0, caido: null, folego: 100, chapeu: "palha", semente: 0, cor: j.slot, agua: 5, vidas: 1, lugar: "sitio", predio: null, andar: 0, int: { x: 4.5, y: 5.2, dir: 1 }, roupa: null, garrafada: 0, broa: 0, conv: {}, gato: { x: 15 + j.slot * .6, y: 12.6 + (j.slot % 2) * .5, alvo: null, prox: 22 + j.slot * 4, dir: 1, anda: 0, cor: j.gc || "preto" } });
 function netReceber(d) {
   if (!d || !d.t || Net.papel !== "guest") return;
   if (d.t === "tchau") return netCaiu();
@@ -3514,23 +3518,24 @@ let aoErroLobby = null;
 const SOM_ORIG = {}; Object.keys(S).forEach(k => { SOM_ORIG[k] = S[k]; if (k === "passo") return; S[k] = (...a) => { SOM_ORIG[k](...a); if (R && R.online === "host" && R.outros && R.outros.length) enviarTodos({ t: "som", k, a }); }; });
 function cairLocal(quem) { if (R.caido) return; R.caido = { quem, t: 0 }; R.dentro = false; R.lanterna = false; R.correndo = false; SOM_ORIG.susto(); try { vibrar(400); } catch (e) {} }
 function estadoPara() {
-  const pl = q => ({ lugar: q.lugar, predio: q.predio, andar: q.andar, int: q.int, roupa: q.roupa, eu: { x: q.eu.x, y: q.eu.y, dir: q.eu.dir, anda: q.eu.anda, fase: q.eu.fase }, dentro: q.dentro, sala: q.sala, lanterna: q.lanterna, regando: q.regando, chapeu: q.chapeu, caido: q.caido ? { quem: q.caido.quem, fora: q.caido.fora } : null, velaCom: q.velaCom, cor: q.cor, perto: q.perto, vidas: q.vidas, agua: q.agua, slot: q === R ? 0 : q.slot, nome: q === R ? R.nome : q.nome });
+  const pl = q => ({ lugar: q.lugar, predio: q.predio, andar: q.andar, int: q.int, roupa: q.roupa, eu: { x: q.eu.x, y: q.eu.y, dir: q.eu.dir, anda: q.eu.anda, fase: q.eu.fase }, dentro: q.dentro, sala: q.sala, lanterna: q.lanterna, regando: q.regando, chapeu: q.chapeu, caido: q.caido ? { quem: q.caido.quem, fora: q.caido.fora } : null, velaCom: q.velaCom, cor: q.cor, perto: q.perto, vidas: q.vidas, agua: q.agua, slot: q === R ? 0 : q.slot, nome: q === R ? R.nome : q.nome, gato: q.gato ? { x: q.gato.x, y: q.gato.y, dir: q.gato.dir, anda: q.gato.anda, cor: q === R ? (ls("roca_gato_cor") || "preto") : q.gato.cor } : null });
   const vs = {}; outros().forEach(o => { vs[o.slot] = { roupa: o.roupa, garrafada: o.garrafada, broa: o.broa, caido: o.caido ? { quem: o.caido.quem, fora: o.caido.fora } : null, velaCom: o.velaCom, regando: o.regando, agua: o.agua, vidas: o.vidas }; });
   return { t: "s", T: R.t, dia: R.dia, moedas: R.moedas, agua: R.agua, aguaMax: R.aguaMax, oleo: R.oleo, vel: R.vel, lanternaBoa: R.lanternaBoa, sementes: R.sementes, vara: R.vara, pecas: R.pecas, peneira: R.peneira,
     missoes: R.missoes, mprog: R.mprog, apito: R.apito, guizo: R.guizo, isca: R.isca, medalha: R.medalha, enxada: R.enxada, lampiao: R.lampiao, ferradura: R.ferradura, sal: R.sal, arruda: R.arruda, aguaBenta: R.aguaBenta, inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
-    gato: R.gato, cachorro: R.cachorro, seco: R.seco, vulto: R.vulto, vela: R.vela, velaEntregue: R.velaEntregue, velaHoje: R.velaHoje, alma: R.alma, galinhas: R.galinhas, porcos: R.porcos,
+    cachorro: R.cachorro, seco: R.seco, vulto: R.vulto, vela: R.vela, velaEntregue: R.velaEntregue, velaHoje: R.velaHoje, alma: R.alma, galinhas: R.galinhas, porcos: R.porcos,
     aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, curu: R.curu, cuca: R.cuca, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
     jogs: jogadores().map(pl), vs };
 }
-const SUAVE = ["gato", "cachorro", "seco", "aranha", "esp", "saci", "vulto", "mula", "curu", "cuca"];
+const SUAVE = ["cachorro", "seco", "aranha", "esp", "saci", "vulto", "mula", "curu", "cuca"];
 function aplicarEstado(d) {
   const suave = (velho, novo) => { if (velho && novo && novo.x != null && velho.x != null && Math.hypot(novo.x - velho.x, novo.y - velho.y) < 4) { novo.ax = novo.x; novo.ay = novo.y; novo.x = velho.x; novo.y = velho.y; } };
   SUAVE.forEach(k => suave(R[k], d[k])); ["galinhas", "porcos"].forEach(k => d[k] && d[k].forEach((g, i) => suave(R[k] && R[k][i], g)));
   const velhos = R.outros || []; R.outros = (d.jogs || []).filter(j => j.slot !== R.slot);
-  R.outros.forEach(j => { const v = velhos.find(x => x.slot === j.slot); if (v) { suave(v.eu, j.eu); if (v.sala && j.sala) suave(v.sala, j.sala); } });
+  R.outros.forEach(j => { const v = velhos.find(x => x.slot === j.slot); if (v) { suave(v.eu, j.eu); if (v.sala && j.sala) suave(v.sala, j.sala); if (v.gato && j.gato) suave(v.gato, j.gato); } });
+  const meu = (d.jogs || []).find(j => j.slot === R.slot); if (meu && meu.gato) { suave(R.gato, meu.gato); R.gato = meu.gato; }
   d.voce = d.vs && d.vs[R.slot];
   ["missoes", "mprog", "apito", "guizo", "isca", "medalha", "enxada", "lampiao", "ferradura", "sal", "arruda", "aguaBenta", "dia", "moedas", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
-    "gato", "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "tempoTotal"].forEach(k => { R[k] = d[k]; });
+    "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "tempoTotal"].forEach(k => { R[k] = d[k]; });
   R.t = d.T; R.fxR = d.fx || []; R.semente = cl(R.semente, 0, R.sementes.length - 1);
   d.canteiros.forEach(([a, cv2], i) => { R.canteiros[i].aberto = a; R.canteiros[i].covas = cv2; });
   if (d.voce) { R.roupa = d.voce.roupa; R.garrafada = d.voce.garrafada; if (d.voce.broa > 0 && !(R.broa > 0)) R.broa = d.voce.broa; R.agua = d.voce.agua; R.vidas = d.voce.vidas; if (d.voce.caido) { cairLocal(d.voce.caido.quem); R.caido.fora = d.voce.caido.fora; } else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
@@ -3544,7 +3549,7 @@ function atualizarConvidado(dt) {
   R.poeira.forEach(q => { q.t += dt; q.y -= dt * .3; }); R.poeira = R.poeira.filter(q => q.t < .8);
   if (R.susto > 0) R.susto -= dt; if (R.tremor > 0) R.tremor -= dt;
   const k = Math.min(1, dt * 10), lerp = o => { if (o && o.ax != null) { o.x = mix(o.x, o.ax, k); o.y = mix(o.y, o.ay, k); } };
-  SUAVE.forEach(n => lerp(R[n])); R.galinhas.forEach(lerp); R.porcos.forEach(lerp); outros().forEach(o => { lerp(o.eu); lerp(o.sala); });
+  SUAVE.forEach(n => lerp(R[n])); R.galinhas.forEach(lerp); R.porcos.forEach(lerp); lerp(R.gato); outros().forEach(o => { lerp(o.eu); lerp(o.sala); lerp(o.gato); });
   if (R.morto) { R.morto.t += dt; return; }
   if (R.venceu) { R.venceu.t += dt; if (R.venceu.t > 4.5 && !R.venceu.tela) { R.venceu.tela = true; telaFim("venceu"); } return; }
   if (R.caido) R.caido.t += dt;
@@ -3552,7 +3557,7 @@ function atualizarConvidado(dt) {
   moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); atualizarPesca(dt);
   if (R.oleo <= 0) R.lanterna = false;
   R.perto = calcPerto(); musicaPasso(dt);
-  Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .066; enviar({ t: "eu", eu: { x: R.eu.x, y: R.eu.y, dir: R.eu.dir, anda: R.eu.anda, fase: R.eu.fase }, dentro: R.dentro, sala: R.sala, lugar: R.lugar, predio: R.predio, andar: R.andar, int: R.int, conv: R.conv, lanterna: R.lanterna, correndo: R.correndo, chapeu: R.chapeu, semente: R.semente }); }
+  Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .066; enviar({ t: "eu", eu: { x: R.eu.x, y: R.eu.y, dir: R.eu.dir, anda: R.eu.anda, fase: R.eu.fase }, dentro: R.dentro, sala: R.sala, lugar: R.lugar, predio: R.predio, andar: R.andar, int: R.int, conv: R.conv, lanterna: R.lanterna, correndo: R.correndo, chapeu: R.chapeu, semente: R.semente, gc: ls("roca_gato_cor") || "preto" }); }
   if (Math.floor(R.t * 2) !== Math.floor((R.t - dt) * 2)) hud();
   const o = oQueFazer(); el.rcAcao.textContent = o ? o.t : "Ação"; el.rcAcao.style.opacity = o ? 1 : .5;
 }
@@ -3581,8 +3586,8 @@ window.rocaChat = mandarChat; // usado nos testes
 /* ---------- menu do modo: sozinha, criar sala, entrar ---------- */
 /* ---------- tela inicial: o sítio de dia, a Yasmin e a Sombrinha ---------- */
 let TIT = null;
-function gatoEm(x, y, s, dir, anda, tm, cx = c) {
-  const [, corG, corL, corO, listra] = corGato();
+function gatoEm(x, y, s, dir, anda, tm, cx = c, ck) {
+  const [, corG, corL, corO, listra] = (ck && GATO_CORES[ck]) || corGato();
   cx.save(); cx.translate(x, y); cx.scale((dir || 1) * s, s); const pa = anda ? Math.sin(tm * 14) * 2 : 0;
   cx.fillStyle = corG; cx.fillRect(-7 + pa, -5, 2.5, 5); cx.fillRect(4 - pa, -5, 2.5, 5);
   cx.beginPath(); cx.ellipse(0, -8, 9, 5, 0, 0, 7); cx.fill(); cx.beginPath(); cx.arc(8, -13, 5, 0, 7); cx.fill();
