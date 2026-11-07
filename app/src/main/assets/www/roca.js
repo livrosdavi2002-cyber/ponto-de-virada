@@ -307,7 +307,7 @@ function montarUI() {
   d.innerHTML = `<canvas id="rocaCv"></canvas>
     <div class="rc-hud"><div class="rc-l"><b id="rcMoedas">0</b><span id="rcDia">Dia 1</span></div>
       <div class="rc-barras"><i class="rc-b agua"><s id="rcAgua"></s></i><i class="rc-b oleo"><s id="rcOleo"></s></i><i class="rc-b folego"><s id="rcFolego"></s></i></div>
-      <div class="rc-vidas" id="rcVidas"></div><div class="rc-itens" id="rcItens"></div><button class="rc-menu rc-moch rc-chatbt" id="rcChat" type="button" aria-label="Chat" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-7l-6 5v-5h-3a4 4 0 0 1-4-4z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="11" cy="12.5" r="1.6" fill="currentColor"/><circle cx="16" cy="12.5" r="1.6" fill="currentColor"/><circle cx="21" cy="12.5" r="1.6" fill="currentColor"/></svg><i id="rcChatN" hidden></i></button><button class="rc-menu rc-moch" id="rcMoch" type="button" aria-label="Mochila"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="8" width="18" height="20" rx="6" fill="#8a5a32" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="17" width="11" height="8" rx="2.5" fill="#6a4224" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 19.5h11" stroke="currentColor" stroke-width="1"/><circle cx="16" cy="21.5" r="1.1" fill="#f2c94a"/></svg></button><button class="rc-menu" id="rcMenu" type="button">Pausa</button></div>
+      <div class="rc-vidas" id="rcVidas"></div><div class="rc-sala" id="rcSala" hidden></div><div class="rc-itens" id="rcItens"></div><button class="rc-menu rc-moch rc-chatbt" id="rcChat" type="button" aria-label="Chat" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-7l-6 5v-5h-3a4 4 0 0 1-4-4z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="11" cy="12.5" r="1.6" fill="currentColor"/><circle cx="16" cy="12.5" r="1.6" fill="currentColor"/><circle cx="21" cy="12.5" r="1.6" fill="currentColor"/></svg><i id="rcChatN" hidden></i></button><button class="rc-menu rc-moch" id="rcMoch" type="button" aria-label="Mochila"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="8" width="18" height="20" rx="6" fill="#8a5a32" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="17" width="11" height="8" rx="2.5" fill="#6a4224" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 19.5h11" stroke="currentColor" stroke-width="1"/><circle cx="16" cy="21.5" r="1.1" fill="#f2c94a"/></svg></button><button class="rc-menu" id="rcMenu" type="button">Pausa</button></div>
     <div class="rc-obj" id="rcObj"></div><div class="rc-chatlog" id="rcChatLog"></div>
     <div class="rc-chatbar" id="rcChatBar" hidden><div class="rc-rapidas">${["Socorro!", "Vem aqui!", "Corre!", "Tô indo!", "Apaga a lanterna!", "Vou vender", "Cuidado!", "Valeu!"].map(t => `<button type="button" data-r="${t}">${t}</button>`).join("")}</div>
       <form id="rcChatF"><input id="rcChatIn" maxlength="80" autocomplete="off" placeholder="Escreva para o seu amigo..."><button type="submit">Enviar</button><button type="button" id="rcChatX" aria-label="Fechar">✕</button></form></div>
@@ -318,7 +318,8 @@ function montarUI() {
     <div class="rc-painel" id="rcPainel" hidden></div>
     <div class="rc-gire" id="rcGire" hidden><b>Vire o celular</b><span>Este modo é jogado com o celular deitado.</span></div>`;
   document.body.appendChild(d);
-  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcMoch", "rcTitulo", "rcTitMenu", "rcTitRod"].forEach(i => el[i] = document.getElementById(i));
+  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcSala", "rcMoch", "rcTitulo", "rcTitMenu", "rcTitRod"].forEach(i => el[i] = document.getElementById(i));
+  el.rcSala.addEventListener("click", () => { const c = Net.codigo; if (!c) return; try { navigator.clipboard.writeText(c).then(() => R && efeito("Código " + c + " copiado", "#f2c94c"), () => {}); } catch (e) {} });
   cv = document.getElementById("rocaCv"); c = cv.getContext("2d"); luzCv = document.createElement("canvas"); lc = luzCv.getContext("2d");
   const st = document.createElement("style"); st.textContent = `
   #roca{position:fixed;inset:0;z-index:300;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;font-family:var(--f-mono,monospace)}
@@ -342,7 +343,7 @@ function montarUI() {
   .rc-bt svg{width:34px;height:34px;display:block;margin:auto}.rc-bt.luz.on .chama{filter:drop-shadow(0 0 4px #f2c94a)}.rc-bt.luz:not(.on) .chama{fill:rgba(255,255,255,.25)}
   .rc-moch{margin-left:auto;padding:4px 8px}.rc-moch svg{width:28px;height:28px;display:block}.rc-moch + .rc-menu{margin-left:0}
   .rc-obj{position:absolute;left:max(12px,env(safe-area-inset-left));top:52px;max-width:38vw;color:#f2c94a;font:600 10.5px/1.3 var(--f-mono,monospace);text-shadow:0 1px 4px #000;pointer-events:none;letter-spacing:.02em}
-  .rc-vidas{display:flex;flex-direction:column;gap:2px;color:#f4efe4;font-size:10px;text-shadow:0 1px 4px #000}.rc-vidas b{color:#e2483d;font-size:13px;letter-spacing:1px}
+  .rc-sala{color:#f4efe4;font-size:11px;text-shadow:0 1px 4px #000;background:#0008;border:1px solid #ffffff30;padding:2px 6px;align-self:flex-start;pointer-events:auto;cursor:pointer;letter-spacing:.5px}.rc-sala b{color:#f2c94c;font-size:13px;letter-spacing:2px}.rc-vidas{display:flex;flex-direction:column;gap:2px;color:#f4efe4;font-size:10px;text-shadow:0 1px 4px #000}.rc-vidas b{color:#e2483d;font-size:13px;letter-spacing:1px}
   .rc-dia-pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.rc-bicho{display:flex;gap:10px;background:#e8dcc0;color:#2a1e12;border-radius:6px;padding:8px;box-shadow:0 2px 0 rgba(0,0,0,.3)}
   .rc-bicho canvas{width:84px;height:100px;flex:none;background:#111;border:4px solid #f4efe4;border-bottom-width:12px;transform:rotate(-2deg);filter:sepia(.55) contrast(1.15) grayscale(.2)}
   .rc-bicho b{display:block;font:800 17px "Big Shoulders Display",sans-serif;color:#5a1a10}.rc-bicho span{font:13px/1.35 var(--f-body,serif)}.rc-bicho i{display:block;font:italic 12px/1.3 var(--f-body,serif);color:#6a5a40;margin-top:4px}
@@ -813,6 +814,8 @@ function hud() {
   const comAmigo = !!(R.online && R.outro && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
   el.rcObj.textContent = R.menu ? "" : "Objetivo: " + objetivo();
   const cor = n => n > 0 ? "♥" : "♡";
+  const sala = R.online && Net.codigo && !R.menu ? `SALA <b>${Net.codigo}</b>${R.online === "host" ? (R.outro ? " · amigo junto" : " · esperando amigo") : ""}` : "";
+  if (el.rcSala.dataset.k !== sala) { el.rcSala.dataset.k = sala; el.rcSala.innerHTML = sala; el.rcSala.hidden = !sala; }
   el.rcVidas.innerHTML = R.online && R.outro ? `<span>Você <b>${cor(R.vidas)}</b></span><span>${R.online === "host" ? "Amigo" : "Yasmin"} <b>${cor(R.outro.vidas)}</b></span>` : "";
 }
 function objetivo() {
@@ -3413,21 +3416,21 @@ const usarBC = () => /[?&]bc\b/.test(location.search);
 const novoCodigo = () => Array.from({ length: 5 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 31)]).join("");
 const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }, { urls: "stun:global.stun.twilio.com:3478" }] };
 function enviar(o) { try { if (Net.bc) Net.bc.postMessage(o); else if (Net.conn && Net.conn.open) Net.conn.send(o); } catch (e) {} }
-function netFechar() { try { if (Net.conn) Net.conn.close(); } catch (e) {} try { if (Net.peer) Net.peer.destroy(); } catch (e) {} try { if (Net.bc) { Net.bc.postMessage({ t: "tchau" }); Net.bc.close(); } } catch (e) {} Net.peer = Net.conn = Net.bc = null; Net.papel = null; }
+function netFechar() { try { if (Net.conn) Net.conn.close(); } catch (e) {} try { if (Net.peer) Net.peer.destroy(); } catch (e) {} try { if (Net.bc) { Net.bc.postMessage({ t: "tchau" }); Net.bc.close(); } } catch (e) {} Net.peer = Net.conn = Net.bc = null; Net.papel = null; Net.ligado = false; Net.codigo = ""; }
 function ligarConn(conn, aoAbrir) { Net.conn = conn; conn.on("open", () => aoAbrir && aoAbrir()); conn.on("data", netReceber); conn.on("close", netCaiu); conn.on("error", netCaiu); }
 function netCriar(aoCodigo, aoEntrar, aoErro) {
-  netFechar(); Net.papel = "host"; const cod = novoCodigo();
+  netFechar(); Net.papel = "host"; const cod = novoCodigo(); Net.codigo = cod;
   if (usarBC()) { Net.bc = new BroadcastChannel("roca-" + cod); Net.bc.onmessage = e => { if (e.data && e.data.t === "oi" && !Net.ligado) { Net.ligado = true; aoEntrar(); } else netReceber(e.data); }; setTimeout(() => aoCodigo(cod), 50); return; }
   if (typeof Peer !== "function") return aoErro("O online não carregou. Confira a internet e tente de novo.");
   const peer = new Peer(PREFIXO + cod, { debug: 0, config: ICE }); Net.peer = peer;
   peer.on("open", () => aoCodigo(cod));
-  peer.on("connection", conn => { if (Net.conn && Net.conn.open) { conn.on("open", () => { conn.send({ t: "cheia" }); setTimeout(() => conn.close(), 300); }); return; } ligarConn(conn, () => aoEntrar()); });
+  peer.on("connection", conn => { if (Net.conn && Net.conn.open) { conn.on("open", () => { conn.send({ t: "cheia" }); setTimeout(() => conn.close(), 300); }); return; } ligarConn(conn, () => { Net.ligado = true; aoEntrar(); }); });
   peer.on("disconnected", () => { try { peer.reconnect(); } catch (e) {} });
   peer.on("error", e => { if (e.type === "unavailable-id") return netCriar(aoCodigo, aoEntrar, aoErro); aoErro(e.type === "network" || e.type === "server-error" || e.type === "socket-error" ? "Sem conexão com o servidor do online. Confira a internet." : "Erro no online: " + e.type); });
 }
 function netEntrar(cod, aoConectar, aoErro) {
   netFechar(); Net.papel = "guest"; cod = cod.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  if (cod.length !== 5) return aoErro("O código tem 5 letras/números.");
+  if (cod.length !== 5) return aoErro("O código tem 5 letras/números."); Net.codigo = cod;
   if (usarBC()) { Net.bc = new BroadcastChannel("roca-" + cod); Net.bc.onmessage = e => netReceber(e.data); Net.bc.postMessage({ t: "oi" }); aoConectar(); return; }
   if (typeof Peer !== "function") return aoErro("O online não carregou. Confira a internet e tente de novo.");
   const peer = new Peer(undefined, { debug: 0, config: ICE }); Net.peer = peer; let ok = false;
@@ -3436,7 +3439,15 @@ function netEntrar(cod, aoConectar, aoErro) {
   peer.on("error", e => { clearTimeout(desiste); aoErro(e.type === "peer-unavailable" ? "Não achei essa sala. Confira o código (e se o amigo ainda está esperando)." : e.type === "network" || e.type === "server-error" || e.type === "socket-error" ? "Sem conexão com o servidor do online. Confira a internet." : "Erro no online: " + e.type); });
 }
 function netCaiu() {
-  if (!Net.papel) return; const era = Net.papel; netFechar();
+  if (!Net.papel) return; const era = Net.papel;
+  if (era === "host" && R && window.rocaAtiva && R.online === "host") {
+    // a sala continua aberta: o amigo pode voltar com o mesmo código
+    if (!Net.ligado && !Net.conn) return;
+    try { if (Net.conn) Net.conn.close(); } catch (e) {} Net.conn = null; Net.ligado = false;
+    R.outro = null; abrirChat && el.rcChatBar && !el.rcChatBar.hidden && abrirChat(false); hud();
+    efeito(`Seu amigo saiu. A sala ${Net.codigo} continua aberta.`, "#e8e2d4"); return;
+  }
+  netFechar();
   if (!R || !window.rocaAtiva) return;
   if (era === "host") { R.outro = null; R.online = null; efeito("Seu amigo saiu. Você continua sozinha.", "#e8e2d4"); return; }
   painelAberto = true; el.rcPainel.hidden = false; el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>A conexão caiu</h2><p>Perdemos o contato com a sala do seu amigo.</p><div class="rc-linha"><button type="button" class="rc-op dest" id="rcSair">Voltar</button></div></div>`;
@@ -3733,8 +3744,18 @@ function criarSala() {
   telaSala(`<h2>Criando sala...</h2><p id="rcSt">Conectando ao servidor do online.</p>`);
   const st = t => { const e = document.getElementById("rcSt"); if (e) e.textContent = t; };
   netCriar(cod => telaSala(`<h2>Sala criada</h2><p>Mande este código para o seu amigo. Ele abre a Roça Assombrada, toca em <b>Entrar numa sala</b> e digita:</p>
-      <div class="rc-codigo" id="rcCodigo">${cod}</div><p id="rcSt" style="font-size:13px">Esperando o amigo entrar... (os dois precisam de internet)</p>`),
-    () => iniciarJogo("host"), err => st(err));
+      <div class="rc-codigo" id="rcCodigo">${cod}</div><p id="rcSt" style="font-size:13px">Esperando o amigo entrar... (os dois precisam de internet)</p>
+      <div class="rc-linha"><button type="button" class="rc-op dest" id="rcComecar">Começar a jogar agora</button></div>
+      <p style="font-size:12px;opacity:.8">Pode começar sozinha: o amigo entra depois, no meio do jogo. O código fica no canto da tela.</p>`) || ligarComecar(),
+    amigoEntrou, err => st(err));
+}
+function ligarComecar() { const b = document.getElementById("rcComecar"); if (b) b.addEventListener("click", () => iniciarJogo("host")); }
+function amigoEntrou() {
+  if (R && window.rocaAtiva && R.online === "host" && el.rcTitulo.hidden) {
+    R.outro = novoOutro(); enviar({ t: "inicio", volta: false }); hud();
+    S.colher && S.colher(); efeito("Seu amigo entrou na sala!", "#9bd86b"); return;
+  }
+  iniciarJogo("host");
 }
 function entrarSala() {
   telaSala(`<h2>Entrar numa sala</h2><p>Digite o código de 5 letras que seu amigo recebeu ao criar a sala.</p>
@@ -3750,7 +3771,7 @@ function entrarSala() {
 function iniciarJogo(modo, semTutorial) {
   fecharPainel(); mostrarTitulo(false); novoJogo(); R.online = modo === "solo" ? null : modo; R.cor = modo === "guest" ? 1 : 0;
   if (modo === "guest") { R.eu.x = 14.2; R.eu.y = 12.9; }
-  if (modo === "host") { R.outro = novoOutro(); enviar({ t: "inicio", volta: !!semTutorial }); }
+  if (modo === "host") { R.outro = Net.ligado ? novoOutro() : null; if (R.outro) enviar({ t: "inicio", volta: !!semTutorial }); }
   hud();
   const comeca = () => { if (!R) return; R.menu = false; if (semTutorial) R.tutorial = 1; else tutorial(); };
   if (!ls("roca_hist")) { R.menu = modo === "solo"; historia(comeca); } else comeca();
