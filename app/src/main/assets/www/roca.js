@@ -775,7 +775,7 @@ function pausar() {
     ${R.online ? `<p style="font-size:13px;color:#9bd86b">Jogando online${R.online === "host" ? (R.outro ? " · amigo conectado" : " · sozinha agora") : " · na sala do amigo"}. O jogo não para no online.</p>` : ""}
     <div class="rc-linha"><button type="button" class="rc-op dest" id="rcVoltar">Continuar</button><button type="button" class="rc-op" id="rcSair">Sair da partida</button></div></div>`;
   document.getElementById("rcVoltar").addEventListener("click", fecharPainel);
-  document.getElementById("rcSair").addEventListener("click", () => { fecharPainel(); R.menu = true; menuInicial(); });
+  el.rcPainel.querySelector("#rcSair").addEventListener("click", () => { fecharPainel(); R.menu = true; menuInicial(); });
 }
 function telaFim(tipo) {
   painelAberto = true; el.rcPainel.hidden = false;
@@ -787,7 +787,7 @@ function telaFim(tipo) {
   if (reinicia) setTimeout(() => { if (R && R.morto && R.online === "host" && R.outro) { fecharPainel(); iniciarJogo("host", true); } }, 6500);
   el.rcPainel.innerHTML = `<div class="rc-caixa">${txt}${conv ? `<p style="font-size:13px">${tipo === "morreu" ? "As duas caíram. A sala continua aberta: o sítio volta para o dia 1 em instantes..." : "Esperando o anfitrião começar outra partida..."}</p>` : reinicia ? `<p style="font-size:13px;color:#f2c94a">As duas caíram. A sala continua aberta: voltando para o dia 1 em 6 segundos...</p>` : ""}<div class="rc-linha">${conv ? "" : `<button type="button" class="rc-op dest" id="rcDeNovo">Jogar de novo</button>`}<button type="button" class="rc-op" id="rcSair">Menu</button></div></div>`;
   if (!conv) document.getElementById("rcDeNovo").addEventListener("click", () => { const m = R.online && R.outro ? "host" : "solo"; fecharPainel(); iniciarJogo(m); });
-  document.getElementById("rcSair").addEventListener("click", () => { fecharPainel(); R.menu = true; menuInicial(); });
+  el.rcPainel.querySelector("#rcSair").addEventListener("click", () => { fecharPainel(); R.menu = true; menuInicial(); });
 }
 function morrer(quem, porque, dica) { if (R.morto || R.venceu || R.caido) return;
   if (quem === "seco" && R.aguaBenta > 0) { R.aguaBenta = 0; R.seco.fase = "sai"; R.seco.t = 0; S.suspiro(R.seco.x, R.seco.y); efeito("A água benta queimou o Corpo-Seco! Ele fugiu", "#9ad0f0"); hud(); return; }
@@ -2712,7 +2712,7 @@ function desenharCabanaFora(tm) {
   c.fillStyle = "#1a1410"; for (let i = 0; i < 8; i++) c.fillRect(x0 + w * (.1 + i * .1), y0 + h * (.02 + Math.abs(i - 4) * .06), w * .08, 3); c.fillStyle = "#2a3a1a"; c.beginPath(); c.ellipse(x0 + w * .25, y0 + h * .2, w * .12, h * .06, -.3, 0, 7); c.fill(); // musgo
   c.fillStyle = "#1a140e"; c.fillRect(x0 + w * .78, y0 - h * .2, TS * .35, h * .35); // chaminé torta
   const pt = PX(B.porta.x) - TS * .4; c.fillStyle = "#140e08"; c.fillRect(pt, y0 + h * .48, TS * .8, h * .52); c.fillStyle = "#5a4a2a"; c.fillRect(pt + TS * .62, y0 + h * .75, 4, 4);
-  const luz = paginasVo().length && !ehNoite() ? 0 : 1; [[.14], [.52]].forEach(([fx]) => { const jx = x0 + w * fx, jy = y0 + h * .45, jw = TS * .9, jh = TS * .65; c.fillStyle = ehNoite() ? `rgba(240,170,70,${.55 + .15 * Math.sin(tm * 7 + fx * 9)})` : "#1a2228"; c.fillRect(jx, jy, jw, jh); c.fillStyle = "#2a1a0e"; c.fillRect(jx + jw / 2 - 1.5, jy, 3, jh); c.fillRect(jx, jy + jh / 2 - 1.5, jw, 3); if (ehNoite() && luz && Math.sin(tm * .5 + fx * 4) > .9) { c.fillStyle = "rgba(0,0,0,.85)"; c.beginPath(); c.ellipse(jx + jw * .5, jy + jh * .65, jw * .2, jh * .45, 0, 0, 7); c.fill(); } }); // alguém passa na janela
+  const luz = paginasVo().length && !ehNoite() ? 0 : 1; [[.08], [.7]].forEach(([fx]) => { const jx = x0 + w * fx, jy = y0 + h * .45, jw = TS * .9, jh = TS * .65; c.fillStyle = ehNoite() ? `rgba(240,170,70,${.55 + .15 * Math.sin(tm * 7 + fx * 9)})` : "#1a2228"; c.fillRect(jx, jy, jw, jh); c.fillStyle = "#2a1a0e"; c.fillRect(jx + jw / 2 - 1.5, jy, 3, jh); c.fillRect(jx, jy + jh / 2 - 1.5, jw, 3); if (ehNoite() && luz && Math.sin(tm * .5 + fx * 4) > .9) { c.fillStyle = "rgba(0,0,0,.85)"; c.beginPath(); c.ellipse(jx + jw * .5, jy + jh * .65, jw * .2, jh * .45, 0, 0, 7); c.fill(); } }); // alguém passa na janela
   c.fillStyle = "#5a4a3a"; c.fillRect(x0 + w * .88, y0 + h * .78, TS * .3, TS * .35); // balde
   if (ehNoite()) for (let i = 0; i < 3; i++) { c.fillStyle = `rgba(160,160,150,${.08 + .04 * i})`; c.beginPath(); c.arc(x0 + w * .82 + Math.sin(tm + i) * 6, y0 - h * .3 - i * TS * .35 - (tm * 8 % 12), TS * (.18 + i * .07), 0, 7); c.fill(); } // fumaça: tem fogo aceso lá dentro
 }
@@ -3311,7 +3311,7 @@ function netCaiu() {
   if (!R || !window.rocaAtiva) return;
   if (era === "host") { R.outro = null; R.online = null; efeito("Seu amigo saiu. Você continua sozinha.", "#e8e2d4"); return; }
   painelAberto = true; el.rcPainel.hidden = false; el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>A conexão caiu</h2><p>Perdemos o contato com a sala do seu amigo.</p><div class="rc-linha"><button type="button" class="rc-op dest" id="rcSair">Voltar</button></div></div>`;
-  document.getElementById("rcSair").addEventListener("click", () => { fecharPainel(); menuInicial(); });
+  el.rcPainel.querySelector("#rcSair").addEventListener("click", () => { fecharPainel(); menuInicial(); });
 }
 const novoOutro = () => ({ eu: { x: 14.2, y: 12.9, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5.6, y: 5.6, dir: 1 }, lanterna: false, correndo: false, regando: 0, velaCom: false, pesca: null, perto: 0, caido: null, folego: 100, chapeu: "palha", semente: 0, cor: 1, agua: 5, vidas: 1, lugar: "sitio", predio: null, andar: 0, int: { x: 4.5, y: 5.2, dir: 1 }, roupa: null, garrafada: 0, broa: 0, conv: {} });
 function netReceber(d) {
@@ -3505,7 +3505,7 @@ function musicaTitulo(t) { // musiquinha de caixinha de música + passarinhos
 }
 function mostrarTitulo(on) {
   const d = el.rcTitulo; if (!d) return; d.hidden = !on;
-  if (!on) { TIT = null; return; }
+  if (!on) { TIT = null; el.rcTitMenu.innerHTML = ""; return; }
   if (TIT) return; TIT = { t0: performance.now(), n: 0, prox: 0 }; const cv2 = document.getElementById("rcTitCv"), g = cv2.getContext("2d");
   const q = now => { if (!TIT || d.hidden) return; const dpr = Math.min(2, devicePixelRatio || 1), w = cv2.clientWidth || d.clientWidth || innerWidth, h = cv2.clientHeight || d.clientHeight || innerHeight; if (cv2.width !== Math.round(w * dpr) || cv2.height !== Math.round(h * dpr)) { cv2.width = Math.round(w * dpr); cv2.height = Math.round(h * dpr); } g.setTransform(dpr, 0, 0, dpr, 0, 0); const t = (now - TIT.t0) / 1000; if (!TIT.prox) TIT.prox = t + .5; desenharTitulo(g, w, h, t); musicaTitulo(t); requestAnimationFrame(q); };
   requestAnimationFrame(q);
@@ -3514,11 +3514,11 @@ const ICS_MENU = { jogar: '<svg viewBox="0 0 16 16"><path d="M4 2h2v2h2v2h2v2h-2
 function telaTituloMenu(sub) {
   const m = el.rcTitMenu, b = (id, ic, txt, sm, cls = "") => `<button type="button" class="rc-tbt ${cls}" id="${id}"><i>${ICS_MENU[ic]}</i><span>${txt}${sm ? `<small>${sm}</small>` : ""}</span></button>`;
   if (sub === "online") m.innerHTML = `<h3>Jogar com amigo</h3>${b("rcCriar", "criar", "Criar sala", "Gera um código")}${b("rcEntrarSala", "entrar", "Entrar numa sala", "Digite o código")}${b("rcTVolta", "voltar", "Voltar")}`;
-  else m.innerHTML = `${b("rcSolo", "jogar", "Jogar", "Você e a Sombrinha", "dest")}${b("rcTOn", "online", "Jogar com amigo", "Pela internet")}${b("rcHistBt", "hist", "A história", "Como tudo começou")}${window.ROCA_SOLO ? b("rcOpcoes", "opc", "Opções") : ""}${window.ROCA_SOLO ? (window.PC || (window.Android && Android.sair) ? b("rcSair", "sair", "Sair do jogo") : "") : b("rcSair", "voltar", "Voltar ao menu")}`;
+  else m.innerHTML = `${b("rcSolo", "jogar", "Jogar", "Você e a Sombrinha", "dest")}${b("rcTOn", "online", "Jogar com amigo", "Pela internet")}${b("rcHistBt", "hist", "A história", "Como tudo começou")}${window.ROCA_SOLO ? b("rcOpcoes", "opc", "Opções") : ""}${window.ROCA_SOLO ? (window.PC || (window.Android && Android.sair) ? b("rcTSair", "sair", "Sair do jogo") : "") : b("rcTSair", "voltar", "Voltar ao menu")}`;
   const on = (id, fn) => { const e = document.getElementById(id); if (e) e.addEventListener("click", () => { initAudio(); tocarTom(660, .06, { tipo: "square", vol: .04 }); fn(); }); };
   on("rcSolo", () => iniciarJogo("solo")); on("rcTOn", () => telaTituloMenu("online")); on("rcTVolta", () => telaTituloMenu());
   on("rcCriar", criarSala); on("rcEntrarSala", entrarSala); on("rcHistBt", () => { mostrarTitulo(false); historia(menuInicial); }); on("rcOpcoes", opcoes);
-  on("rcSair", () => { if (window.ROCA_SOLO) { if (window.PC) PC.sair(); else if (window.Android && Android.sair) Android.sair(); return; } mostrarTitulo(false); sairRoca(); });
+  on("rcTSair", () => { if (window.ROCA_SOLO) { try { if (window.PC) PC.sair(); else if (window.Android && Android.sair) Android.sair(); else window.close(); } catch (e) { window.close(); } return; } mostrarTitulo(false); sairRoca(); });
   const pc = matchMedia("(pointer: fine)").matches;
   el.rcTitRod.classList.toggle("cel", !pc); el.rcTitRod.innerHTML = `<span>versão ${window.ROCA_VERSAO || "1"}</span>${pc ? `<span><b>WASD</b> andar · <b>E</b> ação · <b>R</b> lanterna · <b>Shift</b> correr · <b>M</b> mochila · <b>Q</b> semente · <b>T</b> chat</span>` : ""}`;
   setTimeout(() => { const f = m.querySelector("button"); if (f && (pc || CONTROLE.usado)) f.focus(); }, 30);
