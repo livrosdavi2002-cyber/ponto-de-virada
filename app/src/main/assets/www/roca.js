@@ -122,7 +122,7 @@ const S = {
   galope(x, y, n = 1) { const [v, p] = somEm(x, y), k = v * .7 + .3; for (let i = 0; i < n * 3; i++) tocarRuido(.07, { filtro: "lowpass", f: 240, vol: .35 * k * (n > 1 ? .4 + i / (n * 3) * .6 : 1), pan: p, quando: Math.floor(i / 3) * .42 + (i % 3) * .1, wet: .3 }); },
   relincho(x, y) { const [v, p] = somEm(x, y), k = v * .6 + .4; tocarTom(980, .9, { tipo: "sawtooth", vol: .08 * k, ate: 620, lp: 2600, pan: p, wet: .6 }); tocarTom(1240, .5, { tipo: "sawtooth", vol: .05 * k, ate: 760, lp: 2600, pan: p, quando: .15, wet: .6 }); tocarRuido(1.4, { filtro: "highpass", f: 1800, vol: .12 * k, pan: p, wet: .4 }); },
   porcos() { const [v, p] = somEm(52.8, 27.2), k = v * .7 + .3; for (let i = 0; i < 5; i++) tocarTom(rnd(500, 700), .3, { tipo: "square", vol: .05 * k, ate: rnd(1000, 1400), lp: 1600, pan: p, quando: i * .28 }); },
-  assobio(x, y) { const [v, p] = somEm(x, y), k = v * .8 + .2; tocarTom(1700, .5, { vol: .06 * k, ate: 2700, pan: p, wet: .5 }); tocarTom(2600, .6, { vol: .05 * k, ate: 1500, pan: p, quando: .55, wet: .5 }); },
+  assobioSaci(x, y) { const [v, p] = somEm(x, y), k = v * .8 + .2; tocarTom(1700, .5, { vol: .022 * k, ate: 2700, pan: p, wet: .5 }); tocarTom(2600, .6, { vol: .018 * k, ate: 1500, pan: p, quando: .55, wet: .5 }); },
   risada(x, y) { const [v, p] = somEm(x, y), k = v * .7 + .3; [760, 700, 660, 600, 560].forEach((f, i) => tocarTom(f, .1, { tipo: "triangle", vol: .07 * k, pan: p, quando: i * .13, lp: 2200 })); },
   cascos(x, y) { const [v, pn] = somEm(x, y); for (let i = 0; i < 4; i++) tocarRuido(.05, { filtro: "bandpass", f: 900, vol: .35 * v + .05, pan: pn, wet: .7, quando: i * .32 }); },
   gritoTinhoso(x, y) { const [v, pn] = somEm(x, y), k = .4 + v * .6; tocarTom(210, 1.3, { tipo: "sawtooth", vol: .22 * k, ate: 70, lp: 1600, pan: pn, wet: .6 }); tocarTom(223, 1.3, { tipo: "square", vol: .12 * k, ate: 75, lp: 1200, pan: pn }); tocarRuido(1.1, { filtro: "bandpass", f: 800, vol: .45 * k, pan: pn, wet: .7 }); tocarTom(48, 1, { vol: .4 * k, ate: 30 }); },
@@ -192,6 +192,7 @@ function novoJogo() {
     esp: { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste", t: 0 }, peneira: false, sinoUsado: false, queimado: [], mel: COLMEIAS.map(() => 1),
     porcos: Array.from({ length: 3 }, (_, i) => ({ x: 51.4 + i * 1.5, y: 27 + (i % 2) * .8, alvo: null, t: rnd(0, 3), dir: 1 })), fxR: [],
   };
+  R.deco = lerJSON("roca_deco", { cores: {}, flores: [] }); R.deco.cores = R.deco.cores || {}; R.deco.flores = R.deco.flores || []; R.decoInv = lerJSON("roca_deco_inv", {});
   gerarChao();
 }
 function tutorial() {
@@ -541,6 +542,8 @@ function oQueFazer() {
     if (cova.seca) return { t: R.agua > 0 ? "Regar" : "Sem água", fn: () => regar(cp) };
     return { t: "Crescendo", fn: () => {} };
   }
+  { const fi = (R.deco.flores || []).findIndex(f => Math.hypot(f.x - p.x, f.y - p.y) < .45); if (fi >= 0) return { t: "Arrancar flor", fn: () => arrancarFlor(fi) }; }
+  { const m = mudaDaVez(); if (m && podePlantarFlor(p)) return { t: "Plantar flor", fn: () => plantarFlor(m) }; }
   return null;
 }
 function acao() { if (!R || R.menu) return; if (R.msg) return proximaFala(); if (painelAberto) return; const o = oQueFazer(); if (!o) return; if (R.online === "guest" && !o.loc) { enviar({ t: "acao", nome: o.t }); tocarTom(700, .04, { vol: .03 }); return; } o.fn(); }
@@ -614,10 +617,10 @@ function abrirBancada() {
   el.rcPainel.hidden = false;
   el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Bancada</h2><p>Você tem <b style="color:#f2c94a">${R.moedas} moedas</b>${R.ouro ? ` e ${R.ouro} moeda${R.ouro > 1 ? "s" : ""} dourada${R.ouro > 1 ? "s" : ""}` : ""}.</p>
     <div class="rc-grade">${o.map((x, i) => `<button type="button" class="rc-op ${x.dest ? "dest" : ""}" data-i="${i}" ${x.ok ? "" : "disabled"}>${icDe(x.nome)}${x.nome}<small>${x.desc}</small>${x.preco ? `<em>${x.preco} moedas</em>` : ""}</button>`).join("")}</div>
-    <div class="rc-linha"><button type="button" class="rc-op" id="rcVisual">Visual<small>Chapéus com moedas douradas</small></button><button type="button" class="rc-op dest" id="rcFechar">Voltar</button></div></div>`;
+    <div class="rc-linha"><button type="button" class="rc-op" id="rcVisual">Visual<small>Chapéus com moedas douradas</small></button><button type="button" class="rc-op" id="rcReforma">Reformar<small>Pintar, telhado e flores</small></button><button type="button" class="rc-op dest" id="rcFechar">Voltar</button></div></div>`;
   el.rcPainel.querySelectorAll("[data-i]").forEach(b => b.addEventListener("click", () => { const x = o[+b.dataset.i]; if (R.online === "guest") { enviar({ t: "compra", nome: x.nome }); b.disabled = true; tocarTom(900, .05, { vol: .05 }); setTimeout(() => painelAberto && document.getElementById("rcFechar") && abrirBancada(), 350); return; } R.moedas -= x.preco; x.fn(); S.moedas(); hud(); abrirBancada(); }));
   document.getElementById("rcFechar").addEventListener("click", fecharPainel);
-  document.getElementById("rcVisual").addEventListener("click", abrirVisual);
+  document.getElementById("rcVisual").addEventListener("click", abrirVisual); document.getElementById("rcReforma").addEventListener("click", abrirReforma);
 }
 function abrirVisual() {
   const tem = JSON.parse(ls("roca_chapeus") || '["palha"]');
@@ -918,16 +921,16 @@ function atualizar(dt) {
   if (Math.floor(R.t * 2) !== Math.floor((R.t - dt) * 2)) hud();
   const o = oQueFazer(); el.rcAcao.textContent = o ? o.t : "Ação"; el.rcAcao.style.opacity = o ? 1 : .5;
 }
-function comecaNoite() { R.velaHoje = R.dia === 1 || (!R.velaOntem && Math.random() < .4); R.velaOntem = R.velaHoje; R.velaEntregue = false; R.velaT = rnd(8, 18); R.sinoUsado = false;
+function comecaNoite() { R.velaHoje = R.dia === 1 || (!R.velaOntem && Math.random() < .22); R.velaOntem = R.velaHoje; R.velaEntregue = false; R.velaT = rnd(8, 18); R.sinoUsado = false;
   // cada noite é sorteada: quem vem, quando vem e quantas vezes (nada de padrão)
   R.aranha.hoje = R.dia >= 2 && Math.random() < .45; R.aranha.prox = rnd(4, 70);
   R.mula.hoje = R.dia >= 2 && Math.random() < (R.dia >= 3 ? .4 : .2); R.mula.prox = rnd(6, 60); R.mula.vezes = 0; R.mula.max = 1 + Math.floor(Math.random() * 2);
   R.esp.dorme = !(R.dia >= 2 && Math.random() < .45); R.esp.limiar = rnd(.1, .65);
   R.cuca = R.cuca || { fase: "longe" }; R.cuca.hoje = R.dia >= 2 && Math.random() < .3; R.cuca.prox = rnd(20, 100);
-  R.velaT = rnd(3, 40); efeito(R.velaHoje ? "Anoiteceu... o sino vai tocar" : "Anoiteceu · hoje o sino está quieto", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
+  R.velaT = rnd(22, 50); efeito((R.lugar || "sitio") !== "sitio" ? "Anoiteceu" : R.velaHoje ? "Anoiteceu... o sino vai tocar" : "Anoiteceu · hoje o sino está quieto", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
 function amanhece() {
   if (R.velaHoje && !R.velaEntregue && jogadores().some(P => (P.lugar || "sitio") === "sitio")) { R.alma = { t: 0 }; return; } // a alma vem cobrar (só se tem alguém no sítio)
-  R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false; R.saci.hoje = Math.random() < .5; R.saci.prox = rnd(60, 200);
+  R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false; R.saci.hoje = Math.random() < .3; R.saci.prox = rnd(80, 150);
   jogadores().forEach(P => { P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : (P.slot || 1) * .45 - .1); P.eu.y = CASA.porta.y + .7; if (P !== R) enviarPara(P.nid, { t: "pos", x: P.eu.x, y: P.eu.y }); } });
   if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a");
   Object.assign(R.esp, { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste" }); if (R.aranha.fase !== "longe") R.aranha.fase = "sai"; R.mula.fase = "longe";
@@ -1078,14 +1081,14 @@ function atualizarMula(dt) {
 /* Saci: redemoinho de dia. Seca a plantação e rouba moedas. Com peneira, dá para pegar. */
 function atualizarSaci(dt) {
   const s = R.saci; if (R.tutorial === 0) return; s.t += dt; s.giro = (s.giro || 0) + dt * 9;
-  if (s.fase === "longe") { if (ehNoite() || R.dia < 2 || s.pego || s.hoje === false) return; s.prox -= dt; if (s.prox > 0) return; Object.assign(s, BORDA(), { fase: "anda", t: 0, alvo: null, secou: 0 }); S.assobio(s.x, s.y); efeito("Um assobio no vento...", "#e8e2d4"); return; }
+  if (s.fase === "longe") { if (ehNoite() || R.dia < 2 || s.pego || s.hoje === false) return; s.prox -= dt; if (s.prox > 0) return; Object.assign(s, BORDA(), { fase: "anda", t: 0, alvo: null, secou: 0 }); S.assobioSaci(s.x, s.y); efeito("Um assobio no vento...", "#e8e2d4"); return; }
   if (s.fase === "anda") {
     if (!s.alvo || dist(s, s.alvo) < .4) { const pl = []; R.canteiros.forEach(k => k.covas.forEach((cv2, i) => { if (cv2 && cv2.est < 3) pl.push({ x: k.x + i % k.w + .5, y: k.y + Math.floor(i / k.w) + .5 }); }));
       const P = alvoPara(s.x, s.y); s.alvo = pl.length && Math.random() < .7 ? pl[Math.floor(Math.random() * pl.length)] : { x: P.eu.x + rnd(-1, 1), y: P.eu.y + rnd(-1, 1) }; }
     irAte(s, { x: s.alvo.x + Math.sin(s.t * 3) * .6, y: s.alvo.y + Math.cos(s.t * 2.4) * .4 }, 2.7, dt);
     if (Math.random() < dt * 8) R.poeira.push({ x: s.x + rnd(-.3, .3), y: s.y, t: 0 });
     R.canteiros.forEach(k => k.covas.forEach((cv2, i) => { if (!cv2 || cv2.est >= 3 || cv2.seca) return; if (Math.hypot(k.x + i % k.w + .5 - s.x, k.y + Math.floor(i / k.w) + .5 - s.y) < .7) { cv2.seca = true; cv2.t = 0; if (s.t - s.secou > 3) { s.secou = s.t; R.fx.push({ txt: "Secou!", cor: "#d8b860", t: 0, x: s.x, y: s.y }); } } }));
-    if (s.t % 3.4 < dt) S.assobio(s.x, s.y);
+    if (s.t % 5.5 < dt) S.assobioSaci(s.x, s.y);
     for (const J of jogadores()) { if (J.dentro || J.caido || (J.lugar || "sitio") !== "sitio" || dist(J.eu, s) > .8) continue;
       if (R.peneira) { R.moedas += 30; s.pego = true; s.fase = "longe"; s.prox = 999; S.risada(s.x, s.y); S.moedas(); R.fx.push({ txt: "Pegou o Saci na peneira! +30", cor: "#f2c94a", t: 0, x: s.x, y: s.y }); hud(); return; }
       const n = R.arruda ? 0 : Math.min(15, Math.ceil(R.moedas * .15)); R.moedas -= n; S.risada(s.x, s.y); R.fx.push({ txt: n ? `O Saci levou ${n} moedas!` : "O Saci riu de você", cor: "#e2483d", t: 0, x: s.x, y: s.y }); s.fase = "sai"; s.t = 0; s.alvo = BORDA(); hud(); return; }
@@ -1144,27 +1147,29 @@ function desenharCasa(tm) {
   sombra(x + w / 2, y + h + 4, w * .6, TS * .32, .35);
   // varanda
   c.fillStyle = "#5a3e24"; c.fillRect(x - TS * .2, y + h - TS * .1, w + TS * .4, TS * .5); c.strokeStyle = "rgba(0,0,0,.3)"; c.lineWidth = 1; for (let i = 0; i < 12; i++) { c.beginPath(); c.moveTo(x - TS * .2 + i * (w + TS * .4) / 12, y + h - TS * .1); c.lineTo(x - TS * .2 + i * (w + TS * .4) / 12, y + h + TS * .4); c.stroke(); }
-  c.fillStyle = "#6a4a2a"; c.fillRect(x, y + h * .18, w, h * .82); // parede de tábuas
+  c.fillStyle = decoCor("casa", "#6a4a2a"); c.fillRect(x, y + h * .18, w, h * .82); // parede de tábuas
   c.strokeStyle = "rgba(0,0,0,.25)"; for (let i = 1; i < 10; i++) { c.beginPath(); c.moveTo(x, y + h * .18 + i * h * .082); c.lineTo(x + w, y + h * .18 + i * h * .082); c.stroke(); }
   c.fillStyle = "rgba(255,255,255,.05)"; c.fillRect(x, y + h * .18, w * .12, h * .82);
-  c.fillStyle = "#4a2a1a"; c.beginPath(); c.moveTo(x - TS * .35, y + h * .24); c.lineTo(x + w / 2, y - h * .34); c.lineTo(x + w + TS * .35, y + h * .24); c.closePath(); c.fill(); // telhado
-  c.strokeStyle = "#3a2012"; c.lineWidth = 2; for (let i = 1; i < 6; i++) { const k = i / 6; c.beginPath(); c.moveTo(mix(x - TS * .35, x + w / 2, k), mix(y + h * .24, y - h * .34, k)); c.lineTo(mix(x + w + TS * .35, x + w / 2, k), mix(y + h * .24, y - h * .34, k)); c.stroke(); } // telhas
+  c.fillStyle = decoCor("telhado", "#4a2a1a"); c.beginPath(); c.moveTo(x - TS * .35, y + h * .24); c.lineTo(x + w / 2, y - h * .34); c.lineTo(x + w + TS * .35, y + h * .24); c.closePath(); c.fill(); // telhado
+  c.strokeStyle = decoCor("telhado") ? tomCor(decoCor("telhado"), .7) : "#3a2012"; c.lineWidth = 2; for (let i = 1; i < 6; i++) { const k = i / 6; c.beginPath(); c.moveTo(mix(x - TS * .35, x + w / 2, k), mix(y + h * .24, y - h * .34, k)); c.lineTo(mix(x + w + TS * .35, x + w / 2, k), mix(y + h * .24, y - h * .34, k)); c.stroke(); } // telhas
   c.fillStyle = "#3a3a3a"; c.fillRect(x + w * .74, y - h * .22, TS * .42, h * .32);
   for (let i = 0; i < 4; i++) { const k = (tm * .3 + i / 4) % 1; c.fillStyle = `rgba(200,200,200,${.22 * (1 - k)})`; c.beginPath(); c.arc(x + w * .74 + TS * .2 + Math.sin(tm + i) * 6, y - h * .27 - k * TS * 1.6, 6 + k * 14, 0, 7); c.fill(); }
   const lit = R.lamparinas.filter(v => v).length / 3;
-  [[.1, .42], [.7, .42]].forEach(([fx, fy]) => { c.fillStyle = `rgba(255,${190 + lit * 30},110,${.2 + lit * .7})`; c.fillRect(x + w * fx, y + h * fy, w * .2, h * .22); c.strokeStyle = "#2a1a0e"; c.lineWidth = 3; c.strokeRect(x + w * fx, y + h * fy, w * .2, h * .22); c.beginPath(); c.moveTo(x + w * (fx + .1), y + h * fy); c.lineTo(x + w * (fx + .1), y + h * (fy + .22)); c.stroke();
-    c.fillStyle = "#4a2a1a"; c.fillRect(x + w * fx - 3, y + h * (fy + .22), w * .2 + 6, 5); for (let i = 0; i < 4; i++) { c.fillStyle = ["#c83a2a", "#e8c84a", "#e8e2d8", "#b8582a"][i]; c.beginPath(); c.arc(x + w * fx + 4 + i * w * .05, y + h * (fy + .22) - 2, 2.6, 0, 7); c.fill(); } }); // janelas com floreira
+  [[.1, .42], [.7, .42]].forEach(([fx, fy]) => { c.fillStyle = `rgba(255,${190 + lit * 30},110,${.2 + lit * .7})`; c.fillRect(x + w * fx, y + h * fy, w * .2, h * .22); c.strokeStyle = decoCor("porta", "#2a1a0e"); c.lineWidth = 3; c.strokeRect(x + w * fx, y + h * fy, w * .2, h * .22); c.beginPath(); c.moveTo(x + w * (fx + .1), y + h * fy); c.lineTo(x + w * (fx + .1), y + h * (fy + .22)); c.stroke();
+    c.fillStyle = decoCor("porta", "#4a2a1a"); c.fillRect(x + w * fx - 3, y + h * (fy + .22), w * .2 + 6, 5); for (let i = 0; i < 4; i++) { c.fillStyle = ["#c83a2a", "#e8c84a", "#e8e2d8", "#b8582a"][i]; c.beginPath(); c.arc(x + w * fx + 4 + i * w * .05, y + h * (fy + .22) - 2, 2.6, 0, 7); c.fill(); } }); // janelas com floreira
   // vulto na janela, às vezes, de noite
   if (horaNoite() > .6 && !R.dentro && Math.sin(tm * .37) > .985) { c.fillStyle = "rgba(0,0,0,.85)"; c.beginPath(); c.arc(x + w * .8, y + h * .5, h * .06, 0, 7); c.fill(); c.fillRect(x + w * .77, y + h * .55, w * .06, h * .1); }
-  c.fillStyle = "#3a2214"; c.fillRect(x + w * .42, y + h * .5, w * .16, h * .5); c.strokeStyle = "rgba(0,0,0,.4)"; c.strokeRect(x + w * .42, y + h * .5, w * .16, h * .5); c.fillStyle = "#c8a860"; c.beginPath(); c.arc(x + w * .55, y + h * .76, 2.5, 0, 7); c.fill(); // porta
+  c.fillStyle = decoCor("porta", "#3a2214"); c.fillRect(x + w * .42, y + h * .5, w * .16, h * .5); c.strokeStyle = "rgba(0,0,0,.4)"; c.strokeRect(x + w * .42, y + h * .5, w * .16, h * .5); c.fillStyle = "#c8a860"; c.beginPath(); c.arc(x + w * .55, y + h * .76, 2.5, 0, 7); c.fill(); // porta
   c.fillStyle = "#e8e0c8"; c.fillRect(x + w * .47, y + h * .42, w * .06, h * .05); // ferradura/plaquinha
   c.fillStyle = "#2a2a2a"; c.fillRect(x + w * .62, y + h * .46, 6, 9); c.fillStyle = `rgba(255,200,110,${.7 + .2 * Math.sin(tm * 7)})`; c.fillRect(x + w * .62 + 1.5, y + h * .46 + 2, 3, 5); // lampião da porta
   c.fillStyle = "#6a4a2a"; c.fillRect(x + w * .08, y + h * .8, w * .18, 5); c.fillRect(x + w * .1, y + h * .8, 3, h * .2); c.fillRect(x + w * .24, y + h * .8, 3, h * .2); // banco da varanda
   c.fillStyle = "#3a3a3a"; c.fillRect(x + w * .82, y + h * .82, 10, h * .18); c.fillStyle = "#5a5a5a"; c.fillRect(x + w * .82 - 2, y + h * .82, 14, 3); // galão
+  if (R.deco && R.deco.band) bandeirinhasCasa(x, y, w, h, tm);
 }
 function desenharCerca() {
-  const post = (tx, ty) => { const x = PX(tx), y = PY(ty); if (!naTela(x, y, 30)) return; c.fillStyle = "#6a4a2a"; c.fillRect(x - 3, y - TS * .55, 6, TS * .55); c.fillStyle = "#4a3018"; c.fillRect(x - 3, y - TS * .58, 6, 4); };
-  const trilho = (x0, y0, x1, y1) => { if (!naTela(PX(x0), PY(y0), 60)) return; c.strokeStyle = "#7a5a32"; c.lineWidth = 3; c.beginPath(); c.moveTo(PX(x0), PY(y0) - TS * .42); c.lineTo(PX(x1), PY(y1) - TS * .42); c.moveTo(PX(x0), PY(y0) - TS * .22); c.lineTo(PX(x1), PY(y1) - TS * .22); c.stroke(); };
+  const cc = decoCor("cerca"), cP = cc || "#6a4a2a", cT = cc ? tomCor(cc, .72) : "#4a3018", cR = cc ? tomCor(cc, 1.08) : "#7a5a32";
+  const post = (tx, ty) => { const x = PX(tx), y = PY(ty); if (!naTela(x, y, 30)) return; c.fillStyle = cP; c.fillRect(x - 3, y - TS * .55, 6, TS * .55); c.fillStyle = cT; c.fillRect(x - 3, y - TS * .58, 6, 4); };
+  const trilho = (x0, y0, x1, y1) => { if (!naTela(PX(x0), PY(y0), 60)) return; c.strokeStyle = cR; c.lineWidth = 3; c.beginPath(); c.moveTo(PX(x0), PY(y0) - TS * .42); c.lineTo(PX(x1), PY(y1) - TS * .42); c.moveTo(PX(x0), PY(y0) - TS * .22); c.lineTo(PX(x1), PY(y1) - TS * .22); c.stroke(); };
   return { post, trilho };
 }
 function desenharPlanta(cv2, x, y, tm) {
@@ -1241,8 +1246,8 @@ function desenharGalinha(g, tm) {
 function desenharGalinheiro(tm) {
   const G = GALINHEIRO, x = PX(G.x), y = PY(G.y), w = G.w * TS, h = G.h * TS; if (!naTela(x + w / 2, y, w)) return;
   sombra(x + w / 2, y + h, w * .55, TS * .2, .3);
-  c.fillStyle = "#8a5a32"; c.fillRect(x, y + h * .3, w, h * .7); c.strokeStyle = "rgba(0,0,0,.25)"; c.lineWidth = 1; for (let i = 1; i < 6; i++) { c.beginPath(); c.moveTo(x + i * w / 6, y + h * .3); c.lineTo(x + i * w / 6, y + h); c.stroke(); }
-  c.fillStyle = "#5a3a22"; c.beginPath(); c.moveTo(x - 8, y + h * .34); c.lineTo(x + w / 2, y - h * .1); c.lineTo(x + w + 8, y + h * .34); c.fill();
+  c.fillStyle = decoCor("galinheiro", "#8a5a32"); c.fillRect(x, y + h * .3, w, h * .7); c.strokeStyle = "rgba(0,0,0,.25)"; c.lineWidth = 1; for (let i = 1; i < 6; i++) { c.beginPath(); c.moveTo(x + i * w / 6, y + h * .3); c.lineTo(x + i * w / 6, y + h); c.stroke(); }
+  c.fillStyle = decoCor("galinheiro") ? tomCor(decoCor("galinheiro"), .62) : "#5a3a22"; c.beginPath(); c.moveTo(x - 8, y + h * .34); c.lineTo(x + w / 2, y - h * .1); c.lineTo(x + w + 8, y + h * .34); c.fill();
   c.fillStyle = "#1a1210"; c.fillRect(x + w * .4, y + h * .55, w * .2, h * .45); c.strokeStyle = "#c8a860"; c.lineWidth = 2; c.beginPath(); c.moveTo(x + w * .5, y + h); c.lineTo(x + w * .62, y + h * 1.2); c.stroke();
   for (let i = 0; i < Math.min(R.ovos, 5); i++) { c.fillStyle = "#f4ecd8"; c.beginPath(); c.ellipse(x + w * .45 + i * 7, y + h * 1.08, 3, 4, 0, 0, 7); c.fill(); }
   c.fillStyle = "#e8d8a0"; c.font = `800 ${Math.round(TS * .2)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText("GALINHEIRO", x + w / 2, y + h * .5); c.textAlign = "start";
@@ -1250,8 +1255,8 @@ function desenharGalinheiro(tm) {
 function desenharCeleiro(tm) {
   const C = CELEIRO, x = PX(C.x), y = PY(C.y), w = C.w * TS, h = C.h * TS; if (!naTela(x + w / 2, y + h / 2, w)) return;
   sombra(x + w / 2, y + h, w * .58, TS * .3, .35);
-  c.fillStyle = "#8a2a1e"; c.fillRect(x, y + h * .28, w, h * .72); c.strokeStyle = "rgba(0,0,0,.22)"; c.lineWidth = 1; for (let i = 1; i < 14; i++) { c.beginPath(); c.moveTo(x + i * w / 14, y + h * .28); c.lineTo(x + i * w / 14, y + h); c.stroke(); }
-  c.fillStyle = "#5a1a12"; c.beginPath(); c.moveTo(x - 10, y + h * .32); c.lineTo(x + w * .2, y); c.lineTo(x + w * .8, y); c.lineTo(x + w + 10, y + h * .32); c.fill();
+  c.fillStyle = decoCor("celeiro", "#8a2a1e"); c.fillRect(x, y + h * .28, w, h * .72); c.strokeStyle = "rgba(0,0,0,.22)"; c.lineWidth = 1; for (let i = 1; i < 14; i++) { c.beginPath(); c.moveTo(x + i * w / 14, y + h * .28); c.lineTo(x + i * w / 14, y + h); c.stroke(); }
+  c.fillStyle = decoCor("celeiroTel", "#5a1a12"); c.beginPath(); c.moveTo(x - 10, y + h * .32); c.lineTo(x + w * .2, y); c.lineTo(x + w * .8, y); c.lineTo(x + w + 10, y + h * .32); c.fill();
   c.fillStyle = "#1a0e0a"; c.fillRect(x + w * .36, y + h * .48, w * .28, h * .52); c.strokeStyle = "#e8e0d0"; c.lineWidth = 3; c.strokeRect(x + w * .36, y + h * .48, w * .28, h * .52); c.beginPath(); c.moveTo(x + w * .36, y + h * .48); c.lineTo(x + w * .64, y + h); c.moveTo(x + w * .64, y + h * .48); c.lineTo(x + w * .36, y + h); c.stroke();
   c.fillStyle = "#f2e8c8"; c.fillRect(x + w * .44, y + h * .14, w * .12, h * .14); c.fillStyle = "#1a0e0a"; c.fillRect(x + w * .46, y + h * .16, w * .08, h * .1);
   if (horaNoite() > .5 && Math.sin(tm * .5) > .9) { c.fillStyle = "rgba(255,240,200,.9)"; c.fillRect(x + w * .48, y + h * .2, 2, 2); c.fillRect(x + w * .51, y + h * .2, 2, 2); } // olhos no alto do celeiro
@@ -1690,6 +1695,7 @@ function desenharMundo(tm) {
   obj.push([CRUZ.y, () => desenharCruz(tm)]);
   obj.push([CAMINHONETE.y + .9 + offC, () => { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + offC), w = TS * 2.6, h = TS * 1; if (!naTela(x, y, 200)) return; sombra(x, y, w * .55, TS * .2, .4); c.fillStyle = "#8a2a1e"; c.fillRect(x - w / 2, y - h * .9, w, h * .6); c.fillRect(x - w * .1, y - h * 1.35, w * .5, h * .5); c.fillStyle = "rgba(150,180,200,.5)"; c.fillRect(x + w * .02, y - h * 1.28, w * .32, h * .32); c.fillStyle = "#3a1a14"; c.fillRect(x - w / 2, y - h * .9, w * .42, 4); c.fillStyle = "#111"; [-.32, .32].forEach(o => { c.beginPath(); c.arc(x + o * w, y - h * .26, h * .26, 0, 7); c.fill(); c.fillStyle = "#666"; c.beginPath(); c.arc(x + o * w, y - h * .26, h * .1, 0, 7); c.fill(); c.fillStyle = "#111"; });
     c.fillStyle = "rgba(110,60,30,.6)"; c.fillRect(x - w * .3, y - h * .62, w * .2, h * .2); c.fillStyle = "#d8d0c0"; c.fillRect(x + w * .46, y - h * .7, 5, 6); if (R.pecas < 3) { c.fillStyle = "rgba(240,230,200,.8)"; c.font = `700 ${Math.round(TS * .26)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText(`${R.pecas}/3 peças`, x, y - h * 1.5); c.textAlign = "start"; } }]);
+  (R.deco.flores || []).forEach(fl => obj.push([fl.y, () => desenharFlorDeco(fl, tm)]));
   PLACAS.forEach(pl => obj.push([pl.y, () => { const x = PX(pl.x), y = PY(pl.y); if (!naTela(x, y)) return; sombra(x, y, TS * .2, TS * .07); c.fillStyle = "#5a3a22"; c.fillRect(x - 2, y - TS * .7, 4, TS * .7); c.fillStyle = "#8a6a3a"; c.fillRect(x - TS * .3, y - TS * .85, TS * .6, TS * .32); c.fillStyle = "rgba(30,20,10,.7)"; for (let i = 0; i < 3; i++) c.fillRect(x - TS * .22, y - TS * .78 + i * TS * .08, TS * (.3 + (i % 2) * .14), 2); }]));
   const ce = desenharCerca();
   for (let x = CERCA.x0; x <= CERCA.x1; x++) { obj.push([CERCA.y0, () => ce.post(x, CERCA.y0)]); if (x < CERCA.x1) obj.push([CERCA.y0, () => ce.trilho(x, CERCA.y0, x + 1, CERCA.y0)]); obj.push([CERCA.y1, () => ce.post(x, CERCA.y1)]); if (x < CERCA.x1 && (x < 24 || x > 26)) obj.push([CERCA.y1, () => ce.trilho(x, CERCA.y1, x + 1, CERCA.y1)]); }
@@ -2245,6 +2251,13 @@ VPREDIOS.push(
   { id: "prado", nome: "Casa dos Prado", placa: "", x: 41, y: 53.6, w: 6, h: 4.2, cor: "#9a8a5a", cor2: "#e8e0c0", tel: "#5a3a1e", casa: 1, abandonada: 1, vit: ["#2a2a2a", "#8a6a3a", "#3a3a3a"] },
   { id: "armarinho", nome: "Armarinho da Dona Celeste", placa: "ARMARINHO", x: 49, y: 53.6, w: 7, h: 4.2, cor: "#c87a5a", cor2: "#f2e0c8", tel: "#6a2a1a", vit: ["#e8c84a", "#a83a3a", "#3a6a9a"] });
 VPOSTES.push([8, 49.55], [24.6, 49.55], [47, 49.55], [33.6, 52]);
+VPREDIOS.push({ id: "construcao", nome: "Material de Construção do Nonato", placa: "CONSTRUÇÃO", x: 26, y: 53.6, w: 7, h: 4.2, cor: "#b86a2a", cor2: "#f0dcb8", tel: "#5a3a1e", npc: "nonato", vit: ["#e8c84a", "#4a6a9a", "#a8382a"], balcao: 1 });
+NPCS.push({ id: "nonato", nome: "Seu Nonato", casa: "construcao", loja: 1, look: { pele: "#c8946a", roupa: "#3a5a8a", cabelo: "#4a3a2a", bone: "#e8b030", bigode: 1, avental: "#8a6a3a" },
+  conversas: [["Material de construção do Nonato! Tinta, telha, muda de flor, bandeirinha... o que a casa pedir.", "Tua vó? Comprou tinta branca aqui uma vez. Pintou a porta da frente inteirinha. Disse que coisa ruim não gosta de porta clara."],
+    ["Quer deixar o sítio bonito? Leva umas latas de tinta e umas mudas.", "A pintura você escolhe na bancada da tua casa, em Reformar. As mudas você planta onde quiser, dentro da cerca. É só parar num lugar vazio e plantar."],
+    ["O povo acha que é bobagem enfeitar casa assombrada.", "Eu acho que é o contrário. Casa bonita, cuidada, com flor na porta... dá vontade de voltar pra ela. E quem quer voltar pra casa se cuida mais no escuro."]],
+  extra: ["Tinta boa seca em um dia. Tinta ruim descasca na primeira chuva... ou na primeira noite.", "Girassol gosta de sol. Hortênsia gosta de sombra. Violeta gosta de qualquer coisa, igual gato.", "Bandeirinha de festa junina deixa qualquer varanda alegre. Até a tua."],
+  sono: ["...mais uma demão... mais uma demão...", "(Ronco, com cheiro de tinta fresca.)"] });
 NPCS.push(
   { id: "valdemar", nome: "Seu Valdemar", casa: "valdemar", posto: [3.6, 3.2], look: { pele: "#b8845a", roupa: "#4a6a8a", cabelo: "#3a3a3a", bone: "#c8641e", bigode: 1, grande: 1 }, missao: "mapa",
     conversas: [["Valdemar, encanador aposentado. Quarenta anos limpando o esgoto dessa vila.", "Fecharam o esgoto em 96. Um menino entrou no bueiro da rua de baixo e não saiu mais. Antônio, o nome dele."],
@@ -2633,7 +2646,7 @@ function moveisPredio(id, andar) {
   if (id === "oficina") { l.push([5.3, 2.6, 2.2, 1.3], [.5, 1, 1.1, 1.1], [.5, 3.7, 1.2, .8]); return l; }
   if (p && p.casa) { l.push([.5, 1, 1.3, .8], [.6, 3.7, 2.2, .7], [4.2, 2.6, 1.5, .9], [5.9, 1, 1, .7]); return l; }
   l.push([1.2, 2.3, 4.6, .6]); // balcão
-  const extra = { armazem: [6, 3.6, 1.6, 1], padaria: [6.1, 3.4, 1.3, 1.1], costura: [6.2, 3.8, 1.5, .6], ferreiro: [5.9, 3.5, 1.4, 1.1], botica: [6.2, 3.6, 1, 1], barbearia: [5.9, 3.4, 1, 1], delegacia: [5.6, 3.2, 2.8, 2.1], coveiro: [5.4, 3.5, 2.6, .8], correio: [6, 3.6, 1.6, .9], pensao: [5.8, 3.7, 2.2, .7] }[id];
+  const extra = { armazem: [6, 3.6, 1.6, 1], padaria: [6.1, 3.4, 1.3, 1.1], costura: [6.2, 3.8, 1.5, .6], ferreiro: [5.9, 3.5, 1.4, 1.1], botica: [6.2, 3.6, 1, 1], barbearia: [5.9, 3.4, 1, 1], delegacia: [5.6, 3.2, 2.8, 2.1], coveiro: [5.4, 3.5, 2.6, .8], correio: [6, 3.6, 1.6, .9], pensao: [5.8, 3.7, 2.2, .7], construcao: [5.7, 3.5, 2.4, 1] }[id];
   if (extra) l.push(extra); return l;
 }
 function livrePredio(x, y) { if (x < .5 || x > ROOM.w - .5 || y < 1.1 || y > ROOM.h - .25) return false; for (const [mx, my, mw, mh] of moveisPredio(R.predio, R.andar)) if (x > mx - .2 && x < mx + mw + .2 && y > my && y < my + mh + .25) return false; return true; }
@@ -3635,6 +3648,66 @@ function desenharNeblinaE(tm) { // a neblina por cima de tudo: dá pra ver só u
   const N = R.nev; if (N && N.fase !== "longe" && dist(N, R.eu) < 13 && dist(N, R.eu) > 4.8) { const X = PX(N.x), Y = PY(N.y); if (naTela(X, Y - TS * 2, TS * 4)) corpoNevoa(X, Y, TS, N.dir || 1, N.fase2 || 0, tm, false, true); } // a silhueta aparece no meio da neblina antes do bicho
 }
 
+/* ---------- enfeitar o sítio: tinta, telha, mudas de flor e bandeirinhas ----------
+   Tudo se compra na loja de construção do Seu Nonato, na rua de baixo da vila.
+   Pintar e trocar telha é na bancada de casa; muda de flor se planta onde quiser, dentro da cerca.
+   O que você enfeitou fica guardado de uma partida pra outra. */
+const TINTAS = [["branca", "Branca", "#e8e2d4"], ["azul", "Azul", "#4a6a9a"], ["rosa", "Rosa", "#d88a9a"], ["amarela", "Amarela", "#e0b84a"], ["verde", "Verde", "#5a8a4a"], ["lilas", "Lilás", "#9a7ab8"], ["vermelha", "Vermelha", "#a8382a"]];
+const TELHAS = [["barro", "de barro", "#a8502a"], ["verde", "verdes", "#3a6a3a"], ["azul", "azuis", "#2a4a7a"], ["cinza", "cinzas", "#5a5a62"]];
+const FLORES = [["margarida", "Margaridas"], ["girassol", "Girassóis"], ["rosa", "Rosas"], ["violeta", "Violetas"], ["hortensia", "Hortênsias"]];
+const ALVOS_DECO = [["casa", "Paredes da casa", "t"], ["porta", "Porta e janelas da casa", "t"], ["telhado", "Telhado da casa", "h"], ["celeiro", "Paredes do celeiro", "t"], ["celeiroTel", "Telhado do celeiro", "h"], ["galinheiro", "Galinheiro", "t"], ["cerca", "Cercas do sítio", "t"]];
+const lerJSON = (k, pad) => { try { const v = JSON.parse(ls(k) || "null"); return v && typeof v === "object" ? v : pad; } catch (e) { return pad; } };
+const decoCor = (k, pad) => (R && R.deco && R.deco.cores && R.deco.cores[k]) || pad;
+function tomCor(hex, f) { const v = parseInt(String(hex).slice(1), 16); if (isNaN(v)) return hex; const c2 = x => Math.max(0, Math.min(255, Math.round(x * f))); return `rgb(${c2(v >> 16)},${c2((v >> 8) & 255)},${c2(v & 255)})`; }
+function salvarDeco() { if (R.online === "guest") return; ls("roca_deco", JSON.stringify(R.deco)); ls("roca_deco_inv", JSON.stringify(R.decoInv)); }
+function aplicarDeco(alvo, chave) { // roda no anfitrião (ou sozinha)
+  if (!ALVOS_DECO.some(a => a[0] === alvo) && alvo !== "band") return false;
+  if (alvo === "band") { if (chave === "tirar") R.deco.band = false; else if (R.decoInv.band > 0) { R.decoInv.band--; R.deco.band = true; } else return false; salvarDeco(); return true; }
+  if (chave === "orig") { delete R.deco.cores[alvo]; salvarDeco(); return true; }
+  if (!(R.decoInv[chave] > 0)) return false; const [tipo, k] = String(chave).split(":"), lista = tipo === "t" ? TINTAS : TELHAS, cor = lista.find(x => x[0] === k); if (!cor) return false;
+  R.decoInv[chave]--; R.deco.cores[alvo] = cor[2]; salvarDeco(); return true;
+}
+function pedirDeco(alvo, chave) { if (R.online === "guest") { enviar({ t: "deco", alvo, chave }); tocarTom(900, .05, { vol: .05 }); setTimeout(() => painelAberto && document.getElementById("rcDecoV") && abrirReforma(), 400); return; } if (aplicarDeco(alvo, chave)) { S.colher(); tocarRuido(.4, { filtro: "highpass", f: 2400, vol: .05, atk: .05 }); } hud(); abrirReforma(); }
+const mudaDaVez = () => { const inv = R.decoInv || {}; if (R.decoMuda && inv["m:" + R.decoMuda] > 0) return R.decoMuda; const f = FLORES.find(([k]) => inv["m:" + k] > 0); return f ? f[0] : null; };
+function podePlantarFlor(p) { if (p.x < CERCA.x0 + .6 || p.x > CERCA.x1 - .6 || p.y < CERCA.y0 + .8 || p.y > CERCA.y1 - .3) return false; if ((R.deco.flores || []).length >= 90) return false; if (R.solido[Math.floor(p.y)][Math.floor(p.x)]) return false; if ((R.deco.flores || []).some(f => Math.hypot(f.x - p.x, f.y - p.y) < .45)) return false; return true; }
+function plantarFlor(tipo) { const k = "m:" + tipo; if (!(R.decoInv[k] > 0)) return; R.decoInv[k]--; R.deco.flores.push({ x: Math.round(R.eu.x * 20) / 20, y: Math.round((R.eu.y + .08) * 20) / 20, t: tipo }); salvarDeco(); S.plantar(); efeito("Florzinha plantada!", "#f2a0c0"); hud(); }
+function arrancarFlor(i) { const f = R.deco.flores[i]; if (!f) return; R.deco.flores.splice(i, 1); R.decoInv["m:" + f.t] = (R.decoInv["m:" + f.t] || 0) + 1; salvarDeco(); S.colher(); efeito("Muda guardada", "#e8e2d4"); hud(); }
+function desenharFlorDeco(f, tm) { const x = PX(f.x), y = PY(f.y); if (!naTela(x, y, 40)) return; const k = TS / 48, b = Math.sin(tm * 1.6 + f.x * 3) * 1.2 * k, noite = horaNoite() > .5;
+  c.fillStyle = "rgba(0,0,0,.18)"; c.beginPath(); c.ellipse(x, y, 6 * k, 2 * k, 0, 0, 7); c.fill();
+  const haste = (h) => { c.strokeStyle = "#3a6a2a"; c.lineWidth = Math.max(1, 1.6 * k); c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x - 1, y - h * .5, x + b, y - h); c.stroke(); c.fillStyle = "#4a8a32"; c.beginPath(); c.ellipse(x - 3 * k, y - h * .4, 3 * k, 1.4 * k, -.6, 0, 7); c.fill(); c.beginPath(); c.ellipse(x + 3 * k, y - h * .3, 3 * k, 1.4 * k, .6, 0, 7); c.fill(); };
+  const petalas = (cx, cy, n, r, pr, cor, miolo, mr) => { c.fillStyle = cor; for (let i = 0; i < n; i++) { const a = i / n * PI * 2 + f.x; c.beginPath(); c.ellipse(cx + Math.cos(a) * r, cy + Math.sin(a) * r * .75, pr, pr * .6, a, 0, 7); c.fill(); } c.fillStyle = miolo; c.beginPath(); c.arc(cx, cy, mr, 0, 7); c.fill(); };
+  if (f.t === "girassol") { haste(22 * k); petalas(x + b, y - 22 * k, 12, 4.2 * k, 2.6 * k, "#f2c42a", "#5a3a1a", 3.2 * k); }
+  else if (f.t === "margarida") { haste(12 * k); petalas(x + b, y - 12 * k, 8, 2.6 * k, 1.8 * k, "#f4f0e6", "#e8b82a", 1.5 * k); }
+  else if (f.t === "rosa") { haste(13 * k); c.fillStyle = "#b8202a"; c.beginPath(); c.arc(x + b, y - 13 * k, 3.4 * k, 0, 7); c.fill(); c.strokeStyle = "#7a1018"; c.lineWidth = 1; c.beginPath(); c.arc(x + b, y - 13 * k, 1.8 * k, .5, 5.2); c.stroke(); c.fillStyle = "#d84a50"; c.beginPath(); c.arc(x + b - 1, y - 14 * k, 1.2 * k, 0, 7); c.fill(); }
+  else if (f.t === "violeta") { haste(8 * k); [[-3, -8], [2, -9], [0, -11]].forEach(([ox, oy]) => petalas(x + ox * k + b, y + oy * k, 5, 1.4 * k, 1.2 * k, "#7a4aa8", "#f2d84a", .6 * k)); }
+  else { c.fillStyle = "#3a6a2a"; c.beginPath(); c.ellipse(x, y - 4 * k, 7 * k, 4 * k, 0, 0, 7); c.fill(); for (let i = 0; i < 14; i++) { const a = i * 2.4, r = (i % 4) * 1.6 * k; c.fillStyle = ["#6a8ad8", "#8a7ad0", "#5a7ac8", "#a8b8e8"][i % 4]; c.beginPath(); c.arc(x + Math.cos(a) * r + b * .5, y - 8 * k + Math.sin(a) * r * .7, 1.8 * k, 0, 7); c.fill(); } } // hortênsia
+  if (noite) { c.fillStyle = "rgba(10,14,30,.25)"; c.beginPath(); c.arc(x, y - 10 * k, 8 * k, 0, 7); c.fill(); } }
+function bandeirinhasCasa(x, y, w, h, tm) { // festa junina na varanda
+  const y0 = y + h * .2, cores = ["#e2483d", "#f2c94a", "#3a8ad8", "#5aa84a", "#e88ac8", "#f29a2a"]; c.strokeStyle = "#e8e0c8"; c.lineWidth = 1; c.beginPath(); c.moveTo(x - TS * .2, y0); c.quadraticCurveTo(x + w / 2, y0 + TS * .35, x + w + TS * .2, y0); c.stroke();
+  for (let i = 1; i < 18; i++) { const t = i / 18, px = mix(x - TS * .2, x + w + TS * .2, t), py = y0 + Math.sin(t * PI) * TS * .175, bal = Math.sin(tm * 2.2 + i) * 1.5; c.fillStyle = cores[i % cores.length]; c.beginPath(); c.moveTo(px - TS * .07, py); c.lineTo(px + TS * .07, py); c.lineTo(px + bal, py + TS * .17); c.fill(); } }
+function abrirReforma() {
+  painelAberto = true; el.rcPainel.hidden = false; const inv = R.decoInv || {}, cores = (R.deco && R.deco.cores) || {};
+  const sw = cor => `<i style="display:inline-block;width:14px;height:14px;background:${cor};border:1px solid #000;margin-right:5px;vertical-align:-2px"></i>`;
+  const linhas = ALVOS_DECO.map(([alvo, nome, tipo]) => { const lista = tipo === "t" ? TINTAS : TELHAS, temC = lista.filter(([k]) => inv[tipo + ":" + k] > 0);
+    return `<div style="margin:10px 0 4px"><b>${cores[alvo] ? sw(cores[alvo]) : ""}${nome}</b></div><div style="display:flex;flex-wrap:wrap;gap:6px">${temC.map(([k, n, cor]) => `<button type="button" class="rc-op" style="flex:0 0 auto;padding:6px 10px" data-a="${alvo}" data-c="${tipo}:${k}">${sw(cor)}${tipo === "t" ? n : "Telhas " + n} · ${inv[tipo + ":" + k]}</button>`).join("")}${cores[alvo] ? `<button type="button" class="rc-op" style="flex:0 0 auto;padding:6px 10px" data-a="${alvo}" data-c="orig">Cor original</button>` : ""}${!temC.length && !cores[alvo] ? `<small style="opacity:.6">Sem ${tipo === "t" ? "tinta" : "telha"}. A loja de construção do Seu Nonato vende.</small>` : ""}</div>`; }).join("");
+  const band = `<div style="margin:10px 0 4px"><b>Bandeirinhas na varanda</b></div><div style="display:flex;flex-wrap:wrap;gap:6px">${R.deco.band ? `<button type="button" class="rc-op" style="flex:0 0 auto;padding:6px 10px" data-a="band" data-c="tirar">Tirar as bandeirinhas</button>` : inv.band > 0 ? `<button type="button" class="rc-op" style="flex:0 0 auto;padding:6px 10px" data-a="band" data-c="por">Pendurar (${inv.band})</button>` : `<small style="opacity:.6">A loja de construção vende.</small>`}</div>`;
+  const mudas = FLORES.filter(([k]) => inv["m:" + k] > 0), m0 = mudaDaVez();
+  const flores = `<div style="margin:12px 0 4px"><b>Mudas de flor</b> <small style="opacity:.7">· plantadas: ${(R.deco.flores || []).length}</small></div>${mudas.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${mudas.map(([k, n]) => `<button type="button" class="rc-op ${k === m0 ? "dest" : ""}" style="flex:0 0 auto;padding:6px 10px" data-m="${k}">${n} · ${inv["m:" + k]}</button>`).join("")}</div><p style="font-size:13px;opacity:.8">Escolha qual muda levar. Lá fora, pare num lugar vazio dentro da cerca e aperte Ação pra plantar. Em cima de uma flor, a Ação arranca e devolve a muda.</p>` : `<small style="opacity:.6">Nenhuma muda. A loja de construção vende de vários tipos.</small>`}`;
+  el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Reformar e enfeitar</h2><p style="font-size:13px">O sítio também pode ser bonito. Cada lata pinta uma coisa; voltar pra cor original é de graça.</p>${linhas}${band}${flores}<div class="rc-linha"><button type="button" class="rc-op" id="rcDecoV">Voltar pra bancada</button><button type="button" class="rc-op dest" id="rcFechar">Fechar</button></div></div>`;
+  el.rcPainel.querySelectorAll("[data-a]").forEach(b => b.addEventListener("click", () => pedirDeco(b.dataset.a, b.dataset.c)));
+  el.rcPainel.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { R.decoMuda = b.dataset.m; abrirReforma(); }));
+  document.getElementById("rcDecoV").addEventListener("click", abrirBancada); document.getElementById("rcFechar").addEventListener("click", fecharPainel); focarPrimeiro();
+}
+function opcoesConstrucao() {
+  const l = [], inv = R.decoInv, sw = cor => `<i style="display:inline-block;width:14px;height:14px;background:${cor};border:1px solid #000;margin-right:5px;vertical-align:-2px"></i>`;
+  const it = (nome, desc, preco0, chave, qtd) => { const preco = caro(preco0); l.push({ nome, desc, preco, ok: R.moedas >= preco, fn: () => { R.decoInv[chave] = (R.decoInv[chave] || 0) + qtd; salvarDeco(); } }); };
+  TINTAS.forEach(([k, n, cor]) => it(`${sw(cor)}Tinta ${n.toLowerCase()}`, `Uma lata: pinta uma coisa do sítio · você tem ${inv["t:" + k] || 0}`, 25, "t:" + k, 1));
+  TELHAS.forEach(([k, n, cor]) => it(`${sw(cor)}Telhas ${n}`, `Telhado novo pra casa ou pro celeiro · você tem ${inv["h:" + k] || 0}`, 40, "h:" + k, 1));
+  FLORES.forEach(([k, n]) => it(`Mudas de ${n.toLowerCase()}`, `Cinco mudas pra plantar no sítio · você tem ${inv["m:" + k] || 0}`, 12, "m:" + k, 5));
+  if (!R.deco.band && !(inv.band > 0)) it("Bandeirinhas de festa", "Um varal de bandeirinhas pra varanda da casa", 30, "band", 1);
+  return l;
+}
+
 /* ---------- ir e voltar ---------- */
 function irVila() { if (!VILA) montarVila(); R.lugar = "vila"; R.predio = null; R.eu.x = 23; R.eu.y = .9; R.lanterna = R.lanterna && ehNoite(); cam.x = 23; cam.y = 6; R.fade = 1; S.porta(); efeito("Vila Sossego", "#e8e2d4"); hud(); if (!ls("roca_vila")) { ls("roca_vila", 1); setTimeout(() => R && falar(["Vila Sossego. A vó falava daqui como se fosse longe. É só descer a estrada.", "Alguém aqui tem que saber o que aconteceu com ela. E com o meu pai."], null, "Yasmin"), 900); } }
 function voltarSitio() { R.lugar = "sitio"; R.predio = null; R.eu.x = 25.2; R.eu.y = 35.6; cam.x = 25.2; cam.y = 32; R.fade = 1; S.porta(); hud(); }
@@ -3700,6 +3773,7 @@ function oQueFazerVila() {
   return null;
 }
 function opcoesLoja(id) {
+  if (id === "construcao") return opcoesConstrucao();
   const l = [], item = (nome, desc, preco, ok, fn) => { preco = caro(preco); l.push({ nome, desc, preco, ok: ok && R.moedas >= preco, fn }); };
   if (id === "armazem") { const v = Math.round(valorVenda() * 1.25); l.push({ nome: "Vender tudo", desc: v ? `O Joaquim paga ${v} moedas (25% a mais)` : "Você não tem nada para vender", preco: 0, ok: v > 0, fn: () => { R.moedas += Math.round(valorVenda() * 1.25); R.colheita = {}; R.peixes = {}; R.extra = {}; if (R.vara) { R.inv.graveto = 0; R.inv.folha = 0; } } });
     item("Lata de óleo", "Enche a lanterna e as lamparinas", 4, R.oleo < 100, () => { R.oleo = 100; R.lamparinas = R.lamparinas.map(() => 1); }); item("Sal grosso", "Na soleira: a Pisadeira demora o dobro para vir", 25, !R.sal, () => { R.sal = true; }); }
@@ -4182,6 +4256,7 @@ function hostReceber(id, d, conn) {
   if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; o.lugar = ["vila", "mata", "esgoto"].includes(d.lugar) ? d.lugar : "sitio"; o.predio = d.predio || null; o.andar = d.andar | 0; if (d.int) o.int = d.int; o.conv = d.conv || {}; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); if (o.gato && GATO_CORES[d.gc]) o.gato.cor = d.gc; }
   else if (d.t === "acao") { comJogador(o, () => { const a = oQueFazer(); if (a && !a.loc && a.t.split(" ")[0] === String(d.nome).split(" ")[0]) a.fn(); }); hud(); }
   else if (d.t === "compra") { const op = comJogador(o, () => (d.loja ? opcoesLoja(d.loja) : opcoesBancada())).find(x => x.nome.replace(/^✓ /, "") === d.nome); if (op && op.ok) { R.moedas -= op.preco; comJogador(o, op.fn); S.moedas(); hud(); } }
+  else if (d.t === "deco") { if (aplicarDeco(d.alvo, d.chave)) S.colher(); hud(); }
   else if (d.t === "missao") { comJogador(o, () => aplicarMissao(d.id, d.op, d.alvo)); }
   else if (d.t === "peixe") { R.peixes[d.nome] = (R.peixes[d.nome] || 0) + 1; hud(); }
 }
@@ -4230,7 +4305,7 @@ function estadoPara() {
   return { t: "s", T: R.t, dia: R.dia, moedas: R.moedas, agua: R.agua, aguaMax: R.aguaMax, oleo: R.oleo, vel: R.vel, lanternaBoa: R.lanternaBoa, sementes: R.sementes, vara: R.vara, pecas: R.pecas, peneira: R.peneira,
     missoes: R.missoes, mprog: R.mprog, apito: R.apito, guizo: R.guizo, isca: R.isca, medalha: R.medalha, enxada: R.enxada, lampiao: R.lampiao, ferradura: R.ferradura, sal: R.sal, arruda: R.arruda, aguaBenta: R.aguaBenta, inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
     cachorro: R.cachorro, seco: R.seco, vulto: R.vulto, vela: R.vela, velaEntregue: R.velaEntregue, velaHoje: R.velaHoje, alma: R.alma, galinhas: R.galinhas, porcos: R.porcos,
-    aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, curu: R.curu, cuca: R.cuca, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
+    aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, curu: R.curu, cuca: R.cuca, deco: R.deco, decoInv: R.decoInv, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
     jogs: jogadores().map(pl), vs };
 }
 const SUAVE = ["cachorro", "seco", "aranha", "esp", "saci", "vulto", "mula", "curu", "cuca"];
@@ -4242,7 +4317,7 @@ function aplicarEstado(d) {
   const meu = (d.jogs || []).find(j => j.slot === R.slot); if (meu && meu.gato) { suave(R.gato, meu.gato); R.gato = meu.gato; }
   d.voce = d.vs && d.vs[R.slot];
   ["missoes", "mprog", "apito", "guizo", "isca", "medalha", "enxada", "lampiao", "ferradura", "sal", "arruda", "aguaBenta", "dia", "moedas", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
-    "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "tempoTotal"].forEach(k => { R[k] = d[k]; });
+    "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "tempoTotal"].forEach(k => { R[k] = d[k]; }); if (d.deco) { R.deco = d.deco; R.decoInv = d.decoInv || {}; }
   R.t = d.T; R.fxR = d.fx || []; R.semente = cl(R.semente, 0, R.sementes.length - 1);
   d.canteiros.forEach(([a, cv2], i) => { R.canteiros[i].aberto = a; R.canteiros[i].covas = cv2; });
   if (d.voce) { R.roupa = d.voce.roupa; R.garrafada = d.voce.garrafada; if (d.voce.broa > 0 && !(R.broa > 0)) R.broa = d.voce.broa; R.agua = d.voce.agua; R.vidas = d.voce.vidas; if (d.voce.caido) { cairLocal(d.voce.caido.quem); R.caido.fora = d.voce.caido.fora; } else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
