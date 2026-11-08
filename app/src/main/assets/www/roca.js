@@ -2192,7 +2192,7 @@ NPCS.push(
     pista: [1, "chapeu", "O homem de chapéu, parado na frente da pensão: ele fala como o pai. Ele diz que ainda \"não lembra como é ter rosto\"."],
     extra: ["Não olha embaixo do chapéu.", "A mata me deixou sair pra te chamar. Não vem, filha. Não vem."] });
 /* ---------- a cor da Sombrinha ---------- */
-const GATO_CORES = { preto: ["Preta", "#2a2a30", "#3c3c46", "#c8e86a", 0], branco: ["Branca", "#eeeae2", "#d6cfc4", "#5aa8e8", 0], pardo: ["Parda", "#8a7c68", "#55483a", "#d8c040", 1], marrom: ["Marrom", "#6e4628", "#482c16", "#e8b84a", 1], amarelo: ["Amarela", "#e8a040", "#c0761e", "#6ac86a", 1] };
+const GATO_CORES = { preto: ["Preta", "#2a2a30", "#3c3c46", "#c8e86a", 0], branco: ["Branca", "#eeeae2", "#d6cfc4", "#5aa8e8", 0], pardo: ["Parda", "#8a7c68", "#55483a", "#d8c040", 1], marrom: ["Marrom", "#6e4628", "#482c16", "#e8b84a", 1], amarelo: ["Amarela", "#e8a040", "#c0761e", "#6ac86a", 1], frajola: ["Frajola", "#1e1e24", "#f2efe8", "#e8c84a", 2] };
 const corGato = () => GATO_CORES[ls("roca_gato_cor") || "preto"] || GATO_CORES.preto;
 function abrirCoresGato() {
   painelAberto = true; el.rcPainel.hidden = false; const atual = ls("roca_gato_cor") || "preto";
@@ -4299,9 +4299,10 @@ function gatoEm(x, y, s, dir, anda, tm, cx = c, ck) {
   cx.fillStyle = corG; cx.fillRect(-7 + pa, -5, 2.5, 5); cx.fillRect(4 - pa, -5, 2.5, 5);
   cx.beginPath(); cx.ellipse(0, -8, 9, 5, 0, 0, 7); cx.fill(); cx.beginPath(); cx.arc(8, -13, 5, 0, 7); cx.fill();
   cx.beginPath(); cx.moveTo(5, -16); cx.lineTo(6, -21); cx.lineTo(9, -17); cx.moveTo(9, -17); cx.lineTo(12, -21); cx.lineTo(12, -15); cx.fill();
-  cx.fillStyle = corL; if (listra) { for (const lx of [-5, -1.5, 2]) { cx.beginPath(); cx.ellipse(lx, -11.5, 1.2, 3, .2, 0, 7); cx.fill(); } cx.fillRect(6.5, -17.5, 1, 2.5); cx.fillRect(8.4, -18, 1, 2.5); } else { cx.globalAlpha = .5; cx.beginPath(); cx.ellipse(0, -6, 6, 2, 0, 0, 7); cx.fill(); cx.globalAlpha = 1; }
+  cx.fillStyle = corL; if (listra === 2) { cx.beginPath(); cx.ellipse(.5, -5.3, 6.5, 2, 0, 0, 7); cx.fill(); cx.beginPath(); cx.ellipse(5.2, -7.8, 3.2, 3.4, 0, 0, 7); cx.fill(); cx.beginPath(); cx.ellipse(10.6, -11.2, 3, 2.3, 0, 0, 7); cx.fill(); cx.fillRect(-7 + pa, -1.6, 2.5, 1.6); cx.fillRect(4 - pa, -1.6, 2.5, 1.6); } // frajola: peito, barriga, focinho e patinhas brancas
+  else if (listra) { for (const lx of [-5, -1.5, 2]) { cx.beginPath(); cx.ellipse(lx, -11.5, 1.2, 3, .2, 0, 7); cx.fill(); } cx.fillRect(6.5, -17.5, 1, 2.5); cx.fillRect(8.4, -18, 1, 2.5); } else { cx.globalAlpha = .5; cx.beginPath(); cx.ellipse(0, -6, 6, 2, 0, 0, 7); cx.fill(); cx.globalAlpha = 1; }
   cx.fillStyle = "#f2b0b8"; cx.beginPath(); cx.moveTo(6.2, -17); cx.lineTo(6.6, -19.5); cx.lineTo(8, -17.4); cx.fill(); // dentro da orelha
-  cx.strokeStyle = corG; cx.lineWidth = 3; cx.lineCap = "round"; cx.beginPath(); cx.moveTo(-8, -9); cx.quadraticCurveTo(-15, -14 + Math.sin(tm * 2) * 3, -13, -20); cx.stroke();
+  cx.strokeStyle = corG; cx.lineWidth = 3; cx.lineCap = "round"; cx.beginPath(); cx.moveTo(-8, -9); cx.quadraticCurveTo(-15, -14 + Math.sin(tm * 2) * 3, -13, -20); cx.stroke(); if (listra === 2) { cx.fillStyle = corL; cx.beginPath(); cx.arc(-13, -20, 1.6, 0, 7); cx.fill(); } // pontinha branca do rabo
   cx.fillStyle = corO; cx.fillRect(9, -14, 1.6, Math.sin(tm * .7) > .97 ? .4 : 1.6); cx.fillRect(12, -14, 1.6, Math.sin(tm * .7) > .97 ? .4 : 1.6); cx.fillStyle = "#d88a8a"; cx.fillRect(12.5, -11.5, 1.2, 1);
   cx.fillStyle = "#e86a9a"; cx.beginPath(); cx.moveTo(5, -10); cx.lineTo(2.5, -12.5); cx.lineTo(2.5, -7.5); cx.closePath(); cx.moveTo(5, -10); cx.lineTo(7.5, -12.5); cx.lineTo(7.5, -7.5); cx.closePath(); cx.fill(); cx.fillStyle = "#c84a7a"; cx.beginPath(); cx.arc(5, -10, 1.2, 0, 7); cx.fill();
   cx.strokeStyle = corG === "#eeeae2" ? "rgba(90,90,90,.5)" : "rgba(230,230,230,.5)"; cx.lineWidth = .6; cx.beginPath(); cx.moveTo(12, -12); cx.lineTo(16, -13); cx.moveTo(12, -11.4); cx.lineTo(16, -11); cx.stroke();
