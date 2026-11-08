@@ -3623,7 +3623,7 @@ function desenharFogueiraD(tm, nt) { const T = TS, X = PX(FOGUEIRA_D.x), Y = PY(
   c.fillStyle = "#6a6a62"; for (let i = 0; i < 8; i++) { const a = i / 8 * PI * 2; c.beginPath(); c.ellipse(X + Math.cos(a) * T * .3, Y + Math.sin(a) * T * .12, T * .09, T * .06, 0, 0, 7); c.fill(); }
   c.fillStyle = "#3a2414"; c.save(); c.translate(X, Y - T * .05); c.rotate(.4); c.fillRect(-T * .25, -3, T * .5, 6); c.rotate(-.8); c.fillRect(-T * .25, -3, T * .5, 6); c.restore();
   if (apagada) { c.fillStyle = "#4a3a2a"; c.beginPath(); c.ellipse(X, Y - T * .04, T * .2, T * .07, 0, 0, 7); c.fill(); for (let i = 0; i < 2; i++) { const f = (tm * .3 + i / 2) % 1; c.fillStyle = `rgba(200,200,200,${.25 * (1 - f)})`; c.beginPath(); c.arc(X + f * T * .3, Y - T * .2 - f * T, T * (.06 + f * .15), 0, 7); c.fill(); } return; } // apagada com terra, só fumacinha
-  chamas(X - T * .2, Y - T * .05, T * .4, T * .5, tm, 7);
+  chamas(X, Y - T * .04, T * .42, T * .52, tm, 7); // centralizado em cima da lenha
   c.strokeStyle = "#3a3632"; c.lineWidth = 2; c.beginPath(); c.moveTo(X - T * .35, Y - T * .6); c.lineTo(X + T * .35, Y - T * .6); c.stroke(); c.fillStyle = "#2a2622"; c.fillRect(X - T * .1, Y - T * .58, T * .2, T * .16); } // chaleira de lata pendurada
 // o que a Yasmin vê escondida (igual ao esgoto)
 function desenharEscondidaE() { if (!R.escE) return; const N = R.nev, perto = N && N.fase === "fareja" && dist(N, R.eu) < 4; c.fillStyle = "rgba(0,0,0,.55)"; c.fillRect(0, 0, W, H); c.fillStyle = "#000"; for (let i = 0; i < 9; i++) c.fillRect(0, i * H / 9, W, H / 9 * .62);
