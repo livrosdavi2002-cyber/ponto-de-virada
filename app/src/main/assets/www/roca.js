@@ -473,8 +473,8 @@ function montarUI() {
 }
 let VINHETA = null;
 function medir() {
-  if (!cv) return; const suave = window.fpsAlvo && fpsAlvo() === 60; DPRr = Math.min(devicePixelRatio || 1, suave ? 2 : 1.5); W = innerWidth; H = innerHeight;
-  cv.width = Math.round(W * DPRr); cv.height = Math.round(H * DPRr); luzCv.width = Math.round(W * (suave ? .8 : .5)); luzCv.height = Math.round(H * (suave ? .8 : .5)); VINHETA = null;
+  if (!cv) return; const fa = window.fpsAlvo ? fpsAlvo() : 30, suave = fa === 60; DPRr = Math.min(devicePixelRatio || 1, suave ? 2 : fa <= 24 ? 1 : 1.25, window.rocaDprMax || 9); W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * DPRr); cv.height = Math.round(H * DPRr); luzCv.width = Math.round(W * (suave ? .8 : fa <= 24 ? .4 : .5)); luzCv.height = Math.round(H * (suave ? .8 : fa <= 24 ? .4 : .5)); VINHETA = null;
   TS = Math.max(30, Math.min(W, H) / 9.2);
   el.rcGire.hidden = !(H > W * 1.1);
 }
@@ -2027,7 +2027,8 @@ function desenharVitoria(tm) { if (!R.venceu) return; const k = R.venceu.t; if (
 function loop(ts) {
   if (!rodando || !R) return;
   requestAnimationFrame(loop); // agenda antes: um erro de desenho não congela o jogo
-  lerControle(); const fps = window.fpsAlvo ? fpsAlvo() : 30; if (ultimo && ts - ultimo < 1000 / fps - 4) return; // 30 quadros por segundo bastam: o celular esquenta bem menos
+  lerControle(); const parado = painelAberto && !R.online && !R.msg, fps = parado ? 8 : window.fpsAlvo ? fpsAlvo() : 30; if (ultimo && ts - ultimo < 1000 / fps - 4) return;
+  { const A = window.rocaAdapt || (window.rocaAdapt = { n: 0, soma: 0, ruim: 0 }); if (ultimo && !parado && !document.hidden) { A.n++; A.soma += ts - ultimo; if (A.n >= 90) { const media = A.soma / A.n; A.ruim = media > 1000 / fps * 1.45 ? A.ruim + 1 : 0; A.n = 0; A.soma = 0; if (A.ruim >= 2 && DPRr > 1.01) { window.rocaDprMax = 1; medir(); A.ruim = 0; } } } } // se não está dando conta, baixa a resolução sozinho (é o que mais esquenta) // 30 quadros por segundo bastam: o celular esquenta bem menos
   const t0 = performance.now(); window.rocaPerfN = (window.rocaPerfN || 0) + 1;
   const dt = Math.min(.07, (ts - ultimo) / 1000 || 0); ultimo = ts;
   if (R.online === "guest") atualizarConvidado(dt); else atualizar(dt);
@@ -2045,7 +2046,7 @@ function loop(ts) {
   if (R.venceu && R.venceu.t > 1 && !R.dentro && (R.lugar || "sitio") === "sitio") { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + Math.max(0, R.venceu.t - 1.5) * 2.2); c.globalCompositeOperation = "lighter"; c.fillStyle = "rgba(255,240,200,.18)"; c.beginPath(); c.moveTo(x - TS * .8, y); c.lineTo(x - TS * 2, y + TS * 6); c.lineTo(x + TS * 2, y + TS * 6); c.lineTo(x + TS * .8, y); c.fill(); c.globalCompositeOperation = "source-over"; }
   desenharFx(); desenharSusto(tm); desenharVitoria(tm);
   // vinheta
-  if (!VINHETA) { VINHETA = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75); VINHETA.addColorStop(0, "rgba(0,0,0,0)"); VINHETA.addColorStop(1, "rgba(0,0,0,.55)"); } c.fillStyle = VINHETA; c.fillRect(0, 0, W, H);
+  if (!VINHETA) { VINHETA = document.createElement("canvas"); VINHETA.width = Math.max(32, Math.round(W / 6)); VINHETA.height = Math.max(32, Math.round(H / 6)); const vg = VINHETA.getContext("2d"), w6 = VINHETA.width, h6 = VINHETA.height, gr = vg.createRadialGradient(w6 / 2, h6 / 2, Math.min(w6, h6) * .35, w6 / 2, h6 / 2, Math.max(w6, h6) * .75); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,.55)"); vg.fillStyle = gr; vg.fillRect(0, 0, w6, h6); } c.drawImage(VINHETA, 0, 0, W, H);
   { const dtq = performance.now() - t0; window.rocaMs = (window.rocaMs || 0) * .95 + dtq * .05; if (window.rocaTempos) { rocaTempos.push(dtq); if (rocaTempos.length > 400) rocaTempos.shift(); } }
 }
 
@@ -3553,6 +3554,7 @@ function desenharVagaoDentro(tm) {
    (até do trem), mas não acha quem está escondido. O Seu Durval, que mora na barraca do lado
    da plataforma, se esconde no tender quando a neblina vem. */
 const temNeblina = () => R.dia % 2 === 0;
+const modoLeve = () => !!(window.fpsAlvo && fpsAlvo() <= 24);
 const novoNev = () => ({ fase: "longe", prox: rnd(7, 15), t: 0, x: ETW + 3, y: TRILHO_Y, dir: -1, fase2: 0 });
 const BARRACA = { x: 48.4, y: 15.5 }, FOGUEIRA_D = { x: 46.9, y: 16.1 }, DURVAL_P = { x: 46, y: 15.9 };
 const ESCONDE_E = [
@@ -3655,7 +3657,7 @@ function desenharEscondidaE() { if (!R.escE) return; const N = R.nev, perto = N 
   c.fillStyle = "rgba(240,230,210,.75)"; c.font = `600 ${Math.round(Math.max(13, H * .028))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText(perto ? "As bocas estão cheirando bem do seu lado. Não se mexe." : N && (N.fase === "ronda" || N.fase === "caca") && temNeblina() ? "Escondida. Espere as pernas ficarem longe." : "Escondida. Já dá pra sair.", W / 2, H * .9); c.textAlign = "start"; }
 function desenharNeblinaE(tm) { // a neblina por cima de tudo: dá pra ver só uns passos em volta
   if (!temNeblina()) return; const nt = horaNoite(), rgb = nt > .5 ? "70,76,86" : "196,202,208", x = PX(R.eu.x), y = PY(R.eu.y) - TS * .5;
-  for (let i = 0; i < 14; i++) { const nx = ((i * 6.1 + tm * (.25 + (i % 3) * .1)) % (ETW + 14)) - 7, ny = 3 + (i * 4.3) % 20, px = PX(nx), py = PY(ny); if (!naTela(px, py, 400)) continue; const g = c.createRadialGradient(px, py, 0, px, py, TS * 5.5); g.addColorStop(0, `rgba(${rgb},.32)`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.fillRect(px - TS * 5.5, py - TS * 5.5, TS * 11, TS * 11); }
+  for (let i = 0; i < (modoLeve() ? 6 : 14); i++) { const nx = ((i * 6.1 + tm * (.25 + (i % 3) * .1)) % (ETW + 14)) - 7, ny = 3 + (i * 4.3) % 20, px = PX(nx), py = PY(ny); if (!naTela(px, py, 400)) continue; const g = c.createRadialGradient(px, py, 0, px, py, TS * 5.5); g.addColorStop(0, `rgba(${rgb},.32)`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.fillRect(px - TS * 5.5, py - TS * 5.5, TS * 11, TS * 11); }
   const g = c.createRadialGradient(x, y, TS * (R.lanterna ? 2.6 : 1.8), x, y, TS * (R.lanterna ? 7.5 : 6.2)); g.addColorStop(0, `rgba(${rgb},.08)`); g.addColorStop(1, `rgba(${rgb},${nt > .5 ? .7 : .86})`); c.fillStyle = g; c.fillRect(0, 0, W, H);
   const N = R.nev; if (N && N.fase !== "longe" && dist(N, R.eu) < 13 && dist(N, R.eu) > 4.8) { const X = PX(N.x), Y = PY(N.y); if (naTela(X, Y - TS * 2, TS * 4)) corpoNevoa(X, Y, TS, N.dir || 1, N.fase2 || 0, tm, false, true); } // a silhueta aparece no meio da neblina antes do bicho
 }
@@ -3770,7 +3772,7 @@ function desenharPropsSitio(obj, tm) {
 }
 // borboletas de dia, passarinhos ciscando perto da horta
 function vidaNoQuintal(tm) {
-  const nt = horaNoite(); if (nt > .4) return; const al = 1 - nt / .4, ancoras = [...(R.deco.flores || []).slice(0, 12), ...R.canteiros.filter(k => k.aberto).map(k => ({ x: k.x + k.w / 2, y: k.y + 1 })), ...POMAR.map(([x, y]) => ({ x, y: y - .5 }))];
+  const nt = horaNoite(); if (nt > .4 || modoLeve()) return; const al = 1 - nt / .4, ancoras = [...(R.deco.flores || []).slice(0, 12), ...R.canteiros.filter(k => k.aberto).map(k => ({ x: k.x + k.w / 2, y: k.y + 1 })), ...POMAR.map(([x, y]) => ({ x, y: y - .5 }))];
   for (let i = 0; i < Math.min(10, ancoras.length * 2); i++) { const a = ancoras[i % ancoras.length], t = tm * .6 + i * 1.9, bx = a.x + Math.sin(t) * 1.3 + Math.sin(t * 2.3) * .3, by = a.y - .6 + Math.cos(t * .8) * .7, x = PX(bx), y = PY(by) - TS * .3; if (!naTela(x, y, 20)) continue; const asa = Math.abs(Math.sin(tm * 14 + i)) * TS * .07 + 1, cor = ["#f2c94a", "#f4f0e6", "#e88ac8", "#5aa0e0", "#e2783d"][i % 5]; c.globalAlpha = al; c.fillStyle = cor; c.beginPath(); c.ellipse(x - asa / 2, y, asa, TS * .05, -.3, 0, 7); c.ellipse(x + asa / 2, y, asa, TS * .05, .3, 0, 7); c.fill(); c.fillStyle = "#2a1a10"; c.fillRect(x - .7, y - 2, 1.4, 4); c.globalAlpha = 1; }
   R.canteiros.filter(k => k.aberto).forEach((k, j) => { for (let i = 0; i < 2; i++) { const bx = k.x + k.w + .6 + i * .5, by = k.y + k.h - .2 + i * .3; if (dist(R.eu, { x: bx, y: by }) < 2.6) continue; const x = PX(bx + Math.sin(tm * .4 + i + j) * .3), y = PY(by), pica = Math.sin(tm * 6 + i * 3 + j) > .6 ? 2 : 0; if (!naTela(x, y, 20)) continue; c.globalAlpha = al; c.fillStyle = "#6a4a2a"; c.beginPath(); c.ellipse(x, y - 3, 4, 3, 0, 0, 7); c.fill(); c.beginPath(); c.arc(x + 3, y - 5 + pica, 2.4, 0, 7); c.fill(); c.fillStyle = "#e8b030"; c.fillRect(x + 5, y - 5 + pica, 2.5, 1.2); c.globalAlpha = 1; } }); // somem quando você chega perto
 }
@@ -4587,7 +4589,7 @@ function mostrarTitulo(on) {
   const d = el.rcTitulo; if (!d) return; d.hidden = !on;
   if (!on) { TIT = null; el.rcTitMenu.innerHTML = ""; return; }
   if (TIT) return; TIT = { t0: performance.now(), n: 0, prox: 0 }; const cv2 = document.getElementById("rcTitCv"), g = cv2.getContext("2d");
-  const q = now => { if (!TIT || d.hidden) return; const dpr = Math.min(2, devicePixelRatio || 1), w = cv2.clientWidth || d.clientWidth || innerWidth, h = cv2.clientHeight || d.clientHeight || innerHeight; if (cv2.width !== Math.round(w * dpr) || cv2.height !== Math.round(h * dpr)) { cv2.width = Math.round(w * dpr); cv2.height = Math.round(h * dpr); } g.setTransform(dpr, 0, 0, dpr, 0, 0); const t = (now - TIT.t0) / 1000; if (!TIT.prox) TIT.prox = t + .5; desenharTitulo(g, w, h, t); musicaTitulo(t); requestAnimationFrame(q); };
+  const q = now => { if (!TIT || d.hidden) return; if (now - (TIT.ult || 0) < 48) { requestAnimationFrame(q); return; } TIT.ult = now; const dpr = Math.min(1.25, devicePixelRatio || 1), w = cv2.clientWidth || d.clientWidth || innerWidth, h = cv2.clientHeight || d.clientHeight || innerHeight; if (cv2.width !== Math.round(w * dpr) || cv2.height !== Math.round(h * dpr)) { cv2.width = Math.round(w * dpr); cv2.height = Math.round(h * dpr); } g.setTransform(dpr, 0, 0, dpr, 0, 0); const t = (now - TIT.t0) / 1000; if (!TIT.prox) TIT.prox = t + .5; desenharTitulo(g, w, h, t); musicaTitulo(t); requestAnimationFrame(q); };
   requestAnimationFrame(q);
 }
 const ICS_MENU = { jogar: '<svg viewBox="0 0 16 16"><path d="M4 2h2v2h2v2h2v2h-2v2h-2v2h-2z"/></svg>', online: '<svg viewBox="0 0 16 16"><path d="M3 3h4v4h-4zM9 3h4v4h-4zM2 9h6v4h-6zM8 9h6v4h-6z"/></svg>', hist: '<svg viewBox="0 0 16 16"><path d="M2 3h5v10h-5zM9 3h5v10h-5zM3 5h3v1h-3zM10 5h3v1h-3zM3 7h3v1h-3zM10 7h3v1h-3z"/></svg>', opc: '<svg viewBox="0 0 16 16"><path d="M7 1h2v3h-2zM7 12h2v3h-2zM1 7h3v2h-3zM12 7h3v2h-3zM5 5h6v6h-6zM7 7h2v2h-2z" fill-rule="evenodd"/></svg>', sair: '<svg viewBox="0 0 16 16"><path d="M3 2h7v3h-2v-1h-3v8h3v-1h2v3h-7zM10 6h1v-2h2v2h1v4h-1v2h-2v-2h-1z"/></svg>', voltar: '<svg viewBox="0 0 16 16"><path d="M2 8l4-4v3h8v2h-8v3z"/></svg>', criar: '<svg viewBox="0 0 16 16"><path d="M7 2h2v5h5v2h-5v5h-2v-5h-5v-2h5z"/></svg>', entrar: '<svg viewBox="0 0 16 16"><path d="M2 7h7v-3l5 4-5 4v-3h-7z"/></svg>' };
@@ -4639,7 +4641,7 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
   el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Opções</h2><div class="rc-grade">
     <button type="button" class="rc-op" id="opSom">Som: ${typeof mudo !== "undefined" && mudo ? "desligado" : "ligado"}</button>
     <button type="button" class="rc-op" id="opVoz">Narração da história: ${lig(window.vozLigada !== false)}</button>
-    <button type="button" class="rc-op" id="opFps">Gráfico: ${fps === 60 ? "suave (60 quadros, gasta mais bateria)" : "economia (30 quadros)"}</button>
+    <button type="button" class="rc-op" id="opFps">Gráfico: ${fps === 60 ? "suave<small>60 quadros · mais bonito, esquenta mais</small>" : fps <= 24 ? "bateria<small>24 quadros e resolução menor · esquenta bem menos</small>" : "normal<small>30 quadros · o meio-termo</small>"}</button>
     ${window.PC ? `<button type="button" class="rc-op" id="opTela">Tela cheia (F11)</button>` : ""}
     <button type="button" class="rc-op" id="opHist">Apagar a história já vista<small>A abertura aparece de novo</small></button></div>
     <p style="font-size:12px;color:#b8b2a4">Roça Assombrada · versão ${window.ROCA_VERSAO || "1"}</p>
@@ -4647,7 +4649,7 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
   const re = () => opcoes();
   document.getElementById("opSom").addEventListener("click", () => { if (window.alternarSom) alternarSom(); re(); });
   document.getElementById("opVoz").addEventListener("click", () => { if (window.alternarVozSolo) alternarVozSolo(); re(); });
-  document.getElementById("opFps").addEventListener("click", () => { try { localStorage.setItem("pv_fps", fps === 60 ? "30" : "60"); } catch (e) {} medir(); re(); });
+  document.getElementById("opFps").addEventListener("click", () => { try { localStorage.setItem("pv_fps", fps === 30 ? "24" : fps <= 24 ? "60" : "30"); } catch (e) {} window.rocaDprMax = 0; medir(); re(); });
   const bt2 = document.getElementById("opTela"); if (bt2) bt2.addEventListener("click", () => PC.telaCheia());
   document.getElementById("opHist").addEventListener("click", () => { ls("roca_hist", ""); try { localStorage.removeItem("roca_hist"); } catch (e) {} efeito("A história vai aparecer de novo", "#e8e2d4"); re(); });
   document.getElementById("rcFechar").addEventListener("click", () => { fecharPainel(); menuInicial(); });

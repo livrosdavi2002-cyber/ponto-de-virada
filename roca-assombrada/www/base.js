@@ -28,7 +28,7 @@ function calar() { if (vozNativa()) { try { Android.calar(); } catch (e) {} } el
 window.vozInicio = () => { if (AC && !mudo) OUT.gain.setTargetAtTime(.4, AC.currentTime, .25); };
 window.vozFim = () => { if (AC && !mudo) OUT.gain.setTargetAtTime(.9, AC.currentTime, .5); };
 window.vozPronta = () => {};
-window.fpsAlvo = () => { try { return localStorage.getItem("pv_fps") === "60" ? 60 : 30; } catch (e) { return 30; } };
+window.fpsAlvo = () => { try { const v = localStorage.getItem("pv_fps"); return v === "60" ? 60 : v === "24" ? 24 : 30; } catch (e) { return 30; } };
 // botão voltar do Android e "sair do modo": aqui não existe outro menu, então volta para o menu da Roça
 window.voltarAndroid = () => window.rocaVoltar ? rocaVoltar() : false;
 window.abrirHub = () => { if (window.entrarRoca) entrarRoca(); };
