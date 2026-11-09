@@ -193,7 +193,7 @@ function novoJogo() {
     esp: { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste", t: 0 }, peneira: false, sinoUsado: false, queimado: [], mel: COLMEIAS.map(() => 1),
     porcos: Array.from({ length: 3 }, (_, i) => ({ x: 51.4 + i * 1.5, y: 27 + (i % 2) * .8, alvo: null, t: rnd(0, 3), dir: 1 })), fxR: [],
   };
-  R.deco = lerJSON("roca_deco", { cores: {}, flores: [] }); R.deco.cores = R.deco.cores || {}; R.deco.flores = R.deco.flores || []; R.deco.objs = R.deco.objs || []; R.decoInv = lerJSON("roca_deco_inv", {});
+  R.deco = lerJSON("roca_deco", { cores: {}, flores: [] }); R.deco.cores = R.deco.cores || {}; R.deco.flores = R.deco.flores || []; R.deco.objs = R.deco.objs || []; R.clima = "sol"; R.climaAmanha = sortearClima(); R.medo = 0; R.encomenda = null; R.luaCheia = false; R.decoInv = lerJSON("roca_deco_inv", {});
   gerarChao();
 }
 function tutorial() {
@@ -319,7 +319,7 @@ function montarUI() {
   const d = document.createElement("div"); d.id = "roca"; d.hidden = true;
   d.innerHTML = `<canvas id="rocaCv"></canvas>
     <div class="rc-hud"><div class="rc-l"><b id="rcMoedas">0</b><span id="rcDia">Dia 1</span></div>
-      <div class="rc-barras"><i class="rc-b agua"><s id="rcAgua"></s></i><i class="rc-b oleo"><s id="rcOleo"></s></i><i class="rc-b folego"><s id="rcFolego"></s></i></div>
+      <div class="rc-barras"><i class="rc-b agua"><s id="rcAgua"></s></i><i class="rc-b oleo"><s id="rcOleo"></s></i><i class="rc-b folego"><s id="rcFolego"></s></i><i class="rc-b medo" title="Medo"><s id="rcMedo"></s></i></div>
       <div class="rc-vidas" id="rcVidas"></div><div class="rc-sala" id="rcSala" hidden></div><div class="rc-itens" id="rcItens"></div><button class="rc-menu rc-moch rc-chatbt" id="rcChat" type="button" aria-label="Chat" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-7l-6 5v-5h-3a4 4 0 0 1-4-4z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="11" cy="12.5" r="1.6" fill="currentColor"/><circle cx="16" cy="12.5" r="1.6" fill="currentColor"/><circle cx="21" cy="12.5" r="1.6" fill="currentColor"/></svg><i id="rcChatN" hidden></i></button><button class="rc-menu rc-moch" id="rcMoch" type="button" aria-label="Mochila"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="8" width="18" height="20" rx="6" fill="#8a5a32" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="17" width="11" height="8" rx="2.5" fill="#6a4224" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 19.5h11" stroke="currentColor" stroke-width="1"/><circle cx="16" cy="21.5" r="1.1" fill="#f2c94a"/></svg></button><button class="rc-menu" id="rcMenu" type="button">Pausa</button></div>
     <div class="rc-obj" id="rcObj"></div><div class="rc-chatlog" id="rcChatLog"></div>
     <div class="rc-chatbar" id="rcChatBar" hidden><div class="rc-rapidas">${["Socorro!", "Vem aqui!", "Corre!", "Tô indo!", "Apaga a lanterna!", "Vou vender", "Cuidado!", "Valeu!"].map(t => `<button type="button" data-r="${t}">${t}</button>`).join("")}</div>
@@ -331,7 +331,7 @@ function montarUI() {
     <div class="rc-painel" id="rcPainel" hidden></div>
     <div class="rc-gire" id="rcGire" hidden><b>Vire o celular</b><span>Este modo é jogado com o celular deitado.</span></div>`;
   document.body.appendChild(d);
-  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcSala", "rcMoch", "rcTitulo", "rcTitMenu", "rcTitRod"].forEach(i => el[i] = document.getElementById(i));
+  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcMedo", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcSala", "rcMoch", "rcTitulo", "rcTitMenu", "rcTitRod"].forEach(i => el[i] = document.getElementById(i));
   el.rcSala.addEventListener("click", () => { const c = Net.codigo; if (!c) return; try { navigator.clipboard.writeText(c).then(() => R && efeito("Código " + c + " copiado", "#f2c94c"), () => {}); } catch (e) {} });
   cv = document.getElementById("rocaCv"); c = cv.getContext("2d"); luzCv = document.createElement("canvas"); lc = luzCv.getContext("2d");
   const st = document.createElement("style"); st.textContent = `
@@ -342,7 +342,7 @@ function montarUI() {
   .rc-l b{font:800 22px "Big Shoulders Display",sans-serif;color:#f2c94a}.rc-l b::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:#f2c94a;box-shadow:inset -2px -2px 0 #b8902a;margin-right:6px}
   .rc-l span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
   .rc-barras{display:flex;flex-direction:column;gap:4px}.rc-b{display:block;width:74px;height:6px;border-radius:3px;background:rgba(0,0,0,.45);overflow:hidden;position:relative}
-  .rc-b s{display:block;height:100%;width:50%;border-radius:3px}.rc-b.agua s{background:#5ab0e0}.rc-b.oleo s{background:#f2a33a}.rc-b.folego s{background:#9bd86b}
+  .rc-b s{display:block;height:100%;width:50%;border-radius:3px}.rc-b.agua s{background:#5ab0e0}.rc-b.oleo s{background:#f2a33a}.rc-b.folego s{background:#9bd86b}.rc-b.medo s{background:#d83a5a;width:0}
   .rc-itens{display:flex;gap:6px;flex-wrap:wrap;color:#e8e2d4;font-size:11px;text-shadow:0 1px 4px #000}.rc-itens span{background:rgba(0,0,0,.35);padding:2px 7px;border-radius:8px}
   .rc-menu{margin-left:auto;pointer-events:auto;background:rgba(10,12,16,.6);border:1px solid rgba(255,255,255,.15);color:#f4efe4;border-radius:12px;padding:8px 14px;font:600 12px var(--f-mono,monospace)}
   .rc-joy{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:18px;width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12)}
@@ -510,8 +510,9 @@ function oQueFazer() {
     if (s.y > 5.9 && Math.abs(s.x - SALA.porta.x) < 1.1) return { t: "Sair", fn: sair, loc: 1 };
     if (s.x > 7 && s.y < 2.4) return { t: "Bancada", fn: abrirBancada, loc: 1 };
     if (Math.hypot(s.x - 5, s.y - 3.5) < 1.6 && !R.lamparinas.every(v => v)) return { t: "Acender", fn: () => { if (R.oleo >= 10) { R.oleo -= 10; R.lamparinas = R.lamparinas.map(() => 1); R.lampT = 0; S.colher(); efeito("Lamparinas acesas", "#f2c94a"); } else efeito("Sem óleo para acender", "#e8e2d4"); } };
-    if (Math.hypot(s.x - 4.4, s.y - 1.6) < 1.2) return { t: "Fogão", fn: () => efeito("O fogo estala. Por um instante, parece a voz da vó.", "#e8e2d4"), loc: 1 };
+    if (Math.hypot(s.x - 4.4, s.y - 1.6) < 1.2) return { t: "Fogão", fn: abrirFogao, loc: 1 };
     if (Math.hypot(s.x - 5, s.y - 4.5) < 1.3) return { t: "Diário da vó", fn: () => abrirDiario(), loc: 1 };
+    if (Math.hypot(s.x - RADIO_POS.x, s.y - (RADIO_POS.y - .5)) < .75) return { t: "Rádio", fn: ligarRadio, loc: 1 };
     const lc2 = lembrancaPerto(s, LEMB_CASA); if (lc2) return { t: "Olhar", fn: () => lembrar(lc2), loc: 1 };
     return null;
   }
@@ -519,6 +520,7 @@ function oQueFazer() {
   { const ca = outros().find(o => o.caido && !o.caido.fora && !o.dentro && (o.lugar || "sitio") === (R.lugar || "sitio") && dist(p, o.eu) < 1.4); if (ca) return { t: "Levantar", fn: () => { ca.caido = null; S.colher(); efeito("De pé! Corre!", "#9bd86b"); } }; }
   if (voEsperando() && dist(p, VO_TRILHA) < 1.5) return { t: "Falar com a vó", fn: falarComVo, loc: 1 };
   if (dist(p, CASA.porta) < 1.1) return { t: "Entrar", fn: entrar, loc: 1 };
+  if (dist(p, { x: PROPS_SITIO.correio.x, y: PROPS_SITIO.correio.y + .3 }) < 1) return { t: "Caixa de correio", fn: abrirCorreio, loc: 1 };
   if (dist(p, CAIXOTE) < 1.2) { const v = valorVenda(); return { t: v ? `Vender ${v}` : "Caixote", fn: vender }; }
   if (dist(p, POCO) < 1.4) return { t: "Tirar água", fn: tirarAgua };
   if (R.vela && !velaNaMao() && dist(p, R.vela) < 1.1) return { t: "Pegar vela", fn: pegarVela };
@@ -768,8 +770,8 @@ function abrirMochila() {
   if (R.vara) add("Vara de pesca", "✓"); if (R.peneira) add("Peneira", "✓"); if (R.lanternaBoa) add("Lanterna reforçada", "✓"); if (R.vel > 3.2) add("Botas de borracha", "✓"); if (R.velaCom) add("Vela acesa", "✓"); if (R.garrafada) add("Garrafada", "✓"); if (R.aguaBenta) add("Água benta", "✓"); if (R.broa > 0) add("Broa (fôlego)", Math.ceil(R.broa) + " s"); if (R.enxada) add("Enxada de aço", "✓"); if (R.lampiao) add("Lampião de ferro", "✓"); if (R.ferradura) add("Ferradura na porta", "✓"); if (R.sal) add("Sal na soleira", "✓"); if (R.arruda) add("Arruda", "✓"); add("Pistas", `${Object.keys(pistas()).length}/${NPISTAS}`); if (R.apito) add("Apito de ferro", "✓"); if (R.guizo) add("Guizo da Sombrinha", "✓"); if (R.isca) add("Isca boa", "✓"); if (R.medalha) add("Medalha de Santa Luzia", "✓"); Object.entries(R.missoes || {}).forEach(([k, v]) => { if (v === "ativa") add("Missão: " + MISSOES[k].titulo, MISSOES[k].falta()); }); if (R.chaveVo) add("Chave do alçapão", "✓"); if (ls("roca_fita")) add("Gravador do vô", "✓"); if (temMapaEsgoto()) add("Mapa do esgoto", "✓"); if (R.terco) add("Terço do vô", "✓"); add("Peças da caminhonete", R.pecas ? `${R.pecas}/3` : "0/3");
   const venda = valorVenda();
   el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Mochila</h2><p>${venda ? `O que você carrega vale <b style="color:#f2c94a">${venda} moedas</b> no caixote.` : "Nada para vender por enquanto."} Objetivo: ${objetivo()}.</p><div class="rc-moch-l">${l.join("")}</div>
-    <div class="rc-linha">${R.diario ? `<button type="button" class="rc-op dest" id="rcLerDiario">Ler o diário da vó</button>` : `<span style="color:#b8b2a4;font-size:13px">Tem um diário em cima da mesa da casa...</span>`}<button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
-  if (R.diario) document.getElementById("rcLerDiario").addEventListener("click", () => abrirDiario());
+    <div class="rc-linha">${Object.keys(R.extra).filter(k => RECEITAS.some(r => r.k === k) && R.extra[k] > 0).map(k => `<button type="button" class="rc-op" data-come="${k}">Comer: ${EXTRAS[k][0]}</button>`).join("")}${R.diario ? `<button type="button" class="rc-op dest" id="rcLerDiario">Ler o diário da vó</button>` : `<span style="color:#b8b2a4;font-size:13px">Tem um diário em cima da mesa da casa...</span>`}<button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
+  if (R.diario) document.getElementById("rcLerDiario").addEventListener("click", () => abrirDiario()); el.rcPainel.querySelectorAll("[data-come]").forEach(b => b.addEventListener("click", () => { comer(b.dataset.come); setTimeout(() => painelAberto && abrirMochila(), R.online === "guest" ? 400 : 0); }));
   document.getElementById("rcFechar").addEventListener("click", fecharPainel);
 }
 // lugares onde a Yasmin lembra de coisas (tocar em "Olhar")
@@ -829,7 +831,7 @@ function morrer(quem, porque, dica) { if (R.morto || R.venceu || R.caido) return
 /* ---------- HUD ---------- */
 function hud() {
   if (!R) return;
-  el.rcMoedas.textContent = R.moedas; el.rcDia.textContent = `Dia ${R.dia} · ${ehNoite() ? "noite" : "dia"}`;
+  el.rcMoedas.textContent = R.moedas; el.rcDia.textContent = `Dia ${R.dia} · ${ehNoite() ? (R.luaCheia ? "lua cheia" : "noite") : "dia"} · ${CLIMAS[climaHoje()][0].toLowerCase()}`;
   el.rcAgua.style.width = (R.agua / R.aguaMax * 100) + "%"; el.rcOleo.style.width = R.oleo + "%"; el.rcFolego.style.width = R.folego + "%";
   const it = []; const col = Object.values(R.colheita).reduce((a, b) => a + b, 0), pe = Object.values(R.peixes).reduce((a, b) => a + b, 0);
   if (col) it.push(`${col} colheita`); if (pe) it.push(`${pe} peixe`); if (R.inv.graveto || R.inv.folha) it.push(`${R.inv.graveto} graveto · ${R.inv.folha} folha`); if (R.velaCom) it.push("vela acesa"); if (R.pecas) it.push(`peças ${R.pecas}/3`);
@@ -838,7 +840,7 @@ function hud() {
   el.rcLuz.classList.toggle("on", R.lanterna); el.rcCorre.classList.toggle("on", R.correndo);
   const comAmigo = !!(R.online && outros().length && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
   el.rcObj.textContent = R.menu ? "" : "Objetivo: " + objetivo();
-  el.rcObj.style.marginTop = R.online && outros().length >= 2 ? "16px" : "";
+  el.rcObj.style.marginTop = R.online && outros().length >= 2 ? "24px" : "10px"; // espaço pra barra do medo
   const cor = n => n > 0 ? "♥" : "♡";
   const sala = R.online && Net.codigo && !R.menu ? `SALA <b>${Net.codigo}</b> · ${outros().length + 1}/${MAXJ}${R.online === "host" && !outros().length ? " · esperando amigos" : ""}` : "";
   if (el.rcSala.dataset.k !== sala) { el.rcSala.dataset.k = sala; el.rcSala.innerHTML = sala; el.rcSala.hidden = !sala; }
@@ -877,7 +879,7 @@ function moverLocal(dt) {
   if (R.pesca && m > .2) R.pesca = null;
   if (R.correndo) { R.folego -= 30 * dt; if (R.folego <= 0) { R.folego = 0; R.correndo = false; } } else R.folego = Math.min(100, R.folego + 14 * dt);
   if (R.broa > 0) { R.broa -= dt; R.folego = 100; }
-  const vel = R.vel * (R.correndo ? 1.75 : 1) * (R.dentro || R.predio ? .8 : 1);
+  const vel = R.vel * (R.correndo ? 1.75 : 1) * (R.dentro || R.predio ? .8 : 1) * (R.boloT > 0 ? 1.15 : 1);
   if (R.lugar === "esgoto") { if (!ESG) montarEsgoto(); if (!R.escondido) andaLivre(R.eu, dx, dy, vel, dt, livreEsgoto); }
   else if (R.lugar === "mata") { if (!MATA) montarMata(); if (R.predio) { if (R.espiar) { R.espiar.t += dt; if (Math.abs(dx) + Math.abs(dy) > .3) R.espiar = 0; } else andaLivre(R.int, dx, dy, vel * .8, dt, R.predio === "porao" ? livrePorao : livreCabana); } else { andaLivre(R.eu, dx, dy, vel, dt, livreMata); if (R.eu.x > MTW - .3) voltarDaMata(); } }
   else if (R.lugar === "vila") { if (R.predio) andaLivre(R.int, dx, dy, vel, dt, livrePredio); else { andaLivre(R.eu, dx, dy, vel, dt, livreVila); if (R.eu.y < .5) voltarSitio(); } }
@@ -902,10 +904,11 @@ function atualizar(dt) {
   const antesNoite = ehNoite(); R.t += dt; const agoraNoite = ehNoite();
   if (!antesNoite && agoraNoite) comecaNoite();
   if (antesNoite && !agoraNoite) amanhece();
-  moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); if (R.lugar === "estacao") atualizarNevoa(dt); if (MATA || jogadores().some(J => J.lugar === "mata")) { if (!MATA) montarMata(); atualizarMata(dt); }
+  moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); if (R.lugar === "estacao") atualizarNevoa(dt); atualizarMedo(dt); atualizarClimaLocal(dt); if (MATA || jogadores().some(J => J.lugar === "mata")) { if (!MATA) montarMata(); atualizarMata(dt); }
   const nLuz = jogadores().filter(P => P.lanterna).length;
   if (nLuz) { R.oleo -= (R.lanternaBoa ? .5 : .9) * (R.lampiao ? .5 : 1) * dt * nLuz; if (R.oleo <= 0) { R.oleo = 0; if (R.lanterna) efeito("A lanterna apagou", "#f2a33a"); R.lanterna = false; outros().forEach(o => o.lanterna = false); } }
   outros().forEach(o => { if (o.regando > 0) o.regando -= dt; });
+  atualizarClima(dt);
   // plantas, pomar e galinhas
   for (const k of R.canteiros) k.covas.forEach((cv2, i) => { if (!cv2 || cv2.seca || cv2.est >= 3) return; cv2.t += dt * (R.enxada ? 1.35 : 1); if (cv2.t >= PLANTAS[cv2.tipo].tempo) { cv2.est++; cv2.t = 0; if (cv2.est < 3) cv2.seca = true; else S.pronto(k.x + i % k.w, k.y + Math.floor(i / k.w)); } });
   R.frutas.forEach(f => { if (f.n >= 3) return; f.t += dt; if (f.t > 45) { f.t = 0; f.n++; } });
@@ -928,7 +931,7 @@ function atualizar(dt) {
   if (Math.floor(R.t * 2) !== Math.floor((R.t - dt) * 2)) hud();
   const o = oQueFazer(); el.rcAcao.textContent = o ? o.t : "Ação"; el.rcAcao.style.opacity = o ? 1 : .5;
 }
-function comecaNoite() { R.velaHoje = R.dia === 1 || (!R.velaOntem && Math.random() < .22); R.velaOntem = R.velaHoje; R.velaEntregue = false; R.velaT = rnd(8, 18); R.sinoUsado = false;
+function comecaNoite() { R.luaCheia = R.dia >= 2 && Math.random() < .2; if (R.luaCheia) setTimeout(() => R && efeito("Lua cheia. A noite fica clara... e o cachorro preto, mais rápido.", "#e8e4d0"), 2200); R.velaHoje = R.dia === 1 || (!R.velaOntem && Math.random() < .22); R.velaOntem = R.velaHoje; R.velaEntregue = false; R.velaT = rnd(8, 18); R.sinoUsado = false;
   // cada noite é sorteada: quem vem, quando vem e quantas vezes (nada de padrão)
   R.aranha.hoje = R.dia >= 2 && Math.random() < .45; R.aranha.prox = rnd(4, 70);
   R.mula.hoje = R.dia >= 2 && Math.random() < (R.dia >= 3 ? .4 : .2); R.mula.prox = rnd(6, 60); R.mula.vezes = 0; R.mula.max = 1 + Math.floor(Math.random() * 2);
@@ -939,7 +942,7 @@ function amanhece() {
   if (R.velaHoje && !R.velaEntregue && jogadores().some(P => (P.lugar || "sitio") === "sitio")) { R.alma = { t: 0 }; return; } // a alma vem cobrar (só se tem alguém no sítio)
   R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false; R.saci.hoje = Math.random() < .3; R.saci.prox = rnd(80, 150);
   jogadores().forEach(P => { P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : (P.slot || 1) * .45 - .1); P.eu.y = CASA.porta.y + .7; if (P !== R) enviarPara(P.nid, { t: "pos", x: P.eu.x, y: P.eu.y }); } });
-  if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a");
+  if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a"); mudarDia();
   Object.assign(R.esp, { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste" }); if (R.aranha.fase !== "longe") R.aranha.fase = "sai"; R.mula.fase = "longe";
 
   tocarTom(523, 1.5, { tipo: "triangle", vol: .04, wet: .6 }); tocarTom(659, 1.5, { tipo: "triangle", vol: .035, quando: .2, wet: .6 }); tocarTom(780, .4, { tipo: "square", vol: .02, ate: 1100, lp: 2000, quando: 1 }); // galo
@@ -982,7 +985,7 @@ function atualizarCachorro(dt) {
   } else if (k.fase === "vira") { if (k.t > 1.3) { k.fase = "lobo"; k.t = 0; k.porta = 0; S.uivo(k.x, k.y); } }
   else if (k.fase === "lobo") {
     const alvo2 = R.dentro ? { x: CASA.porta.x, y: CASA.porta.y + 1 } : alvo, d2 = dist(k, alvo2);
-    if (d2 > .1) { k.x += (alvo2.x - k.x) / d2 * 5.9 * dt; k.y += (alvo2.y - k.y) / d2 * 5.9 * dt; k.dir = alvo2.x > k.x ? 1 : -1; k.anda = 1; if (Math.random() < dt * 10) R.poeira.push({ x: k.x, y: k.y, t: 0 }); }
+    if (d2 > .1) { k.x += (alvo2.x - k.x) / d2 * 5.9 * (R.luaCheia ? 1.08 : 1) * dt; k.y += (alvo2.y - k.y) / d2 * 5.9 * (R.luaCheia ? 1.08 : 1) * dt; k.dir = alvo2.x > k.x ? 1 : -1; k.anda = 1; if (Math.random() < dt * 10) R.poeira.push({ x: k.x, y: k.y, t: 0 }); }
     if (k.t % 1.3 < dt) S.rosnado(k.x, k.y);
     if (!R.dentro && d < .8) morrer("lobo", "O cachorro preto virou lobisomem.", "Fique longe do cachorro. Se ele virar, corra para casa: ele desiste e volta para a mata.");
     if (R.dentro) k.porta += dt;
@@ -1023,7 +1026,7 @@ function alvoPara(x, y) { // quem a assombração persegue: o mais perto, de pre
 const velaNaMao = () => R.velaCom || outros().some(o => o.velaCom);
 const noMilharal = p => p.x > MILHARAL.x0 && p.x < MILHARAL.x1 && p.y > MILHARAL.y0 && p.y < MILHARAL.y1;
 const progNoite = () => cl(((R.t % CICLO) - DIA) / NOITE, 0, 1);
-const raioLuz = P => P.lanterna ? (R.lanternaBoa ? 5.4 : 4.4) + (R.lampiao ? 1 : 0) : 1.7;
+const raioLuz = P => ((P.lanterna ? (R.lanternaBoa ? 5.4 : 4.4) + (R.lampiao ? 1 : 0) : 1.7) + (P.sopaT > 0 ? 1.2 : 0)) * (P === R && R.medo > 70 && R.lanterna && Math.random() < .07 ? .4 : 1); // medo alto: a lanterna falha
 function calcPerto() {
   if ((R.lugar || "sitio") !== "sitio") return 0;
   if (R.dentro && !R.pisadeira) return 0;
@@ -1729,7 +1732,7 @@ function desenharLuz(tm) {
   if (tarde > .02) { c.fillStyle = `rgba(255,140,60,${.16 * tarde})`; c.fillRect(0, 0, W, H); }
   if (nt <= .02) return;
   lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh);
-  lc.fillStyle = `rgba(6,10,24,${.92 * nt})`; lc.fillRect(0, 0, lw, lh);
+  if (R.raio > .12) return; lc.fillStyle = `rgba(6,10,24,${(R.luaCheia ? .74 : .92) * nt})`; lc.fillRect(0, 0, lw, lh);
   lc.globalCompositeOperation = "destination-out";
   const furo = (x, y, r, a = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(.55, `rgba(0,0,0,${a * .7})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.beginPath(); lc.arc(x * k, y * k, r * k, 0, 7); lc.fill(); };
   const ex = PX(R.eu.x), ey = PY(R.eu.y) - TS * .4;
@@ -1866,6 +1869,7 @@ function desenharDentro(tm) {
   { const bx = X(5), by = Y(3.35), u = s / 40; c.save(); c.translate(bx, by); c.rotate(-.12); c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(-15 * u, -8 * u, 32 * u, 20 * u); c.fillStyle = "#5a2a1a"; c.fillRect(-16 * u, -10 * u, 32 * u, 20 * u); c.fillStyle = "#e8dcc0"; c.fillRect(-14 * u, -8.5 * u, 13 * u, 17 * u); c.fillRect(1 * u, -8.5 * u, 13 * u, 17 * u); c.strokeStyle = "rgba(60,40,20,.6)"; c.lineWidth = 1; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(-12 * u, (-5 + i * 3) * u); c.lineTo(-3 * u, (-5 + i * 3) * u); c.moveTo(3 * u, (-5 + i * 3) * u); c.lineTo(12 * u, (-5 + i * 3) * u); c.stroke(); }
     if (!R.diario) { c.strokeStyle = `rgba(242,201,74,${.4 + .4 * Math.sin(tm * 4)})`; c.lineWidth = 2; c.strokeRect(-18 * u, -12 * u, 36 * u, 24 * u); } c.restore(); } // o diário da vó em cima da mesa
   for (const ou of outros()) if (ou.dentro && ou.sala) desenharVoce(X(ou.sala.x), Y(ou.sala.y), tm, { q: ou, dir: ou.sala.dir || 1, s: s * 1.05, nome: ou.nome || "Amigo(a)" });
+  desenharRadio(X, Y, s, tm);
   desenharVoce(X(R.sala.x), Y(R.sala.y), tm, { dir: R.sala.dir || 1, s: s * 1.05 });
   // escuridão conforme as lamparinas
   const lit = R.lamparinas.filter(v => v).length;
@@ -2040,7 +2044,7 @@ function loop(ts) {
   else if (R.lugar === "vila") { if (R.predio) desenharPredio(tm); else { desenharVila(tm); desenharLuzVila(tm); desenharVagalumesENevoa(tm); } }
   else if (R.lugar === "estacao") { if (R.predio) desenharVagaoDentro(tm); else desenharEstacao(tm); }
   else if (R.dentro) { if (R.espiar) desenharEspiar(tm); else desenharDentro(tm); } else { if (R.venceu && R.venceu.t > 1) { CAMINHONETE.x += .0; } desenharMundo(tm); desenharLuz(tm); }
-  desenharBrilhoCoisasVo(tm);
+  desenharClima(tm); desenharMedo(tm); desenharBrilhoCoisasVo(tm);
   if (R.fimVo) { c.fillStyle = `rgba(0,0,0,${cl((R.fimVo.t - 1.5) / 3.5, 0, 1)})`; c.fillRect(0, 0, W, H); }
   if (R.fade > 0) { c.fillStyle = `rgba(0,0,0,${Math.min(1, R.fade)})`; c.fillRect(0, 0, W, H); R.fade -= .05; }
   if (R.venceu && R.venceu.t > 1 && !R.dentro && (R.lugar || "sitio") === "sitio") { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + Math.max(0, R.venceu.t - 1.5) * 2.2); c.globalCompositeOperation = "lighter"; c.fillStyle = "rgba(255,240,200,.18)"; c.beginPath(); c.moveTo(x - TS * .8, y); c.lineTo(x - TS * 2, y + TS * 6); c.lineTo(x + TS * 2, y + TS * 6); c.lineTo(x + TS * .8, y); c.fill(); c.globalCompositeOperation = "source-over"; }
@@ -3417,7 +3421,7 @@ function desenharEstacao(tm) {
   const tarde = cl(1 - Math.abs(((R.t % CICLO) - (DIA - 14)) / 22), 0, 1) * (1 - nt); if (tarde > .02) { c.fillStyle = `rgba(255,140,60,${.16 * tarde})`; c.fillRect(0, 0, W, H); }
   if (nt <= .02) { desenharEscondidaE(); return; }
   const lw = luzCv.width, lh = luzCv.height, k = lw / W;
-  lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(6,10,24,${.9 * nt})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
+  lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(6,10,24,${(R.luaCheia ? .74 : .9) * nt})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
   const furo = (x, y, r, f = 1) => { if (x < -r || x > W + r || y < -r || y > H + r) return; const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
   furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * raioLuz(R) * (R.lanterna ? 1 : 1.2), R.lanterna ? 1 : .75);
   for (const ou of outros()) if (ou.lugar === "estacao" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
@@ -3827,6 +3831,145 @@ function falarComVo() {
   }, VO_NPC.nome);
 }
 function atualizarFimVo(dt) { const f = R.fimVo; f.t += dt; R.eu.x = VO_TRILHA.x + .8 - f.t * 1.1; R.eu.y = VO_TRILHA.y + .25; R.eu.dir = -1; R.eu.anda = 1; R.eu.fase += dt * 8; if (f.t > 5.5 && !f.tela) { f.tela = true; telaFim("vo"); } }
+
+/* =====================================================================
+   MEDO, CLIMA, FOGÃO, RÁDIO E ENCOMENDAS
+   - O medo da Yasmin sobe no escuro, perto de bicho e com susto; desce com luz, de dia,
+     em casa, perto da Sombrinha e comendo coisa boa. Medo alto: coração, lanterna piscando
+     e coisas que não estão lá.
+   - Cada dia tem um clima (o rádio dá a previsão de amanhã) e algumas noites são de lua cheia.
+   - No fogão a lenha dá pra cozinhar; na caixa de correio chegam encomendas da vila.
+   ===================================================================== */
+const CLIMAS = { sol: ["Sol", "#f2c94a"], nublado: ["Nublado", "#b8c0c8"], chuva: ["Chuva", "#5ab0e0"], tempestade: ["Tempestade", "#a89ae8"], calor: ["Calorão", "#e2783d"] };
+const sortearClima = () => { const r = Math.random(); return r < .38 ? "sol" : r < .55 ? "nublado" : r < .77 ? "chuva" : r < .87 ? "tempestade" : "calor"; };
+const climaHoje = () => (R && R.clima) || "sol";
+const chovendo = () => climaHoje() === "chuva" || climaHoje() === "tempestade";
+const aoArLivre = () => !R.dentro && !R.predio && (R.lugar || "sitio") !== "esgoto";
+// ---------- o dia novo: clima e encomenda ----------
+function mudarDia() {
+  R.clima = R.climaAmanha || sortearClima(); R.climaAmanha = sortearClima();
+  const fr = { sol: "Céu limpo hoje.", nublado: "Dia nublado.", chuva: "Chovendo: as plantas se regam sozinhas.", tempestade: "Tempestade! Raios e chuva forte.", calor: "Calorão: as plantas secam rápido." }[R.clima];
+  setTimeout(() => R && efeito(fr, CLIMAS[R.clima][1]), 1300);
+  const E = R.encomenda; if (E && R.dia > E.ate) { efeito(`A encomenda de ${E.quem} venceu`, "#e8e2d4"); R.encomenda = null; }
+  if (!R.encomenda && R.dia >= 2) gerarEncomenda();
+}
+// ---------- medo ----------
+function atualizarMedo(dt) {
+  if (R.morto || R.venceu || R.fimVo || R.menu) return;
+  const lg = R.lugar || "sitio", noite = ehNoite(), dentro = R.dentro || !!R.predio; let d = 0;
+  if (noite && !dentro) d += R.lanterna ? .6 : 2.2; else if (noite && dentro) d += lg === "sitio" && R.dentro && !R.lamparinas.some(v => v) ? 1.5 : -3; else d -= 2.5;
+  if (lg === "mata" && noite && !dentro) d += 2; if (lg === "estacao" && temNeblina() && !dentro) d += 1.2; if (lg === "esgoto") d += 1.8; if (lg === "vila" && !noite) d -= 1;
+  if (R.luaCheia && noite) d -= .6; if (climaHoje() === "tempestade" && noite) d += .8;
+  d += (R.perto || 0) * 9; if (R.nev && R.nev.fase === "caca") d += 8; if (R.tin && R.tin.fase === "caca") d += 8; if (R.curu && R.curu.fase === "vem" && lg === "mata") d += 6;
+  const g = R.gato; if (g && lg === "sitio" && !dentro && Math.hypot(g.x - R.eu.x, g.y - R.eu.y) < 1.6) d -= 3;
+  if (lg === "sitio" && !dentro && ((R.deco && R.deco.objs) || []).some(o => o.t === "lampiao" && Math.hypot(o.x - R.eu.x, o.y - R.eu.y) < 2.5)) d -= 2.5;
+  if (R.susto > 1.02 && !R.sustoMedo) { R.sustoMedo = true; R.medo = (R.medo || 0) + 22; } if (!(R.susto > 0)) R.sustoMedo = false;
+  R.medo = cl((R.medo || 0) + d * dt, 0, 100);
+  if (R.sopaT > 0) R.sopaT -= dt; if (R.boloT > 0) R.boloT -= dt;
+  if (R.medo > 55) { R.medoBat = (R.medoBat || 0) - dt; if (R.medoBat <= 0) { R.medoBat = 1.25 - R.medo / 100 * .75; const k = R.medo / 100; tocarTom(55, .12, { vol: .1 * k, ate: 40 }); tocarTom(50, .1, { vol: .07 * k, ate: 35, quando: .14 }); } }
+  if (R.medo > 75 && Math.random() < dt * .6) R.tremor = Math.max(R.tremor || 0, .12);
+  if (R.medo > 80 && Math.random() < dt * .22) alucinar();
+  if (R.medo > 62 && !ls("roca_medo_aviso") && !R.msg && !painelAberto) { ls("roca_medo_aviso", 1); falar(["Miau... Yasmin, seu coração está disparado. Dá pra ouvir daqui.", "Medo demais faz a gente ver coisa que não existe. Procura luz, fica perto de mim, entra em casa... ou toma um café quentinho.", "Aquele coração vermelho do lado das barras: quando ele enche, o escuro começa a mentir pra você."], null, "Sombrinha"); }
+  if (R.alucina) { R.alucina.t += dt; if (R.alucina.t > 1.6) R.alucina = null; }
+  if (el.rcMedo) el.rcMedo.style.width = R.medo + "%";
+}
+function alucinar() {
+  const tipo = Math.floor(Math.random() * 4);
+  if (tipo === 0) { for (let i = 0; i < 4; i++) tocarRuido(.07, { filtro: "lowpass", f: 420, vol: .16, pan: -.8, quando: i * .38, wet: .3 }); efeito("Passos. Atrás de você.", "#c88aa0"); }
+  else if (tipo === 1) { tocarRuido(1.4, { filtro: "bandpass", f: 900, ate: 500, q: 2, vol: .08, atk: .4, pan: rnd(-1, 1), wet: .8 }); efeito("...Yasmin...", "#b89ae8"); }
+  else if (tipo === 2 && !R.dentro && !R.predio) { const a = rnd(0, PI * 2); R.alucina = { x: R.eu.x + Math.cos(a) * 3.2, y: R.eu.y + Math.sin(a) * 2.2, t: 0 }; }
+  else { const f = ["Ela não é a sua vó.", "Não olha pra trás.", "Ele tá dentro de casa.", "Você deixou a porta aberta."][Math.floor(Math.random() * 4)]; efeito(f, "#c88aa0"); tocarTom(700, .3, { tipo: "triangle", vol: .03, ate: 520, lp: 1800 }); }
+}
+function desenharMedo(tm) {
+  const m = R.medo || 0;
+  if (R.alucina && !R.dentro && !R.predio) { const a = R.alucina, x = PX(a.x), y = PY(a.y), al = Math.sin(Math.min(1, a.t / 1.6) * PI) * .8; c.fillStyle = `rgba(4,2,6,${al})`; c.beginPath(); c.ellipse(x, y - TS * .7, TS * .26, TS * .7, 0, 0, 7); c.fill(); c.beginPath(); c.arc(x, y - TS * 1.5, TS * .2, 0, 7); c.fill(); c.fillStyle = `rgba(255,250,240,${al})`; c.fillRect(x - TS * .09, y - TS * 1.53, 2.5, 2.5); c.fillRect(x + TS * .05, y - TS * 1.53, 2.5, 2.5); } // um vulto que não está lá
+  if (m < 50) return; const k = (m - 50) / 50, bat = .6 + .4 * Math.abs(Math.sin(tm * (2.2 + k * 2.5)));
+  const g = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * (.48 - k * .12), W / 2, H / 2, Math.max(W, H) * .72); g.addColorStop(0, "rgba(90,0,10,0)"); g.addColorStop(1, `rgba(110,0,14,${.42 * k * bat})`); c.fillStyle = g; c.fillRect(0, 0, W, H);
+}
+// ---------- clima ----------
+function atualizarClima(dt) {
+  const cl2 = climaHoje();
+  if (chovendo()) { for (const k of R.canteiros) k.covas.forEach(cv2 => { if (cv2 && cv2.seca && cv2.est < 3) { cv2.seca = false; cv2.t = 0; } }); if (R.lanterna) R.oleo = Math.max(0, R.oleo - (cl2 === "tempestade" ? .35 : .2) * dt); }
+  if (cl2 === "calor") for (const k of R.canteiros) k.covas.forEach(cv2 => { if (cv2 && !cv2.seca && cv2.est < 3 && cv2.t > 2 && Math.random() < dt * .025) cv2.seca = true; });
+  if (cl2 === "tempestade") { R.raioT = (R.raioT == null ? rnd(4, 10) : R.raioT) - dt; if (R.raioT <= 0) { R.raioT = rnd(7, 17); R.raioN = (R.raioN || 0) + 1; trovao(); } }
+}
+function trovao() { R.raio = .45; const q = rnd(.3, 1.4), dentro = R.dentro || R.predio ? .5 : 1; tocarTom(48, 2.6, { tipo: "sawtooth", vol: .16 * dentro, ate: 30, lp: 220, quando: q, atk: .05, wet: .9 }); tocarRuido(2.4, { filtro: "lowpass", f: 300, ate: 90, vol: .32 * dentro, quando: q, atk: .05, wet: .8 }); }
+function atualizarClimaLocal(dt) { // som de chuva e o clarão (cada um no seu aparelho)
+  if (R.raio > 0) R.raio -= dt;
+  if (chovendo()) { R.chuvaSom = (R.chuvaSom || 0) - dt; if (R.chuvaSom <= 0) { R.chuvaSom = .9; const dentro = R.dentro || R.predio, v = (climaHoje() === "tempestade" ? .05 : .032) * (dentro ? .45 : 1); tocarRuido(1.3, { filtro: dentro ? "lowpass" : "highpass", f: dentro ? 900 : 1700, vol: v, atk: .3, wet: .2 }); } }
+  if (climaHoje() === "calor" && !ehNoite() && aoArLivre() && Math.random() < dt * .3) { const f = rnd(3800, 4600); tocarTom(f, .5, { tipo: "square", vol: .006, lp: 6000, pan: rnd(-1, 1), wet: 0 }); } // cigarra
+}
+function desenharClima(tm) {
+  const nt = horaNoite(), cl2 = climaHoje();
+  if (R.raio > 0 && !R.dentro && !R.predio) { c.fillStyle = `rgba(230,235,255,${cl(R.raio * 1.6, 0, .75) * (.4 + .6 * nt)})`; c.fillRect(0, 0, W, H); }
+  if (!aoArLivre()) return;
+  if (cl2 === "nublado") { c.fillStyle = `rgba(40,50,60,${.1 * (1 - nt)})`; c.fillRect(0, 0, W, H); }
+  if (cl2 === "calor") { c.fillStyle = `rgba(255,150,60,${.07 * (1 - nt)})`; c.fillRect(0, 0, W, H); }
+  if (chovendo()) { const forte = cl2 === "tempestade", n = (modoLeve() ? 60 : 130) * (forte ? 1.4 : 1); c.fillStyle = `rgba(20,30,45,${(forte ? .2 : .13) * (1 - nt * .5)})`; c.fillRect(0, 0, W, H);
+    c.strokeStyle = `rgba(180,200,230,${forte ? .42 : .32})`; c.lineWidth = 1; c.beginPath(); const L = H * .05, vx = forte ? -.35 : -.18;
+    for (let i = 0; i < n; i++) { const sx = (i * 97.3 + tm * 40 * (1 + (i % 3))) % (W + 60) - 30, sy = (i * 53.7 + tm * H * (1.3 + (i % 4) * .2)) % (H + 40) - 20; c.moveTo(sx, sy); c.lineTo(sx + vx * L, sy + L); } c.stroke();
+    c.fillStyle = "rgba(200,215,235,.35)"; for (let i = 0; i < n / 5; i++) { const k = (tm * 2 + i * .37) % 1, sx = (i * 131.7) % W, sy = (i * 71.3 + Math.floor(tm * 2 + i * .37) * 97) % H; c.beginPath(); c.ellipse(sx, sy, 2 + k * 5, 1 + k * 2, 0, 0, 7); c.globalAlpha = 1 - k; c.fill(); c.globalAlpha = 1; } } // respingos
+  if (R.luaCheia && nt > .4 && (R.lugar || "sitio") !== "mata") { const x = W * .82, y = H * .14, r = Math.min(W, H) * .06; c.globalCompositeOperation = "lighter"; const g = c.createRadialGradient(x, y, r * .8, x, y, r * 3.5); g.addColorStop(0, `rgba(230,230,210,${.25 * nt})`); g.addColorStop(1, "rgba(230,230,210,0)"); c.fillStyle = g; c.fillRect(x - r * 3.5, y - r * 3.5, r * 7, r * 7); c.globalCompositeOperation = "source-over"; c.fillStyle = `rgba(236,232,214,${.9 * nt})`; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.fillStyle = `rgba(190,186,170,${.6 * nt})`; [[-.3, -.2, .22], [.25, .15, .18], [-.05, .35, .12]].forEach(([ox, oy, rr]) => { c.beginPath(); c.arc(x + ox * r, y + oy * r, rr * r, 0, 7); c.fill(); }); } // a lua cheia lá no alto
+}
+// ---------- fogão a lenha ----------
+const RECEITAS = [
+  { k: "broa", nome: "Broa de milho", pede: { "c:milho": 3, "e:ovo": 1, "e:lenha": 1 }, efeito: "fôlego sem fim por um tempo" },
+  { k: "cafe", nome: "Café com leite", pede: { "e:leite": 1, "e:lenha": 1 }, efeito: "o medo cai bastante" },
+  { k: "sopa", nome: "Sopa de abóbora", pede: { "c:abobora": 1, "c:mandioca": 1, "e:lenha": 1 }, efeito: "enxerga mais longe no escuro por um tempo" },
+  { k: "doce", nome: "Doce de leite", pede: { "e:leite": 2, "e:lenha": 1 }, efeito: "o medo cai um pouco" },
+  { k: "bolo", nome: "Bolo de laranja", pede: { "e:laranja": 2, "e:ovo": 2, "c:milho": 1, "e:lenha": 1 }, efeito: "o medo cai e você anda mais rápido por um tempo" }];
+Object.assign(EXTRAS, { broa: ["Broa de milho", 25], cafe: ["Café com leite", 14], sopa: ["Sopa de abóbora", 32], doce: ["Doce de leite", 26], bolo: ["Bolo de laranja", 38] });
+const nomeIng = k => { const [t, n] = k.split(":"); return t === "c" ? PLANTAS[n].nome : EXTRAS[n][0]; };
+const temIng = k => { const [t, n] = k.split(":"); return (t === "c" ? R.colheita[n] : R.extra[n]) || 0; };
+const tiraIng = (k, q) => { const [t, n] = k.split(":"), o = t === "c" ? R.colheita : R.extra; o[n] = (o[n] || 0) - q; if (o[n] <= 0) delete o[n]; };
+const podeCozinhar = r => Object.entries(r.pede).every(([k, q]) => temIng(k) >= q);
+function cozinhar(k) { const r = RECEITAS.find(x => x.k === k); if (!r || !podeCozinhar(r)) return false; Object.entries(r.pede).forEach(([i, q]) => tiraIng(i, q)); R.extra[k] = (R.extra[k] || 0) + 1; S.colher(); tocarRuido(1.2, { filtro: "lowpass", f: 700, vol: .12, atk: .2 }); efeito(`${r.nome} pronto!`, "#f2c94a"); hud(); return true; }
+function efeitoComer(k) { if (k === "broa") R.broa = 45; if (k === "cafe") R.medo = Math.max(0, (R.medo || 0) - 55); if (k === "sopa") { R.sopaT = 90; R.medo = Math.max(0, (R.medo || 0) - 15); } if (k === "doce") R.medo = Math.max(0, (R.medo || 0) - 25); if (k === "bolo") { R.medo = Math.max(0, (R.medo || 0) - 30); R.boloT = 60; }
+  tocarTom(660, .15, { tipo: "triangle", vol: .05 }); tocarTom(880, .2, { tipo: "triangle", vol: .04, quando: .1 }); efeito({ broa: "Fôlego de sobra!", cafe: "Quentinho. O coração acalmou.", sopa: "Os olhos acostumaram com o escuro.", doce: "Docinho. Igual ao da vó.", bolo: "Bolo da vó! Pernas leves." }[k], "#9bd86b"); }
+function comer(k) { if (!(R.extra[k] > 0)) return; if (R.online === "guest") { enviar({ t: "comer", k }); efeitoComer(k); return; } tiraIng("e:" + k, 1); efeitoComer(k); hud(); }
+function abrirFogao() {
+  painelAberto = true; el.rcPainel.hidden = false; const tem = Object.keys(R.extra).filter(k => RECEITAS.some(r => r.k === k) && R.extra[k] > 0);
+  el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Fogão a lenha</h2><p style="font-size:13px">O fogão da vó ainda funciona. Cada receita gasta um feixe de lenha. Comida feita vende mais caro no caixote, ou dá pra comer.</p>
+    <div class="rc-grade">${RECEITAS.map((r, i) => `<button type="button" class="rc-op" data-r="${r.k}" ${podeCozinhar(r) ? "" : "disabled"}>${r.nome}<small>${Object.entries(r.pede).map(([k, q]) => `${q} ${nomeIng(k).toLowerCase()} (${temIng(k)})`).join(" · ")}</small><small style="color:#9bd86b">Vende por ${EXTRAS[r.k][1]} · comer: ${r.efeito}</small></button>`).join("")}</div>
+    ${tem.length ? `<p style="margin-top:10px"><b>Pra comer agora:</b></p><div style="display:flex;flex-wrap:wrap;gap:6px">${tem.map(k => `<button type="button" class="rc-op" style="flex:0 0 auto;padding:6px 10px" data-c="${k}">${EXTRAS[k][0]} · ${R.extra[k]}</button>`).join("")}</div>` : ""}
+    <div class="rc-linha"><button type="button" class="rc-op dest" id="rcFechar">Fechar</button></div></div>`;
+  el.rcPainel.querySelectorAll("[data-r]").forEach(b => b.addEventListener("click", () => { if (R.online === "guest") { enviar({ t: "cozinha", k: b.dataset.r }); b.disabled = true; setTimeout(() => painelAberto && abrirFogao(), 400); return; } cozinhar(b.dataset.r); abrirFogao(); }));
+  el.rcPainel.querySelectorAll("[data-c]").forEach(b => b.addEventListener("click", () => { comer(b.dataset.c); setTimeout(() => painelAberto && abrirFogao(), R.online === "guest" ? 400 : 0); }));
+  document.getElementById("rcFechar").addEventListener("click", fecharPainel); focarPrimeiro();
+}
+// ---------- rádio velho ----------
+const RADIO_POS = { x: 2.6, y: 4.35 };
+const RADIO_DIA = ["...e na Vila Sossego, a festa de Santa Luzia foi adiada de novo. Por motivo de força maior, diz o padre.", "Recado pra Dona Benedita do sítio: o seu Joaquim chegou com o óleo que a senhora pediu. ...Repetindo: recado pra Dona Benedita.", "Hora certa: três e quinze. ...Três e quinze. ...Três e quinze.", "Achados e perdidos: alguém perdeu um cachorro preto, grande, magro. Se encontrar, não chegue perto. Avise a delegacia.", "Atenção, moradores do ramal da Roça: o trem de quinta está cancelado. ...Até segunda ordem."];
+const RADIO_NOITE = ["(chiado) ...tem alguém aí? Tô no lago. Tá frio. Tá muito frio... (chiado)", "(Uma música de caixinha de música, tocando ao contrário.)", "(Uma criança contando: um, dois, três... trinta. Trinta. Trinta.)", "(chiado) ...não abre a porta. Ele imita a voz. Ele imita QUALQUER voz... (chiado)", "(Respiração bem perto do microfone. Depois, três batidas. Iguais às da porta.)", "Rádio Sossego AM, boa noite. ...A estação saiu do ar em 1996. ...Boa noite, Yasmin."];
+const DICAS_VO = { oculos: "...meus óculos, meu bem... ficaram debaixo do banco da varanda...", xale: "...o meu xale ficou na estação... no banco, esperando o trem...", terco: "...o terço... caiu perto do lago da mata... no galho seco...", retrato: "...o meu retrato... lá na praça da vila... virado pra baixo...", fita: "...a fita vermelha... no cemitério... enrolada numa cruz..." };
+function ligarRadio() {
+  tocarRuido(.8, { filtro: "bandpass", f: 2200, q: .6, vol: .1, atk: .02 }); R.radioI = (R.radioI || 0) + 1;
+  if (!ehNoite()) { const prev = CLIMAS[R.climaAmanha || "sol"][0].toLowerCase(), musica = R.radioI % 2 === 0;
+    if (musica) { [0, 2, 4, 5, 4, 2, 0, -1, 0].forEach((n, i) => tocarTom(ESCALA[Math.max(0, n + 1)] * 1.5, .5, { tipo: "triangle", vol: .035, quando: .8 + i * .32, lp: 1600, wet: .4 })); R.medo = Math.max(0, (R.medo || 0) - 20); return falar(["Rádio Sossego AM! (Uma moda de viola, meio desafinada, toca baixinho. Dá uma paz.)"], null, "Rádio"); }
+    const enc = R.encomenda ? `Recado pro sítio da Roça: ${R.encomenda.quem} está esperando ${R.encomenda.n} ${nomeIng(R.encomenda.item).toLowerCase()} até o dia ${R.encomenda.ate}. Deixe na caixa de correio.` : null;
+    return falar([`Rádio Sossego AM. Previsão pra amanhã: ${prev}.`, enc || RADIO_DIA[Math.floor(Math.random() * RADIO_DIA.length)]], null, "Rádio"); }
+  const falta = COISAS_VO.find(o => !coisasVo().includes(o.k));
+  if (Math.random() < .55) { R.medo = Math.min(100, (R.medo || 0) + 10); if (falta) return falar(["(chiado) ...Yasmin? ...é a vó, meu bem...", DICAS_VO[falta.k]], null, "Rádio"); if (coisasVo().length >= COISAS_VO.length) return falar(["(A voz da vó, bem clara, como se estivesse do lado:) Você achou tudo, minha filha. Agora vem. Tô te esperando na trilha da mata."], null, "Rádio"); }
+  R.medo = Math.min(100, (R.medo || 0) + 12); falar([RADIO_NOITE[Math.floor(Math.random() * RADIO_NOITE.length)]], null, "Rádio");
+}
+function desenharRadio(X, Y, s, tm) { const x = X(RADIO_POS.x), y = Y(RADIO_POS.y);
+  c.fillStyle = "rgba(0,0,0,.3)"; c.beginPath(); c.ellipse(x, y + s * .12, s * .32, s * .08, 0, 0, 7); c.fill(); c.fillStyle = "#4a3018"; c.fillRect(x - s * .28, y - s * .05, s * .56, s * .1); c.fillRect(x - s * .24, y + .05 * s, 3, s * .12); c.fillRect(x + s * .21, y + .05 * s, 3, s * .12); // banquinho
+  c.fillStyle = "#6a3a1e"; c.beginPath(); c.moveTo(x - s * .24, y - s * .05); c.lineTo(x - s * .24, y - s * .3); c.quadraticCurveTo(x, y - s * .45, x + s * .24, y - s * .3); c.lineTo(x + s * .24, y - s * .05); c.fill(); c.fillStyle = "#c8b078"; c.fillRect(x - s * .17, y - s * .27, s * .2, s * .17); c.strokeStyle = "rgba(60,30,10,.5)"; c.lineWidth = 1; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(x - s * .17, y - s * .24 + i * s * .04); c.lineTo(x + s * .03, y - s * .24 + i * s * .04); c.stroke(); }
+  c.fillStyle = ehNoite() ? `rgba(255,${180 + 40 * Math.sin(tm * 3)},90,.95)` : "#e8d8a0"; c.fillRect(x + s * .07, y - s * .25, s * .12, s * .06); c.fillStyle = "#2a1a0e"; c.beginPath(); c.arc(x + s * .1, y - s * .13, s * .035, 0, 7); c.arc(x + s * .17, y - s * .13, s * .035, 0, 7); c.fill(); c.strokeStyle = "#8a8a90"; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x + s * .18, y - s * .35); c.lineTo(x + s * .32, y - s * .62); c.stroke(); }
+// ---------- encomendas da vila (chegam na caixa de correio) ----------
+const PEDIDOS = [["Seu Joaquim", "c:milho", 6], ["Seu Joaquim", "c:mandioca", 4], ["Dona Lurdes", "e:ovo", 4], ["Dona Lurdes", "e:leite", 2], ["Dona Cida", "e:mel", 2], ["Dona Cida", "e:laranja", 4], ["Padre Anselmo", "e:broa", 2], ["Seu Tonho", "e:sopa", 1], ["Seu Tonho", "c:abobora", 2], ["Dona Celeste", "e:bolo", 1], ["Dona Zuleica", "e:doce", 1], ["Seu Durval", "e:cafe", 2], ["Seu Nonato", "e:lenha", 4]];
+function gerarEncomenda() { const ok = PEDIDOS.filter(([, i]) => i[0] === "e" || R.sementes.includes(i.slice(2))), [quem, item, n] = ok[Math.floor(Math.random() * ok.length)], unit = item[0] === "c" ? PLANTAS[item.slice(2)].preco : EXTRAS[item.slice(2)][1];
+  R.encomenda = { quem, item, n, paga: Math.round((unit * n * 1.7 + 10) / 5) * 5, ate: R.dia + 2 }; efeito(`Encomenda nova na caixa de correio`, "#f2c94a"); }
+function entregarEncomenda() { const E = R.encomenda; if (!E || temIng(E.item) < E.n) return false; tiraIng(E.item, E.n); R.moedas += E.paga; R.encomenda = null; S.moedas(); efeito(`Encomenda entregue! +${E.paga} moedas`, "#f2c94a"); hud(); return true; }
+function abrirCorreio() {
+  painelAberto = true; el.rcPainel.hidden = false; const E = R.encomenda, tem = E ? temIng(E.item) : 0;
+  el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Caixa de correio</h2>${E ? `<p>Um bilhete com a letra de ${E.quem}:</p><p style="font-style:italic">"Preciso de ${E.n} ${nomeIng(E.item).toLowerCase()} até o dia ${E.ate}. Deixa aqui na caixa que o carteiro leva. Pago ${E.paga} moedas."</p><p style="font-size:13px">Você tem ${tem}. Hoje é dia ${R.dia}.</p>` : `<p>${R.dia < 2 ? "Vazia. Os moradores da vila ainda não sabem que tem alguém no sítio." : "Vazia por enquanto. Amanhã pode chegar encomenda nova."}</p>`}
+    ${ehNoite() && !R.cartaNoite ? `<p style="font-size:13px;color:#c88aa0">Tem também um envelope sem remetente, molhado. Dentro, só uma folha com uma palavra: "LAGO".</p>` : ""}
+    <div class="rc-linha">${E ? `<button type="button" class="rc-op dest" id="rcEntregar" ${tem >= E.n ? "" : "disabled"}>Entregar</button>` : ""}<button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
+  if (ehNoite()) R.cartaNoite = 1;
+  const b = document.getElementById("rcEntregar"); if (b) b.addEventListener("click", () => { if (R.online === "guest") { enviar({ t: "entrega" }); fecharPainel(); return; } entregarEncomenda(); abrirCorreio(); });
+  document.getElementById("rcFechar").addEventListener("click", fecharPainel); focarPrimeiro();
+}
 
 /* ---------- ir e voltar ---------- */
 function irVila() { if (!VILA) montarVila(); R.lugar = "vila"; R.predio = null; R.eu.x = 23; R.eu.y = .9; R.lanterna = R.lanterna && ehNoite(); cam.x = 23; cam.y = 6; R.fade = 1; S.porta(); efeito("Vila Sossego", "#e8e2d4"); hud(); if (!ls("roca_vila")) { ls("roca_vila", 1); setTimeout(() => R && falar(["Vila Sossego. A vó falava daqui como se fosse longe. É só descer a estrada.", "Alguém aqui tem que saber o que aconteceu com ela. E com o meu pai."], null, "Yasmin"), 900); } }
@@ -4377,6 +4520,9 @@ function hostReceber(id, d, conn) {
   else if (d.t === "acao") { comJogador(o, () => { const a = oQueFazer(); if (a && !a.loc && a.t.split(" ")[0] === String(d.nome).split(" ")[0]) a.fn(); }); hud(); }
   else if (d.t === "compra") { const op = comJogador(o, () => (d.loja ? opcoesLoja(d.loja) : opcoesBancada())).find(x => x.nome.replace(/^✓ /, "") === d.nome); if (op && op.ok) { R.moedas -= op.preco; comJogador(o, op.fn); S.moedas(); hud(); } }
   else if (d.t === "deco") { if (aplicarDeco(d.alvo, d.chave)) S.colher(); hud(); }
+  else if (d.t === "cozinha") { cozinhar(d.k); hud(); }
+  else if (d.t === "comer") { if (R.extra[d.k] > 0) tiraIng("e:" + d.k, 1); hud(); }
+  else if (d.t === "entrega") { entregarEncomenda(); }
   else if (d.t === "missao") { comJogador(o, () => aplicarMissao(d.id, d.op, d.alvo)); }
   else if (d.t === "peixe") { R.peixes[d.nome] = (R.peixes[d.nome] || 0) + 1; hud(); }
 }
@@ -4425,7 +4571,7 @@ function estadoPara() {
   return { t: "s", T: R.t, dia: R.dia, moedas: R.moedas, agua: R.agua, aguaMax: R.aguaMax, oleo: R.oleo, vel: R.vel, lanternaBoa: R.lanternaBoa, sementes: R.sementes, vara: R.vara, pecas: R.pecas, peneira: R.peneira,
     missoes: R.missoes, mprog: R.mprog, apito: R.apito, guizo: R.guizo, isca: R.isca, medalha: R.medalha, enxada: R.enxada, lampiao: R.lampiao, ferradura: R.ferradura, sal: R.sal, arruda: R.arruda, aguaBenta: R.aguaBenta, inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
     cachorro: R.cachorro, seco: R.seco, vulto: R.vulto, vela: R.vela, velaEntregue: R.velaEntregue, velaHoje: R.velaHoje, alma: R.alma, galinhas: R.galinhas, porcos: R.porcos,
-    aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, curu: R.curu, cuca: R.cuca, deco: R.deco, decoInv: R.decoInv, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
+    aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, curu: R.curu, cuca: R.cuca, deco: R.deco, decoInv: R.decoInv, clima: R.clima, climaAmanha: R.climaAmanha, luaCheia: R.luaCheia, encomenda: R.encomenda, raioN: R.raioN || 0, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
     jogs: jogadores().map(pl), vs };
 }
 const SUAVE = ["cachorro", "seco", "aranha", "esp", "saci", "vulto", "mula", "curu", "cuca"];
@@ -4437,7 +4583,7 @@ function aplicarEstado(d) {
   const meu = (d.jogs || []).find(j => j.slot === R.slot); if (meu && meu.gato) { suave(R.gato, meu.gato); R.gato = meu.gato; }
   d.voce = d.vs && d.vs[R.slot];
   ["missoes", "mprog", "apito", "guizo", "isca", "medalha", "enxada", "lampiao", "ferradura", "sal", "arruda", "aguaBenta", "dia", "moedas", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
-    "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "tempoTotal"].forEach(k => { R[k] = d[k]; }); if (d.deco) { R.deco = d.deco; R.decoInv = d.decoInv || {}; }
+    "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "tempoTotal"].forEach(k => { R[k] = d[k]; }); if (d.deco) { R.deco = d.deco; R.decoInv = d.decoInv || {}; } R.clima = d.clima || "sol"; R.climaAmanha = d.climaAmanha; R.luaCheia = !!d.luaCheia; R.encomenda = d.encomenda || null; if ((d.raioN || 0) !== (R.raioN || 0)) { if (R.raioN != null) trovao(); R.raioN = d.raioN || 0; }
   R.t = d.T; R.fxR = d.fx || []; R.semente = cl(R.semente, 0, R.sementes.length - 1);
   d.canteiros.forEach(([a, cv2], i) => { R.canteiros[i].aberto = a; R.canteiros[i].covas = cv2; });
   if (d.voce) { R.roupa = d.voce.roupa; R.garrafada = d.voce.garrafada; if (d.voce.broa > 0 && !(R.broa > 0)) R.broa = d.voce.broa; R.agua = d.voce.agua; R.vidas = d.voce.vidas; if (d.voce.caido) { cairLocal(d.voce.caido.quem); R.caido.fora = d.voce.caido.fora; } else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
@@ -4456,7 +4602,7 @@ function atualizarConvidado(dt) {
   if (R.venceu) { R.venceu.t += dt; if (R.venceu.t > 4.5 && !R.venceu.tela) { R.venceu.tela = true; telaFim("venceu"); } return; }
   if (R.caido) R.caido.t += dt;
   R.t += dt; // o relógio anda entre um pacote e outro
-  moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); if (R.lugar === "estacao") atualizarNevoa(dt); atualizarPesca(dt);
+  moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); if (R.lugar === "estacao") atualizarNevoa(dt); atualizarMedo(dt); atualizarClimaLocal(dt); atualizarPesca(dt);
   if (R.oleo <= 0) R.lanterna = false;
   R.perto = calcPerto(); musicaPasso(dt);
   Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .066; enviar({ t: "eu", eu: { x: R.eu.x, y: R.eu.y, dir: R.eu.dir, anda: R.eu.anda, fase: R.eu.fase }, dentro: R.dentro, sala: R.sala, lugar: R.lugar, predio: R.predio, andar: R.andar, int: R.int, conv: R.conv, lanterna: R.lanterna, correndo: R.correndo, chapeu: R.chapeu, semente: R.semente, gc: ls("roca_gato_cor") || "preto" }); }
