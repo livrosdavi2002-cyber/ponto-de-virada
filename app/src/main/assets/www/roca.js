@@ -2650,11 +2650,11 @@ function montarVila() {
       else if (dEst > 1.1 && !clar && r() < .3) arv.push({ x: cx, y: cy, r: .5, c: Math.floor(r() * 5) });
       continue;
     }
-    const borda = x < 2 || x > VW - 3 || y > VH - 3, atras = y >= 21 && y < 22.4 && !(x > 21 && x < 25) && !(x >= 50 && x < 59);
+    const borda = x < 2 || x > VW - 3 || y > VH - 1.2, atras = y >= 21 && y < 22.4 && !(x > 21 && x < 25) && !(x >= 50 && x < 59);
     if (borda && r() < .8) { arv.push({ x: cx + (r() - .5) * .6, y: cy + (r() - .5) * .5, r: .7 + r() * .5, c: Math.floor(r() * 5) }); sol[y][x] = true; }
     else if (atras && r() < .45) { arv.push({ x: cx, y: cy - .2, r: .6 + r() * .4, c: Math.floor(r() * 5) }); }
   }
-  [[15.6, 46], [16.8, 44], [2.4, 47.6], [27.6, 59], [44.2, 39.4], [1.6, 38], [57.8, 46.6], [52, 47.8]].forEach(([x, y]) => { arv.push({ x, y, r: .9, c: Math.floor(r() * 5) }); caixas.push([x - .3, y - .25, x + .3, y + .1]); });
+  [[16.8, 44], [2.4, 47.6], [44.2, 39.4], [1.6, 38], [52, 47.8], [15.4, 48.2]].forEach(([x, y]) => { arv.push({ x, y, r: .9, c: Math.floor(r() * 5) }); caixas.push([x - .3, y - .25, x + .3, y + .1]); });
   const tumulos = []; for (let gx = VCEM.x0 + 1; gx < VCEM.x1 - .6; gx += 1.6) for (let gy = VCEM.y0 + 1.2; gy < VCEM.y1 - .4; gy += 1.5) tumulos.push({ x: gx + (r() - .5) * .3, y: gy, k: r(), aberta: Math.abs(gx - (VCEM.x1 - 2.2)) < .9 && Math.abs(gy - (VCEM.y0 + 4.2)) < .8 });
   const vaga = Array.from({ length: 26 }, () => ({ x: rnd(14, 32), y: rnd(0, 20), f: r() * 9 }));
   VILA = { sol, caixas, arv, tumulos, vaga };
@@ -2690,7 +2690,11 @@ function pintarChaoVila(g) {
     for (let i = 0; i < (x1 - x0) * (y1 - y0) * 2; i++) { g.fillStyle = r() < .5 ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.08)"; g.fillRect((x0 + r() * (x1 - x0)) * P, (y0 + r() * (y1 - y0)) * P, .6 * P, .42 * P); }
     for (let i = 0; i < (x1 - x0) * .6; i++) { g.strokeStyle = "rgba(90,110,40,.6)"; const xx = (x0 + r() * (x1 - x0)) * P, yy = (y0 + r() * (y1 - y0)) * P; g.beginPath(); g.moveTo(xx, yy); g.lineTo(xx + 2, yy - 5); g.stroke(); } };
   pedra(1, 27.5, VW - 1, 29.55); pedra(1, 35.9, VW - 1, 38.5); pedra(21.6, 21.4, 24.4, 40.6); pedra(16.6, 29.55, 29.4, 35.9, "#7a7262"); pedra(17, 45.6, 29, 48.8, "#7a7262"); pedra(1, 49.8, VW - 1, 51.8); pedra(28.9, 38.5, 31.3, 49.8); g.fillStyle = "#8a8478"; g.fillRect(1 * P, 49.65 * P, (VW - 2) * P, .15 * P); g.fillRect(1 * P, 51.8 * P, (VW - 2) * P, .15 * P); // a rua de baixo e o beco
-  g.fillStyle = "#8a8478"; for (const yy of [27.35, 29.55, 35.75, 38.5]) g.fillRect(1 * P, yy * P, (VW - 2) * P, .15 * P); // meio-fio
+  g.fillStyle = "#8a8478"; for (const yy of [27.35, 29.55, 35.75, 38.5]) g.fillRect(1 * P, yy * P, (VW - 2) * P, .15 * P);
+  // rua das gêmeas, da Dona Eulália e da Dona Nena (na frente delas) e rua de baixo (na frente da última fileira), com as travessas
+  pedra(1, 44.95, 17, 46.75); pedra(43.3, 44.95, VW - 1, 46.75); pedra(4.4, 46.75, 5.8, 49.8, "#7a7262"); pedra(47.6, 46.75, 49.2, 49.8, "#7a7262");
+  pedra(1, 58.05, VW - 1, 59.85); pedra(17.4, 51.8, 18.6, 58.05, "#7a7262"); pedra(36.4, 51.8, 37.8, 58.05, "#7a7262"); pedra(47.4, 51.8, 48.6, 58.05, "#7a7262");
+  g.fillStyle = "#8a8478"; for (const [x0, yy, x1] of [[1, 44.8, 17], [43.3, 44.8, VW - 1], [1, 46.75, 17], [43.3, 46.75, VW - 1], [1, 57.9, VW - 1]]) g.fillRect(x0 * P, yy * P, (x1 - x0) * P, .15 * P); // meio-fio // meio-fio
   [[17, 30.6], [28.4, 30.6], [17, 34.8], [28.4, 34.8]].forEach(([x, y]) => { g.fillStyle = "#3a2a1a"; g.fillRect(x * P, y * P, .9 * P, .9 * P); for (let i = 0; i < 8; i++) { g.fillStyle = ["#a02a2a", "#e8d8a0", "#8a3a8a", "#e8e2d8"][i % 4]; g.beginPath(); g.arc((x + .15 + r() * .6) * P, (y + .15 + r() * .6) * P, 3, 0, 7); g.fill(); } }); // canteiros murchos
   g.fillStyle = "#3a3222"; g.fillRect(VCEM.x0 * P, VCEM.y0 * P, (VCEM.x1 - VCEM.x0) * P, (VCEM.y1 - VCEM.y0) * P);
   g.fillStyle = "rgba(60,40,20,.55)"; g.fillRect((CARROCA.x - 1.2) * P, (CARROCA.y + .1) * P, 2.4 * P, .5 * P);
