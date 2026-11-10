@@ -30,11 +30,11 @@ const CANTEIROS = [
   { x: 9, y: 15, w: 4, h: 3, preco: 0 }, { x: 14.5, y: 15, w: 4, h: 3, preco: 30 }, { x: 26.4, y: 15, w: 4, h: 3, preco: 60 },
   { x: 9, y: 20, w: 4, h: 3, preco: 100 }, { x: 14.5, y: 20, w: 4, h: 3, preco: 150 }, { x: 26.4, y: 20, w: 4, h: 3, preco: 220 }];
 const PLANTAS = {
-  milho: { nome: "Milho", tempo: 7, preco: 4, cor: "#e8c84a" },
-  mandioca: { nome: "Mandioca", tempo: 10, preco: 8, cor: "#c89a6a" },
-  abobora: { nome: "Abóbora", tempo: 14, preco: 17, cor: "#e07a2a", custo: 40 },
-  melancia: { nome: "Melancia", tempo: 18, preco: 30, cor: "#4a9a3a", custo: 90 } };
-const EXTRAS = { ovo: ["Ovo", 3], laranja: ["Laranja", 4], mel: ["Mel", 9], leite: ["Balde de leite", 7], lenha: ["Feixe de lenha", 3] };
+  milho: { nome: "Milho", tempo: 18, preco: 4, cor: "#e8c84a" },
+  mandioca: { nome: "Mandioca", tempo: 25, preco: 8, cor: "#c89a6a" },
+  abobora: { nome: "Abóbora", tempo: 35, preco: 17, cor: "#e07a2a", custo: 40 },
+  melancia: { nome: "Melancia", tempo: 45, preco: 30, cor: "#4a9a3a", custo: 90 } };
+const EXTRAS = { ovo: ["Ovo", 3], laranja: ["Laranja", 4], mel: ["Mel", 9], leite: ["Balde de leite", 7], lenha: ["Feixe de lenha", 3], flor: ["Flor do mato", 2], cogumelo: ["Cogumelo", 3] };
 const PEIXES = [["Lambari", 6, .55], ["Tilápia", 12, .33], ["Traíra", 22, .12]];
 const DIA = 160, NOITE = 85, CICLO = DIA + NOITE;
 const PLACAS = [
@@ -50,7 +50,7 @@ const PLACAS = [
   { x: 24, y: 13, txt: "Redemoinho assobiando de dia é o Saci: seca a plantação e rouba moedas. Com uma peneira da bancada dá para pegar ele." },
   { x: 50.6, y: 21.6, txt: "O sino da capela espanta o Corpo-Seco e manda o espantalho de volta. Só funciona uma vez por noite." },
   { x: 56.8, y: 21.1, txt: "ESTAÇÃO VELHA →  O trem do sítio levava café, leite e laranja pra Capital. Não passa mais desde 1966. Se ouvir o apito de noite, não vá ver quem chegou." }];
-const COSMETICOS = [["palha", "Chapéu de palha", 0, "#d8b860"], ["vermelho", "Chapéu vermelho", 2, "#b8382a"], ["azul", "Chapéu azul", 3, "#3a5a9a"], ["preto", "Chapéu preto", 4, "#1e1e22"], ["branco", "Chapéu branco", 6, "#e8e4d8"]];
+const COSMETICOS = [["palha", "Chapéu de palha", 0, "#d8b860"], ["vermelho", "Chapéu vermelho", 2, "#b8382a"], ["azul", "Chapéu azul", 3, "#3a5a9a"], ["preto", "Chapéu preto", 4, "#1e1e22"], ["branco", "Chapéu branco", 6, "#e8e4d8"], ["rosa", "Chapéu rosa", 3, "#d87a9a"], ["verde", "Chapéu verde", 3, "#4a7a3a"], ["lilas", "Chapéu lilás", 4, "#8a6ab8"], ["laranja", "Chapéu laranja", 3, "#d8762a"], ["marrom", "Chapéu de couro", 5, "#6a4428"], ["dourado", "Chapéu dourado", 10, "#e8c040"]];
 // a casa por dentro (vista de cima): 10 x 7
 const SALA = { w: 10, h: 7, porta: { x: 5, y: 6.6 } };
 const MOVEIS = [[.4, .5, 2.6, 2.1, "cama"], [3.6, .4, 1.6, 1.1, "fogao"], [7.4, .4, 2.2, 1.1, "bancada"], [4.1, 2.9, 1.8, 1.2, "mesa"], [8.7, 2.4, .9, 2.4, "armario"], [.4, 4.6, 1, 1, "balanco"]];
@@ -197,7 +197,7 @@ function novoJogo() {
   gerarChao();
 }
 function tutorial() {
-  falar(["Miau. Yasmin? Sou eu, a Sombrinha. Respira. Vamos fazer do jeito que a sua vó fazia.", "Primeiro: escolha a semente no botão da direita, plante no canteiro e regue com a água do poço.", "Colha e venda no caixote do lado da porta. Ovo, laranja, peixe e o mel das colmeias lá depois do riacho também valem moeda.", "Com o dinheiro, compre as peças na bancada lá dentro e conserte a caminhonete no portão. Aí a gente vai embora daqui. Juntas.", "E as regras... estão nas placas. Leia todas. Se ouvir a mata estalar, corre pra dentro de casa. Ele corre de quatro."], () => { R.tutorial = 1; }, "Sombrinha");
+  falar(["Miau. Yasmin? Sou eu, a Sombrinha. Respira. Vamos fazer do jeito que a sua vó fazia.", "Primeiro: escolha a semente no botão da direita, plante no canteiro e regue com a água do poço.", "Colha e venda no caixote do lado da porta. Ovo, laranja, peixe e o mel das colmeias lá depois do riacho também valem moeda.", "Dá pra consertar a caminhonete do portão e fugir... mas as peças da bancada custam uma fortuna. Fugir sem saber de nada é o caminho mais difícil.", "O caminho de verdade é descobrir o que aconteceu com a sua vó. A vila inteira fala dela. Começa descendo a estrada do portão.", "E as regras... estão nas placas. Leia todas. Se ouvir a mata estalar, corre pra dentro de casa. Ele corre de quatro."], () => { R.tutorial = 1; }, "Sombrinha");
 }
 const horaNoite = () => { const k = R.t % CICLO; if (k < DIA - 12) return 0; if (k < DIA) return (k - (DIA - 12)) / 12; if (k > CICLO - 10) return (CICLO - k) / 10; return 1; };
 const ehNoite = () => (R.t % CICLO) >= DIA;
@@ -341,13 +341,13 @@ function montarUI() {
   .rc-l{display:flex;flex-direction:column;line-height:1.05;color:#f4efe4;text-shadow:0 2px 6px #000}
   .rc-l b{font:800 22px "Big Shoulders Display",sans-serif;color:#f2c94a}.rc-l b::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:#f2c94a;box-shadow:inset -2px -2px 0 #b8902a;margin-right:6px}
   .rc-l span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
-  .rc-barras{display:grid;grid-template-columns:auto auto;gap:4px 10px;padding:5px 8px 5px 5px;background:linear-gradient(rgba(255,255,255,.03),rgba(0,0,0,.12)),rgba(42,27,16,.8);border:3px solid #120a05;box-shadow:inset 0 0 0 2px rgba(232,200,138,.22),3px 3px 0 rgba(0,0,0,.55)}
+  .rc-barras{display:grid;grid-template-columns:auto auto;gap:5px 12px;padding:6px 9px 6px 6px;background:linear-gradient(rgba(255,255,255,.03),rgba(0,0,0,.12)),rgba(42,27,16,.8);border:3px solid #120a05;box-shadow:inset 0 0 0 2px rgba(232,200,138,.22),3px 3px 0 rgba(0,0,0,.55)}
   .rc-st{display:flex;align-items:center;gap:5px}
-  .rc-sti{width:18px;height:18px;flex:none;display:grid;place-items:center;background:#120a05;box-shadow:inset 0 0 0 1px rgba(232,200,138,.28)}.rc-sti svg{width:14px;height:14px;display:block;overflow:visible}
-  .rc-b{position:relative;display:block;width:66px;height:10px;background:var(--tr);border:2px solid #120a05;box-shadow:0 0 0 1px rgba(232,200,138,.2);overflow:hidden;--n:10}
+  .rc-sti{width:24px;height:24px;flex:none;display:grid;place-items:center;background:#120a05;box-shadow:inset 0 0 0 1px rgba(232,200,138,.28)}.rc-sti svg{width:19px;height:19px;display:block;overflow:visible}
+  .rc-b{position:relative;display:block;width:96px;height:14px;background:var(--tr);border:2px solid #120a05;box-shadow:0 0 0 1px rgba(232,200,138,.2);overflow:hidden;--n:10}
   .rc-b::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 calc(100% / var(--n) - 2px),#120a05 calc(100% / var(--n) - 2px) calc(100% / var(--n)))}
   .rc-b s{display:block;height:100%;width:50%;transition:width .45s linear;background:linear-gradient(180deg,var(--c1) 0 30%,var(--c2) 30% 70%,var(--c3) 70%)}
-  .rc-b em{position:absolute;right:3px;top:0;bottom:0;display:flex;align-items:center;z-index:1;font:700 9px/1 var(--f-mono,monospace);font-style:normal;color:#fff;text-shadow:1px 1px 0 #000;background:rgba(18,10,5,.7);padding:0 3px;margin:1px 0}
+  .rc-b em{position:absolute;right:3px;top:0;bottom:0;display:flex;align-items:center;z-index:1;font:700 11px/1 var(--f-mono,monospace);font-style:normal;color:#fff;text-shadow:1px 1px 0 #000;background:rgba(18,10,5,.7);padding:0 3px;margin:1px 0}
   .rc-st.agua{--c1:#b4e2fa;--c2:#5ab0e0;--c3:#2f78b0;--tr:#0e2232}.rc-st.oleo{--c1:#ffdc98;--c2:#f2a33a;--c3:#b86a14;--tr:#2e1a06}.rc-st.folego{--c1:#d8f6b0;--c2:#9bd86b;--c3:#5a9a34;--tr:#14240a}.rc-st.medo{--c1:#ffa4b8;--c2:#d83a5a;--c3:#8e1a34;--tr:#2a0810}.rc-st.medo s{width:0;transition:width .2s linear}
   .rc-st.baixo .rc-b,.rc-st.baixo .rc-sti{animation:rcAlerta .8s steps(2,jump-none) infinite}
   @keyframes rcAlerta{0%{box-shadow:0 0 0 1px rgba(232,200,138,.2)}100%{box-shadow:0 0 0 2px #e2483d,0 0 6px rgba(226,72,61,.8);background-color:#4a0c0c}}
@@ -355,8 +355,8 @@ function montarUI() {
   .rc-st.medo.bate .rc-sti svg{animation:rcBate var(--bt,1.2s) infinite}@keyframes rcBate{0%,45%,100%{transform:scale(1)}12%{transform:scale(1.3)}24%{transform:scale(1.05)}34%{transform:scale(1.2)}}
   .rc-st.medo.alto .rc-b{box-shadow:0 0 0 1px #d83a5a,0 0 8px rgba(216,58,90,.75)}.rc-st.medo.alto .rc-sti{background:#3a0814}
   .rc-vidas{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;max-width:230px}
-  .rc-vida{display:flex;align-items:center;gap:3px;background:rgba(42,27,16,.8);border:2px solid #120a05;box-shadow:inset 0 0 0 1px rgba(232,200,138,.2),2px 2px 0 rgba(0,0,0,.5);padding:2px 5px;color:#f4efe4;font-size:10px;text-shadow:1px 1px 0 #000;white-space:nowrap}
-  .rc-vida svg{width:13px;height:13px;display:block}.rc-vida i{width:8px;height:8px;flex:none;border:1px solid #000}.rc-vida.caido{animation:rcAlerta .8s steps(2,jump-none) infinite}.rc-vida.sem{opacity:.55}
+  .rc-vida{display:flex;align-items:center;gap:4px;background:rgba(42,27,16,.8);border:2px solid #120a05;box-shadow:inset 0 0 0 1px rgba(232,200,138,.2),2px 2px 0 rgba(0,0,0,.5);padding:4px 7px;color:#f4efe4;font-size:12px;text-shadow:1px 1px 0 #000;white-space:nowrap}
+  .rc-vida svg{width:22px;height:22px;display:block}.rc-vida .rc-prot svg{width:18px;height:18px}.rc-vida i{width:10px;height:10px;flex:none;border:1px solid #000}.rc-vida.caido{animation:rcAlerta .8s steps(2,jump-none) infinite}.rc-vida.sem{opacity:.55}
   .rc-vida .rc-prot{display:flex;gap:2px;margin-left:3px;padding-left:5px;border-left:1px solid rgba(232,200,138,.25)}
   .rc-itens{display:flex;gap:6px;flex-wrap:wrap;color:#e8e2d4;font-size:11px;text-shadow:0 1px 4px #000}.rc-itens span{background:rgba(0,0,0,.35);padding:2px 7px;border-radius:8px}
   .rc-menu{margin-left:auto;pointer-events:auto;background:rgba(10,12,16,.6);border:1px solid rgba(255,255,255,.15);color:#f4efe4;border-radius:12px;padding:8px 14px;font:600 12px var(--f-mono,monospace)}
@@ -527,6 +527,7 @@ function oQueFazer() {
     if (Math.hypot(s.x - 4.4, s.y - 1.6) < 1.2) return { t: "Fogão", fn: abrirFogao, loc: 1 };
     if (Math.hypot(s.x - 5, s.y - 4.5) < 1.3) return { t: "Diário da vó", fn: () => abrirDiario(), loc: 1 };
     if (Math.hypot(s.x - RADIO_POS.x, s.y - (RADIO_POS.y - .5)) < .75) return { t: "Rádio", fn: ligarRadio, loc: 1 };
+    if (s.x < 3.2 && s.y < 3.3) return { t: R.online ? "Cama da vó" : "Cama · salvar", fn: abrirCama, loc: 1 };
     const lc2 = lembrancaPerto(s, LEMB_CASA); if (lc2) return { t: "Olhar", fn: () => lembrar(lc2), loc: 1 };
     return null;
   }
@@ -543,6 +544,7 @@ function oQueFazer() {
   if (dist(p, DOCA) < 1.3) return { t: R.vara ? "Pescar" : "Sem vara", fn: () => R.vara ? pescar() : efeito("Faça uma vara na bancada: 3 gravetos e 2 folhas", "#e8e2d4"), loc: 1 };
   if (dist(p, CAPELA.porta) < 1.3) return { t: "Tocar o sino", fn: tocarSino };
   for (let i = 0; i < COLMEIAS.length; i++) { const [cx, cy] = COLMEIAS[i]; if (Math.hypot(p.x - cx, p.y - (cy + .4)) < .9) return { t: R.mel[i] ? "Tirar mel" : "Colmeia", fn: () => { if (ehNoite()) return efeito("As abelhas dormem. Melhor não.", "#e8e2d4"); if (!R.mel[i]) return efeito("Amanhã tem mais", "#e8e2d4"); R.mel[i] = 0; R.extra.mel = (R.extra.mel || 0) + 1; S.abelhas(cx, cy); efeito("+1 mel", "#f2c94a"); hud(); } }; }
+  if (p.x > CHIQUEIRO.x0 && p.x < CHIQUEIRO.x1 && Math.abs(p.y - CHIQUEIRO.y1 - .3) < .6 && !R.porcosComeram && (R.colheita.mandioca || 0) > 0) return { t: "Dar mandioca pros porcos", fn: () => { R.colheita.mandioca--; R.porcosComeram = true; R.adubo = (R.adubo || 0) + 2; S.oinc(p.x, CHIQUEIRO.y1); efeito("Os porcos comeram! +2 adubo pra horta", "#c8a070"); hud(); } };
   if (p.x > CHIQUEIRO.x0 && p.x < CHIQUEIRO.x1 && Math.abs(p.y - CHIQUEIRO.y1 - .3) < .6) return { t: "Porcos", fn: () => { S.oinc(p.x, CHIQUEIRO.y1); falar([R.mula.hoje && ehNoite() ? "Eles não param de olhar para a mata. Porco sabe das coisas." : ["Oi, porquinhos! A vó dava nome para todos. Esse é o Torresmo... coitado.", "A vó dizia que porco grita antes de coisa ruim chegar.", "Eles estão com fome. Eu também."][Math.floor(Math.random() * 3)]], null, "Yasmin"); }, loc: 1 };
   if (dist(p, { x: BALANCO.x, y: BALANCO.y + .3 }) < 1.1) return { t: "Balanço", fn: () => falar([ehNoite() ? "O balanço está quente. Como se alguém tivesse acabado de levantar." : "A vó me balançava aqui e cantava a música do sabiá. Eu pedia mais alto, mais alto..."], null, "Yasmin"), loc: 1 };
   if (dist(p, GALINHEIRO.porta) < 1.3) return { t: R.ovos ? `Pegar ${R.ovos} ovos` : "Sem ovos", fn: () => { if (!R.ovos) return efeito("Elas botam de manhã", "#e8e2d4"); R.extra.ovo = (R.extra.ovo || 0) + R.ovos; efeito(`+${R.ovos} ovos`); R.ovos = 0; S.colher(); tocarTom(900, .12, { tipo: "square", vol: .02, ate: 1300, lp: 2000 }); hud(); } };
@@ -561,6 +563,8 @@ function oQueFazer() {
     if (cova.seca) return { t: R.agua > 0 ? "Regar" : "Sem água", fn: () => regar(cp) };
     return { t: "Crescendo", fn: () => {} };
   }
+  if (!ehNoite() || R.lanterna) { const fi = R.flores.findIndex(f => Math.hypot(f.x - p.x, f.y - p.y) < .45); if (fi >= 0) return { t: "Colher flor do mato", fn: () => { R.flores.splice(fi, 1); R.extra.flor = (R.extra.flor || 0) + 1; S.colher(); efeito("+1 flor do mato", "#f2a0c0"); hud(); } };
+    const ci = R.cogumelos.findIndex(f => Math.hypot(f.x - p.x, f.y - p.y) < .45); if (ci >= 0) return { t: "Colher cogumelo", fn: () => { const cg = R.cogumelos.splice(ci, 1)[0]; if (cg.k > .85) { R.medo = Math.min(100, (R.medo || 0) + 25); R.tremor = .3; efeito("Eca! Esse era venenoso: deu tontura", "#c86ae8"); } else { R.extra.cogumelo = (R.extra.cogumelo || 0) + 1; efeito("+1 cogumelo", "#e8e0d0"); } S.colher(); hud(); } }; }
   { const oi = (R.deco.objs || []).findIndex(o => Math.hypot(o.x - p.x, o.y - p.y) < .55); if (oi >= 0) return { t: "Guardar " + nomeObjDeco(R.deco.objs[oi].t).toLowerCase(), fn: () => guardarObjDeco(oi) }; }
   { const fi = (R.deco.flores || []).findIndex(f => Math.hypot(f.x - p.x, f.y - p.y) < .45); if (fi >= 0) return { t: "Arrancar flor", fn: () => arrancarFlor(fi) }; }
   { const it = itemDaVez(); if (it && it[0] === "m" && podePlantarFlor(p)) return { t: "Plantar flor", fn: () => plantarFlor(it.slice(2)) }; if (it && it[0] === "o" && podeColocarObj(p)) return { t: "Colocar " + nomeObjDeco(it.slice(2)).toLowerCase(), fn: () => colocarObjDeco(it.slice(2)) }; }
@@ -616,7 +620,7 @@ function irEmbora() { R.venceu = { t: 0 }; R.lanterna = false; S.motor(); setTim
 
 /* ---------- bancada (melhorias, vara, peças, visual) ---------- */
 const caro = p => p ? Math.round(p * 1.5 / 5) * 5 : 0; // preços da loja (mais caros)
-const PECAS = [["Bateria nova", 150], ["Pneu", 210], ["Motor de arranque", 300]];
+const PECAS = [["Bateria nova", 900], ["Pneu", 1400], ["Motor de arranque", 2200]]; // fugir sem saber da história é o caminho caro
 function opcoesBancada() {
   const o = [];
   const item = (nome, desc, preco, ok, fn, dest) => { if (!dest) preco = caro(preco); o.push({ nome, desc, preco, ok: ok && R.moedas >= preco, fn, dest }); };
@@ -701,7 +705,7 @@ function abrirDiario(aba = "bichos") {
     <li><b>Vila Sossego:</b> desça a estrada do portão. Os bichos não vão lá. De dia as lojas abrem; à noite a vila apaga e todos dormem no quarto de cima.</li><li><b>Com amigo:</b> cada uma tem sua água e 1 coração. Quem for pega cai e só a outra levanta. Sem coração, fica fora até amanhecer. Toda manhã o coração volta. Se as duas caírem, o sítio volta para o dia 1.</li></ul>`;
   if (aba === "pistas") { const p = pistas(), l = Object.values(p); corpo = `<p><i>Páginas em branco no fim do caderno. Aqui a Yasmin anota o que descobre na Vila Sossego, descendo a estrada do portão.</i></p><p><b>${l.length} de ${NPISTAS} pistas</b>${l.length >= NPISTAS ? " · agora você sabe a verdade." : ""}</p><ul>${l.map(t => `<li>${t}</li>`).join("") || "<li>Nada ainda. Converse com os moradores da vila (de dia: de noite todos dormem).</li>"}</ul>`; }
   if (aba === "missoes") { const mi = R.missoes || {}, l = Object.entries(MISSOES); corpo = `<p><i>Favores pedidos pelos moradores da Vila Sossego. Cada um paga com alguma coisa útil.</i></p><ul>${l.filter(([k]) => mi[k]).map(([k, m]) => `<li><b>${m.titulo}</b> (${npc(m.npc).nome}): ${mi[k] === "feita" ? "<b style='color:#2a6a1a'>feita ✓</b>" : m.falta()} · <i>${m.premio}</i></li>`).join("") || "<li>Nenhuma ainda. Converse mais de uma vez com os moradores: alguns vão pedir ajuda.</li>"}</ul><p style="font-size:13px">Quem pede favor: o carteiro, a professora, o mecânico, o dono da pensão, a viúva, a mulher dos gatos e a benzedeira.</p>`; }
-  if (aba === "obj") corpo = `<p><b>Agora:</b> ${objetivo()}.</p><ul><li>Plante, regue, colha e venda para juntar moedas.</li><li>Compre as três peças na bancada: bateria (120), pneu (170) e motor de arranque (240).</li><li>Leve tudo até a caminhonete no portão e vá embora deste sítio.</li><li>De noite, siga as regras dos bichos. Toda noite tem uma vela para levar até a cruz.</li></ul><p><i>Se encontrar seu pai, diga que eu sinto muito. — Benedita</i></p>`;
+  if (aba === "obj") corpo = `<p><b>Agora:</b> ${objetivo()}.</p><ul><li>Plante, regue, colha e venda para juntar moedas.</li><li>Compre as três peças na bancada: ${PECAS.map(p => `${p[0].toLowerCase()} (${p[1]})`).join(", ")}. É caro: fugir sem descobrir nada é o caminho mais difícil.</li><li>Leve tudo até a caminhonete no portão e vá embora deste sítio.</li><li>De noite, siga as regras dos bichos. Toda noite tem uma vela para levar até a cruz.</li></ul><p><i>Se encontrar seu pai, diga que eu sinto muito. — Benedita</i></p>`;
   el.rcPainel.innerHTML = `<div class="rc-caixa rc-diario"><h2>Diário da Vó Benedita</h2><div class="rc-linha" style="margin:4px 0 10px">${abas.map(([k, n]) => `<button type="button" class="rc-op${k === aba ? " dest" : ""}" data-aba="${k}">${n}</button>`).join("")}</div>${corpo}<div class="rc-linha"><button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
   el.rcPainel.querySelectorAll("[data-aba]").forEach(b => b.addEventListener("click", () => { tocarRuido(.25, { filtro: "highpass", f: 2500, vol: .05 }); abrirDiario(b.dataset.aba); }));
   el.rcPainel.querySelectorAll("canvas[data-q]").forEach(k => fotoMonstro(k, k.dataset.q));
@@ -867,7 +871,7 @@ function telaFim(tipo) {
   painelAberto = true; el.rcPainel.hidden = false;
   const mins = Math.floor(R.tempoTotal / 60), segs = Math.round(R.tempoTotal % 60);
   const verdade = Object.keys(pistas()).length >= NPISTAS;
-  const txt = tipo === "vo" ? `<h2 style="color:#c8b8e8">Você encontrou a vó</h2><p>A vó segurou a sua mão. A mão dela estava fria e molhada de sereno, mas o abraço era igualzinho ao de antes.</p><p>Vocês desceram a trilha da mata até o lago, ela cantando a música do sabiá bem baixinho. Só lá no fim você reparou que os pés dela pisavam virados pra trás.</p><p style="color:#e2483d">Em 2026, a mata recebeu o que era dela. Na varanda do sítio, a Sombrinha ficou esperando até o sol nascer.</p><p style="font-size:13px;color:#b8b2a4">Final alternativo: a vó · dia ${R.dia} · ${mins} min ${segs} s</p>`
+  const txt = tipo === "verdade" ? `<h2 style="color:#f2c94a">A vó descansa</h2><p>A água do lago levou os óculos, o xale, o terço, o retrato e a fita. Lá no fundo, uma moça de tranças sorriu pela primeira vez em sessenta anos.</p><p>A coisa que usava a cara dela gritou na trilha até o sol nascer. Depois a mata ficou quieta, quieta como nunca ficou.</p><p>De manhã, você desceu a estrada a pé, com a Sombrinha na mochila. O Seu Juvêncio parou a carroça e te levou até a rodoviária, sem perguntar nada.</p><p style="color:#9bd86b">O trato acabou. Ninguém mais do sangue da Benedita precisa ir pra mata. Final verdadeiro.</p><p>Dia ${R.dia}.</p>` : tipo === "vo" ? `<h2 style="color:#c8b8e8">Você encontrou a vó</h2><p>A vó segurou a sua mão. A mão dela estava fria e molhada de sereno, mas o abraço era igualzinho ao de antes.</p><p>Vocês desceram a trilha da mata até o lago, ela cantando a música do sabiá bem baixinho. Só lá no fim você reparou que os pés dela pisavam virados pra trás.</p><p style="color:#e2483d">Em 2026, a mata recebeu o que era dela. Na varanda do sítio, a Sombrinha ficou esperando até o sol nascer.</p><p style="font-size:13px;color:#b8b2a4">Final alternativo: a vó · dia ${R.dia} · ${mins} min ${segs} s</p>`
     : tipo === "venceu" ? `<h2 style="color:#9bd86b">Você foi embora</h2><p>A caminhonete pega na terceira tentativa. Pelo retrovisor, o sítio fica pequeno... e alguém acena da janela da casa vazia.</p>${verdade ? `<p style="color:#f2c94a">Você sabe a verdade: a mata cobra alguém do sítio a cada trinta anos, e a vó foi duas vezes para que não fosse você. Na porteira, uma voz igual à do seu pai chama o seu nome. Você não olha para trás.</p>` : `<p style="font-size:13px;color:#b8b2a4">Ainda há perguntas sem resposta na Vila Sossego.</p>`}<p>Dia ${R.dia} · ${mins} min ${segs} s</p>`
     : `<h2 style="color:#e2483d">Você morreu</h2><p>${R.morto.porque}</p><p style="font-size:13px;color:#9bd86b">${R.morto.dica}</p><p>Chegou ao dia ${R.dia}.</p>`;
   const conv = R.online === "guest", reinicia = R.online === "host" && outros().length && tipo === "morreu";
@@ -884,7 +888,80 @@ function morrer(quem, porque, dica) { if (R.morto || R.venceu || R.caido) return
     R.caido = { quem, porque, dica, t: 0, fora }; R.correndo = false; R.lanterna = false; R.dentro = false;
     if (R.trocado) enviar({ t: "caiu", quem }); else { S.susto(); try { vibrar(400); } catch (e) {} }
     efeito(fora ? "Sem vidas! Agora é com a outra" : "Caiu! Só a outra pode levantar", "#e2483d"); hud(); return;
-  } R.morto = { quem, porque, dica, t: 0 }; R.correndo = false; S.susto(); try { vibrar(500); } catch (e) {} setTimeout(() => telaFim("morreu"), 2300); }
+  } if (!R.online && R.vidas > 1) return acordarEmCasa(quem, porque, dica);
+  if (!R.online) R.vidas = 0;
+  R.morto = { quem, porque, dica, t: 0 }; R.correndo = false; S.susto(); try { vibrar(500); } catch (e) {} setTimeout(() => telaFim("morreu"), 2300); }
+// single player: perde um coração e acorda na cama de casa (só é fim de jogo quando acabam os corações)
+function acordarEmCasa(quem, porque, dica) {
+  R.vidas--; R.susto = 1.1; R.tremor = 1; S.susto(); try { vibrar(500); } catch (e) {}
+  R.correndo = false; R.lanterna = false; R.lugar = "sitio"; R.predio = null; R.escondido = null; R.escE = null; R.tin = null; R.pisadeira = null; R.pesca = null; R.espiar = 0;
+  if (quem === "alma") { R.alma = null; R.vela = null; R.velaCom = false; R.velaEntregue = true; }
+  R.folego = 100; R.medo = Math.min(R.medo || 0, 40);
+  R.eu.x = CASA.porta.x; R.eu.y = CASA.porta.y + .55; R.dentro = true; R.sala = { x: SALA.porta.x, y: 5.9, dir: -1 }; R.fade = 1.4;
+  efeito(R.vidas > 1 ? `Você acordou em casa · restam ${R.vidas} corações` : "Último coração! Mais um susto e acabou", "#e2483d"); hud(); salvarJogo(true);
+  setTimeout(() => R && !R.morto && falar([`(Você acorda no chão da sala, suando frio.) ${porque}`, `Miau... Yasmin, você voltou. Escuta: ${dica}`].concat(R.vidas === 1 ? ["Esse é o seu último fôlego de sorte. Se acontecer de novo, não tem volta."] : []), null, "Sombrinha"), 1500);
+}
+
+/* ---------- a história da vó: o caminho para o final verdadeiro ---------- */
+const PISTAS_HIST = 6;
+const PISTAS_COISA = [
+  { k: "oculos", npc: "lurdes", onde: "a Dona Lurdes disse que a vó largou os óculos debaixo do banco da varanda de casa", fala: ["A Benedita? Passou aqui na véspera de sumir, sem os óculos. Disse que tinha deixado debaixo do banco da varanda \"pra quem chegar enxergar o caminho\".", "Achei que era coisa de velha. Agora não sei."] },
+  { k: "xale", npc: "zuleica", onde: "a Dona Zuleica contou que a vó esperava na plataforma da estação velha com o xale de crochê", fala: ["Fui eu que fiz aquele xale de crochê pra sua vó. Lilás, ponto pipoca.", "Na última semana ela ficava sentada na plataforma da estação velha, de xale, esperando um trem que não passa desde 1966. A porteira do leste do sítio leva lá."] },
+  { k: "terco", npc: "anselmo", onde: "o Padre Anselmo disse que a vó rezava o terço na beira do lago da mata, perto da casinha do vô", fala: ["Sua avó não vinha mais à missa. Rezava o terço sozinha, na beira do lago da mata, perto da casinha do Sebastião.", "Ela dizia que lá era o único lugar onde a outra não ouvia. Eu nunca entendi que outra."] },
+  { k: "retrato", npc: "ze", onde: "o Seu Zé viu um retrato da vó caído na praça da vila", fala: ["Ontem de manhã tinha um retrato caído na praça, virado pra baixo. Ninguém teve coragem de pegar.", "Era a Benedita. Moça ainda, de tranças. Só que a Benedita de tranças morreu antes de eu nascer."] },
+  { k: "fita", npc: "damiao", onde: "o Damião, o coveiro, achou a fita vermelha da vó enrolada numa cruz do cemitério do sítio", fala: ["Tem uma fita vermelha amarrada numa cruz lá do cemitério do seu sítio. Eu não mexi. Fita em cruz é recado.", "Sua vó amarrava uma igual no seu pulso, lembra? Pra te achar no escuro."] }];
+function passoVo() {
+  const np = Object.keys(pistas()).length, cv = coisasVo(), pg = paginasVo().length;
+  if (ls("roca_final_verdade") && R.fimVerdade) return { i: 5, txt: "fim" };
+  if (np < PISTAS_HIST && cv.length < COISAS_VO.length) return { i: 0, txt: `ouça o que a Vila Sossego fala da vó (conversas ${np}/${PISTAS_HIST}) · desça a estrada do portão` };
+  if (cv.length < COISAS_VO.length) { const f = PISTAS_COISA.find(d => !cv.includes(d.k)), nome = (NPCS.find(n => n.id === f.npc) || {}).nome || "alguém da vila";
+    return { i: 1, txt: `siga as coisas da vó (${cv.length}/${COISAS_VO.length}) · ` + (ls("roca_dica_" + f.k) ? f.onde + " (brilho lilás)" : `pergunte sobre a vó para ${nome} na vila`) }; }
+  if (pg < PAGINAS_VO.length) return { i: 2, txt: `leia o diário do vô na casinha do lago da mata (páginas ${pg}/${PAGINAS_VO.length}) · trilha a oeste do sítio, só de dia` };
+  if (!ls("roca_negou_vo")) return { i: 3, txt: "de noite, a \"vó\" espera na entrada da trilha da mata. Vá até ela... e diga que não é ela" };
+  return { i: 4, txt: "de dia, leve as coisas da vó até a ponta do píer do lago da mata e devolva à água" };
+}
+const FALAS_CAP = [null,
+  ["Miau. A vila inteira fala da sua vó, Yasmin. Cada um viu uma coisa dela num lugar diferente.", "Pergunta pra cada um. Ela deixou um caminho pra você."],
+  ["Miau... você achou tudo. Agora a gente precisa saber quem é a sua vó de verdade.", "O vô escrevia tudo. O diário dele está na casinha do lago, lá na mata. Vai de dia."],
+  ["Então é isso. A vó que voltou da mata em 1966 não era ela.", "Se a coisa aparecer na trilha com a cara da sua vó... você vai ter que dizer não. Olhando nos olhos."],
+  ["Você disse não. Agora devolve pra Benedita de verdade o que é dela.", "O vô escreveu que ela não atravessa a água. A de verdade está no lago. Leva as coisas dela até a ponta do píer, de dia."]];
+function checarHistoriaVo() {
+  if (!R || R.online || R.menu) return; const p = passoVo().i;
+  if (R.capVo === undefined) { R.capVo = p; return; }
+  if (p > R.capVo) { R.capVo = p; if (p < 5) { efeito(`A história da vó · capítulo ${p + 1}`, "#c8b8e8"); tocarTom(392, 1, { tipo: "triangle", vol: .04, wet: .7 }); if (FALAS_CAP[p] && !R.msg) setTimeout(() => R && !R.msg && falar(FALAS_CAP[p], null, "Sombrinha"), 2200); } }
+}
+function finalVerdade() {
+  R.fimVerdade = 1; R.correndo = false; R.lanterna = false; ls("roca_final_verdade", 1);
+  tocarTom(262, 4, { tipo: "triangle", vol: .05, wet: .9 }); tocarTom(330, 4, { tipo: "triangle", vol: .04, quando: 1, wet: .9 }); tocarTom(392, 5, { tipo: "triangle", vol: .04, quando: 2, wet: .9 });
+  falar(["(Você tira da mochila os óculos, o xale, o terço, o retrato e a fita vermelha.)", "Vó... a de verdade. Eu sei que você está aí embaixo desde 1966.", "(Você solta tudo na água preta. Nada afunda sozinho: alguém lá embaixo puxa, devagarinho.)", "(Uma mão de moça, com uma trança enrolada no pulso, aparece um instante. Solta uma bolha de ar. Parece um suspiro de alívio.)", "(Lá longe, na trilha, alguém grita com a voz da vó. Grita até a voz acabar. Depois, nada. Pela primeira vez, a mata não estala.)"],
+    () => R && falar(["Miau... acabou, Yasmin. O trato era com ela, não com você.", "Agora ninguém mais do seu sangue precisa ir pra mata. Vamos pra casa. A nossa casa."], () => R && telaFim("verdade"), "Sombrinha"), "Yasmin");
+}
+
+/* ---------- save (só no single player) ---------- */
+const SAVE_FORA = new Set(["solido", "caixas", "arvores", "pedras", "flores", "cogumelos", "msg", "fx", "fxR", "poeira", "outros", "online", "morto", "venceu", "caido", "susto", "tremor", "alucina", "alma", "pisadeira", "tin", "pesca", "escondido", "escE", "fade", "menu", "rostoPoco", "espiar", "regando", "correndo", "perto", "deco", "decoInv", "nev", "seco", "cuca", "cu", "aranha", "mula", "saci", "esp", "vulto", "cachorro", "lobo", "sinoT"]);
+function salvarJogo(auto) {
+  if (!R || R.online || R.menu || R.morto || R.venceu) return false;
+  try { const d = {}; for (const k in R) if (!SAVE_FORA.has(k) && typeof R[k] !== "function") d[k] = R[k];
+    localStorage.setItem("roca_save", JSON.stringify({ v: 1, quando: Date.now(), d })); efeito(auto ? "Jogo salvo (amanhecer)" : "Jogo salvo", "#9bd86b"); return true;
+  } catch (e) { efeito("Não deu pra salvar", "#e2483d"); return false; }
+}
+function infoSave() { try { const x = JSON.parse(localStorage.getItem("roca_save") || "null"); if (!x || !x.d) return null; const dt = new Date(x.quando), hj = new Date(); const q = dt.toDateString() === hj.toDateString() ? `hoje ${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}` : `${dt.getDate()}/${dt.getMonth() + 1}`; return { dia: x.d.dia || 1, vidas: x.d.vidas || 1, quando: q }; } catch (e) { return null; } }
+function carregarJogo() {
+  let x; try { x = JSON.parse(localStorage.getItem("roca_save") || "null"); } catch (e) {} if (!x || !x.d) return iniciarJogo("solo");
+  fecharPainel(); mostrarTitulo(false); novoJogo(); const base = { seco: R.seco, aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp };
+  Object.assign(R, x.d, base); R.online = null; R.menu = false; R.slot = 0; R.nome = meuNome() || "Jogador 1"; R.tutorial = 1;
+  R.lugar = "sitio"; R.predio = null; R.dentro = true; R.sala = { x: 2.2, y: 3.1, dir: 1 }; R.eu.x = CASA.porta.x; R.eu.y = CASA.porta.y + .55; R.fade = 1.2;
+  if (typeof mudarDia === "function" && x.d.clima) R.clima = x.d.clima; hud(); efeito(`Bem-vinda de volta · Dia ${R.dia}`, "#f2c94a");
+}
+function abrirCama() {
+  painelAberto = true; el.rcPainel.hidden = false; const sv = infoSave();
+  el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>A cama da vó</h2><p>O colchão de palha ainda guarda o cheiro dela. Aqui é seguro fechar os olhos um pouquinho e guardar o que você já fez.</p>${sv ? `<p style="font-size:13px;color:#b8b2a4">Último save: dia ${sv.dia}, ${sv.quando}</p>` : ""}
+    <div class="rc-grade">${R.online ? "" : `<button type="button" class="rc-op dest" id="rcSalvar">Salvar o jogo<small>Ao abrir o jogo, é só tocar em Continuar</small></button>`}<button type="button" class="rc-op" id="rcOlharCama">Olhar a cama<small>Uma lembrança da vó</small></button></div>
+    <div class="rc-linha"><button type="button" class="rc-op" id="rcFechar">Voltar</button></div></div>`;
+  const sb = document.getElementById("rcSalvar"); if (sb) sb.addEventListener("click", () => { if (salvarJogo()) { S.colher(); fecharPainel(); hud(); } });
+  document.getElementById("rcOlharCama").addEventListener("click", () => { fecharPainel(); const l = LEMB_CASA.find(z => z.x === 1.7 && z.y === 3); if (l) lembrar(l); });
+  document.getElementById("rcFechar").addEventListener("click", () => { fecharPainel(); hud(); }); focarPrimeiro();
+}
 
 /* ---------- HUD ---------- */
 // ícones em pixel-art (cada letra é uma cor, "." é vazio)
@@ -908,17 +985,17 @@ function barras() {
   el.rcSt_folego.classList.toggle("baixo", R.folego < 25); el.rcSt_folego.classList.toggle("ativo", !!R.correndo);
 }
 function hud() {
-  if (!R) return;
+  if (!R) return; checarHistoriaVo();
   el.rcMoedas.textContent = R.moedas; el.rcDia.textContent = `Dia ${R.dia} · ${ehNoite() ? (R.luaCheia ? "lua cheia" : "noite") : "dia"} · ${CLIMAS[climaHoje()][0].toLowerCase()}`;
   barras();
   const it = []; const col = Object.values(R.colheita).reduce((a, b) => a + b, 0), pe = Object.values(R.peixes).reduce((a, b) => a + b, 0);
-  if (col) it.push(`${col} colheita`); if (pe) it.push(`${pe} peixe`); if (R.inv.graveto || R.inv.folha) it.push(`${R.inv.graveto} graveto · ${R.inv.folha} folha`); if (R.velaCom) it.push("vela acesa"); if (R.pecas) it.push(`peças ${R.pecas}/3`);
+  if (col) it.push(`${col} colheita`); if (pe) it.push(`${pe} peixe`); if (R.inv.graveto || R.inv.folha) it.push(`${R.inv.graveto} graveto · ${R.inv.folha} folha`); if (R.velaCom) it.push("vela acesa"); if (R.adubo) it.push(`${R.adubo} adubo`); if (R.pecas) it.push(`peças ${R.pecas}/3`);
   el.rcItens.innerHTML = it.map(x => `<span>${x}</span>`).join("");
   const sm = PLANTAS[R.sementes[R.semente]]; if (el.rcSem.dataset.k !== sm.nome) { el.rcSem.dataset.k = sm.nome; el.rcSem.innerHTML = `${icDe(sm.nome)}<br>${sm.nome}`; }
   el.rcLuz.classList.toggle("on", R.lanterna); el.rcCorre.classList.toggle("on", R.correndo);
   const comAmigo = !!(R.online && outros().length && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
   el.rcObj.textContent = R.menu ? "" : "Objetivo: " + objetivo();
-  el.rcObj.style.marginTop = "18px"; // espaço pro painel das barras
+  el.rcObj.style.marginTop = "32px"; // espaço pro painel das barras
   const sala = R.online && Net.codigo && !R.menu ? `SALA <b>${Net.codigo}</b> · ${outros().length + 1}/${MAXJ}${R.online === "host" && !outros().length ? " · esperando amigos" : ""}` : "";
   if (el.rcSala.dataset.k !== sala) { el.rcSala.dataset.k = sala; el.rcSala.innerHTML = sala; el.rcSala.hidden = !sala; }
   const cor = q => { const n = q.vidas || 0; let h = ""; for (let i = 0; i < Math.max(1, n); i++) h += pixIc(i < n ? "coracao" : "coracaoV"); return h; };
@@ -935,6 +1012,7 @@ function objetivo() {
   if (R.lugar === "vila") return `descobrir o que aconteceu (pistas ${np}/${NPISTAS})` + (ehNoite() ? " · a vila dorme: volte de dia" : "");
   if (R.lugar === "estacao") return `explorar o trem velho (achados ${achadosTrem().length}/${ACHADOS_TREM.length})` + (temNeblina() ? " · NEBLINA: devagar, luz apagada e se esconda se ouvir as pernas" : ehNoite() ? " · o trem acendeu as luzes sozinho" : "");
   if (R.pecas >= 3) return "leve tudo até a caminhonete no portão e vá embora!";
+  if (!R.online) { const pv = passoVo(); if (pv.i < 5) return `A vó · capítulo ${pv.i + 1}/5: ${pv.txt}` + (ehNoite() && pv.i !== 3 ? " · sobreviva até amanhecer" : "") + (R.pecas ? ` · caminhonete ${R.pecas}/3` : ""); }
   const falta = PECAS[R.pecas];
   return `juntar ${falta[1]} moedas e comprar ${falta[0].toLowerCase()} na bancada (peças ${R.pecas}/3)` + (ehNoite() ? " · sobreviva até amanhecer" : "") + pp;
 }
@@ -991,8 +1069,8 @@ function atualizar(dt) {
   outros().forEach(o => { if (o.regando > 0) o.regando -= dt; });
   atualizarClima(dt);
   // plantas, pomar e galinhas
-  for (const k of R.canteiros) k.covas.forEach((cv2, i) => { if (!cv2 || cv2.seca || cv2.est >= 3) return; cv2.t += dt * (R.enxada ? 1.35 : 1); if (cv2.t >= PLANTAS[cv2.tipo].tempo) { cv2.est++; cv2.t = 0; if (cv2.est < 3) cv2.seca = true; else S.pronto(k.x + i % k.w, k.y + Math.floor(i / k.w)); } });
-  R.frutas.forEach(f => { if (f.n >= 3) return; f.t += dt; if (f.t > 45) { f.t = 0; f.n++; } });
+  for (const k of R.canteiros) k.covas.forEach((cv2, i) => { if (!cv2 || cv2.seca || cv2.est >= 3) return; cv2.t += dt * (R.enxada ? 1.35 : 1) * (k.adubo >= R.dia ? 1.6 : 1); if (cv2.t >= PLANTAS[cv2.tipo].tempo) { cv2.est++; cv2.t = 0; if (cv2.est < 3) cv2.seca = true; else S.pronto(k.x + i % k.w, k.y + Math.floor(i / k.w)); } });
+  R.frutas.forEach(f => { if (f.n >= 3) return; f.t += dt; if (f.t > 130) { f.t = 0; f.n++; } });
   R.galinhas.forEach(g => { g.t -= dt; if (!g.alvo || g.t <= 0) { g.alvo = { x: rnd(26, 31.6), y: rnd(9.9, 10.9) }; g.t = rnd(1.5, 4); } const d = dist(g, g.alvo); if (d > .1) { g.x += (g.alvo.x - g.x) / d * .9 * dt; g.y += (g.alvo.y - g.y) / d * .9 * dt; g.dir = g.alvo.x > g.x ? 1 : -1; g.anda = 1; } else g.anda = 0; if (Math.random() < dt * .04) { const [v, pn] = somEm(g.x, g.y); tocarTom(rnd(700, 900), .09, { tipo: "square", vol: .012 * v, ate: 1200, lp: 1800, pan: pn }); } });
   atualizarPesca(dt);
   const naFaz = jogadores().some(P => (P.lugar || "sitio") === "sitio"); // ninguém no sítio = os bichos de lá esperam
@@ -1021,9 +1099,9 @@ function comecaNoite() { R.luaCheia = R.dia >= 2 && Math.random() < .2; if (R.lu
   R.velaT = rnd(22, 50); R.velaP = rnd(.1, .32); efeito((R.lugar || "sitio") !== "sitio" ? "Anoiteceu" : R.velaHoje ? "Anoiteceu... o sino vai tocar" : "Anoiteceu · hoje o sino está quieto", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
 function amanhece() {
   if (R.velaHoje && !R.velaEntregue && jogadores().some(P => (P.lugar || "sitio") === "sitio")) { R.alma = { t: 0 }; return; } // a alma vem cobrar (só se tem alguém no sítio)
-  R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(8, R.ovos + 3); R.mel = R.mel.map(() => 1); R.saci.pego = false; R.saci.hoje = Math.random() < .3; R.saci.prox = rnd(80, 150);
-  jogadores().forEach(P => { P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : (P.slot || 1) * .45 - .1); P.eu.y = CASA.porta.y + .7; if (P !== R) enviarPara(P.nid, { t: "pos", x: P.eu.x, y: P.eu.y }); } });
-  if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a"); mudarDia();
+  R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(12, R.ovos + 3 + (R.galinhasComeram ? 3 : 0)); R.galinhasComeram = false; R.porcosComeram = false; repovoarMato(); R.mel = R.mel.map(() => 1); R.saci.pego = false; R.saci.hoje = Math.random() < .3; R.saci.prox = rnd(80, 150);
+  jogadores().forEach(P => { if (!R.online) { if (P.vidas < 3) { P.vidas++; efeito("Amanheceu: você recuperou um coração", "#e2483d"); } } else P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : (P.slot || 1) * .45 - .1); P.eu.y = CASA.porta.y + .7; if (P !== R) enviarPara(P.nid, { t: "pos", x: P.eu.x, y: P.eu.y }); } });
+  if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a"); mudarDia(); setTimeout(() => R && !R.morto && salvarJogo(true), 1500);
   Object.assign(R.esp, { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste" }); if (R.aranha.fase !== "longe") R.aranha.fase = "sai"; R.mula.fase = "longe";
 
   tocarTom(523, 1.5, { tipo: "triangle", vol: .04, wet: .6 }); tocarTom(659, 1.5, { tipo: "triangle", vol: .035, quando: .2, wet: .6 }); tocarTom(780, .4, { tipo: "square", vol: .02, ate: 1100, lp: 2000, quando: 1 }); // galo
@@ -1368,6 +1446,122 @@ function desenharCemiterio(tm) {
   for (let y = C.y0; y <= C.y1; y++) [C.x0, C.x1].forEach(x => { const sx = PX(x), sy = PY(y); if (!naTela(sx, sy)) return; c.fillStyle = "#2a2a2e"; c.fillRect(sx - 1.5, sy - TS * .4, 3, TS * .4); });
   c.strokeStyle = "#2a2a2e"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(PX(C.x0), PY(C.y0) - TS * .3); c.lineTo(PX(41.4), PY(C.y0) - TS * .3); c.moveTo(PX(42.6), PY(C.y0) - TS * .3); c.lineTo(PX(C.x1), PY(C.y0) - TS * .3); c.stroke(); c.fillStyle = "#2a2a2e"; for (const gx of [41.4, 42.6]) c.fillRect(PX(gx) - 2.5, PY(C.y0) - TS * .65, 5, TS * .65); c.lineWidth = 2; c.beginPath(); c.arc(PX(42), PY(C.y0) - TS * .62, TS * .6, PI * 1.15, PI * 1.85); c.stroke(); // portãozinho
 }
+// a caminhonete velha do pai: lataria arredondada, caçamba de tábua, ferrugem e o estado do conserto
+function corTom(hex, k) { if (!/^#[0-9a-f]{6}$/i.test(hex)) return hex; const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; const f = v => Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k); return `rgb(${f(r)},${f(g)},${f(b)})`; }
+function desenharCaminhonete(x, y, tm, andando) {
+  if (!naTela(x, y, 220)) return; const u = TS / 48, tinta = decoCor("caminhonete", "#8a2a1e"), clara = corTom(tinta, .22), escura = corTom(tinta, -.38), funda = corTom(tinta, -.6);
+  const pneuBom = R.pecas >= 2 || andando, motor = R.pecas >= 3 || andando, nt = ehNoite();
+  sombra(x, y, TS * 1.45, TS * .2, .45); c.save(); c.translate(x, y); c.scale(u, u); c.lineJoin = "round"; c.lineCap = "round";
+  const inc = pneuBom ? 0 : .045; c.rotate(inc); // pneu da frente murcho: ela tomba pra frente
+  const roda = (rx, murcha) => { const ry = murcha ? -8 : -11, gr = andando ? tm * 12 : 0;
+    c.fillStyle = "#141210"; c.beginPath(); c.ellipse(rx, ry, 11.5, murcha ? 8.5 : 11.5, 0, 0, 7); c.fill();
+    c.strokeStyle = "#2c2824"; c.lineWidth = 1.6; for (let i = 0; i < 10; i++) { const a = gr + i * PI / 5; c.beginPath(); c.moveTo(rx + Math.cos(a) * 9.6, ry + Math.sin(a) * (murcha ? 7 : 9.6)); c.lineTo(rx + Math.cos(a) * 11.3, ry + Math.sin(a) * (murcha ? 8.3 : 11.3)); c.stroke(); } // cravos do pneu
+    const g = c.createRadialGradient(rx - 1.5, ry - 1.5, 0, rx, ry, 6.5); g.addColorStop(0, "#e8e4dc"); g.addColorStop(.6, "#9a968e"); g.addColorStop(1, "#5a5650"); c.fillStyle = g; c.beginPath(); c.arc(rx, ry, 6.2, 0, 7); c.fill();
+    c.fillStyle = tinta; c.beginPath(); c.arc(rx, ry, 3.6, 0, 7); c.fill(); c.fillStyle = "#3a3632"; for (let i = 0; i < 5; i++) { const a = gr + i * PI * .4; c.beginPath(); c.arc(rx + Math.cos(a) * 4.8, ry + Math.sin(a) * 4.8, .7, 0, 7); c.fill(); }
+    c.fillStyle = "rgba(110,80,50,.55)"; c.beginPath(); c.ellipse(rx, ry + (murcha ? 6 : 9), 9, 2.4, 0, 0, 7); c.fill(); }; // barro
+  // escapamento e chassi
+  c.fillStyle = "#2a2622"; c.fillRect(-56, -16, 112, 5); c.fillStyle = "#4a4640"; c.fillRect(-64, -14, 10, 3);
+  roda(-34, false);
+  // caçamba
+  let g = c.createLinearGradient(0, -36, 0, -14); g.addColorStop(0, clara); g.addColorStop(.25, tinta); g.addColorStop(1, escura); c.fillStyle = g;
+  c.beginPath(); c.moveTo(-60, -36); c.lineTo(-6, -36); c.lineTo(-6, -15); c.lineTo(-22, -15); c.arc(-34, -14, 13.5, -.08, PI + .08, true); c.lineTo(-60, -15); c.quadraticCurveTo(-62, -15, -62, -18); c.lineTo(-62, -34); c.quadraticCurveTo(-62, -36, -60, -36); c.fill();
+  c.strokeStyle = funda; c.lineWidth = 1; c.beginPath(); c.moveTo(-60, -30); c.lineTo(-8, -30); c.stroke();
+  // tábuas da grade da caçamba e o que tem dentro
+  c.fillStyle = "#c8a070"; c.beginPath(); c.ellipse(-40, -40, 9, 5, -.1, 0, 7); c.fill(); c.strokeStyle = "rgba(120,90,40,.7)"; c.lineWidth = .6; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(-48 + i * 3, -43); c.lineTo(-46 + i * 3, -36); c.stroke(); } // fardo de feno
+  c.fillStyle = "#a89a7a"; c.beginPath(); c.moveTo(-24, -36); c.quadraticCurveTo(-26, -46, -19, -46); c.quadraticCurveTo(-12, -46, -13, -36); c.fill(); c.strokeStyle = "#6a5a3a"; c.beginPath(); c.moveTo(-21, -46); c.lineTo(-18, -48); c.stroke(); // saco de ração
+  [-46, -38].forEach((yy, i) => { c.fillStyle = i ? "#8a6038" : "#7a5230"; c.fillRect(-61, yy, 54, 4); c.fillStyle = "rgba(255,230,190,.18)"; c.fillRect(-61, yy, 54, 1); });
+  c.fillStyle = "#5a3a22"; [-61, -35, -9].forEach(px => c.fillRect(px, -48, 3, 13)); c.fillStyle = "#2a1a10"; [-59.5, -33.5, -7.5].forEach(px => { c.fillRect(px, -44.5, 1, 1); c.fillRect(px, -36.5, 1, 1); });
+  // cabine
+  g = c.createLinearGradient(0, -60, 0, -14); g.addColorStop(0, clara); g.addColorStop(.18, tinta); g.addColorStop(1, escura); c.fillStyle = g;
+  c.beginPath(); c.moveTo(-6, -15); c.lineTo(-6, -54); c.quadraticCurveTo(-6, -60, 0, -60); c.lineTo(14, -60); c.quadraticCurveTo(18, -60, 20, -56); c.lineTo(26, -40); c.lineTo(26, -15); c.closePath(); c.fill();
+  c.fillStyle = "rgba(255,255,255,.12)"; c.fillRect(-4, -59, 18, 1.5); // brilho do teto
+  // janela
+  g = c.createLinearGradient(0, -56, 0, -40); g.addColorStop(0, nt ? "#2a3446" : "#9ec4d8"); g.addColorStop(1, nt ? "#141a24" : "#4a7088"); c.fillStyle = g;
+  c.beginPath(); c.moveTo(-2, -41); c.lineTo(-2, -53); c.quadraticCurveTo(-2, -56, 1, -56); c.lineTo(13, -56); c.quadraticCurveTo(16, -56, 17, -53); c.lineTo(21.5, -41); c.closePath(); c.fill();
+  c.strokeStyle = funda; c.lineWidth = 1.4; c.stroke(); c.fillStyle = "rgba(255,255,255,.28)"; c.beginPath(); c.moveTo(4, -56); c.lineTo(8, -56); c.lineTo(2, -41); c.lineTo(-2, -41); c.lineTo(-2, -46); c.fill(); // reflexo
+  c.fillStyle = "#1e1612"; c.beginPath(); c.arc(6, -46, 2.6, 0, 7); c.fill(); c.fillRect(4.6, -44, 2.8, 3); // encosto do banco
+  // porta
+  c.strokeStyle = funda; c.lineWidth = 1; c.beginPath(); c.moveTo(-3, -40); c.lineTo(-3, -18); c.quadraticCurveTo(-3, -16, -1, -16); c.lineTo(22, -16); c.lineTo(23, -40); c.stroke();
+  c.fillStyle = "#d8d4c8"; c.fillRect(16, -36, 5, 1.6); c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(16, -34.4, 5, .8); // maçaneta
+  // capô e para-lama da frente
+  g = c.createLinearGradient(0, -42, 0, -14); g.addColorStop(0, clara); g.addColorStop(.2, tinta); g.addColorStop(1, escura); c.fillStyle = g;
+  c.beginPath(); c.moveTo(26, -15); c.lineTo(26, -41); c.quadraticCurveTo(44, -42, 56, -38); c.quadraticCurveTo(62, -36, 62, -30); c.lineTo(62, -18); c.lineTo(50, -15); c.arc(36, -14, 13.5, -.05, PI + .05, true); c.closePath(); c.fill();
+  c.strokeStyle = funda; c.lineWidth = .9; c.beginPath(); c.moveTo(27, -34); c.quadraticCurveTo(44, -35, 58, -31); c.stroke(); // vinco do capô
+  // grade, farol e para-choques cromados
+  c.fillStyle = "#2a2622"; c.fillRect(58.5, -31, 4, 11); c.strokeStyle = "#b8b4aa"; c.lineWidth = .7; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(58.8, -30 + i * 3); c.lineTo(62.3, -30 + i * 3); c.stroke(); }
+  c.fillStyle = "#c8c4ba"; c.beginPath(); c.arc(55.5, -31.5, 4, 0, 7); c.fill(); c.fillStyle = motor && nt ? "#fff6c8" : "#e8e0b0"; c.beginPath(); c.arc(55.5, -31.5, 2.8, 0, 7); c.fill(); c.fillStyle = "rgba(255,255,255,.7)"; c.beginPath(); c.arc(54.6, -32.4, .9, 0, 7); c.fill();
+  g = c.createLinearGradient(0, -21, 0, -15); g.addColorStop(0, "#f2f0ea"); g.addColorStop(.5, "#a8a49c"); g.addColorStop(1, "#6a665e"); c.fillStyle = g; c.fillRect(56, -21, 9, 5.5); c.fillRect(-65, -21, 7, 5.5); // para-choques
+  c.fillStyle = "#c83a2a"; c.fillRect(-62.5, -32, 2.5, 4); // lanterna de trás
+  c.fillStyle = "#a8a49c"; c.fillRect(22, -50, 1.4, 6); c.fillStyle = "#3a3632"; c.fillRect(22.5, -54, 4, 5); // retrovisor
+  c.strokeStyle = "#5a5650"; c.lineWidth = .7; c.beginPath(); c.moveTo(-3, -60); c.quadraticCurveTo(-5, -68 + Math.sin(tm * 2) * .5, -8 + Math.sin(tm * 2.2), -76); c.stroke(); // antena
+  // ferrugem e barro na lataria
+  const fer = [[-50, -24, 4, 2.5], [-14, -20, 3, 2], [44, -20, 3.5, 2], [6, -22, 2.2, 1.4], [-30, -34, 2.5, 1.2]]; fer.forEach(([fx, fy, rx, ry]) => { c.fillStyle = "rgba(120,60,20,.75)"; c.beginPath(); c.ellipse(fx, fy, rx, ry, .3, 0, 7); c.fill(); c.fillStyle = "rgba(80,36,10,.6)"; c.beginPath(); c.ellipse(fx + .5, fy + .3, rx * .45, ry * .45, .3, 0, 7); c.fill(); });
+  c.fillStyle = "rgba(110,80,50,.45)"; for (let i = 0; i < 9; i++) { c.beginPath(); c.arc(-58 + i * 14 + (i % 3) * 2, -15.5 - (i % 2) * 1.5, 1.4 + (i % 3) * .5, 0, 7); c.fill(); } // respingos de barro
+  roda(36, !pneuBom);
+  // capô aberto enquanto falta o motor de arranque
+  if (!motor) { c.save(); c.translate(27, -41); c.rotate(-.55); g = c.createLinearGradient(0, -4, 0, 2); g.addColorStop(0, clara); g.addColorStop(1, escura); c.fillStyle = g; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(18, -2, 33, 2); c.lineTo(33, 4); c.quadraticCurveTo(18, 1, 0, 2.5); c.fill(); c.restore();
+    c.strokeStyle = "#8a867e"; c.lineWidth = .9; c.beginPath(); c.moveTo(48, -38); c.lineTo(42, -54); c.stroke(); // vareta segurando o capô
+    c.fillStyle = "#1a1612"; c.beginPath(); c.ellipse(42, -40.5, 13, 2.2, 0, 0, 7); c.fill(); c.fillStyle = "#4a4640"; c.fillRect(34, -43, 8, 2.5); c.fillStyle = R.pecas >= 1 ? "#2a3a5a" : "rgba(0,0,0,0)"; c.fillRect(46, -44, 6, 3.5); } // motor exposto (e a bateria nova, se já colocou)
+  if (!pneuBom) { c.fillStyle = "#8a7a6a"; c.fillRect(46, -6, 6, 6); c.fillStyle = "#6a5a4a"; c.fillRect(46, -6, 6, 1.2); } // tijolo segurando
+  c.restore();
+  if (motor && nt && !andando) { c.save(); c.globalCompositeOperation = "lighter"; const gx = x + 56 * u, gy = y - 31.5 * u, gl = c.createRadialGradient(gx, gy, 0, gx, gy, TS * .5); gl.addColorStop(0, "rgba(255,240,180,.35)"); gl.addColorStop(1, "rgba(255,240,180,0)"); c.fillStyle = gl; c.fillRect(gx - TS * .5, gy - TS * .5, TS, TS); c.restore(); }
+  if (R.pecas < 3 && !andando) { const ty = y - TS * 1.75; c.font = `800 ${Math.round(TS * .27)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; const tx = `${R.pecas}/3 PEÇAS`, tw = c.measureText(tx).width + 14;
+    c.fillStyle = "#3d2816"; c.fillRect(x - tw / 2, ty - TS * .25, tw, TS * .34); c.strokeStyle = "#120a05"; c.lineWidth = 2; c.strokeRect(x - tw / 2, ty - TS * .25, tw, TS * .34); c.fillStyle = "#f6ead0"; c.fillText(tx, x, ty); c.textAlign = "start"; }
+}
+// cabeça do Corpo-Seco: crânio seco, olhos fundos, boca que abre de verdade entre as duas mandíbulas
+function cabecaSeco(boca, tm, pele, escura) {
+  const ab = boca * .9, H = [-1, 3], la = .12 + ab * .5, ca = Math.cos(la), sa = Math.sin(la);
+  const rot = ([x, y]) => [H[0] + x * ca - y * sa, H[1] + x * sa + y * ca];
+  const qb = (a, k, b, t) => [(1 - t) ** 2 * a[0] + 2 * (1 - t) * t * k[0] + t * t * b[0], (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * k[1] + t * t * b[1]];
+  const T = [30, -2], UK = [15, 5]; // ponta do focinho e curva de baixo da mandíbula de cima
+  const LT = [29, 1], LK = [15, 5]; // borda de cima da mandíbula de baixo (antes de girar)
+  const U = t => qb(H, UK, T, t), L = t => rot(qb([0, 0], LK, LT, t));
+  const caminho = (pts) => { c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); };
+  const N = 16, cimaU = Array.from({ length: N + 1 }, (_, i) => U(i / N)), baixoL = Array.from({ length: N + 1 }, (_, i) => L(i / N));
+  // mandíbula de baixo (gira no queixo)
+  c.save(); c.translate(H[0], H[1]); c.rotate(la);
+  let g = c.createLinearGradient(0, 0, 0, 10); g.addColorStop(0, pele); g.addColorStop(1, escura); c.fillStyle = g;
+  c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(LK[0], LK[1], LT[0], LT[1]); c.quadraticCurveTo(30, 5, 26, 7.5); c.quadraticCurveTo(14, 11, 3, 9.5); c.quadraticCurveTo(-3, 7, 0, 0); c.fill();
+  c.strokeStyle = "rgba(15,10,5,.55)"; c.lineWidth = .7; c.beginPath(); c.moveTo(6, 8.5); c.quadraticCurveTo(14, 6.5, 22, 7.2); c.stroke(); c.restore();
+  // crânio
+  g = c.createLinearGradient(0, -22, 0, 4); g.addColorStop(0, "#5e4a32"); g.addColorStop(.55, pele); g.addColorStop(1, escura); c.fillStyle = g;
+  c.beginPath(); c.moveTo(H[0], H[1]); c.quadraticCurveTo(-8, 3, -10, -4); c.quadraticCurveTo(-13, -14, -3, -18); c.quadraticCurveTo(6, -21, 15, -16.5);
+  c.quadraticCurveTo(19, -14, 22, -11.5); c.quadraticCurveTo(29, -9, 31, -4); c.quadraticCurveTo(31.5, -2, T[0], T[1]); c.quadraticCurveTo(UK[0], UK[1], H[0], H[1]); c.fill();
+  c.strokeStyle = "rgba(10,6,3,.6)"; c.lineWidth = 1.4; c.beginPath(); c.moveTo(4, -15.5); c.quadraticCurveTo(10, -18.5, 17, -14.5); c.stroke(); // sobrancelha funda
+  c.lineWidth = .7; c.strokeStyle = "rgba(10,6,3,.45)"; c.beginPath(); c.moveTo(2, -6); c.quadraticCurveTo(9, -3, 16, -6); c.stroke(); // maçã do rosto chupada
+  c.strokeStyle = "rgba(210,180,130,.22)"; c.lineWidth = .6; [[-6, -14, -2, -10], [-2, -18, 1, -15], [20, -13, 23, -10]].forEach(([a, b, d, e]) => { c.beginPath(); c.moveTo(a, b); c.lineTo((a + d) / 2 + 1, (b + e) / 2); c.lineTo(d, e); c.stroke(); }); // rachaduras
+  c.fillStyle = "#120a06"; [[26.5, -7.5], [28.6, -6.6]].forEach(([nx, ny]) => { c.beginPath(); c.ellipse(nx, ny, .9, .6, -.4, 0, 7); c.fill(); }); // narinas
+  // olhos fundos com brilho
+  const pis = .75 + .25 * Math.sin(tm * 9);
+  [[10, -11, 3.6, 2.5, 1], [16.5, -10.8, 2.2, 1.8, .7]].forEach(([ex, ey, rx, ry, k]) => {
+    c.fillStyle = "#0e0704"; c.beginPath(); c.ellipse(ex, ey, rx, ry, -.15, 0, 7); c.fill();
+    const gl = c.createRadialGradient(ex + .5, ey, 0, ex + .5, ey, rx * 1.1); gl.addColorStop(0, `rgba(255,190,90,${pis * k})`); gl.addColorStop(.35, `rgba(240,110,40,${.7 * pis * k})`); gl.addColorStop(1, "rgba(120,30,10,0)"); c.fillStyle = gl; c.beginPath(); c.ellipse(ex, ey, rx, ry, -.15, 0, 7); c.fill();
+    c.fillStyle = `rgba(255,230,170,${pis})`; c.beginPath(); c.ellipse(ex + .6, ey, .9 * k, .3 * k, 0, 0, 7); c.fill(); c.fillStyle = "#0a0402"; c.fillRect(ex + .45, ey - ry * .7, .35, ry * 1.4); }); // pupila em fenda
+  // boca: só o espaço entre as mandíbulas
+  caminho(cimaU.concat(baixoL.slice().reverse())); c.closePath();
+  c.save(); c.clip(); g = c.createLinearGradient(H[0], 0, T[0], 0); g.addColorStop(0, "#020000"); g.addColorStop(.6, "#220303"); g.addColorStop(1, "#3e0808"); c.fillStyle = g; c.fillRect(-4, -8, 38, 30);
+  c.fillStyle = "#3e0e12"; c.beginPath(); c.ellipse(11 + ab * 2, 5 + ab * 6, 9, 1.6 + ab, la * .7, 0, 7); c.fill(); c.fillStyle = "rgba(200,90,90,.14)"; c.beginPath(); c.ellipse(11 + ab * 2, 4.4 + ab * 6, 6, .6, la * .7, 0, 7); c.fill(); // língua escura
+  c.restore();
+  // dentes: nascem da gengiva e apontam para dentro da boca
+  const dente = (b, dir, w, l, curva) => { const nx = -dir[1], ny = dir[0];
+    const tip = [b[0] + dir[0] * l + nx * curva, b[1] + dir[1] * l + ny * curva];
+    g = c.createLinearGradient(b[0], b[1], tip[0], tip[1]); g.addColorStop(0, "#7a6a42"); g.addColorStop(.35, "#d8cca4"); g.addColorStop(1, "#f6f0dc"); c.fillStyle = g;
+    c.beginPath(); c.moveTo(b[0] - nx * w, b[1] - ny * w); c.quadraticCurveTo(b[0] - nx * w * .3 + dir[0] * l * .6, b[1] - ny * w * .3 + dir[1] * l * .6, tip[0], tip[1]); c.quadraticCurveTo(b[0] + nx * w * .5 + dir[0] * l * .5, b[1] + ny * w * .5 + dir[1] * l * .5, b[0] + nx * w, b[1] + ny * w); c.closePath(); c.fill();
+    c.strokeStyle = "rgba(60,40,20,.55)"; c.lineWidth = .35; c.stroke(); };
+  const normal = (fn, t, sinal) => { const a = fn(Math.max(0, t - .02)), b2 = fn(Math.min(1, t + .02)); let dx = b2[0] - a[0], dy = b2[1] - a[1]; const m = Math.hypot(dx, dy) || 1; return [-dy / m * sinal, dx / m * sinal]; };
+  const altura = Math.max(2, Math.hypot(T[0] - L(1)[0], T[1] - L(1)[1]));
+  for (let i = 0; i < 9; i++) { const t = .14 + i * .1, presa = i === 2 || i === 7, l = Math.min(presa ? 9.5 : 4.8 + (i % 2) * 1.6, presa ? 99 : altura * .9 + 3); dente(U(t), normal(U, t, -1), presa ? 1.6 : 1.15, l, presa ? -1.4 : -.5); }
+  for (let i = 0; i < 8; i++) { const t = .18 + i * .1, presa = i === 5, l = presa ? 8 : 4 + (i % 2) * 1.3; dente(L(t), normal(L, t, 1), presa ? 1.5 : 1, l, presa ? 1.1 : .35); }
+  // gengiva cobrindo a raiz dos dentes
+  c.lineCap = "round"; c.strokeStyle = "#4a1414"; c.lineWidth = 1.4; caminho(cimaU.slice(1, -1)); c.stroke(); caminho(baixoL.slice(1, -1)); c.stroke();
+  c.strokeStyle = pele; c.lineWidth = .9; caminho(cimaU.slice(2, -1).map(([x, y]) => [x, y - .9])); c.stroke(); caminho(baixoL.slice(2, -1).map(([x, y]) => [x, y + .9])); c.stroke();
+  // baba pendurada entre os dentes
+  if (ab > .25) { c.strokeStyle = "rgba(225,225,205,.55)"; c.lineWidth = .55; [[.45, .5], [.75, .78]].forEach(([tu, tl], i) => { const a = U(tu), b2 = L(tl), meio = [(a[0] + b2[0]) / 2 + Math.sin(tm * 4 + i) * .8, Math.max(a[1], b2[1]) + 2 + ab * 3]; c.beginPath(); c.moveTo(a[0], a[1] + 2); c.quadraticCurveTo(meio[0], meio[1], b2[0], b2[1] - 1); c.stroke(); }); }
+  { const q = L(.55); c.strokeStyle = "rgba(225,225,205,.45)"; c.lineWidth = .6; c.beginPath(); c.moveTo(q[0], q[1] + 3); c.quadraticCurveTo(q[0] + 1, q[1] + 7, q[0] - .5, q[1] + 9 + Math.sin(tm * 3) * 2.5); c.stroke(); }
+  // cabelo ralo e sujo caindo pela nuca (sem tampar o rosto)
+  c.lineCap = "round"; for (let i = 0; i < 8; i++) { const bx = -9 + i * 1.9, by = -18 + Math.abs(i - 3) * .9, bal = Math.sin(tm * 5 + i * 1.3) * 1.6;
+    c.strokeStyle = i % 3 ? "rgba(22,16,10,.85)" : "rgba(50,40,28,.8)"; c.lineWidth = i % 2 ? .9 : .7; c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(bx - 6 - i * .3, by + 8, bx - 9 - i * .6 + bal, by + 18 + (i % 3) * 4); c.stroke(); }
+}
 function _desenharSeco(s, tm) {
   if (s.fase === "longe" || s.fase === "aviso") { if (s.fase === "aviso") { const x = PX(s.x), y = PY(s.y); if (naTela(x, y)) { c.fillStyle = "rgba(255,150,70,.9)"; c.fillRect(x - 4, y - TS * .5, 2.5, 2.5); c.fillRect(x + 2, y - TS * .5, 2.5, 2.5); } } return; }
   const sc = TS / 48 * 1.35, x = PX(s.x), y = PY(s.y); if (!naTela(x, y, 200)) return;
@@ -1390,16 +1584,7 @@ function _desenharSeco(s, tm) {
   // pescoço e cabeça baixa com a boca enorme
   membro([[14, -38], [26, -36], [34, -30]], 6);
   c.save(); c.translate(38, -28); c.rotate(-.1 + Math.sin(tm * 8) * .04);
-  const ab = boca * .9; // mandíbula
-  c.fillStyle = "#1a0606"; c.beginPath(); c.moveTo(-4, 0); c.lineTo(24, -6 - ab * 3); c.lineTo(26, 6 + ab * 12); c.lineTo(-2, 8); c.closePath(); c.fill(); // fundo da boca
-  const g = c.createRadialGradient(10, 2, 1, 10, 2, 20); g.addColorStop(0, "rgba(120,10,10,.9)"); g.addColorStop(1, "rgba(30,0,0,0)"); c.fillStyle = g; c.beginPath(); c.moveTo(-4, 0); c.lineTo(24, -6 - ab * 3); c.lineTo(26, 6 + ab * 12); c.lineTo(-2, 8); c.fill();
-  c.fillStyle = pele; c.beginPath(); c.moveTo(-8, -14); c.quadraticCurveTo(10, -22, 28, -10 - ab * 3); c.lineTo(26, -5 - ab * 3); c.quadraticCurveTo(10, -6, -4, 0); c.closePath(); c.fill(); // crânio/mandíbula de cima
-  c.save(); c.translate(-2, 6); c.rotate(ab * .55); c.fillStyle = pele; c.beginPath(); c.moveTo(0, 0); c.lineTo(28, 2); c.lineTo(26, 7); c.quadraticCurveTo(10, 10, -2, 6); c.fill(); // mandíbula de baixo
-  c.fillStyle = "#e8e0c8"; for (let i = 0; i < 8; i++) { c.beginPath(); c.moveTo(3 + i * 3.1, 1); c.lineTo(4.5 + i * 3.1, -5 - (i % 2) * 2); c.lineTo(6 + i * 3.1, 1); c.fill(); } c.restore();
-  c.fillStyle = "#e8e0c8"; for (let i = 0; i < 9; i++) { const tx = -2 + i * 3, ty = -3 + (i / 8) * (-3 - ab * 3); c.beginPath(); c.moveTo(tx, ty - 1); c.lineTo(tx + 1.5, ty + 6 + (i % 2) * 3); c.lineTo(tx + 3, ty - 1); c.fill(); } // dentes de cima, compridos
-  c.strokeStyle = "rgba(220,220,200,.5)"; c.lineWidth = .8; c.beginPath(); c.moveTo(14, 2); c.quadraticCurveTo(15, 8 + ab * 6, 13, 12 + Math.sin(tm * 3) * 3); c.stroke(); // baba
-  c.fillStyle = "rgba(255,150,70,1)"; c.beginPath(); c.arc(8, -15, 1.9, 0, 7); c.arc(14, -15, 1.6, 0, 7); c.fill(); c.fillStyle = "rgba(255,150,70,.25)"; c.beginPath(); c.arc(11, -15, 9, 0, 7); c.fill();
-  c.strokeStyle = "#1e160c"; c.lineWidth = 1.2; for (let i = 0; i < 9; i++) { c.beginPath(); c.moveTo(-6 + i * 2.6, -17); c.quadraticCurveTo(-10 + i * 2.6, -6, -12 + i * 2.4 + Math.sin(tm * 6 + i) * 2, 6 + (i % 3) * 4); c.stroke(); } // cabelo sujo caindo
+  cabecaSeco(boca, tm, pele, escura);
   c.restore();
   c.restore();
 }
@@ -1784,8 +1969,7 @@ function desenharMundo(tm) {
   obj.push([POCO.y + .3, () => { const x = PX(POCO.x), y = PY(POCO.y + .3); if (!naTela(x, y)) return; sombra(x, y, TS * .55, TS * .2); c.fillStyle = "#6a6a6a"; c.beginPath(); c.ellipse(x, y - TS * .3, TS * .45, TS * .18, 0, 0, 7); c.fill(); c.fillRect(x - TS * .45, y - TS * .3, TS * .9, TS * .3); c.strokeStyle = "rgba(0,0,0,.25)"; c.lineWidth = 1; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(x - TS * .45 + i * TS * .3, y - TS * .3); c.lineTo(x - TS * .45 + i * TS * .3, y); c.stroke(); } c.fillStyle = "#0a0c10"; c.beginPath(); c.ellipse(x, y - TS * .32, TS * .34, TS * .12, 0, 0, 7); c.fill(); c.fillStyle = "#5a3a22"; c.fillRect(x - TS * .42, y - TS * 1.1, 5, TS * .8); c.fillRect(x + TS * .38, y - TS * 1.1, 5, TS * .8); c.fillRect(x - TS * .46, y - TS * 1.15, TS * .92, 6); c.strokeStyle = "#ccc"; c.beginPath(); c.moveTo(x, y - TS * 1.1); c.lineTo(x, y - TS * .6); c.stroke(); c.fillStyle = "#7a7a7a"; c.fillRect(x - 5, y - TS * .62, 10, 8); }]);
   obj.push([CAIXOTE.y, () => { const x = PX(CAIXOTE.x), y = PY(CAIXOTE.y); if (!naTela(x, y)) return; sombra(x, y, TS * .4, TS * .12); c.fillStyle = "#8a6a3a"; c.fillRect(x - TS * .35, y - TS * .5, TS * .7, TS * .5); c.strokeStyle = "#5a3a1a"; c.lineWidth = 2; c.strokeRect(x - TS * .35, y - TS * .5, TS * .7, TS * .5); c.beginPath(); c.moveTo(x - TS * .35, y - TS * .25); c.lineTo(x + TS * .35, y - TS * .25); c.stroke(); c.fillStyle = "#f2c94a"; c.font = `800 ${Math.round(TS * .22)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText("VENDA", x, y - TS * .56); c.textAlign = "start"; }]);
   obj.push([CRUZ.y, () => desenharCruz(tm)]);
-  obj.push([CAMINHONETE.y + .9 + offC, () => { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + offC), w = TS * 2.6, h = TS * 1; if (!naTela(x, y, 200)) return; sombra(x, y, w * .55, TS * .2, .4); c.fillStyle = decoCor("caminhonete", "#8a2a1e"); c.fillRect(x - w / 2, y - h * .9, w, h * .6); c.fillRect(x - w * .1, y - h * 1.35, w * .5, h * .5); c.fillStyle = "rgba(150,180,200,.5)"; c.fillRect(x + w * .02, y - h * 1.28, w * .32, h * .32); c.fillStyle = "#3a1a14"; c.fillRect(x - w / 2, y - h * .9, w * .42, 4); c.fillStyle = "#111"; [-.32, .32].forEach(o => { c.beginPath(); c.arc(x + o * w, y - h * .26, h * .26, 0, 7); c.fill(); c.fillStyle = "#666"; c.beginPath(); c.arc(x + o * w, y - h * .26, h * .1, 0, 7); c.fill(); c.fillStyle = "#111"; });
-    c.fillStyle = "rgba(110,60,30,.6)"; c.fillRect(x - w * .3, y - h * .62, w * .2, h * .2); c.fillStyle = "#d8d0c0"; c.fillRect(x + w * .46, y - h * .7, 5, 6); if (R.pecas < 3) { c.fillStyle = "rgba(240,230,200,.8)"; c.font = `700 ${Math.round(TS * .26)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText(`${R.pecas}/3 peças`, x, y - h * 1.5); c.textAlign = "start"; } }]);
+  obj.push([CAMINHONETE.y + .9 + offC, () => desenharCaminhonete(PX(CAMINHONETE.x), PY(CAMINHONETE.y + .9 + offC), tm, !!R.venceu)]);
   if (voEsperando() || R.fimVo) obj.push([R.fimVo ? VO_TRILHA.y : VO_TRILHA.y, () => desenharVoTrilha(tm)]);
   (R.deco.flores || []).forEach(fl => obj.push([fl.y, () => desenharFlorDeco(fl, tm)])); (R.deco.objs || []).forEach(o => obj.push([o.y, () => desenharObjDeco(o, tm)])); cerquinhasHorta(obj); desenharPropsSitio(obj, tm);
   PLACAS.forEach(pl => obj.push([pl.y, () => { const x = PX(pl.x), y = PY(pl.y); if (!naTela(x, y)) return; sombra(x, y, TS * .2, TS * .07); c.fillStyle = "#5a3a22"; c.fillRect(x - 2, y - TS * .7, 4, TS * .7); c.fillStyle = "#8a6a3a"; c.fillRect(x - TS * .3, y - TS * .85, TS * .6, TS * .32); c.fillStyle = "rgba(30,20,10,.7)"; for (let i = 0; i < 3; i++) c.fillRect(x - TS * .22, y - TS * .78 + i * TS * .08, TS * (.3 + (i % 2) * .14), 2); }]));
@@ -1823,7 +2007,7 @@ function desenharLuz(tm) {
   furo(PX(CASA.x + CASA.w * .62), PY(CASA.y + CASA.h * .5), TS * 1.1, .8); // lampião da porta
   for (const ou of outros()) if (!ou.dentro && (ou.lugar || "sitio") === "sitio") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   furo(PX(CAPELA.porta.x), PY(CAPELA.porta.y) - 6, TS * 1.5, .75); // velinhas da capela
-  ((R.deco && R.deco.objs) || []).forEach(o => { if (o.t === "lampiao") furo(PX(o.x), PY(o.y) - TS * 1.9, TS * 2.6, .85); }); // lampiões de jardim
+  ((R.deco && R.deco.objs) || []).forEach(o => { if (o.t === "lampiao") furo(PX(o.x), PY(o.y) - TS * 1.9, TS * 2.6, .85); else if (o.t === "fogueira") furo(PX(o.x), PY(o.y) - TS * .3, TS * 3.2, .9); else if (o.t === "luzinhas") furo(PX(o.x), PY(o.y) - TS * .9, TS * 1.9, .6); else if (o.t === "aboboraLuz") furo(PX(o.x), PY(o.y) - TS * .2, TS * 1.1, .55); }); // lampiões, fogueira e luzinhas
   if (R.mula.fase === "corre") furo(PX(R.mula.x), PY(R.mula.y) - TS, TS * 2.4, 1);
   if (R.mula.fase === "aviso") { if (R.mula.horiz) for (let x = CERCA.x0; x < CERCA.x1; x += 2) furo(PX(x), PY(R.mula.linha), TS * 1.1, .5); else for (let y = CERCA.y0; y < CERCA.y1; y += 2) furo(PX(R.mula.linha), PY(y), TS * 1.1, .5); }
   R.queimado.forEach((q, i) => { if (i % 3 === 0) furo(PX(q.x), PY(q.y), TS * .8, .6 * (1 - q.t / 3.5)); });
@@ -2296,7 +2480,8 @@ NPCS.push(
     pista: [1, "chapeu", "O homem de chapéu, parado na frente da pensão: ele fala como o pai. Ele diz que ainda \"não lembra como é ter rosto\"."],
     extra: ["Não olha embaixo do chapéu.", "A mata me deixou sair pra te chamar. Não vem, filha. Não vem."] });
 /* ---------- a cor da Sombrinha ---------- */
-const GATO_CORES = { preto: ["Preta", "#2a2a30", "#3c3c46", "#c8e86a", 0], branco: ["Branca", "#eeeae2", "#d6cfc4", "#5aa8e8", 0], pardo: ["Parda", "#8a7c68", "#55483a", "#d8c040", 1], marrom: ["Marrom", "#6e4628", "#482c16", "#e8b84a", 1], amarelo: ["Amarela", "#e8a040", "#c0761e", "#6ac86a", 1], frajola: ["Frajola", "#1e1e24", "#f2efe8", "#e8c84a", 2] };
+const GATO_CORES = { preto: ["Pretinha", "#16161b", "#2a2a33", "#c8e86a", 0], branco: ["Branca", "#eeeae2", "#d6cfc4", "#5aa8e8", 0], pardo: ["Parda", "#8a7c68", "#55483a", "#d8c040", 1], marrom: ["Marrom", "#6e4628", "#482c16", "#e8b84a", 1], amarelo: ["Amarela", "#e8a040", "#c0761e", "#6ac86a", 1], frajola: ["Frajola", "#1e1e24", "#f2efe8", "#e8c84a", 2], cinza: ["Cinzinha", "#7a7a84", "#5a5a64", "#e8c84a", 1], siames: ["Siamesa", "#e8dcc6", "#5a4030", "#5aa8e8", 0], laranja: ["Laranjinha", "#d8762a", "#a8501a", "#7ad86a", 1] };
+try { if (!localStorage.getItem("roca_gato_v2")) { localStorage.setItem("roca_gato_v2", "1"); localStorage.setItem("roca_gato_cor", "preto"); } } catch (e) {} // a Sombrinha volta a ser pretinha
 const corGato = () => GATO_CORES[ls("roca_gato_cor") || "preto"] || GATO_CORES.preto;
 function abrirCoresGato() {
   painelAberto = true; el.rcPainel.hidden = false; const atual = ls("roca_gato_cor") || "preto";
@@ -2310,6 +2495,8 @@ function abrirCoresGato() {
 /* ---------- mais coisas pra fazer no sítio: a vaca Mimosa e a lenha ---------- */
 const VACA = { x: 15.6, y: 30.2 }, COCHO = { x: 18, y: 30.7 };
 function acaoFazenda(p) {
+  if (dist(p, { x: 28.6, y: 12.3 }) < .9 && !R.galinhasComeram && (R.colheita.milho || 0) > 0) return { t: "Jogar milho pras galinhas", fn: () => { R.colheita.milho--; R.galinhasComeram = true; R.milhoChao = { t: 0 }; tocarRuido(.3, { filtro: "highpass", f: 3000, vol: .05 }); efeito("Có-có! Amanhã elas botam o dobro", "#f2c94a"); hud(); } };
+  if (R.adubo > 0) for (const k of R.canteiros) { if (!k.aberto || k.adubo >= R.dia) continue; if (dist(p, { x: k.x + k.w / 2, y: k.y + k.h + .55 }) < .75) return { t: "Adubar a horta", fn: () => { R.adubo--; k.adubo = R.dia + 1; S.plantar(); efeito("Horta adubada: cresce bem mais rápido até depois de amanhã", "#9bd86b"); hud(); } }; }
   if (dist(p, { x: VACA.x, y: VACA.y + .55 }) < 1.4) {
     const max = R.vacaComeu ? 2 : 1, feito = R.leiteHoje || 0;
     if (!R.vacaComeu && (R.colheita.milho || 0) > 0 && feito < 1) return { t: "Dar milho pra Mimosa", fn: () => { R.colheita.milho--; R.vacaComeu = 1; tocarTom(150, .6, { tipo: "sawtooth", vol: .06, ate: 110, lp: 700 }); efeito("A Mimosa comeu! Hoje ela dá mais leite", "#9bd86b"); hud(); } };
@@ -2317,7 +2504,7 @@ function acaoFazenda(p) {
     return { t: "Mimosa", loc: 1, fn: () => { tocarTom(130, 1, { tipo: "sawtooth", vol: .07, ate: 95, lp: 600 }); falar(ehNoite() ? ["A Mimosa não tira o olho da mata. Ela parou de mastigar.", "As vacas sabem quando tem alguma coisa olhando de volta."] : ["Muuu. A Mimosa já deu todo o leite de hoje. Amanhã tem mais.", "Se der milho pra ela antes de ordenhar, ela dá dois baldes."], null, "Yasmin"); } };
   }
   if (dist(p, { x: LENHA.x, y: LENHA.y + .75 }) < 1.25) {
-    if ((R.lenhaHoje || 0) < 4) return { t: "Rachar lenha", fn: () => { R.lenhaHoje = (R.lenhaHoje || 0) + 1; R.extra.lenha = (R.extra.lenha || 0) + 1; R.machado = 1; tocarRuido(.08, { filtro: "lowpass", f: 700, vol: .45 }); tocarTom(95, .12, { vol: .2, ate: 60 }); R.tremor = .12; efeito(`+1 feixe de lenha (${R.lenhaHoje}/4 hoje)`, "#c8a070"); hud(); } };
+    if ((R.lenhaHoje || 0) < 2) return { t: "Rachar lenha", fn: () => { R.lenhaHoje = (R.lenhaHoje || 0) + 1; R.extra.lenha = (R.extra.lenha || 0) + 1; R.machado = 1; tocarRuido(.08, { filtro: "lowpass", f: 700, vol: .45 }); tocarTom(95, .12, { vol: .2, ate: 60 }); R.tremor = .12; efeito(`+1 feixe de lenha (${R.lenhaHoje}/2 hoje)`, "#c8a070"); hud(); } };
     return { t: "Lenha", loc: 1, fn: () => efeito("Já rachou bastante hoje. Amanhã tem mais", "#e8e2d4") };
   }
   return null;
@@ -2932,6 +3119,7 @@ function oQueFazerMata() {
   if (dist(p, CABANA.porta) < 1.2) return { t: "Entrar", fn: entrarCabana, loc: 1 };
   if (dist(p, CADEIRA_M) < 1.1) return { t: "Olhar", loc: 1, fn: () => falar(ehNoite() ? ["A cadeira do vô está balançando. Virada pro lago. Como se alguém estivesse esperando alguém sair da água."] : ["A cadeira de balanço do vô, virada pro lago. A vó dizia que ele passava a tarde toda aqui, olhando a água.", "Do que ele tinha tanto medo que saísse dali?"], null, "Yasmin") };
   if (dist(p, BARCO_M) < 1.6) return { t: "Olhar", loc: 1, fn: () => falar(["Um barquinho afundado pela metade. Tem arranhão de unha por dentro do casco. Muitos."], null, "Yasmin") };
+  if (dist(p, PIER_FIM) < 1.1 && passoVo().i === 4 && !R.online) return ehNoite() ? { t: "Lago (só de dia)", loc: 1, fn: () => falar(["De noite não. A moça de tranças fica olhando de baixo d'água... e a outra vem atrás. Volto de manhã."], null, "Yasmin") } : { t: "Devolver as coisas da vó", loc: 1, fn: finalVerdade };
   if (dist(p, PIER_FIM) < 1.1) return { t: "Olhar o lago", loc: 1, fn: () => { if (ehNoite()) { R.rostoPoco = 1; R.susto = 1.1; S.susto(); efeito("Tinha uma moça de tranças embaixo d'água.", "#e2483d"); } else falar(["A água é preta. Não dá pra ver o fundo. O meu reflexo demora um pouquinho pra piscar depois de mim."], null, "Yasmin"); } };
   for (const o of COISAS_MATA) if (dist(p, o) < 1.2) return { t: "Olhar", fn: () => lembrar(o), loc: 1 };
   return null;
@@ -3234,7 +3422,7 @@ const PRIMEIRA_V = { breque: "O breque, o vagão do chefe do trem. Tem um fogare
 function entrarVagao(v) { R.predio = "t_" + v.id; R.int = { x: v.pd, y: IH - .75, dir: -1 }; R.fade = .5; S.porta(); S.rangido(); hud(); if (!ls("roca_trem_" + v.id)) { ls("roca_trem_" + v.id, 1); setTimeout(() => R && R.predio === "t_" + v.id && falar([PRIMEIRA_V[v.id]], null, "Yasmin"), 500); } }
 function sairVagao() { const v = vagaoAtual(); R.predio = null; R.eu.x = v.porta; R.eu.y = TREM_Y1 + .55; R.fade = .4; S.porta(); hud(); }
 function trocarVagao(d) { const i = ORDEM_V.indexOf(vagaoAtual().id), nv = vagao(ORDEM_V[i + d]); if (!nv) return; R.predio = "t_" + nv.id; R.int = { x: d > 0 ? .8 : nv.iw - .8, y: 2.65, dir: d }; R.fade = .55; S.porta(); tocarRuido(.5, { filtro: "lowpass", f: 380, vol: .12, atk: .05 }); hud(); if (!ls("roca_trem_" + nv.id)) { ls("roca_trem_" + nv.id, 1); setTimeout(() => R && R.predio === "t_" + nv.id && falar([PRIMEIRA_V[nv.id]], null, "Yasmin"), 500); } }
-function pegarLenhaTrem() { if (R.tremLenha === R.dia) return efeito("Já peguei lenha hoje. Amanhã tem mais.", "#e8e2d4"); R.tremLenha = R.dia; R.extra.lenha = (R.extra.lenha || 0) + 2; S.colher(); tocarRuido(.25, { filtro: "lowpass", f: 500, vol: .15 }); efeito("+2 feixes de lenha (pra vender no caixote)", "#c89a6a"); hud(); }
+function pegarLenhaTrem() { if (R.tremLenha === R.dia) return efeito("Já peguei lenha hoje. Amanhã tem mais.", "#e8e2d4"); R.tremLenha = R.dia; R.extra.lenha = (R.extra.lenha || 0) + 1; S.colher(); tocarRuido(.25, { filtro: "lowpass", f: 500, vol: .15 }); efeito("+1 feixe de lenha (pra vender no caixote)", "#c89a6a"); hud(); }
 function apitarTrem() { S.apitoTrem(); R.tremor = .3; efeito("PIUÍÍÍ!", "#f2c94a"); if (ehNoite()) setTimeout(() => { if (!R) return; S.assobio(.55, -.7); efeito("Lá da mata, alguém assobiou de volta.", "#e2483d"); }, 2600); }
 function tocarSinoEstacao() { S.sinoEstacao(SINO_EST.x, SINO_EST.y);
   if (temNeblina()) { const N = R.nev || (R.nev = novoNev()); if (N.fase === "longe" || N.fase === "some") Object.assign(N, { x: ETW + 1.5, y: TRILHO_Y + 1 }); N.fase = "fareja"; N.t = 0; N.alvo = { x: SINO_EST.x, y: SINO_EST.y + .6 }; R.tremor = .5; setTimeout(() => R && R.nev && S.gritoNevoa(R.nev.x, R.nev.y), 900); efeito("Lá do fim da linha, muitas bocas responderam ao sino.", "#e2483d"); return; } if (ehNoite()) setTimeout(() => { if (!R || R.lugar !== "estacao") return; S.apitoTrem(51, 9.4, .9); R.tremor = .5; efeito("O trem apitou de volta.", "#e2483d"); }, 1800); else efeito("Ninguém vem. Faz sessenta anos que ninguém vem.", "#e8e2d4"); }
@@ -3755,8 +3943,8 @@ function desenharNeblinaE(tm) { // a neblina por cima de tudo: dá pra ver só u
    Tudo se compra na loja de construção do Seu Nonato, na rua de baixo da vila.
    Pintar e trocar telha é na bancada de casa; muda de flor se planta onde quiser, dentro da cerca.
    O que você enfeitou fica guardado de uma partida pra outra. */
-const TINTAS = [["branca", "Branca", "#e8e2d4"], ["azul", "Azul", "#4a6a9a"], ["rosa", "Rosa", "#d88a9a"], ["amarela", "Amarela", "#e0b84a"], ["verde", "Verde", "#5a8a4a"], ["lilas", "Lilás", "#9a7ab8"], ["vermelha", "Vermelha", "#a8382a"]];
-const TELHAS = [["barro", "de barro", "#a8502a"], ["verde", "verdes", "#3a6a3a"], ["azul", "azuis", "#2a4a7a"], ["cinza", "cinzas", "#5a5a62"]];
+const TINTAS = [["branca", "Branca", "#e8e2d4"], ["azul", "Azul", "#4a6a9a"], ["rosa", "Rosa", "#d88a9a"], ["amarela", "Amarela", "#e0b84a"], ["verde", "Verde", "#5a8a4a"], ["lilas", "Lilás", "#9a7ab8"], ["vermelha", "Vermelha", "#a8382a"], ["laranja", "Laranja", "#d8762a"], ["turquesa", "Turquesa", "#3a9a9a"], ["preta", "Preta", "#26262a"], ["creme", "Creme", "#e8d8b0"], ["marrom", "Marrom", "#6a4428"], ["vinho", "Vinho", "#6a1e2a"]];
+const TELHAS = [["barro", "de barro", "#a8502a"], ["verde", "verdes", "#3a6a3a"], ["azul", "azuis", "#2a4a7a"], ["cinza", "cinzas", "#5a5a62"], ["vermelha", "vermelhas", "#8a2a1e"], ["preta", "pretas", "#2a2a2e"], ["palha", "de palha (sapé)", "#b8985a"]];
 const FLORES = [["margarida", "Margaridas"], ["girassol", "Girassóis"], ["rosa", "Rosas"], ["violeta", "Violetas"], ["hortensia", "Hortênsias"]];
 const ALVOS_DECO = [["casa", "Paredes da casa", "t"], ["porta", "Porta e janelas da casa", "t"], ["telhado", "Telhado da casa", "h"], ["celeiro", "Paredes do celeiro", "t"], ["celeiroTel", "Telhado do celeiro", "h"], ["galinheiro", "Galinheiro", "t"], ["cerca", "Cercas do sítio", "t"], ["horta", "Cerquinhas da horta", "t"], ["capela", "Paredes da capela", "t"], ["casinha", "Casinha do banheiro", "t"], ["caminhonete", "Caminhonete", "t"]];
 const lerJSON = (k, pad) => { try { const v = JSON.parse(ls(k) || "null"); return v && typeof v === "object" ? v : pad; } catch (e) { return pad; } };
@@ -3772,7 +3960,7 @@ function aplicarDeco(alvo, chave) { // roda no anfitrião (ou sozinha)
 }
 function pedirDeco(alvo, chave) { if (R.online === "guest") { enviar({ t: "deco", alvo, chave }); tocarTom(900, .05, { vol: .05 }); setTimeout(() => painelAberto && document.getElementById("rcDecoV") && abrirReforma(), 400); return; } if (aplicarDeco(alvo, chave)) { S.colher(); tocarRuido(.4, { filtro: "highpass", f: 2400, vol: .05, atk: .05 }); } hud(); abrirReforma(); }
 const mudaDaVez = () => { const inv = R.decoInv || {}; if (R.decoMuda && inv["m:" + R.decoMuda] > 0) return R.decoMuda; const f = FLORES.find(([k]) => inv["m:" + k] > 0); return f ? f[0] : null; };
-function podePlantarFlor(p) { if (p.x < CERCA.x0 + .6 || p.x > CERCA.x1 - .6 || p.y < CERCA.y0 + .8 || p.y > CERCA.y1 - .3) return false; if ((R.deco.flores || []).length >= 90) return false; if (R.solido[Math.floor(p.y)][Math.floor(p.x)]) return false; if ((R.deco.flores || []).some(f => Math.hypot(f.x - p.x, f.y - p.y) < .45)) return false; return true; }
+function podePlantarFlor(p) { if (p.x < CERCA.x0 + .6 || p.x > CERCA.x1 - .6 || p.y < CERCA.y0 + .8 || p.y > CERCA.y1 - .3) return false; if ((R.deco.flores || []).length >= 250) return false; if (R.solido[Math.floor(p.y)][Math.floor(p.x)]) return false; if ((R.deco.flores || []).some(f => Math.hypot(f.x - p.x, f.y - p.y) < .45)) return false; return true; }
 function plantarFlor(tipo) { const k = "m:" + tipo; if (!(R.decoInv[k] > 0)) return; R.decoInv[k]--; R.deco.flores.push({ x: Math.round(R.eu.x * 20) / 20, y: Math.round((R.eu.y + .08) * 20) / 20, t: tipo }); salvarDeco(); S.plantar(); efeito("Florzinha plantada!", "#f2a0c0"); hud(); }
 function arrancarFlor(i) { const f = R.deco.flores[i]; if (!f) return; R.deco.flores.splice(i, 1); R.decoInv["m:" + f.t] = (R.decoInv["m:" + f.t] || 0) + 1; salvarDeco(); S.colher(); efeito("Muda guardada", "#e8e2d4"); hud(); }
 function desenharFlorDeco(f, tm) { const x = PX(f.x), y = PY(f.y); if (!naTela(x, y, 40)) return; const k = TS / 48, b = Math.sin(tm * 1.6 + f.x * 3) * 1.2 * k, noite = horaNoite() > .5;
@@ -3818,7 +4006,7 @@ const nomeObjDeco = k => (OBJS_DECO.find(o => o[0] === k) || [k, k])[1];
 const itemDaVez = () => { const inv = R.decoInv || {}; if (R.decoSel && inv[R.decoSel] > 0) return R.decoSel; const f = FLORES.find(([k]) => inv["m:" + k] > 0); if (f) return "m:" + f[0]; const o = OBJS_DECO.find(([k]) => inv["o:" + k] > 0); return o ? "o:" + o[0] : null; };
 function colocarObjDeco(tipo) { const k = "o:" + tipo; if (!(R.decoInv[k] > 0)) return; R.decoInv[k]--; R.deco.objs = R.deco.objs || []; R.deco.objs.push({ x: Math.round(R.eu.x * 20) / 20, y: Math.round((R.eu.y + .1) * 20) / 20, t: tipo }); salvarDeco(); S.plantar(); efeito(nomeObjDeco(tipo) + " no lugar!", "#f2c94a"); hud(); }
 function guardarObjDeco(i) { const o = (R.deco.objs || [])[i]; if (!o) return; R.deco.objs.splice(i, 1); R.decoInv["o:" + o.t] = (R.decoInv["o:" + o.t] || 0) + 1; salvarDeco(); S.colher(); efeito("Guardado", "#e8e2d4"); hud(); }
-const podeColocarObj = p => podePlantarFlor(p) && (R.deco.objs || []).length < 40 && !(R.deco.objs || []).some(o => Math.hypot(o.x - p.x, o.y - p.y) < .8) && !R.caixas.some(([x0, y0, x1, y1]) => p.x > x0 - .4 && p.x < x1 + .4 && p.y > y0 - .2 && p.y < y1 + .4);
+const podeColocarObj = p => podePlantarFlor(p) && (R.deco.objs || []).length < 150 && !(R.deco.objs || []).some(o => Math.hypot(o.x - p.x, o.y - p.y) < .8) && !R.caixas.some(([x0, y0, x1, y1]) => p.x > x0 - .4 && p.x < x1 + .4 && p.y > y0 - .2 && p.y < y1 + .4);
 function desenharObjDeco(o, tm) {
   const T = TS, x = PX(o.x), y = PY(o.y); if (!naTela(x, y, 80)) return; const nt = horaNoite();
   if (desenharObjDeco2(o, tm)) return;
@@ -3850,7 +4038,21 @@ function cerquinhasHorta(obj) {
 }
 // enfeites fixos do quintal (caixa de correio, tanque, carroça velha, abóboras)
 const PROPS_SITIO = { correio: { x: 26.6, y: 32.5 }, tanque: { x: 23.4, y: 7.6 }, carroca: { x: 34.6, y: 12.35 }, aboboras: { x: 45.9, y: 12.3 } };
+// a cada amanhecer o mato dá mais flor e cogumelo
+function repovoarMato() { for (let i = 0; i < 40 && (R.flores.length < 26 || R.cogumelos.length < 22); i++) { const x = rnd(CERCA.x0 + .5, CERCA.x1 - .5), y = rnd(CERCA.y0 + .5, CERCA.y1 - .5); if (R.solido[Math.floor(y)][Math.floor(x)] || R.canteiros.some(k => x > k.x - .5 && x < k.x + k.w + .5 && y > k.y - .5 && y < k.y + k.h + .5)) continue; (R.flores.length < 26 && i % 2 ? R.flores : R.cogumelos.length < 22 ? R.cogumelos : R.flores).push({ x, y, k: Math.random() }); } }
+// borboletas, libélulas no lago, passarinhos passando e o milho jogado pras galinhas
+const BORB = Array.from({ length: 9 }, (_, i) => ({ x: 10 + i * 5.1, y: 12 + (i * 7.3) % 18, f: i * 1.7, cor: ["#f2c94a", "#f4f0e6", "#e88ab8", "#6aa8e8"][i % 4] }));
+function bichinhosSitio(tm) {
+  const nt = horaNoite(); if (nt > .4 || climaHoje() === "chuva" || climaHoje() === "tempestade") return; const T = TS, k = T / 48;
+  BORB.forEach(b => { const bx = b.x + Math.sin(tm * .23 + b.f) * 3.2 + Math.sin(tm * .9 + b.f * 2) * .6, by = b.y + Math.cos(tm * .19 + b.f) * 2.2 + Math.sin(tm * 1.3 + b.f) * .3, x = PX(bx), y = PY(by) - T * .7 - Math.abs(Math.sin(tm * 3 + b.f)) * T * .15; if (!naTela(x, y, 20)) return;
+    const a = Math.abs(Math.sin(tm * 14 + b.f)) * 3.6 * k + .6; c.fillStyle = b.cor; c.beginPath(); c.ellipse(x - a * .6, y, a, 2.4 * k, -.4, 0, 7); c.ellipse(x + a * .6, y, a, 2.4 * k, .4, 0, 7); c.fill(); c.fillStyle = "#2a2018"; c.fillRect(x - .6, y - 2 * k, 1.2, 4 * k); });
+  for (let i = 0; i < 4; i++) { const ang = tm * (.8 + i * .2) + i * 2, lx = (LAGO.x0 + LAGO.x1) / 2 + Math.cos(ang) * (2 + i * .4), ly = (LAGO.y0 + LAGO.y1) / 2 + Math.sin(ang * 1.3) * (1.6 + i * .3), x = PX(lx), y = PY(ly) - T * .5; if (!naTela(x, y, 20)) continue;
+    c.fillStyle = i % 2 ? "#3ac8c8" : "#5a8ae8"; c.fillRect(x - 5 * k, y - .8, 10 * k, 1.6); c.fillStyle = "rgba(220,240,255,.55)"; c.beginPath(); c.ellipse(x - 1.5 * k, y - 2 * k, 3 * k, 1.2 * k, -.3 + Math.sin(tm * 40 + i) * .3, 0, 7); c.ellipse(x + 1.5 * k, y - 2 * k, 3 * k, 1.2 * k, .3 - Math.sin(tm * 40 + i) * .3, 0, 7); c.fill(); }
+  const ciclo = (tm * .05) % 1; if (ciclo < .35) { const q = ciclo / .35; for (let i = 0; i < 4; i++) { const x = mix(-W * .1, W * 1.1, q) - i * 22 * k, y = H * (.18 + i * .025) + Math.sin(tm * 5 + i) * 3; c.strokeStyle = "rgba(30,26,22,.7)"; c.lineWidth = 1.4 * k; c.beginPath(); const as = Math.sin(tm * 12 + i) * 3 * k; c.moveTo(x - 6 * k, y - as); c.quadraticCurveTo(x - 3 * k, y - 3 * k, x, y); c.quadraticCurveTo(x + 3 * k, y - 3 * k, x + 6 * k, y - as); c.stroke(); } }
+}
+function milhoNoChao(tm) { const m = R.milhoChao; if (!m || !R.galinhasComeram) return; const k = TS / 48; c.fillStyle = "#f2c94a"; for (let i = 0; i < 26; i++) { const x = PX(26.4 + (i * 2.91) % 6), y = PY(7.6 + (i * 1.73) % 3.2); if (naTela(x, y, 10)) c.fillRect(x, y, 2 * k, 2 * k); } }
 function desenharPropsSitio(obj, tm) {
+  obj.push([CERCADO.y0 + .01, () => milhoNoChao(tm)]); obj.push([999, () => bichinhosSitio(tm)]);
   const T = TS, P = PROPS_SITIO, nt = horaNoite();
   obj.push([P.correio.y, () => { const x = PX(P.correio.x), y = PY(P.correio.y); if (!naTela(x, y)) return; sombra(x, y, T * .15, T * .05); c.fillStyle = "#5a3e24"; c.fillRect(x - 2, y - T * .7, 4, T * .7); c.fillStyle = decoCor("porta", "#3a5a8a"); c.beginPath(); c.moveTo(x - T * .2, y - T * .7); c.lineTo(x - T * .2, y - T * .95); c.quadraticCurveTo(x, y - T * 1.1, x + T * .2, y - T * .95); c.lineTo(x + T * .2, y - T * .7); c.fill(); c.fillStyle = "#b8281e"; c.fillRect(x + T * .2, y - T * 1.05, 3, T * .2); c.fillRect(x + T * .2, y - T * 1.05, T * .12, T * .06); if (nt > .6) { c.fillStyle = "#e8e0c8"; c.fillRect(x - T * .14, y - T * .8, T * .14, T * .05); } }]); // de noite tem uma carta saindo. Ninguém passou.
   obj.push([P.tanque.y, () => { const x = PX(P.tanque.x), y = PY(P.tanque.y); if (!naTela(x, y)) return; sombra(x, y, T * .5, T * .1); c.fillStyle = "#9a968a"; c.fillRect(x - T * .45, y - T * .55, T * .9, T * .55); c.fillStyle = "#b8b4a8"; c.fillRect(x - T * .5, y - T * .6, T, T * .08); c.fillStyle = "#4a6a78"; c.fillRect(x - T * .4, y - T * .55, T * .48, T * .12); c.strokeStyle = "rgba(0,0,0,.2)"; c.lineWidth = 1; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(x + T * .12 + i * T * .05, y - T * .55); c.lineTo(x + T * .12 + i * T * .05, y - T * .43); c.stroke(); } c.fillStyle = "#e8d8a0"; c.fillRect(x + T * .2, y - T * .7, T * .14, T * .1); c.fillStyle = "#7a7a80"; c.fillRect(x - T * .1, y - T * .9, 3, T * .3); c.fillRect(x - T * .1, y - T * .9, T * .14, 3); }]); // tanque de lavar, sabão e torneira
@@ -3868,7 +4070,49 @@ function vidaNoQuintal(tm) {
 
 // mais enfeites: caminho de pedras, cadeira de balanço, mesa de piquenique e cesto de frutas
 OBJS_DECO.push(["pedras", "Caminho de pedras", 15], ["cadeira", "Cadeira de balanço", 40], ["mesa", "Mesa de piquenique", 45], ["cesto", "Cesto de frutas", 20]);
-function desenharObjDeco2(o, tm) { const T = TS, x = PX(o.x), y = PY(o.y), nt = horaNoite();
+OBJS_DECO.push(["ipe", "Ipê florido", 60], ["ipeA", "Ipê amarelo", 60], ["fonte", "Fontezinha de pedra", 70], ["rede", "Rede de descanso", 45], ["varal", "Varal de roupas", 25], ["casaPassaro", "Casinha de passarinho", 30], ["luzinhas", "Varal de luzinhas", 40], ["galo", "Galo cata-vento", 35], ["cogumelos", "Cogumelos de cerâmica", 15], ["arco", "Arco de flores", 55], ["bicicleta", "Bicicleta com cesta de flores", 50], ["fogueira", "Fogueira de São João", 35], ["placa", "Placa \"Sítio da Vó\"", 20], ["aboboraLuz", "Abóbora com vela", 15], ["toco", "Toco com samambaia", 15], ["cerquinha", "Pedaço de cerca branca", 10]);
+function desenharObjDeco3(o, tm) { const T = TS, x = PX(o.x), y = PY(o.y), nt = horaNoite(), t = o.t, k = T / 48, bal = Math.sin(tm * 1.4 + o.x * 2);
+  const cx = (cor, x0, y0, w, h) => { c.fillStyle = cor; c.fillRect(x0, y0, w, h); };
+  if (t === "ipe" || t === "ipeA") { const flor = t === "ipe" ? ["#e88ab8", "#d8609a", "#f4b0d0"] : ["#f2c42a", "#e8a020", "#ffe070"]; sombra(x, y, T * .7, T * .18);
+    c.strokeStyle = "#4a3222"; c.lineCap = "round"; c.lineWidth = 6 * k; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x - 3 * k, y - T * .6, x + 2 * k, y - T * 1.1); c.stroke(); c.lineWidth = 3 * k; c.beginPath(); c.moveTo(x + 1 * k, y - T * .8); c.lineTo(x - T * .35, y - T * 1.2); c.moveTo(x + 2 * k, y - T * .95); c.lineTo(x + T * .38, y - T * 1.25); c.stroke();
+    for (let i = 0; i < 46; i++) { const a = i * 2.39996, r = Math.sqrt(i / 46) * T * .62, fx = x + Math.cos(a) * r + bal * 1.2 * k, fy = y - T * 1.45 + Math.sin(a) * r * .62; c.fillStyle = flor[i % 3]; c.beginPath(); c.arc(fx, fy, (3.2 + (i % 3)) * k, 0, 7); c.fill(); }
+    if (nt < .5) for (let i = 0; i < 3; i++) { const q = (tm * .35 + i * .33 + o.x) % 1; c.fillStyle = flor[i]; c.beginPath(); c.ellipse(x - T * .4 + i * T * .35 + Math.sin(q * 9 + i) * 6 * k, y - T * 1.1 + q * T * 1.1, 1.8 * k, 1.1 * k, q * 6, 0, 7); c.fill(); } // pétalas caindo
+    return true; }
+  if (t === "fonte") { sombra(x, y, T * .5, T * .13); cx("#7a766c", x - T * .45, y - T * .22, T * .9, T * .22); c.fillStyle = "#8e8a80"; c.beginPath(); c.ellipse(x, y - T * .22, T * .45, T * .12, 0, 0, 7); c.fill(); c.fillStyle = nt > .5 ? "#1e2a3a" : "#5aa0c8"; c.beginPath(); c.ellipse(x, y - T * .23, T * .38, T * .09, 0, 0, 7); c.fill();
+    cx("#8e8a80", x - T * .06, y - T * .62, T * .12, T * .4); c.fillStyle = "#a8a498"; c.beginPath(); c.ellipse(x, y - T * .62, T * .2, T * .06, 0, 0, 7); c.fill();
+    c.strokeStyle = nt > .5 ? "rgba(150,180,210,.5)" : "rgba(220,240,255,.85)"; c.lineWidth = 1.2 * k; for (let i = -1; i <= 1; i += 2) { c.beginPath(); c.moveTo(x, y - T * .66); c.quadraticCurveTo(x + i * T * .18, y - T * .78, x + i * T * .26, y - T * .26); c.stroke(); }
+    c.fillStyle = "rgba(255,255,255,.6)"; for (let i = 0; i < 4; i++) { const q = (tm * 1.3 + i * .25) % 1; c.beginPath(); c.ellipse(x + (i - 1.5) * T * .16, y - T * .23, T * .05 * q + 1, T * .015 * q + .5, 0, 0, 7); c.fill(); } return true; }
+  if (t === "rede") { sombra(x, y, T * .7, T * .1); [-.6, .6].forEach(ox => { cx("#5a3e24", x + ox * T - 2 * k, y - T * .9, 4 * k, T * .9); }); const sw = bal * 3 * k;
+    c.strokeStyle = "#e8d8b0"; c.lineWidth = 1 * k; c.beginPath(); c.moveTo(x - T * .58, y - T * .8); c.quadraticCurveTo(x + sw, y - T * .1, x + T * .58, y - T * .8); c.stroke();
+    const cores = ["#d8502a", "#f2c42a", "#3a8ad8", "#5aa84a"]; for (let i = 0; i < 4; i++) { c.fillStyle = cores[i]; c.beginPath(); c.moveTo(x - T * .5, y - T * (.74 - i * .03)); c.quadraticCurveTo(x + sw, y - T * (.18 - i * .05), x + T * .5, y - T * (.74 - i * .03)); c.quadraticCurveTo(x + sw, y - T * (.24 - i * .05), x - T * .5, y - T * (.7 - i * .03)); c.fill(); } return true; }
+  if (t === "varal") { sombra(x, y, T * .6, T * .08); [-.6, .6].forEach(ox => cx("#6a4a2a", x + ox * T - 1.5 * k, y - T * .9, 3 * k, T * .9)); c.strokeStyle = "#d8d0c0"; c.lineWidth = .8 * k; c.beginPath(); c.moveTo(x - T * .6, y - T * .86); c.quadraticCurveTo(x, y - T * .78, x + T * .6, y - T * .86); c.stroke();
+    [["#e8e2d4", -.42, .26], ["#d8502a", -.15, .3], ["#3a6aa8", .12, .24], ["#f2c42a", .38, .2]].forEach(([cor, ox, h], i) => { const b2 = Math.sin(tm * 2.4 + i) * 2 * k, px = x + ox * T, py = y - T * .82; c.fillStyle = cor; c.beginPath(); c.moveTo(px - T * .1, py); c.lineTo(px + T * .1, py); c.lineTo(px + T * .09 + b2, py + T * h); c.lineTo(px - T * .09 + b2, py + T * h); c.fill(); cx("#a8a090", px - 1, py - 2, 2, 4); }); return true; }
+  if (t === "casaPassaro") { sombra(x, y, T * .2, T * .06); cx("#5a3e24", x - 2 * k, y - T * .9, 4 * k, T * .9); cx(decoCor("casa", "#e8d8b0"), x - T * .17, y - T * 1.22, T * .34, T * .3); c.fillStyle = "#a8502a"; c.beginPath(); c.moveTo(x - T * .23, y - T * 1.2); c.lineTo(x, y - T * 1.42); c.lineTo(x + T * .23, y - T * 1.2); c.fill();
+    c.fillStyle = "#1a1210"; c.beginPath(); c.arc(x, y - T * 1.08, T * .06, 0, 7); c.fill(); cx("#5a3e24", x - 1, y - T * .98, 2, T * .06);
+    if (nt < .5 && Math.sin(tm * .7 + o.x) > 0) { c.fillStyle = "#c86a2a"; c.beginPath(); c.arc(x, y - T * 1.08, T * .045, 0, 7); c.fill(); cx("#e8b030", x + T * .04, y - T * 1.09, 2, 1.5); } return true; }
+  if (t === "luzinhas") { [-.65, .65].forEach(ox => cx("#4a3a2a", x + ox * T - 1.5 * k, y - T * 1.1, 3 * k, T * 1.1)); c.strokeStyle = "#2a2622"; c.lineWidth = .8 * k; c.beginPath(); c.moveTo(x - T * .65, y - T * 1.05); c.quadraticCurveTo(x, y - T * .7, x + T * .65, y - T * 1.05); c.stroke();
+    const cores = ["255,200,90", "255,120,90", "140,220,255", "180,255,140"]; for (let i = 1; i < 12; i++) { const q = i / 12, lx = x - T * .65 + q * T * 1.3, ly = y - T * 1.05 + Math.sin(q * PI) * T * .17 + 2 * k, a = nt > .35 ? .7 + .3 * Math.sin(tm * 3 + i * 1.7) : .5; c.fillStyle = `rgba(${cores[i % 4]},${a})`; c.beginPath(); c.arc(lx, ly, 2.2 * k, 0, 7); c.fill();
+      if (nt > .35) { c.globalCompositeOperation = "lighter"; const g = c.createRadialGradient(lx, ly, 0, lx, ly, 9 * k); g.addColorStop(0, `rgba(${cores[i % 4]},${.35 * a})`); g.addColorStop(1, `rgba(${cores[i % 4]},0)`); c.fillStyle = g; c.fillRect(lx - 9 * k, ly - 9 * k, 18 * k, 18 * k); c.globalCompositeOperation = "source-over"; } } return true; }
+  if (t === "galo") { sombra(x, y, T * .15, T * .05); cx("#3a3632", x - 1.5 * k, y - T * 1.25, 3 * k, T * 1.25); const g = Math.sin(tm * .5 + o.x) * .6; c.save(); c.translate(x, y - T * 1.25); c.scale(Math.cos(g) || .1, 1);
+    c.fillStyle = "#2a2622"; c.beginPath(); c.moveTo(-T * .2, 0); c.quadraticCurveTo(-T * .25, -T * .22, -T * .1, -T * .2); c.lineTo(T * .05, -T * .12); c.lineTo(T * .1, -T * .3); c.lineTo(T * .16, -T * .22); c.lineTo(T * .14, -T * .12); c.lineTo(T * .22, -T * .1); c.lineTo(T * .12, -T * .05); c.lineTo(T * .1, 0); c.closePath(); c.fill(); c.fillStyle = "#c82a2a"; c.fillRect(T * .1, -T * .34, 3 * k, 3 * k); c.restore();
+    c.strokeStyle = "#3a3632"; c.lineWidth = 1.2 * k; c.beginPath(); c.moveTo(x - T * .2, y - T * 1.05); c.lineTo(x + T * .2, y - T * 1.05); c.stroke(); c.fillStyle = "#e8e2d4"; c.font = `700 ${Math.round(6 * k)}px monospace`; c.fillText("N", x - 2 * k, y - T * 1.1); return true; }
+  if (t === "cogumelos") { [[-.18, .0, .14, "#c82a2a"], [.12, .04, .1, "#e8762a"], [.02, -.06, .08, "#c82a2a"]].forEach(([ox, oy, r, cor]) => { const px = x + ox * T, py = y + oy * T; c.fillStyle = "rgba(0,0,0,.2)"; c.beginPath(); c.ellipse(px, py, r * T, r * T * .3, 0, 0, 7); c.fill(); cx("#f4ecd8", px - r * T * .3, py - r * T * 1.1, r * T * .6, r * T * 1.1); c.fillStyle = cor; c.beginPath(); c.ellipse(px, py - r * T * 1.1, r * T, r * T * .6, 0, PI, 0); c.fill(); c.fillStyle = "#fff"; [[-.4, -1.35], [.3, -1.4], [0, -1.55]].forEach(([a, b]) => { c.beginPath(); c.arc(px + a * r * T, py + b * r * T, r * T * .13, 0, 7); c.fill(); }); }); return true; }
+  if (t === "arco") { sombra(x, y, T * .6, T * .1); c.strokeStyle = "#e8e2d4"; c.lineWidth = 4 * k; c.beginPath(); c.moveTo(x - T * .55, y); c.lineTo(x - T * .55, y - T * .9); c.arc(x, y - T * .9, T * .55, PI, 0); c.lineTo(x + T * .55, y); c.stroke();
+    const fl = ["#e88ab8", "#f4f0e6", "#e2483d", "#f2c42a"]; for (let i = 0; i < 26; i++) { const q = i / 25, a = PI + q * PI, px = q < .2 ? x - T * .55 : q > .8 ? x + T * .55 : x + Math.cos(a) * T * .55, py = q < .2 ? y - T * (.2 + q * 3.5) : q > .8 ? y - T * (.2 + (1 - q) * 3.5) : y - T * .9 + Math.sin(a) * T * .55; c.fillStyle = i % 3 ? "#4a8a32" : fl[i % 4]; c.beginPath(); c.arc(px + Math.sin(i) * 2 * k, py, (i % 3 ? 3 : 2.6) * k, 0, 7); c.fill(); } return true; }
+  if (t === "bicicleta") { sombra(x, y, T * .5, T * .08); rodaTrem(x - T * .32, y - T * .2, T * .19, "#2a2622", 0, 8); rodaTrem(x + T * .32, y - T * .2, T * .19, "#2a2622", 0, 8); c.strokeStyle = "#3a8a8a"; c.lineWidth = 2.5 * k; c.beginPath(); c.moveTo(x - T * .32, y - T * .2); c.lineTo(x - T * .05, y - T * .5); c.lineTo(x + T * .22, y - T * .5); c.lineTo(x + T * .32, y - T * .2); c.moveTo(x - T * .05, y - T * .5); c.lineTo(x + T * .05, y - T * .2); c.lineTo(x - T * .32, y - T * .2); c.moveTo(x + T * .22, y - T * .5); c.lineTo(x + T * .24, y - T * .62); c.stroke();
+    cx("#2a2622", x - T * .1, y - T * .55, T * .12, 3 * k); c.fillStyle = "#b88a4a"; c.beginPath(); c.moveTo(x + T * .2, y - T * .72); c.lineTo(x + T * .44, y - T * .72); c.lineTo(x + T * .4, y - T * .55); c.lineTo(x + T * .24, y - T * .55); c.fill(); ["#e2483d", "#f2c42a", "#f4f0e6", "#e88ab8"].forEach((cor, i) => { c.fillStyle = cor; c.beginPath(); c.arc(x + T * (.24 + i * .06), y - T * (.76 + (i % 2) * .04), 2.6 * k, 0, 7); c.fill(); }); return true; }
+  if (t === "fogueira") { sombra(x, y, T * .4, T * .1); c.fillStyle = "#6a6458"; for (let i = 0; i < 9; i++) { const a = i / 9 * PI * 2; c.beginPath(); c.ellipse(x + Math.cos(a) * T * .3, y - T * .05 + Math.sin(a) * T * .1, 4 * k, 3 * k, 0, 0, 7); c.fill(); }
+    c.strokeStyle = "#5a3a22"; c.lineWidth = 4 * k; [[-1, 1], [1, 1], [0, 1.2]].forEach(([d], i) => { c.beginPath(); c.moveTo(x - T * .25 * (i === 2 ? 0 : d), y - T * .02); c.lineTo(x + T * .08 * d, y - T * .45); c.stroke(); }); chamas(x, y - T * .08, T * .32, T * .55, tm, 6); return true; }
+  if (t === "placa") { sombra(x, y, T * .45, T * .07); [-.38, .38].forEach(ox => cx("#5a3e24", x + ox * T - 2 * k, y - T * .75, 4 * k, T * .75)); cx("#8a6038", x - T * .55, y - T * .82, T * 1.1, T * .32); cx("#6a4628", x - T * .55, y - T * .54, T * 1.1, 3 * k);
+    c.fillStyle = "#f6ead0"; c.font = `800 ${Math.round(11 * k)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText("SÍTIO DA VÓ", x, y - T * .6); c.textAlign = "start"; c.fillStyle = "#e88ab8"; c.beginPath(); c.arc(x + T * .5, y - T * .82, 3 * k, 0, 7); c.fill(); c.fillStyle = "#4a8a32"; c.beginPath(); c.ellipse(x + T * .44, y - T * .8, 3 * k, 1.5 * k, .5, 0, 7); c.fill(); return true; }
+  if (t === "aboboraLuz") { sombra(x, y, T * .25, T * .07); c.fillStyle = "#d8641e"; c.beginPath(); c.ellipse(x, y - T * .17, T * .24, T * .17, 0, 0, 7); c.fill(); c.strokeStyle = "#a8460e"; c.lineWidth = 1.2 * k; [-.1, 0, .1].forEach(ox => { c.beginPath(); c.ellipse(x + ox * T, y - T * .17, T * .06, T * .16, 0, 0, 7); c.stroke(); }); cx("#4a6a2a", x - 1.5 * k, y - T * .38, 3 * k, T * .07);
+    const a = nt > .35 ? .8 + .2 * Math.sin(tm * 11) : .55; c.fillStyle = `rgba(255,${nt > .35 ? 200 : 120},60,${a})`; c.beginPath(); c.moveTo(x - T * .12, y - T * .22); c.lineTo(x - T * .06, y - T * .26); c.lineTo(x - T * .03, y - T * .2); c.fill(); c.beginPath(); c.moveTo(x + T * .12, y - T * .22); c.lineTo(x + T * .06, y - T * .26); c.lineTo(x + T * .03, y - T * .2); c.fill(); c.beginPath(); c.moveTo(x - T * .12, y - T * .12); c.quadraticCurveTo(x, y - T * .05, x + T * .12, y - T * .12); c.lineTo(x, y - T * .09); c.fill(); return true; }
+  if (t === "toco") { sombra(x, y, T * .3, T * .08); c.fillStyle = "#5a3e24"; c.beginPath(); c.moveTo(x - T * .22, y); c.lineTo(x - T * .18, y - T * .3); c.lineTo(x + T * .18, y - T * .3); c.lineTo(x + T * .22, y); c.fill(); c.fillStyle = "#b8905a"; c.beginPath(); c.ellipse(x, y - T * .3, T * .18, T * .06, 0, 0, 7); c.fill(); c.strokeStyle = "#8a6a3a"; c.lineWidth = .7 * k; c.beginPath(); c.ellipse(x, y - T * .3, T * .1, T * .03, 0, 0, 7); c.stroke();
+    c.strokeStyle = "#3a7a2a"; c.lineWidth = 2 * k; for (let i = 0; i < 7; i++) { const a = -PI * .9 + i * PI * .3 + bal * .05; c.beginPath(); c.moveTo(x, y - T * .32); c.quadraticCurveTo(x + Math.cos(a) * T * .25, y - T * .5, x + Math.cos(a) * T * .38, y - T * .32 + Math.abs(Math.sin(a)) * T * .05); c.stroke(); } return true; }
+  if (t === "cerquinha") { const cor = decoCor("cerca", "#ece6d8"); sombra(x, y, T * .55, T * .05); for (let i = 0; i < 5; i++) { const px = x - T * .5 + i * T * .25; cx(cor, px - 2 * k, y - T * .5, 4 * k, T * .5); c.fillStyle = cor; c.beginPath(); c.moveTo(px - 2 * k, y - T * .5); c.lineTo(px, y - T * .58); c.lineTo(px + 2 * k, y - T * .5); c.fill(); } cx(cor, x - T * .55, y - T * .38, T * 1.1, 3 * k); cx(cor, x - T * .55, y - T * .18, T * 1.1, 3 * k); return true; }
+  return false;
+}
+function desenharObjDeco2(o, tm) { if (desenharObjDeco3(o, tm)) return true; const T = TS, x = PX(o.x), y = PY(o.y), nt = horaNoite();
   if (o.t === "pedras") { [[-.35, .02, .2], [0, -.08, .17], [.32, .04, .19], [.05, .14, .13]].forEach(([ox, oy, r], i) => { c.fillStyle = "rgba(0,0,0,.2)"; c.beginPath(); c.ellipse(x + ox * T + 1, y + oy * T + 2, r * T, r * T * .55, 0, 0, 7); c.fill(); c.fillStyle = ["#a8a090", "#9a9284", "#b4ac9c", "#8e877a"][i]; c.beginPath(); c.ellipse(x + ox * T, y + oy * T, r * T, r * T * .55, 0, 0, 7); c.fill(); c.fillStyle = "rgba(255,255,255,.15)"; c.beginPath(); c.ellipse(x + ox * T - r * T * .25, y + oy * T - r * T * .15, r * T * .4, r * T * .2, 0, 0, 7); c.fill(); }); return true; }
   if (o.t === "cadeira") { sombra(x, y, T * .3, T * .08); const b = nt > .5 ? Math.sin(tm * 1.7) * .12 : Math.sin(tm * .4) * .02; c.save(); c.translate(x, y); c.rotate(b); c.strokeStyle = "#5a3e24"; c.lineWidth = 3; c.beginPath(); c.arc(0, -T * .05, T * .34, PI * .15, PI * .85); c.stroke(); c.fillStyle = "#6a4a2a"; c.fillRect(-T * .25, -T * .45, T * .5, T * .08); c.fillRect(-T * .25, -T * 1.05, T * .07, T * .62); c.fillRect(T * .18, -T * 1.05, T * .07, T * .62); c.fillRect(-T * .25, -T * 1.05, T * .5, T * .08); c.fillRect(-T * .25, -T * .8, T * .5, T * .05); c.fillRect(-T * .22, -T * .4, 3, T * .32); c.fillRect(T * .19, -T * .4, 3, T * .32); c.fillStyle = "#a83a4a"; c.fillRect(-T * .2, -T * .5, T * .4, T * .06); c.restore(); return true; } // de noite ela balança sozinha
   if (o.t === "mesa") { sombra(x, y, T * .75, T * .14); c.fillStyle = "#6a4a2a"; c.fillRect(x - T * .6, y - T * .55, T * 1.2, T * .1); c.fillRect(x - T * .7, y - T * .28, T * 1.4, T * .07); c.fillStyle = "#4a3018"; c.fillRect(x - T * .5, y - T * .45, 4, T * .45); c.fillRect(x + T * .46, y - T * .45, 4, T * .45);
@@ -3912,7 +4156,7 @@ function falarComVo() {
     painelAberto = true; el.rcPainel.hidden = false;
     el.rcPainel.innerHTML = `<div class="rc-caixa"><h2 style="color:#c8b8e8">A vó</h2><p>Ela está ali, do jeitinho que você lembra. Só a lamparina é que não esquenta.</p><div class="rc-linha"><button type="button" class="rc-op dest" id="rcIrVo">Ir com a vó</button><button type="button" class="rc-op" id="rcNaoVo">Não é ela. Voltar pra casa.</button></div></div>`;
     document.getElementById("rcIrVo").addEventListener("click", () => { fecharPainel(); R.fimVo = { t: 0 }; R.lanterna = false; tocarTom(392, 3, { tipo: "triangle", vol: .05, wet: .9 }); tocarTom(330, 3.5, { tipo: "triangle", vol: .04, quando: .8, wet: .9 }); ls("roca_final_vo", 1); });
-    document.getElementById("rcNaoVo").addEventListener("click", () => { fecharPainel(); R.voNoite = R.dia; R.rostoPoco = 1; R.rostoQuem = "alma"; R.susto = 1.1; S.susto(); R.tremor = 1; efeito("Não era ela.", "#e2483d"); setTimeout(() => R && falar(["Quando eu disse não, o rosto dela... esticou. A boca foi até o peito.", "A vó de verdade nunca me chamaria pra mata. Ela me mandaria correr.", "Miau! Pra casa, Yasmin! E não olha pra trás!"], null, "Yasmin"), 1300); });
+    document.getElementById("rcNaoVo").addEventListener("click", () => { fecharPainel(); R.voNoite = R.dia; if (!R.online) ls("roca_negou_vo", 1); R.rostoPoco = 1; R.rostoQuem = "alma"; R.susto = 1.1; S.susto(); R.tremor = 1; efeito("Não era ela.", "#e2483d"); setTimeout(() => R && falar(["Quando eu disse não, o rosto dela... esticou. A boca foi até o peito.", "A vó de verdade nunca me chamaria pra mata. Ela me mandaria correr.", "Miau! Pra casa, Yasmin! E não olha pra trás!"], null, "Yasmin"), 1300); });
   }, VO_NPC.nome);
 }
 function atualizarFimVo(dt) { const f = R.fimVo; f.t += dt; R.eu.x = VO_TRILHA.x + .8 - f.t * 1.1; R.eu.y = VO_TRILHA.y + .25; R.eu.dir = -1; R.eu.anda = 1; R.eu.fase += dt * 8; if (f.t > 5.5 && !f.tela) { f.tela = true; telaFim("vo"); } }
@@ -3947,7 +4191,7 @@ function atualizarMedo(dt) {
   if (R.luaCheia && noite) d -= .6; if (climaHoje() === "tempestade" && noite) d += .8;
   d += (R.perto || 0) * 9; if (R.nev && R.nev.fase === "caca") d += 8; if (R.tin && R.tin.fase === "caca") d += 8; if (R.curu && R.curu.fase === "vem" && lg === "mata") d += 6;
   const g = R.gato; if (g && lg === "sitio" && !dentro && Math.hypot(g.x - R.eu.x, g.y - R.eu.y) < 1.6) d -= 3;
-  if (lg === "sitio" && !dentro && ((R.deco && R.deco.objs) || []).some(o => o.t === "lampiao" && Math.hypot(o.x - R.eu.x, o.y - R.eu.y) < 2.5)) d -= 2.5;
+  if (lg === "sitio" && !dentro && ((R.deco && R.deco.objs) || []).some(o => (o.t === "lampiao" || o.t === "fogueira") && Math.hypot(o.x - R.eu.x, o.y - R.eu.y) < 2.5)) d -= 2.5;
   if (R.susto > 1.02 && !R.sustoMedo) { R.sustoMedo = true; R.medo = (R.medo || 0) + 22; } if (!(R.susto > 0)) R.sustoMedo = false;
   R.medo = cl((R.medo || 0) + d * dt, 0, 100);
   if (R.sopaT > 0) R.sopaT -= dt; if (R.boloT > 0) R.boloT -= dt;
@@ -4067,6 +4311,7 @@ function trocarAndar() { R.andar = R.andar ? 0 : 1; R.int = { x: 7.9, y: 2.9, di
 function conversar(n) {
   const o = npcOnde(n);
   if (o.dorme) { falar([n.sono[Math.floor(Math.random() * n.sono.length)]], null, n.nome + " (dormindo)"); return; }
+  { const dv = !R.online && passoVo().i >= 1 && PISTAS_COISA.find(d => d.npc === n.id && !coisasVo().includes(d.k) && !ls("roca_dica_" + d.k)); if (dv) { ls("roca_dica_" + dv.k, 1); falar(dv.fala, () => { efeito("A história da vó: nova pista de onde ir", "#c8b8e8"); hud(); }, n.nome); return; } }
   R.conv = R.conv || {}; const i = R.conv[n.id] || 0;
   const m = n.missao && MISSOES[n.missao], st = m && (R.missoes || {})[n.missao];
   if (m && !st && i >= 1) { falar([...m.pede, `(Missão: ${m.titulo}. Recompensa: ${m.premio}.)`], () => { missaoOp(n.missao, "aceitar"); efeito("Missão nova: " + m.titulo, "#f2c94a"); tocarTom(660, .2, { tipo: "triangle", vol: .05 }); }, n.nome); return; }
@@ -4132,7 +4377,7 @@ function opcoesLoja(id) {
   if (id === "igreja") item("Água benta", "O Corpo-Seco foge em vez de te pegar (uma vez)", 20, !(R.aguaBenta > 0), () => { R.aguaBenta = 1; });
   return l;
 }
-const ROUPAS_LOJA = [["vermelho", "Vestido vermelho", "#a02a2a", "#7a1e1e", 30], ["azul", "Vestido azul-noite", "#2a3a6a", "#1e2a50", 30], ["musgo", "Vestido verde-musgo", "#4a5a2a", "#38461e", 30], ["amarela", "Jardineira amarela", "#c8a030", "#a07e20", 30], ["luto", "Vestido de luto", "#1e1a1e", "#141014", 45]];
+const ROUPAS_LOJA = [["vermelho", "Vestido vermelho", "#a02a2a", "#7a1e1e", 30], ["azul", "Vestido azul-noite", "#2a3a6a", "#1e2a50", 30], ["musgo", "Vestido verde-musgo", "#4a5a2a", "#38461e", 30], ["amarela", "Jardineira amarela", "#c8a030", "#a07e20", 30], ["luto", "Vestido de luto", "#1e1a1e", "#141014", 45], ["rosa", "Vestido rosa", "#d87a9a", "#b05a7a", 30], ["lilas", "Vestido lilás", "#8a6ab8", "#6a4a98", 30], ["jeans", "Macacão jeans", "#3a5a8a", "#2a4268", 35], ["chita", "Vestido de chita", "#d8502a", "#2a6a3a", 40], ["branco", "Vestido branco de renda", "#ece6d8", "#c8c0b0", 45], ["laranja", "Jardineira laranja", "#d8762a", "#a85a1e", 30], ["xadrez", "Vestido xadrez de festa junina", "#b83a3a", "#e8d8b0", 40]];
 const roupasCompradas = () => { try { return JSON.parse(ls("roca_roupas") || "[]"); } catch (e) { return []; } };
 function abrirLoja(n) {
   painelAberto = true; el.rcPainel.hidden = false; const id = n.casa, o = opcoesLoja(id), p = predio(id);
@@ -4827,9 +5072,9 @@ const ICS_MENU = { jogar: '<svg viewBox="0 0 16 16"><path d="M4 2h2v2h2v2h2v2h-2
 function telaTituloMenu(sub) {
   const m = el.rcTitMenu, b = (id, ic, txt, sm, cls = "") => `<button type="button" class="rc-tbt ${cls}" id="${id}"><i>${ICS_MENU[ic]}</i><span>${txt}${sm ? `<small>${sm}</small>` : ""}</span></button>`;
   if (sub === "online") m.innerHTML = `<h3>Jogar online (até 4)</h3>${b("rcCriar", "criar", "Criar sala", "Gera um código")}${b("rcEntrarSala", "entrar", "Entrar numa sala", "Digite o código")}${b("rcTVolta", "voltar", "Voltar")}`;
-  else m.innerHTML = `${b("rcSolo", "jogar", "Jogar", "Você e a Sombrinha", "dest")}${b("rcTOn", "online", "Jogar online", "Até 4 pessoas")}${b("rcHistBt", "hist", "A história", "Como tudo começou")}${window.ROCA_SOLO ? b("rcOpcoes", "opc", "Opções") : ""}${window.ROCA_SOLO ? (window.PC || (window.Android && Android.sair) ? b("rcTSair", "sair", "Sair do jogo") : "") : b("rcTSair", "voltar", "Voltar ao menu")}`;
+  else { const sv = infoSave(); m.innerHTML = `${sv ? b("rcContinuar", "jogar", "Continuar", `Dia ${sv.dia} · ${sv.vidas} ${sv.vidas === 1 ? "coração" : "corações"} · salvo ${sv.quando}`, "dest") : ""}${b("rcSolo", "jogar", sv ? "Novo jogo" : "Jogar", sv ? "Começa do dia 1 (o save só muda quando salvar)" : "Você e a Sombrinha", sv ? "" : "dest")}${b("rcTOn", "online", "Jogar online", "Até 4 pessoas")}${b("rcHistBt", "hist", "A história", "Como tudo começou")}${window.ROCA_SOLO ? b("rcOpcoes", "opc", "Opções") : ""}${window.ROCA_SOLO ? (window.PC || (window.Android && Android.sair) ? b("rcTSair", "sair", "Sair do jogo") : "") : b("rcTSair", "voltar", "Voltar ao menu")}`; }
   const on = (id, fn) => { const e = document.getElementById(id); if (e) e.addEventListener("click", () => { initAudio(); tocarTom(660, .06, { tipo: "square", vol: .04 }); fn(); }); };
-  on("rcSolo", () => iniciarJogo("solo")); on("rcTOn", () => telaTituloMenu("online")); on("rcTVolta", () => telaTituloMenu());
+  on("rcSolo", () => iniciarJogo("solo")); on("rcContinuar", carregarJogo); on("rcTOn", () => telaTituloMenu("online")); on("rcTVolta", () => telaTituloMenu());
   on("rcCriar", criarSala); on("rcEntrarSala", entrarSala); on("rcHistBt", () => { mostrarTitulo(false); historia(menuInicial); }); on("rcOpcoes", opcoes);
   on("rcTSair", () => { if (window.ROCA_SOLO) { try { if (window.PC) PC.sair(); else if (window.Android && Android.sair) Android.sair(); else window.close(); } catch (e) { window.close(); } return; } mostrarTitulo(false); sairRoca(); });
   const pc = matchMedia("(pointer: fine)").matches;
@@ -4977,7 +5222,7 @@ function entrarSala() {
   document.getElementById("rcIr").addEventListener("click", ir); inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") ir(); });
 }
 function iniciarJogo(modo, semTutorial) {
-  fecharPainel(); mostrarTitulo(false); novoJogo(); R.online = modo === "solo" ? null : modo;
+  fecharPainel(); mostrarTitulo(false); novoJogo(); R.online = modo === "solo" ? null : modo; if (modo === "solo") R.vidas = 3;
   R.slot = modo === "guest" ? (Net.meuSlot || 1) : 0; R.cor = R.slot; R.nome = meuNome() || "Jogador " + (R.slot + 1);
   if (modo === "guest") { R.eu.x = 14.2 + (R.slot - 1) * .7; R.eu.y = 12.9 + (R.slot === 2 ? .5 : 0); }
   if (modo === "host") { Net.jog.forEach(j => j.pronto = true); R.outros = [...Net.jog.values()].map(novoOutro); R.outros.forEach(o => enviarPara(o.nid, { t: "inicio", volta: !!semTutorial, slot: o.slot })); avisarLobby(); }
