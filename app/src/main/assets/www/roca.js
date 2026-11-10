@@ -319,7 +319,7 @@ function montarUI() {
   const d = document.createElement("div"); d.id = "roca"; d.hidden = true;
   d.innerHTML = `<canvas id="rocaCv"></canvas>
     <div class="rc-hud"><div class="rc-l"><b id="rcMoedas">0</b><span id="rcDia">Dia 1</span></div>
-      <div class="rc-barras"><i class="rc-b agua"><s id="rcAgua"></s></i><i class="rc-b oleo"><s id="rcOleo"></s></i><i class="rc-b folego"><s id="rcFolego"></s></i><i class="rc-b medo" title="Medo"><s id="rcMedo"></s></i></div>
+      <div class="rc-barras">${[["agua", "Água do regador", "rcAgua", "<em id=\"rcAguaN\"></em>"], ["oleo", "Óleo da lanterna", "rcOleo", ""], ["folego", "Fôlego", "rcFolego", ""], ["medo", "Medo", "rcMedo", ""]].map(([k, t, id, ex]) => `<span class="rc-st ${k}" id="rcSt_${k}" title="${t}"><i class="rc-sti">${pixIc(k)}</i><span class="rc-b"><s id="${id}"></s>${ex}</span></span>`).join("")}</div>
       <div class="rc-vidas" id="rcVidas"></div><div class="rc-sala" id="rcSala" hidden></div><div class="rc-itens" id="rcItens"></div><button class="rc-menu rc-moch rc-chatbt" id="rcChat" type="button" aria-label="Chat" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-7l-6 5v-5h-3a4 4 0 0 1-4-4z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="11" cy="12.5" r="1.6" fill="currentColor"/><circle cx="16" cy="12.5" r="1.6" fill="currentColor"/><circle cx="21" cy="12.5" r="1.6" fill="currentColor"/></svg><i id="rcChatN" hidden></i></button><button class="rc-menu rc-moch" id="rcMoch" type="button" aria-label="Mochila"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="8" width="18" height="20" rx="6" fill="#8a5a32" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="17" width="11" height="8" rx="2.5" fill="#6a4224" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 19.5h11" stroke="currentColor" stroke-width="1"/><circle cx="16" cy="21.5" r="1.1" fill="#f2c94a"/></svg></button><button class="rc-menu" id="rcMenu" type="button">Pausa</button></div>
     <div class="rc-obj" id="rcObj"></div><div class="rc-chatlog" id="rcChatLog"></div>
     <div class="rc-chatbar" id="rcChatBar" hidden><div class="rc-rapidas">${["Socorro!", "Vem aqui!", "Corre!", "Tô indo!", "Apaga a lanterna!", "Vou vender", "Cuidado!", "Valeu!"].map(t => `<button type="button" data-r="${t}">${t}</button>`).join("")}</div>
@@ -331,7 +331,7 @@ function montarUI() {
     <div class="rc-painel" id="rcPainel" hidden></div>
     <div class="rc-gire" id="rcGire" hidden><b>Vire o celular</b><span>Este modo é jogado com o celular deitado.</span></div>`;
   document.body.appendChild(d);
-  ["rcMoedas", "rcDia", "rcAgua", "rcOleo", "rcFolego", "rcMedo", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcSala", "rcMoch", "rcTitulo", "rcTitMenu", "rcTitRod"].forEach(i => el[i] = document.getElementById(i));
+  ["rcMoedas", "rcDia", "rcAguaN", "rcSt_agua", "rcSt_oleo", "rcSt_folego", "rcSt_medo", "rcAgua", "rcOleo", "rcFolego", "rcMedo", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcSala", "rcMoch", "rcTitulo", "rcTitMenu", "rcTitRod"].forEach(i => el[i] = document.getElementById(i));
   el.rcSala.addEventListener("click", () => { const c = Net.codigo; if (!c) return; try { navigator.clipboard.writeText(c).then(() => R && efeito("Código " + c + " copiado", "#f2c94c"), () => {}); } catch (e) {} });
   cv = document.getElementById("rocaCv"); c = cv.getContext("2d"); luzCv = document.createElement("canvas"); lc = luzCv.getContext("2d");
   const st = document.createElement("style"); st.textContent = `
@@ -341,8 +341,23 @@ function montarUI() {
   .rc-l{display:flex;flex-direction:column;line-height:1.05;color:#f4efe4;text-shadow:0 2px 6px #000}
   .rc-l b{font:800 22px "Big Shoulders Display",sans-serif;color:#f2c94a}.rc-l b::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:#f2c94a;box-shadow:inset -2px -2px 0 #b8902a;margin-right:6px}
   .rc-l span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
-  .rc-barras{display:flex;flex-direction:column;gap:4px}.rc-b{display:block;width:74px;height:6px;border-radius:3px;background:rgba(0,0,0,.45);overflow:hidden;position:relative}
-  .rc-b s{display:block;height:100%;width:50%;border-radius:3px}.rc-b.agua s{background:#5ab0e0}.rc-b.oleo s{background:#f2a33a}.rc-b.folego s{background:#9bd86b}.rc-b.medo s{background:#d83a5a;width:0}
+  .rc-barras{display:grid;grid-template-columns:auto auto;gap:4px 10px;padding:5px 8px 5px 5px;background:linear-gradient(rgba(255,255,255,.03),rgba(0,0,0,.12)),rgba(42,27,16,.8);border:3px solid #120a05;box-shadow:inset 0 0 0 2px rgba(232,200,138,.22),3px 3px 0 rgba(0,0,0,.55)}
+  .rc-st{display:flex;align-items:center;gap:5px}
+  .rc-sti{width:18px;height:18px;flex:none;display:grid;place-items:center;background:#120a05;box-shadow:inset 0 0 0 1px rgba(232,200,138,.28)}.rc-sti svg{width:14px;height:14px;display:block;overflow:visible}
+  .rc-b{position:relative;display:block;width:66px;height:10px;background:var(--tr);border:2px solid #120a05;box-shadow:0 0 0 1px rgba(232,200,138,.2);overflow:hidden;--n:10}
+  .rc-b::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 calc(100% / var(--n) - 2px),#120a05 calc(100% / var(--n) - 2px) calc(100% / var(--n)))}
+  .rc-b s{display:block;height:100%;width:50%;transition:width .45s linear;background:linear-gradient(180deg,var(--c1) 0 30%,var(--c2) 30% 70%,var(--c3) 70%)}
+  .rc-b em{position:absolute;right:3px;top:0;bottom:0;display:flex;align-items:center;z-index:1;font:700 9px/1 var(--f-mono,monospace);font-style:normal;color:#fff;text-shadow:1px 1px 0 #000;background:rgba(18,10,5,.7);padding:0 3px;margin:1px 0}
+  .rc-st.agua{--c1:#b4e2fa;--c2:#5ab0e0;--c3:#2f78b0;--tr:#0e2232}.rc-st.oleo{--c1:#ffdc98;--c2:#f2a33a;--c3:#b86a14;--tr:#2e1a06}.rc-st.folego{--c1:#d8f6b0;--c2:#9bd86b;--c3:#5a9a34;--tr:#14240a}.rc-st.medo{--c1:#ffa4b8;--c2:#d83a5a;--c3:#8e1a34;--tr:#2a0810}.rc-st.medo s{width:0;transition:width .2s linear}
+  .rc-st.baixo .rc-b,.rc-st.baixo .rc-sti{animation:rcAlerta .8s steps(2,jump-none) infinite}
+  @keyframes rcAlerta{0%{box-shadow:0 0 0 1px rgba(232,200,138,.2)}100%{box-shadow:0 0 0 2px #e2483d,0 0 6px rgba(226,72,61,.8);background-color:#4a0c0c}}
+  .rc-st.ativo .rc-sti svg{animation:rcChama .3s steps(2,jump-none) infinite alternate}@keyframes rcChama{to{transform:translateY(-1px) scale(1.12)}}
+  .rc-st.medo.bate .rc-sti svg{animation:rcBate var(--bt,1.2s) infinite}@keyframes rcBate{0%,45%,100%{transform:scale(1)}12%{transform:scale(1.3)}24%{transform:scale(1.05)}34%{transform:scale(1.2)}}
+  .rc-st.medo.alto .rc-b{box-shadow:0 0 0 1px #d83a5a,0 0 8px rgba(216,58,90,.75)}.rc-st.medo.alto .rc-sti{background:#3a0814}
+  .rc-vidas{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;max-width:230px}
+  .rc-vida{display:flex;align-items:center;gap:3px;background:rgba(42,27,16,.8);border:2px solid #120a05;box-shadow:inset 0 0 0 1px rgba(232,200,138,.2),2px 2px 0 rgba(0,0,0,.5);padding:2px 5px;color:#f4efe4;font-size:10px;text-shadow:1px 1px 0 #000;white-space:nowrap}
+  .rc-vida svg{width:13px;height:13px;display:block}.rc-vida i{width:8px;height:8px;flex:none;border:1px solid #000}.rc-vida.caido{animation:rcAlerta .8s steps(2,jump-none) infinite}.rc-vida.sem{opacity:.55}
+  .rc-vida .rc-prot{display:flex;gap:2px;margin-left:3px;padding-left:5px;border-left:1px solid rgba(232,200,138,.25)}
   .rc-itens{display:flex;gap:6px;flex-wrap:wrap;color:#e8e2d4;font-size:11px;text-shadow:0 1px 4px #000}.rc-itens span{background:rgba(0,0,0,.35);padding:2px 7px;border-radius:8px}
   .rc-menu{margin-left:auto;pointer-events:auto;background:rgba(10,12,16,.6);border:1px solid rgba(255,255,255,.15);color:#f4efe4;border-radius:12px;padding:8px 14px;font:600 12px var(--f-mono,monospace)}
   .rc-joy{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:18px;width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12)}
@@ -356,7 +371,7 @@ function montarUI() {
   .rc-bt svg{width:34px;height:34px;display:block;margin:auto}.rc-bt.luz.on .chama{filter:drop-shadow(0 0 4px #f2c94a)}.rc-bt.luz:not(.on) .chama{fill:rgba(255,255,255,.25)}
   .rc-moch{margin-left:auto;padding:4px 8px}.rc-moch svg{width:28px;height:28px;display:block}.rc-moch + .rc-menu{margin-left:0}
   .rc-obj{position:absolute;left:max(12px,env(safe-area-inset-left));top:52px;max-width:38vw;color:#f2c94a;font:600 10.5px/1.3 var(--f-mono,monospace);text-shadow:0 1px 4px #000;pointer-events:none;letter-spacing:.02em}
-  .rc-codigo.peq{font-size:38px;padding:0;margin:4px 0 6px}.rc-lobby{display:flex;flex-direction:column;gap:5px;margin:10px 0}.rc-lob-j{display:flex;align-items:center;gap:10px;background:#0006;border:1px solid #ffffff22;padding:7px 10px;font-size:15px}.rc-lob-j.eu{border-color:#f2c94c88}.rc-lob-j i{width:14px;height:14px;flex:none;border:1px solid #0008}.rc-lob-j span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rc-lob-j small{opacity:.6;font-size:11px}.rc-lob-j b{font-size:12px;opacity:.75;font-weight:600}.rc-lob-j b.ok{color:#9bd86b;opacity:1}.rc-lob-j.vaga{opacity:.4;border-style:dashed}.rc-lob-nome{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:8px}.rc-lob-nome .rc-input{flex:1;font-size:16px;padding:6px 8px;margin:0;letter-spacing:0;text-transform:none;text-align:left}#rcComecar:disabled{opacity:.45;filter:grayscale(.7);cursor:not-allowed}#rcPronto.ok{background:#3a7a2a;border-color:#9bd86b}.rc-sala{color:#f4efe4;font-size:11px;text-shadow:0 1px 4px #000;background:#0008;border:1px solid #ffffff30;padding:2px 6px;align-self:flex-start;pointer-events:auto;cursor:pointer;letter-spacing:.5px}.rc-sala b{color:#f2c94c;font-size:13px;letter-spacing:2px}.rc-vidas{display:flex;flex-flow:row wrap;column-gap:9px;row-gap:1px;max-width:170px;color:#f4efe4;font-size:10px;text-shadow:0 1px 4px #000}.rc-vidas b{color:#e2483d;font-size:13px;letter-spacing:1px}
+  .rc-codigo.peq{font-size:38px;padding:0;margin:4px 0 6px}.rc-lobby{display:flex;flex-direction:column;gap:5px;margin:10px 0}.rc-lob-j{display:flex;align-items:center;gap:10px;background:#0006;border:1px solid #ffffff22;padding:7px 10px;font-size:15px}.rc-lob-j.eu{border-color:#f2c94c88}.rc-lob-j i{width:14px;height:14px;flex:none;border:1px solid #0008}.rc-lob-j span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rc-lob-j small{opacity:.6;font-size:11px}.rc-lob-j b{font-size:12px;opacity:.75;font-weight:600}.rc-lob-j b.ok{color:#9bd86b;opacity:1}.rc-lob-j.vaga{opacity:.4;border-style:dashed}.rc-lob-nome{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:8px}.rc-lob-nome .rc-input{flex:1;font-size:16px;padding:6px 8px;margin:0;letter-spacing:0;text-transform:none;text-align:left}#rcComecar:disabled{opacity:.45;filter:grayscale(.7);cursor:not-allowed}#rcPronto.ok{background:#3a7a2a;border-color:#9bd86b}.rc-sala{color:#f4efe4;font-size:11px;text-shadow:0 1px 4px #000;background:#0008;border:1px solid #ffffff30;padding:2px 6px;align-self:flex-start;pointer-events:auto;cursor:pointer;letter-spacing:.5px}.rc-sala b{color:#f2c94c;font-size:13px;letter-spacing:2px}
   .rc-dia-pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.rc-bicho{display:flex;gap:10px;background:#e8dcc0;color:#2a1e12;border-radius:6px;padding:8px;box-shadow:0 2px 0 rgba(0,0,0,.3)}
   .rc-bicho canvas{width:84px;height:100px;flex:none;background:#111;border:4px solid #f4efe4;border-bottom-width:12px;transform:rotate(-2deg);filter:sepia(.55) contrast(1.15) grayscale(.2)}
   .rc-bicho b{display:block;font:800 17px "Big Shoulders Display",sans-serif;color:#5a1a10}.rc-bicho span{font:13px/1.35 var(--f-body,serif)}.rc-bicho i{display:block;font:italic 12px/1.3 var(--f-body,serif);color:#6a5a40;margin-top:4px}
@@ -416,7 +431,6 @@ function montarUI() {
   .rc-joy{border-radius:0;background:rgba(42,27,16,.35);border:3px solid rgba(15,9,5,.7);box-shadow:inset 0 0 0 2px rgba(232,200,138,.22)}
   .rc-joy::before,.rc-joy::after{content:"";position:absolute;background:rgba(232,200,138,.18)}.rc-joy::before{left:50%;top:12px;bottom:12px;width:3px;margin-left:-1.5px}.rc-joy::after{top:50%;left:12px;right:12px;height:3px;margin-top:-1.5px}
   .rc-joy i{border-radius:0;background:rgba(246,234,208,.35);border:3px solid rgba(15,9,5,.75);box-shadow:inset 0 -4px 0 rgba(0,0,0,.25);z-index:1}
-  .rc-b{border-radius:0;height:8px;border:2px solid rgba(0,0,0,.7);box-sizing:content-box}.rc-b s{border-radius:0}
   .rc-itens span{border-radius:0;border:1px solid rgba(0,0,0,.5)}
   .rc-l b::before{border-radius:0;transform:rotate(45deg) scale(.8)}
   .rc-obj{font-size:12px;background:rgba(20,12,6,.55);padding:3px 7px;border-left:3px solid var(--ouro)}
@@ -873,10 +887,30 @@ function morrer(quem, porque, dica) { if (R.morto || R.venceu || R.caido) return
   } R.morto = { quem, porque, dica, t: 0 }; R.correndo = false; S.susto(); try { vibrar(500); } catch (e) {} setTimeout(() => telaFim("morreu"), 2300); }
 
 /* ---------- HUD ---------- */
+// ícones em pixel-art (cada letra é uma cor, "." é vazio)
+const PIX = {
+  agua: [["....a....", "...aaa...", "...aaa...", "..aaaaa..", ".abaaaaa.", ".abaaaaa.", ".aaaaaad.", ".aaaaadd.", "..aaddd..", "...ddd..."], { a: "#5ab0e0", b: "#e0f4ff", d: "#2f78b0" }],
+  oleo: [["....r....", "...rr....", "...ryr...", "..rryr...", "..ryyyr..", ".rryyyrr.", ".ryywyyr.", ".ryywwyr.", "..ryyyr..", "...rrr..."], { r: "#d8641e", y: "#f2c94a", w: "#fff6d0" }],
+  folego: [[".....ggg.", "....ggg..", "...ggg...", "..ggl....", ".gggggggg", "....lgg..", "...ggg...", "..ggg....", ".gg......", "g........"], { g: "#9bd86b", l: "#e4ffc8" }],
+  medo: [["..wwwww..", ".wwwwwww.", "wwwkkkwww", "wwkkpkkww", "wwkpphkww", "wwkkpkkww", "wwwkkkwww", ".wwwwwww.", "..wwwww.."], { w: "#f4efe4", k: "#d83a5a", p: "#1a0608", h: "#fff" }],
+  coracao: [[".rr...rr.", "rllr.rrrr", "rlrrrrrrr", "rrrrrrrrr", ".rrrrrrd.", "..rrrdd..", "...rdd...", "....d...."], { r: "#e2483d", l: "#ffb4a8", d: "#9a2018" }],
+  coracaoV: [[".rr...rr.", "r..r.r..r", "r...r...r", "r.......r", ".r.....r.", "..r...r..", "...r.r...", "....r...."], { r: "#8a7a6a" }],
+  garrafada: [["...cc...", "...nn...", "..gggg..", ".gggggg.", ".glgggg.", ".glgggg.", ".gggggg.", "..gggg.."], { c: "#8a5a32", n: "#b8d8a0", g: "#4a9a3a", l: "#b8f0a0" }],
+  benta: [["...cc...", "...nn...", "..bbbb..", ".bbwbbb.", ".bwwwbb.", ".bbwbbb.", ".bbwbbb.", "..bbbb.."], { c: "#8a5a32", n: "#c8e0f0", b: "#3a7ac0", w: "#fff" }],
+  terco: [["...yy...", "...yy...", ".yyyyyy.", ".yyyyyy.", "...yy...", "...yy...", "...yy...", "..o..o.."], { y: "#f2c94a", o: "#a07a3a" }]
+};
+const PIX_C = {};
+function pixIc(k) { if (PIX_C[k]) return PIX_C[k]; const [l, pal] = PIX[k], h = l.length, w = Math.max(...l.map(x => x.length)); let r = ""; l.forEach((ln, y) => [...ln].forEach((ch, x) => { if (pal[ch]) r += `<rect x="${x}" y="${y}" width="1.05" height="1.05" fill="${pal[ch]}"/>`; })); return PIX_C[k] = `<svg viewBox="-.5 -.5 ${w + 1} ${h + 1}" shape-rendering="crispEdges" aria-hidden="true"><g style="filter:drop-shadow(.6px .6px 0 #000)">${r}</g></svg>`; }
+function barras() {
+  const am = R.aguaMax || 5, b = el.rcAgua.parentNode; if (b.style.getPropertyValue("--n") !== String(am)) b.style.setProperty("--n", am);
+  el.rcAgua.style.width = (R.agua / am * 100) + "%"; el.rcAguaN.textContent = `${R.agua}/${am}`; el.rcOleo.style.width = R.oleo + "%"; el.rcFolego.style.width = R.folego + "%";
+  el.rcSt_agua.classList.toggle("baixo", R.agua <= 0); el.rcSt_oleo.classList.toggle("baixo", R.oleo < 20); el.rcSt_oleo.classList.toggle("ativo", !!R.lanterna);
+  el.rcSt_folego.classList.toggle("baixo", R.folego < 25); el.rcSt_folego.classList.toggle("ativo", !!R.correndo);
+}
 function hud() {
   if (!R) return;
   el.rcMoedas.textContent = R.moedas; el.rcDia.textContent = `Dia ${R.dia} · ${ehNoite() ? (R.luaCheia ? "lua cheia" : "noite") : "dia"} · ${CLIMAS[climaHoje()][0].toLowerCase()}`;
-  el.rcAgua.style.width = (R.agua / R.aguaMax * 100) + "%"; el.rcOleo.style.width = R.oleo + "%"; el.rcFolego.style.width = R.folego + "%";
+  barras();
   const it = []; const col = Object.values(R.colheita).reduce((a, b) => a + b, 0), pe = Object.values(R.peixes).reduce((a, b) => a + b, 0);
   if (col) it.push(`${col} colheita`); if (pe) it.push(`${pe} peixe`); if (R.inv.graveto || R.inv.folha) it.push(`${R.inv.graveto} graveto · ${R.inv.folha} folha`); if (R.velaCom) it.push("vela acesa"); if (R.pecas) it.push(`peças ${R.pecas}/3`);
   el.rcItens.innerHTML = it.map(x => `<span>${x}</span>`).join("");
@@ -884,11 +918,14 @@ function hud() {
   el.rcLuz.classList.toggle("on", R.lanterna); el.rcCorre.classList.toggle("on", R.correndo);
   const comAmigo = !!(R.online && outros().length && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
   el.rcObj.textContent = R.menu ? "" : "Objetivo: " + objetivo();
-  el.rcObj.style.marginTop = R.online && outros().length >= 2 ? "24px" : "10px"; // espaço pra barra do medo
-  const cor = n => n > 0 ? "♥" : "♡";
+  el.rcObj.style.marginTop = "18px"; // espaço pro painel das barras
   const sala = R.online && Net.codigo && !R.menu ? `SALA <b>${Net.codigo}</b> · ${outros().length + 1}/${MAXJ}${R.online === "host" && !outros().length ? " · esperando amigos" : ""}` : "";
   if (el.rcSala.dataset.k !== sala) { el.rcSala.dataset.k = sala; el.rcSala.innerHTML = sala; el.rcSala.hidden = !sala; }
-  el.rcVidas.innerHTML = R.online && outros().length ? `<span>Você <b>${cor(R.vidas)}</b></span>` + outros().map(o => `<span><i style="color:${CORES_J[o.slot] || "#ccc"};font-style:normal">■</i> ${escH(o.nome || "Amigo")} <b>${cor(o.vidas)}</b></span>`).join("") : "";
+  const cor = q => { const n = q.vidas || 0; let h = ""; for (let i = 0; i < Math.max(1, n); i++) h += pixIc(i < n ? "coracao" : "coracaoV"); return h; };
+  const prot = [R.garrafada > 0 && ["garrafada", "Garrafada: se um bicho te pegar, você volta"], R.aguaBenta > 0 && ["benta", "Água benta: o Corpo-Seco foge"], R.terco && ["terco", "Terço do vô: o Curupira recua"]].filter(Boolean);
+  const pr = prot.length ? `<span class="rc-prot">${prot.map(([k, t]) => `<span title="${t}">${pixIc(k)}</span>`).join("")}</span>` : "";
+  const vs = R.menu ? "" : R.online && outros().length ? `<span class="rc-vida${R.caido ? " caido" : ""}">Você ${cor(R)}${pr}</span>` + outros().map(o => `<span class="rc-vida${o.caido ? " caido" : ""}${o.vidas > 0 ? "" : " sem"}"><i style="background:${CORES_J[o.slot] || "#ccc"}"></i>${escH(o.nome || "Amigo")} ${cor(o)}</span>`).join("") : `<span class="rc-vida${R.caido ? " caido" : ""}" title="Vida">${cor(R)}${pr}</span>`;
+  if (el.rcVidas.dataset.k !== vs) { el.rcVidas.dataset.k = vs; el.rcVidas.innerHTML = vs; }
 }
 function objetivo() {
   const np = Object.keys(pistas()).length, pp = np < NPISTAS ? ` · pistas ${np}/${NPISTAS} na vila` : "";
@@ -3917,9 +3954,9 @@ function atualizarMedo(dt) {
   if (R.medo > 55) { R.medoBat = (R.medoBat || 0) - dt; if (R.medoBat <= 0) { R.medoBat = 1.25 - R.medo / 100 * .75; const k = R.medo / 100; tocarTom(55, .12, { vol: .1 * k, ate: 40 }); tocarTom(50, .1, { vol: .07 * k, ate: 35, quando: .14 }); } }
   if (R.medo > 75 && Math.random() < dt * .6) R.tremor = Math.max(R.tremor || 0, .12);
   if (R.medo > 80 && Math.random() < dt * .22) alucinar();
-  if (R.medo > 62 && !ls("roca_medo_aviso") && !R.msg && !painelAberto) { ls("roca_medo_aviso", 1); falar(["Miau... Yasmin, seu coração está disparado. Dá pra ouvir daqui.", "Medo demais faz a gente ver coisa que não existe. Procura luz, fica perto de mim, entra em casa... ou toma um café quentinho.", "Aquele coração vermelho do lado das barras: quando ele enche, o escuro começa a mentir pra você."], null, "Sombrinha"); }
+  if (R.medo > 62 && !ls("roca_medo_aviso") && !R.msg && !painelAberto) { ls("roca_medo_aviso", 1); falar(["Miau... Yasmin, seu coração está disparado. Dá pra ouvir daqui.", "Medo demais faz a gente ver coisa que não existe. Procura luz, fica perto de mim, entra em casa... ou toma um café quentinho.", "Aquele olhinho arregalado do lado das barras: quando a barra vermelha dele enche, o escuro começa a mentir pra você."], null, "Sombrinha"); }
   if (R.alucina) { R.alucina.t += dt; if (R.alucina.t > 1.6) R.alucina = null; }
-  if (el.rcMedo) el.rcMedo.style.width = R.medo + "%";
+  if (el.rcMedo) { el.rcMedo.style.width = R.medo + "%"; const bx = el.rcSt_medo, bt = R.medo > 80 ? .4 : R.medo > 55 ? .6 : R.medo > 30 ? .9 : 0; if (bx.dataset.bt !== String(bt)) { bx.dataset.bt = bt; bx.classList.toggle("bate", bt > 0); bx.classList.toggle("alto", R.medo > 55); if (bt) bx.style.setProperty("--bt", bt + "s"); } }
 }
 function alucinar() {
   const tipo = Math.floor(Math.random() * 4);
