@@ -1060,9 +1060,9 @@ function f3Iniciar() {
 const f3Mat = (o) => new THREE.MeshLambertMaterial(o);
 function f3Limpar() { // tira o cenário anterior da memória
   if (F3.grupo) { F3.grupo.traverse(o => { if (o.geometry && o.geometry !== F3.plano) o.geometry.dispose(); if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.map && !Object.values(F3.tex).includes(m.map)) m.map.dispose(); m.dispose(); }); } }); F3.cena.remove(F3.grupo); }
-  F3.it.forEach(e => f3Soltar(e)); F3.it.clear(); F3.casas = new Map(); F3.atores = []; F3.grupo = new THREE.Group(); F3.cena.add(F3.grupo); F3.chao = null; F3.chaoK = ""; F3.sala = null;
+  F3.it.forEach(e => f3Soltar(e)); F3.it.clear(); if (F3.arvM) { F3.arvM.tr.count = F3.arvM.bo.count = 0; } if (F3.somb) F3.somb.count = 0; F3.casas = new Map(); F3.atores = []; F3.grupo = new THREE.Group(); F3.cena.add(F3.grupo); F3.chao = null; F3.chaoK = ""; F3.sala = null;
 }
-function f3Soltar(e) { if (e.mesh) { F3.grupo.remove(e.mesh); e.mesh.material.map && e.mesh.material.map.dispose(); e.mesh.material.dispose(); e.mesh = null; } }
+function f3Soltar(e) { if (e.mesh) { F3.grupo.remove(e.mesh); if (e.mesh.geometry !== F3.plano) e.mesh.geometry.dispose(); e.mesh.material.map && !e.mesh.userData.textoFixo && e.mesh.material.map.dispose(); e.mesh.material.dispose(); e.mesh = null; } }
 // geometria feita na mão: quadriláteros com textura
 function Geo() { return { p: [], n: [], u: [], idx: [], grupos: [] }; }
 function geoQuad(G, a, b, c2, d, nrm, ua, ub, uc, ud, mat = 0) { const i = G.p.length / 3; G.p.push(...a, ...b, ...c2, ...d); for (let k = 0; k < 4; k++) G.n.push(...nrm); G.u.push(...ua, ...ub, ...uc, ...ud); G.idx.push({ m: mat, v: [i, i + 1, i + 2, i, i + 2, i + 3] }); }
@@ -1127,33 +1127,48 @@ function f3Caixa(d, x0, x1, y) { // a casa (caixa de colisão) que fica atrás d
 }
 function f3PintarItem(e, d, tm, S1) {
   // 1) onde ele fica: anota os x que a função de desenho usa (sem desenhar nada)
-  FP_REG = [1e9, -1e9]; FP_SEM_SOMBRA = true; FP_SEM_EU = true; const cs = { x: cam.x, y: cam.y };
+  FP_REG = [1e9, -1e9, 1e9, -1e9]; FP_SEM_SOMBRA = true; FP_SEM_EU = true; const cs = { x: cam.x, y: cam.y };
   try {
     try { pintarEm(F3.dg, 1, 1, 8, -5000, -5000, 0, 0, e.fn); } catch (er) {}
-    const [ra, rb] = FP_REG; FP_REG = null; if (ra > rb) { e.vazio = true; return; }
+    const [ra, rb, rya, ryb] = FP_REG; FP_REG = null; if (ra > rb) { e.vazio = true; return; }
     // 2) recorte aproximado, em baixa resolução
     const S0 = 8, ax0 = ra - 3.2, ax1 = Math.min(rb + 3.2, ra + 70), ay0 = e.y - 9.5, w0 = Math.ceil((ax1 - ax0) * S0), h0 = Math.ceil(12 * S0);
     const c0 = F3.c0 || (F3.c0 = document.createElement("canvas").getContext("2d", { willReadFrequently: true })); if (c0.canvas.width < w0 || c0.canvas.height < h0) { c0.canvas.width = Math.max(c0.canvas.width, w0); c0.canvas.height = Math.max(c0.canvas.height, h0); } c0.clearRect(0, 0, w0, h0);
     pintarEm(c0, w0, h0, S0, ax0, ay0, 0, 0, e.fn);
     const im = c0.getImageData(0, 0, w0, h0).data; let mx0 = 1e9, mx1 = -1, my0 = 1e9, my1 = -1;
-    for (let y = 0; y < h0; y++) for (let x = 0; x < w0; x++) if (im[(y * w0 + x) * 4 + 3] > 10) { if (x < mx0) mx0 = x; if (x > mx1) mx1 = x; if (y < my0) my0 = y; if (y > my1) my1 = y; }
+    for (let y = 0; y < h0; y++) for (let x = 0; x < w0; x++) if (im[(y * w0 + x) * 4 + 3] > 90) { if (x < mx0) mx0 = x; if (x > mx1) mx1 = x; if (y < my0) my0 = y; if (y > my1) my1 = y; }
     if (mx1 < 0) { e.vazio = true; return; }
     { const eu = fpEu(); if (Math.abs(e.y - eu.y) < .02 && Math.abs((ra + rb) / 2 - eu.x) < .8) { e.vazio = true; return; } }
     if (d.parede) { const tx = Math.floor((ra + rb) / 2), ty = Math.floor(e.y); if (d.parede(tx, ty) && d.parede(tx - 1, ty) && d.parede(tx + 1, ty) && d.parede(tx, ty - 1) && d.parede(tx, ty + 1)) { e.vazio = true; return; } } // árvore no meio da mata fechada: ninguém vê
     const bx0 = ax0 + mx0 / S0 - .2, bx1 = ax0 + (mx1 + 1) / S0 + .2, bt = ay0 + my0 / S0 - .2, bb = ay0 + (my1 + 1) / S0 + .12, bw = bx1 - bx0, bh = bb - bt;
+    const ehArv = /desenharArvore\(a, tm\)|arvoreMata\(a, tm\)/.test(e.sig), ator = e.anda || /desenhar(Npc|Voce|Saci|Cuca|Seco|Mula|Aranha|Vulto|Curupira|Tinhoso|BichoNevoa|Espantalho|Galinha|Gato|Cachorro|Vela|VoTrilha)\b/.test(e.sig);
+    if (ehArv && e.tipo == null) { // árvore em 3D: tronco e copa de bolas, nas cores do próprio desenho
+      const ax = (ra + rb) / 2, r = Math.max(.3, (e.y - bt - .15) / 2.45), cor = (ox, oy) => { const px = Math.round((ax + ox * r - ax0) * S0), py = Math.round((e.y + oy * r - ay0) * S0); if (px < 0 || py < 0 || px >= w0 || py >= h0) return null; const q = (py * w0 + px) * 4; return im[q + 3] > 150 ? new THREE.Color(`rgb(${im[q]},${im[q + 1]},${im[q + 2]})`) : null; };
+      const c0 = cor(0, -1.5) || new THREE.Color("#3a5a2a"), cores = [c0, cor(-.45, -1.25) || c0, cor(.45, -1.3) || c0, cor(0, -1.95) || c0]; f3Soltar(e);
+      e.tipo = "arv"; e.vazio = false; e.x0 = bx0; e.x1 = bx1; e.t = bt; e.b = bb; e.arv = { x: ax, y: e.y, r, cores, tronco: cor(0, -.45) || new THREE.Color("#3a2a1a"), s: Math.abs((Math.sin(ax * 12.9898 + e.y * 78.233) * 43758.5453) % 1) }; F3.arvSujo = true; return; }
+    if (e.tipo === "arv") return;
+    if ((e.tipo == null || e.tipo === "cercaZ") && ((ryb - rya > 1.2 && rb - ra < .6) || (ryb - rya > .3 && rb - ra < .05)) && !ator) { // cerca (ou trilho) que corre de norte a sul
+      let r = 0, gg = 0, b = 0, n = 0; for (let q = 0; q < im.length; q += 16) if (im[q + 3] > 200) { r += im[q]; gg += im[q + 1]; b += im[q + 2]; n++; } const cor = n ? new THREE.Color(`rgb(${r / n | 0},${gg / n | 0},${b / n | 0})`) : new THREE.Color("#c8c0b0");
+      const len = ryb - rya + .3, alt = cl(bh - (ryb - rya) - .1, .35, 1.4), x = (ra + rb) / 2; f3Soltar(e); e.tipo = "cercaZ"; e.vazio = false; e.x0 = x - .1; e.x1 = x + .1; e.base = 0;
+      if (!F3.tex.cerca) F3.tex.cerca = f3Tex(128, 128, (g2, w, h) => { g2.clearRect(0, 0, w, h); g2.fillStyle = "#ffffff"; g2.fillRect(0, h * .3, w, h * .1); g2.fillRect(0, h * .62, w, h * .1); for (const px of [14, 78]) { g2.beginPath(); g2.moveTo(px, h); g2.lineTo(px, h * .12); g2.lineTo(px + 18, 0); g2.lineTo(px + 36, h * .12); g2.lineTo(px + 36, h); g2.fill(); } g2.fillStyle = "rgba(0,0,0,.2)"; for (const px of [44, 108]) g2.fillRect(px, h * .12, 6, h); }, true);
+      const G = Geo(), z0 = rya - .15, z1 = ryb + .15, U = len / .55; geoQuad(G, [x, 0, z1], [x, 0, z0], [x, alt, z0], [x, alt, z1], [1, 0, 0], [0, 0], [U, 0], [U, 1], [0, 1]);
+      e.mesh = new THREE.Mesh(geoFim(G), f3Mat({ map: F3.tex.cerca, color: cor, alphaTest: .5, side: THREE.DoubleSide })); e.mesh.userData.textoFixo = 1; F3.grupo.add(e.mesh); return; }
+    if (e.tipo === "cercaZ") return;
+    if (e.anda && e.tipo === "pilha") { f3Soltar(e); e.tipo = "bb"; }
     // 3) a figura em alta resolução
     const s1 = Math.min(S1, 1900 / bw, 1900 / bh), cw = Math.max(4, Math.ceil(bw * s1)), chh = Math.max(4, Math.ceil(bh * s1));
     let cv = e.cv; if (!cv) cv = e.cv = document.createElement("canvas"); const novoTam = cv.width !== cw || cv.height !== chh; if (novoTam) { cv.width = cw; cv.height = chh; }
     const g = cv.getContext("2d", { willReadFrequently: true }); g.clearRect(0, 0, cw, chh); pintarEm(g, cw, chh, s1, bx0, bt, 0, 0, e.fn);
     e.vazio = false; e.x0 = bx0; e.x1 = bx1; e.t = bt; e.b = bb;
     // 4) que tipo de coisa é
-    if (e.tipo == null) { const ci = f3Caixa(d, bx0, bx1, e.y); e.tipo = ci >= 0 ? "casa" : (bb - e.y) > bh * .55 && (e.y - bt) < .7 ? "chao" : bw >= 4.6 ? "painel" : "bb"; e.ci = ci; }
-    if (e.mesh && novoTam) { e.mesh.material.map.dispose(); e.mesh.material.map = f3TexItem(cv); e.mesh.material.needsUpdate = true; } else if (e.mesh) e.mesh.material.map.needsUpdate = true;
-    if (!e.mesh) { e.mesh = new THREE.Mesh(F3.plano, f3Mat({ map: f3TexItem(cv), alphaTest: .42, side: e.tipo === "bb" ? THREE.FrontSide : THREE.DoubleSide })); F3.grupo.add(e.mesh); }
+    if (e.tipo == null) { const ci = f3Caixa(d, bx0, bx1, e.y); e.tipo = ci >= 0 ? "casa" : (bb - e.y) > bh * .55 && (e.y - bt) < .7 ? "chao" : ator ? "bb" : "pilha"; e.ci = ci; }
+    if (e.mesh && novoTam) { e.mesh.material.map.dispose(); e.mesh.material.map = f3TexItem(cv); e.mesh.material.needsUpdate = true; if (e.tipo === "pilha") { e.mesh.geometry.dispose(); e.mesh.geometry = f3Extrudar(g, cw, chh, bw, bh); } } else if (e.mesh) e.mesh.material.map.needsUpdate = true;
+    if (!e.mesh) { const mat = f3Mat({ map: f3TexItem(cv), alphaTest: .42, side: e.tipo === "bb" ? THREE.FrontSide : THREE.DoubleSide });
+      e.mesh = new THREE.Mesh(e.tipo === "pilha" ? f3Extrudar(g, cw, chh, bw, bh) : F3.plano, mat); F3.grupo.add(e.mesh); }
     const m = e.mesh;
     if (e.tipo === "chao") { m.rotation.set(-PI / 2, 0, 0); m.scale.set(bw, bh, 1); m.position.set((bx0 + bx1) / 2, .012 + (F3.n % 7) * .0006, (bt + bb) / 2); m.renderOrder = 1; }
     else if (e.tipo === "casa") { const b = d.caixas[e.ci]; m.rotation.set(0, 0, 0); m.scale.set(bw, bh, 1); m.position.set((bx0 + bx1) / 2, bh / 2, Math.max(b[3], e.y - .2) + .03); f3Casa(d, e, g, cw, chh, s1); }
-    else { m.rotation.set(0, 0, 0); m.scale.set(bw, bh, 1); m.position.set((bx0 + bx1) / 2, bh / 2, e.y); }
+    else { const base = Math.min(0, e.y - bb); m.rotation.set(0, 0, 0); m.scale.set(bw, bh, 1); m.position.set((bx0 + bx1) / 2, base + bh / 2, e.y); e.base = base; }
   } catch (er) { console.log("FP item", er && er.message); e.vazio = true; }
   finally { FP_REG = null; FP_SEM_SOMBRA = false; FP_SEM_EU = false; cam.x = cs.x; cam.y = cs.y; }
 }
@@ -1186,7 +1201,7 @@ function f3Itens(d, tm) {
   const falta = [];
   for (const [y, fn] of L) { const sig = f3Assin(fn), k0 = sig + "|" + y.toFixed(2), q = cont[k0] = (cont[k0] || 0) + 1, key = k0 + "#" + q, e = F3.it.get(key); if (e) { e.y = y; e.fn = fn; e.n = n; } else falta.push([y, fn, sig, key]); }
   for (const [y, fn, sig, key] of falta) { let e = null, bd = .8; for (const o of porSig.get(sig) || []) { if (o.n !== n - 1) continue; const dd = Math.abs(o.y - y); if (dd < bd) { bd = dd; e = o; } } // a mesma coisa que andou
-    if (e) { F3.it.delete(e.key); e.key = key; e.sujo = 2; } else { e = { key, sig, sujo: 1 }; novos.push(e); } F3.it.set(key, e); e.y = y; e.fn = fn; e.n = n; }
+    if (e) { F3.it.delete(e.key); e.key = key; e.sujo = 2; e.anda = true; } else { e = { key, sig, sujo: 1 }; novos.push(e); } F3.it.set(key, e); e.y = y; e.fn = fn; e.n = n; }
   F3.it.forEach((e, k) => { if (e.n < n - 2) { f3Soltar(e); F3.it.delete(k); } });
   return novos;
 }
@@ -1194,7 +1209,7 @@ function f3AtualizarItens(d, tm) {
   const novos = f3Itens(d, tm), e0 = fpEu(), S1 = modoLeve() ? 30 : 42, t0 = performance.now();
   // primeiro o que se mexe, depois o que é novo (do mais perto pro mais longe), e um pouco de "refresco" pras animações
   F3.it.forEach(e => { if (e.sujo === 2 && e.n === F3.n) { f3PintarItem(e, d, tm, S1); e.sujo = 0; } });
-  const fila = [], perto = [], lim2 = F3.primeiro ? 70 : 11; F3.it.forEach(e => { if (e.n !== F3.n) return; if (e.sujo) fila.push(e); else if (!e.vazio && e.tipo !== "casa" && e.x0 != null && Math.abs(e.y - e0.y) < 9 && Math.abs((e.x0 + e.x1) / 2 - e0.x) < 9) perto.push(e); });
+  const fila = [], perto = [], lim2 = F3.primeiro ? 70 : 11; F3.it.forEach(e => { if (e.n !== F3.n) return; if (e.sujo) fila.push(e); else if (!e.vazio && e.tipo !== "casa" && e.tipo !== "arv" && e.tipo !== "cercaZ" && e.x0 != null && Math.abs(e.y - e0.y) < 9 && Math.abs((e.x0 + e.x1) / 2 - e0.x) < 9) perto.push(e); });
   const dd = e => Math.abs(e.y - e0.y) + (e.x0 != null ? Math.abs((e.x0 + e.x1) / 2 - e0.x) : 6); fila.sort((a, b) => dd(a) - dd(b));
   for (const e of fila) { if (performance.now() - t0 > lim2) break; f3PintarItem(e, d, tm, S1); e.sujo = 0; }
   for (let i = 0; i < 3 && perto.length; i++) f3PintarItem(perto[(F3.rr++) % perto.length], d, tm, S1);
@@ -1202,7 +1217,45 @@ function f3AtualizarItens(d, tm) {
   // cada figura de pé gira pra olhar pra câmera (as que ficam longe somem na névoa)
   const cx = F3.cam.position.x, cz = F3.cam.position.z, lim = F3.cena.fog.far + 4, leve = modoLeve();
   F3.it.forEach(e => { const m = e.mesh; if (!m) return; m.visible = !e.vazio && e.n === F3.n; if (!m.visible) return;
-    if (e.tipo === "bb") { const dx = cx - m.position.x, dz = cz - m.position.z; const d2 = dx * dx + dz * dz, lm = (e.x1 - e.x0) < 1.6 ? Math.min(lim, leve ? 18 : 28) : lim; m.visible = d2 < lm * lm && d2 > .56; m.rotation.y = Math.atan2(dx, dz); } });
+    if (e.tipo === "bb" || e.tipo === "pilha") { const dx = cx - m.position.x, dz = cz - m.position.z, d2 = dx * dx + dz * dz, lm = (e.x1 - e.x0) < 1.6 ? Math.min(lim, leve ? 18 : 28) : lim; m.visible = d2 < lm * lm && d2 > .3; if (e.tipo === "bb") m.rotation.y = Math.atan2(dx, dz); } });
+  if (F3.arvSujo || F3.n % 12 === 0) f3Arvores(lim); f3Sombras(lim);
+}
+// a figura vira um objeto sólido: frente e costas com o desenho e as laterais fechadas seguindo o contorno, na cor da borda
+function f3Extrudar(g, cw, chh, bw, bh) {
+  const dep = bw > 3.2 ? .07 : cl(Math.min(bw, bh) * .5, .1, .8), k = Math.max(1, Math.round(Math.min(cw / bw, chh / bh) / 11)), gw = Math.ceil(cw / k), gh = Math.ceil(chh / k), im = g.getImageData(0, 0, cw, chh).data, M = new Uint8Array(gw * gh);
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const px = Math.min(cw - 1, i * k + (k >> 1)), py = Math.min(chh - 1, j * k + (k >> 1)); M[j * gw + i] = im[(py * cw + px) * 4 + 3] > 110 ? 1 : 0; }
+  const G = Geo(), z0 = -dep / 2, z1 = dep / 2, X = i => i / gw - .5, Yy = j => .5 - j / gh, cheio = (i, j) => i >= 0 && j >= 0 && i < gw && j < gh && M[j * gw + i];
+  geoQuad(G, [-.5, -.5, z1], [.5, -.5, z1], [.5, .5, z1], [-.5, .5, z1], [0, 0, 1], [0, 0], [1, 0], [1, 1], [0, 1]);
+  geoQuad(G, [.5, -.5, z0], [-.5, -.5, z0], [-.5, .5, z0], [.5, .5, z0], [0, 0, -1], [1, 0], [0, 0], [0, 1], [1, 1]);
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { if (!M[j * gw + i]) continue; const u = [(i + .5) / gw, 1 - (j + .5) / gh], a = X(i), b = X(i + 1), t = Yy(j), d = Yy(j + 1);
+    if (!cheio(i - 1, j)) geoQuad(G, [a, d, z0], [a, d, z1], [a, t, z1], [a, t, z0], [-1, 0, 0], u, u, u, u);
+    if (!cheio(i + 1, j)) geoQuad(G, [b, d, z1], [b, d, z0], [b, t, z0], [b, t, z1], [1, 0, 0], u, u, u, u);
+    if (!cheio(i, j - 1)) geoQuad(G, [a, t, z1], [b, t, z1], [b, t, z0], [a, t, z0], [0, 1, 0], u, u, u, u);
+    if (!cheio(i, j + 1)) geoQuad(G, [a, d, z0], [b, d, z0], [b, d, z1], [a, d, z1], [0, -1, 0], u, u, u, u); }
+  return geoFim(G);
+}
+// árvores 3D (todas de uma vez, em dois desenhos só) e as sombras redondas no pé de tudo
+function f3Arvores(lim) {
+  F3.arvSujo = false; const cx = F3.cam.position.x, cz = F3.cam.position.z, L = []; F3.it.forEach(e => { if (e.tipo === "arv" && !e.vazio && e.arv && e.n >= F3.n - 1 && Math.hypot(e.arv.x - cx, e.arv.y - cz) < lim + 4) L.push(e.arv); });
+  const BL = [[0, 1.5, 0, .66], [-.47, 1.27, .16, .5], [.47, 1.3, -.14, .48], [0, 1.95, .04, .47], [.05, 1.42, -.44, .52], [-.08, 1.45, .44, .5]];
+  if (!F3.arvG) { F3.arvG = { tr: new THREE.CylinderGeometry(.42, .62, 1, 7).translate(0, .5, 0), bo: new THREE.IcosahedronGeometry(1, 1) };
+    F3.tex.folha = f3Tex(128, 128, (g, w, h) => { const rr = f3Rnd(21); g.fillStyle = "#d8d8d8"; g.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { g.fillStyle = rr() < .5 ? "rgba(255,255,255,.55)" : "rgba(60,60,60,.45)"; g.beginPath(); g.ellipse(rr() * w, rr() * h, 3 + rr() * 6, 2 + rr() * 3, rr() * 3, 0, 7); g.fill(); } }, true);
+    F3.tex.casca = f3Tex(64, 128, (g, w, h) => { const rr = f3Rnd(8); g.fillStyle = "#cfcfcf"; g.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { g.fillStyle = "rgba(40,40,40,.5)"; g.fillRect(rr() * w, rr() * h, 2, 10 + rr() * 30); } }, true); }
+  const nT = L.length, nB = nT * BL.length;
+  if (!F3.arvM || F3.arvM.cap < nT) { if (F3.arvM) { F3.cena.remove(F3.arvM.tr); F3.cena.remove(F3.arvM.bo); F3.arvM.tr.dispose(); F3.arvM.bo.dispose(); } const cap = Math.max(64, Math.ceil(nT * 1.3));
+    const tr = new THREE.InstancedMesh(F3.arvG.tr, f3Mat({ map: F3.tex.casca }), cap), bo = new THREE.InstancedMesh(F3.arvG.bo, f3Mat({ map: F3.tex.folha, flatShading: true }), cap * BL.length); tr.frustumCulled = bo.frustumCulled = false; F3.cena.add(tr); F3.cena.add(bo); F3.arvM = { tr, bo, cap }; }
+  const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0), Sc = new THREE.Vector3(), cc = new THREE.Color(); let k = 0;
+  L.forEach((a, i) => { const r = a.r; F3.arvM.tr.setMatrixAt(i, M4.compose(V.set(a.x, 0, a.y), Q.identity(), Sc.set(r * .32, r * 1.55, r * .32))); F3.arvM.tr.setColorAt(i, a.tronco);
+    const ang = a.s * 6.283, ca = Math.cos(ang), sa = Math.sin(ang); BL.forEach(([ox, oy, oz, rs], j) => { const x = ox * ca - oz * sa, z = ox * sa + oz * ca; Q.setFromAxisAngle(Y, ang + j); F3.arvM.bo.setMatrixAt(k, M4.compose(V.set(a.x + x * r, oy * r, a.y + z * r), Q, Sc.set(rs * r, rs * r * .88, rs * r))); F3.arvM.bo.setColorAt(k, cc.copy(a.cores[j % 4]).multiplyScalar(1.05 + (j % 3) * .08)); k++; }); });
+  F3.arvM.tr.count = nT; F3.arvM.bo.count = nB; F3.arvM.tr.instanceMatrix.needsUpdate = F3.arvM.bo.instanceMatrix.needsUpdate = true; if (F3.arvM.tr.instanceColor) F3.arvM.tr.instanceColor.needsUpdate = true; if (F3.arvM.bo.instanceColor) F3.arvM.bo.instanceColor.needsUpdate = true;
+}
+function f3Sombras(lim) {
+  if (!F3.somb) { const t = f3Tex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,.5)"); gr.addColorStop(.6, "rgba(0,0,0,.28)"); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); F3.somb = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-PI / 2), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }), 2500); F3.somb.frustumCulled = false; F3.somb.renderOrder = 2; F3.cena.add(F3.somb); }
+  const cx = F3.cam.position.x, cz = F3.cam.position.z, M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3(), lm = Math.min(lim, 30); let n = 0;
+  F3.it.forEach(e => { if (n >= 2500 || e.vazio || e.n !== F3.n) return; let x, y, w;
+    if (e.tipo === "arv" && e.arv) { x = e.arv.x; y = e.arv.y; w = e.arv.r * 2.2; } else if ((e.tipo === "bb" || e.tipo === "pilha") && e.mesh && e.mesh.visible && e.base > -.6) { x = (e.x0 + e.x1) / 2; y = e.y; w = Math.min(3.2, (e.x1 - e.x0) * .8); } else return;
+    if (Math.abs(x - cx) > lm || Math.abs(y - cz) > lm) return; F3.somb.setMatrixAt(n++, M4.compose(V.set(x, .02, y + .05), Q, Sc.set(w, 1, w * .5))); });
+  F3.somb.count = n; F3.somb.instanceMatrix.needsUpdate = true; F3.somb.visible = !!n;
 }
 // ---- dentro: o cômodo desenhado vira piso, parede do fundo e móveis ----
 function f3Sala(d, tm) {
@@ -1702,7 +1755,7 @@ function atualizarBichos(dt) {
 }
 
 /* ---------- desenho ---------- */
-const PX = x => { if (FP_REG) { if (x < FP_REG[0]) FP_REG[0] = x; if (x > FP_REG[1]) FP_REG[1] = x; } return (x - cam.x) * TS + W / 2; }, PY = y => (y - cam.y) * TS + H / 2;
+const PX = x => { if (FP_REG) { if (x < FP_REG[0]) FP_REG[0] = x; if (x > FP_REG[1]) FP_REG[1] = x; } return (x - cam.x) * TS + W / 2; }, PY = y => { if (FP_REG) { if (y < FP_REG[2]) FP_REG[2] = y; if (y > FP_REG[3]) FP_REG[3] = y; } return (y - cam.y) * TS + H / 2; };
 let cam = { x: 13, y: 12 };
 const naTela = (x, y, m = 120) => x > -m && x < W + m && y > -m && y < H + m;
 let FP_SEM_SOMBRA = false;
