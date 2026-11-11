@@ -1,6 +1,6 @@
 /* deixa a Roça Assombrada funcionar sem internet (menos o online) */
-const VERSAO = "ra-1";
-const ARQUIVOS = ["./", "index.html", "base.js", "roca.js", "lib/peerjs.min.js", "manifest.webmanifest", "icones/icone-192.png", "icones/icone-512.png", "icones/icone-180.png",
+const VERSAO = "ra-2";
+const ARQUIVOS = ["./", "index.html", "base.js", "roca.js", "lib/peerjs.min.js", "lib/three.min.js", "manifest.webmanifest", "icones/icone-192.png", "icones/icone-512.png", "icones/icone-180.png",
   "fonts/big-shoulders-display-latin-500-normal.woff2", "fonts/big-shoulders-display-latin-800-normal.woff2", "fonts/newsreader-latin-400-normal.woff2", "fonts/newsreader-latin-500-normal.woff2", "fonts/newsreader-latin-400-italic.woff2", "fonts/jetbrains-mono-latin-400-normal.woff2", "fonts/jetbrains-mono-latin-600-normal.woff2"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(VERSAO).then(c => c.addAll(ARQUIVOS)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(l => Promise.all(l.filter(k => k !== VERSAO).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
