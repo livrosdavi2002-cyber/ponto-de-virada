@@ -2,6 +2,7 @@ package com.rocaassombrada.jogo;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.window.OnBackInvokedDispatcher;
 
 import android.os.Build;
@@ -25,6 +26,17 @@ import android.webkit.WebViewClient;
 
 import androidx.webkit.WebViewAssetLoader;
 
+import com.android.billingclient.api.AcknowledgePurchaseParams;
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingClientStateListener;
+import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.PendingPurchasesParams;
+import com.android.billingclient.api.ProductDetails;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryPurchasesParams;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -42,6 +54,7 @@ public class MainActivity extends Activity {
     private TextToSpeech voz;
     private boolean vozPronta = false;
     private final List<Voice> vozesPt = new ArrayList<>();
+    private BillingClient cobranca;
 
 
     @Override
@@ -101,6 +114,7 @@ public class MainActivity extends Activity {
         // Android 13+: gesto/botão de voltar (o onBackPressed antigo não é mais chamado no Android 16)
         if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::voltar);
         iniciarVoz();
+        iniciarCompras();
         telaCheia();
 
         if (estado != null) web.restoreState(estado);
@@ -110,6 +124,66 @@ public class MainActivity extends Activity {
     private void voltar() {
         web.evaluateJavascript("window.voltarAndroid ? voltarAndroid() : false", valor -> {
             if (!"true".equals(valor)) finish();
+        });
+    }
+
+    /* Compras dentro do app (Google Play): a Floresta da Serra é um produto único, não consumível */
+    private void iniciarCompras() {
+        try {
+            cobranca = BillingClient.newBuilder(this)
+                    .setListener((res, compras) -> {
+                        int cod = res.getResponseCode();
+                        if (cod == BillingClient.BillingResponseCode.OK && compras != null) { for (Purchase p : compras) tratarCompra(p); }
+                        else if (cod == BillingClient.BillingResponseCode.USER_CANCELED) avisarCompra("", "cancelou");
+                        else if (cod == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) restaurar();
+                        else avisarCompra("", "erro");
+                    })
+                    .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+                    .build();
+            conectarLoja(this::restaurar);
+        } catch (Exception e) { cobranca = null; }
+    }
+
+    private void conectarLoja(Runnable depois) {
+        if (cobranca == null) { avisarCompra("", "semloja"); return; }
+        if (cobranca.isReady()) { if (depois != null) depois.run(); return; }
+        cobranca.startConnection(new BillingClientStateListener() {
+            @Override public void onBillingSetupFinished(BillingResult r) {
+                if (r.getResponseCode() == BillingClient.BillingResponseCode.OK) { if (depois != null) depois.run(); }
+                else avisarCompra("", "semloja");
+            }
+            @Override public void onBillingServiceDisconnected() { }
+        });
+    }
+
+    private void restaurar() {
+        if (cobranca == null || !cobranca.isReady()) return;
+        cobranca.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(), (r, lista) -> {
+            if (r.getResponseCode() != BillingClient.BillingResponseCode.OK || lista == null) return;
+            for (Purchase p : lista) tratarCompra(p);
+        });
+    }
+
+    private void tratarCompra(Purchase p) {
+        if (p.getPurchaseState() == Purchase.PurchaseState.PENDING) { for (String id : p.getProducts()) avisarCompra(id, "pendente"); return; }
+        if (p.getPurchaseState() != Purchase.PurchaseState.PURCHASED) return;
+        for (String id : p.getProducts()) avisarCompra(id, "ok");
+        if (!p.isAcknowledged()) cobranca.acknowledgePurchase(AcknowledgePurchaseParams.newBuilder().setPurchaseToken(p.getPurchaseToken()).build(), r -> { });
+    }
+
+    private void avisarCompra(String id, String estado) {
+        js("window.rocaCompra && rocaCompra(" + JSONObject.quote(id) + "," + JSONObject.quote(estado) + ")");
+    }
+
+    private void detalhesProduto(String id, java.util.function.Consumer<ProductDetails> fn) {
+        conectarLoja(() -> {
+            QueryProductDetailsParams q = QueryProductDetailsParams.newBuilder()
+                    .setProductList(Collections.singletonList(QueryProductDetailsParams.Product.newBuilder().setProductId(id).setProductType(BillingClient.ProductType.INAPP).build()))
+                    .build();
+            cobranca.queryProductDetailsAsync(q, (r, resultado) -> {
+                List<ProductDetails> l = resultado != null ? resultado.getProductDetailsList() : null;
+                fn.accept(r.getResponseCode() == BillingClient.BillingResponseCode.OK && l != null && !l.isEmpty() ? l.get(0) : null);
+            });
         });
     }
 
@@ -211,6 +285,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (voz != null) voz.shutdown();
+        if (cobranca != null) cobranca.endConnection();
         if (web != null) web.destroy();
         super.onDestroy();
     }
@@ -265,6 +340,32 @@ public class MainActivity extends Activity {
         public void usarVoz(String nome) {
             if (voz == null) return;
             for (Voice v : vozesPt) if (v.getName().equals(nome)) { voz.setVoice(v); return; }
+        }
+
+        // versão de teste (APK do GitHub): a fase paga fica liberada pra testar
+        @JavascriptInterface
+        public boolean compraTeste() { return (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0; }
+
+        @JavascriptInterface
+        public void comprar(String id) {
+            detalhesProduto(id, d -> {
+                if (d == null) { avisarCompra(id, "semproduto"); return; }
+                BillingFlowParams f = BillingFlowParams.newBuilder()
+                        .setProductDetailsParamsList(Collections.singletonList(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(d).build()))
+                        .build();
+                runOnUiThread(() -> cobranca.launchBillingFlow(MainActivity.this, f));
+            });
+        }
+
+        @JavascriptInterface
+        public void restaurarCompras() { conectarLoja(MainActivity.this::restaurar); }
+
+        @JavascriptInterface
+        public void pedirPreco(String id) {
+            detalhesProduto(id, d -> {
+                if (d == null || d.getOneTimePurchaseOfferDetails() == null) return;
+                js("window.rocaPreco && rocaPreco(" + JSONObject.quote(id) + "," + JSONObject.quote(d.getOneTimePurchaseOfferDetails().getFormattedPrice()) + ")");
+            });
         }
 
         @JavascriptInterface

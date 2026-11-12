@@ -507,6 +507,7 @@ function montarUI() {
   .rc-caixa.rc-diario .rc-bicho{background:rgba(255,250,235,.6)}
   /* letras maiores no jogo inteiro (dá pra ler no celular) */
   .rc-dica.baixo{top:auto!important;bottom:118px;color:#ffe2a0}
+  .rc-viajando .rc-hud,.rc-viajando .rc-obj,.rc-viajando .rc-bts,.rc-viajando .rc-bt,.rc-viajando .rc-joy,.rc-viajando .rc-menu,.rc-viajando .rc-mao,.rc-viajando .rc-dica,.rc-viajando .rc-barras,.rc-viajando .rc-itens{visibility:hidden!important}
   .rc-obj{font-size:clamp(13px,1.7vw,16px)!important;max-width:min(48vw,480px)!important;padding:4px 9px!important}
   .rc-dica{font-size:clamp(15px,2.1vw,20px)!important;max-width:min(64vw,680px)!important;top:clamp(118px,24vh,150px)!important}
   .rc-bt{font-size:clamp(11px,1.45vw,14px)!important}.rc-bt.sem{font-size:clamp(11px,1.35vw,13px)!important}.rc-bt.acao{font-size:clamp(13px,1.7vw,17px)!important}
@@ -583,6 +584,7 @@ function oQueFazer() {
   if (R.lugar === "mina") return oQueFazerMina();
   if (SALAS[R.lugar]) return oQueFazerSala();
   if (R.lugar === "lagoa") return oQueFazerLagoa();
+  if (R.viagem) return null; if (R.lugar === "serra") return oQueFazerSerra(); if (R.lugar === "floresta") return oQueFazerFloresta();
   if (R.pesca) return R.pesca.fisgou ? { t: "Puxar!", fn: puxarPeixe, loc: 1 } : { t: "...", fn: () => {}, loc: 1 };
   if (R.dentro) {
     const s = R.sala;
@@ -744,6 +746,7 @@ const BICHOS = [
   ["iara", "Iara", "Mora no rio da Baixada (porteira do norte). De noite ela canta, e quem está perto da água vai sendo puxado pra beira sem perceber. Ouviu o canto? Vire as costas pro rio e ande pra longe. O patuá da Dona Zefa protege.", "A Dora, irmã da vó, foi pro rio em 1966. Na ilhota tem uma cruz com o nome dela."],
   ["boitata", "Boitatá", "Cobra comprida de fogo azul, mora no brejo da Baixada. Só sai nas noites SECAS (com chuva ele fica quieto). Enxerga de longe quem anda de lanterna acesa e quem corre, e é mais rápido que você. Se ele vier, pule numa poça do brejo: fogo não entra na água. Dentro de casa também não.", "O Seu Galdino jura que os olhos dele são duas brasas do tamanho de um punho."],
   ["mapinguari", "Mapinguari", "Mora no fundo da mina da Baixada. Grande, peludo, um olho só e a boca na barriga. Tem pavor de fogo: com a lanterna acesa ele fica longe, só espiando. Se a luz apagar ou o óleo acabar, ele vem. Entre com o óleo cheio e saia antes de acabar.", "O cheiro chega antes dele. Cheiro de bicho morto."],
+  ["pedegarrafa", "Pé-de-Garrafa", "Mora na Floresta da Serra, depois da Estação da Serra. De noite ele grita igual gente perdida pedindo socorro. NUNCA saia da trilha de terra de noite: fora dela ele te acha. Na trilha, perto da fogueira do Seu Tibúrcio, na capela e dentro do oco das árvores grandes você fica segura. Ele não atravessa água.", "A pegada dele é redonda, igual fundo de garrafa. O Zé Carvoeiro, maquinista do último trem, foi atrás do grito."],
   ["poco", "O rosto do poço", "De noite, às vezes tem alguém olhando lá do fundo do poço. Ele não sobe. Só assusta.", "Não responda quando ele chamar seu nome."]];
 function fotoMonstro(cvF, quem) {
   const g = cvF.getContext("2d"), cS = c, WS = W, HS = H; cvF.width = 168; cvF.height = 200;
@@ -755,7 +758,7 @@ function fotoMonstro(cvF, quem) {
 }
 function abrirDiario(aba = "objetivos") {
   painelAberto = true; el.rcPainel.hidden = false; if (!R.diario) { R.diario = true; ls("roca_diario", 1); }
-  const abas = [["objetivos", "Objetivos"], ["bichos", "Os bichos"], ["pistas", "Pistas"], ...(paginasVo().length || ls("roca_fita") ? [["vo", "Vô Sebastião"]] : []), ...(achadosEsgoto().length ? [["esg", "Esgoto"]] : []), ...(achadosTrem().length ? [["trem", "O trem"]] : []), ...(achadosBx().length ? [["baixada", "A Baixada"]] : []), ...(achadosLg().length ? [["lagoa", "A Lagoa"]] : []), ...(segredosAchados().length ? [["segredos", "Segredos"]] : []), ...(tesourosAchados().length ? [["tesouros", "Enterrados"]] : []), ...(coisasVo().length ? [["coisasvo", "Coisas da vó"]] : []), ["missoes", "Missões"], ["precos", "O que vale"], ["guia", "Guia do sítio"], ["obj", "O que fazer"]];
+  const abas = [["objetivos", "Objetivos"], ["bichos", "Os bichos"], ["pistas", "Pistas"], ...(paginasVo().length || ls("roca_fita") ? [["vo", "Vô Sebastião"]] : []), ...(achadosEsgoto().length ? [["esg", "Esgoto"]] : []), ...(achadosTrem().length ? [["trem", "O trem"]] : []), ...(achadosBx().length ? [["baixada", "A Baixada"]] : []), ...(achadosLg().length ? [["lagoa", "A Lagoa"]] : []), ...(achadosFl().length ? [["floresta", "A Floresta"]] : []), ...(segredosAchados().length ? [["segredos", "Segredos"]] : []), ...(tesourosAchados().length ? [["tesouros", "Enterrados"]] : []), ...(coisasVo().length ? [["coisasvo", "Coisas da vó"]] : []), ["missoes", "Missões"], ["precos", "O que vale"], ["guia", "Guia do sítio"], ["obj", "O que fazer"]];
   let corpo = "";
   if (aba === "objetivos") { const o = objetivosLista(), li = x => { const m = /(\d+)\s*\/\s*(\d+)/.exec(x.p || ""), pc = m ? Math.min(100, Math.round(+m[1] / Math.max(1, +m[2]) * 100)) : null; return `<li class="dj-item${x.feito ? " feito" : ""}"><span class="dj-caixa">${x.feito ? "✔" : ""}</span><div><b>${escH(x.t)}</b>${x.p ? ` <em>${escH(x.p)}</em>` : ""}${pc != null && !x.feito ? `<i class="dj-barra"><i style="width:${pc}%"></i></i>` : ""}${x.d ? `<small>${escH(x.d)}</small>` : ""}</div></li>`; };
     const feitos = [...o.principais, ...o.secundarios].filter(x => x.feito).length, tot = o.principais.length + o.secundarios.length;
@@ -765,6 +768,7 @@ function abrirDiario(aba = "objetivos") {
   if (aba === "vo") { const l = paginasVo(); corpo = (ls("roca_fita") ? `<h3>A fita do porão</h3>${FITA_VO.map(t => `<p style="font-style:italic">${t}</p>`).join("")}<h3>As páginas</h3>` : "") + `<p>Páginas do diário do vô, achadas na casinha do lago (${l.length}/${PAGINAS_VO.length}).</p>${PAGINAS_VO.map((p, i) => l.includes(i) ? `<p style="font-style:italic">"${p.txt}"</p>` : "").join("")}${l.length < PAGINAS_VO.length ? `<p style="opacity:.7">Ainda falta coisa na casinha. Procure perto dos móveis.</p>` : ""}`; }
   if (aba === "coisasvo") { const l = coisasVo(); corpo = `<p>Coisas da vó que você achou (${l.length}/${COISAS_VO.length}).</p>` + COISAS_VO.map(o => l.includes(o.k) ? `<h3>${o.nome}</h3><p style="font-style:italic">${o.fala.map(escH).join(" ")}</p>` : "").join("") + (l.length < COISAS_VO.length ? `<p style="opacity:.7">Faltam coisas. Procure um brilhinho lilás no sítio, na estação, na mata, na vila e no cemitério.</p>` : `<p style="color:#c8b8e8">Você tem tudo. De noite, alguém vai esperar na entrada da trilha da mata.</p>`); }
   if (aba === "lagoa") { const l = achadosLg(); corpo = `<p>O que a Lagoa Grande guardava (${l.length}/${ACHADOS_LG.length}).</p>` + ACHADOS_LG.map(a => l.includes(a.k) ? `<h3>${a.onde}</h3><p style="font-style:italic">${escH(a.txt)}</p>` : "").join(""); }
+  if (aba === "floresta") { const l = achadosFl(); corpo = `<p>O que a Floresta da Serra guardava (${l.length}/${ACHADOS_FL.length}).</p>` + ACHADOS_FL.map(a => l.includes(a.k) ? `<h3>${a.onde}</h3><p style="font-style:italic">${escH(a.txt)}</p>` : "").join(""); }
   if (aba === "segredos") { const l = segredosAchados(); corpo = `<p>Segredos escondidos no sítio e na vila (${l.length}/${SEGREDOS.length}).</p>` + SEGREDOS.map(a => l.includes(a.k) ? `<h3>${a.onde}</h3><p style="font-style:italic">${escH(a.txt)}</p>` : "").join(""); }
   if (aba === "tesouros") { const l = tesourosAchados(); corpo = `<p>Coisas que a pá achou enterradas por aí (${l.length}/${TESOUROS.length}). Toda manhã aparece terra mexida nova no sítio, na Baixada e na mata.</p><ul>` + TESOUROS.map(([k, n, d]) => l.includes(k) ? `<li><b>${n}</b> · <i>${escH(d)}</i></li>` : `<li style="opacity:.45">??? (ainda enterrado)</li>`).join("") + "</ul>"; }
   if (aba === "baixada") { const l = achadosBx(); corpo = `<p>O que ficou na Baixada do Rio (${l.length}/${ACHADOS_BX.length}).</p>` + ACHADOS_BX.map(a => l.includes(a.k) ? `<h3>${a.onde}</h3><p style="font-style:italic">${escH(a.txt)}</p>` : "").join(""); }
@@ -786,6 +790,7 @@ function abrirDiario(aba = "objetivos") {
     <li><b>Mochila:</b> o botão da mochila mostra tudo o que você carrega. Este diário fica guardado nela.</li>
     <li><b>Ferramentas:</b> a loja de construção vende pá (cava onde a terra está mexida: moedas, sementes e tesouros), rastelo (limpa as folhas secas do chão; enfeite só vai em chão limpo), vassoura e caixa de ferramentas. Na frente da casa, "Arrumar a casa" mostra o que consertar e o que dá pra colocar.</li>
     <li><b>Barco e Ipupiara:</b> o barco é um só e cabem 4: leme, arpão, canhão e remendo (o botão de ação troca de posto). Nas armas, arraste pra mirar e solte pra atirar. O Ipupiara mora no Poção (oeste da lagoa) e só morre com arpão nas guelras, quando brilham vermelho. Tudo do barco o Seu Bento vende, na barraca do píer.</li>
+    <li><b>O trem e a serra:</b> a Maria-Fumaça da estação velha precisa de 5 peças (a aba Objetivos mostra onde estão). Consertada, ela sobe até a Estação da Serra. Lá, a porteira leva pra Floresta da Serra (fase paga, compra pela Google Play).</li>
     <li><b>Lagoa Grande:</b> na Baixada, siga a trilha do oeste (passando o engenho). No píer tem um barquinho: aponte o controle pra onde quer ir e ele vira e rema; correr = remar forte. Encoste numa ilha e desça. Seu Bento, na palafita, vende remo bom, lanterna de proa, bandeirinha e tinta pro barco. Pesque perto das boias vermelhas.</li>
     <li><b>Baixada do Rio:</b> saia pela porteira do norte (atrás do galinheiro). Tem o engenho, a benzedeira Dona Zefa (patuá, benzimento e óleo), a casa dos Prado, o brejo do Seu Galdino, a ponte, a canoa da ilhota, a torre e a mina. No canavial dá pra cortar cana; com 3 feixes o engenho faz uma rapadura. Na mina, cada veio dá uma pepita de ouro por dia.</li>
     <li><b>Vila Sossego:</b> desça a estrada do portão. Os bichos não vão lá. De dia as lojas abrem; à noite a vila apaga e todos dormem no quarto de cima.</li><li><b>Com amigo:</b> cada uma tem sua água e 1 coração. Quem for pega cai e só a outra levanta. Sem coração, fica fora até amanhecer. Toda manhã o coração volta. Se as duas caírem, o sítio volta para o dia 1.</li></ul>`;
@@ -921,7 +926,7 @@ function abrirMochila() {
   const l = [], add = (n, v) => { if (v) l.push(`<div>${icDe(n)}<span>${n}</span><b>${v}</b></div>`); };
   add("Água no regador", `${R.agua}/${R.aguaMax}`); add("Óleo", Math.round(R.oleo) + "%"); add("Moedas", R.moedas);
   Object.entries(R.colheita).forEach(([k, n]) => add(PLANTAS[k].nome, n)); Object.entries(R.peixes).forEach(([k, n]) => add(k, n)); Object.entries(R.extra).forEach(([k, n]) => add(EXTRAS[k][0], n));
-  add("Gravetos", R.inv.graveto); add("Folhas", R.inv.folha); R.sementes.forEach(k => add(`Sementes de ${PLANTAS[k].nome.toLowerCase()}`, "✓"));
+  add("Peças do trem", pecasTrem().length ? `${pecasTrem().length}/5` : 0); add("Gravetos", R.inv.graveto); add("Folhas", R.inv.folha); R.sementes.forEach(k => add(`Sementes de ${PLANTAS[k].nome.toLowerCase()}`, "✓"));
   if (R.vara) add("Vara de pesca", "✓"); if (R.peneira) add("Peneira", "✓"); if (R.lanternaBoa) add("Lanterna reforçada", "✓"); if (R.vel > 3.2) add("Botas de borracha", "✓"); if (R.velaCom) add("Vela acesa", "✓"); if (R.garrafada) add("Garrafada", "✓"); if (R.aguaBenta) add("Água benta", "✓"); if (R.broa > 0) add("Broa (fôlego)", Math.ceil(R.broa) + " s"); if (R.enxada) add("Enxada de aço", "✓"); if (R.lampiao) add("Lampião de ferro", "✓"); if (R.ferradura) add("Ferradura na porta", "✓"); if (R.sal) add("Sal na soleira", "✓"); if (R.arruda) add("Arruda", "✓"); add("Pistas", `${Object.keys(pistas()).length}/${NPISTAS}`); if (R.apito) add("Apito de ferro", "✓"); if (R.guizo) add("Guizo da Sombrinha", "✓"); if (R.isca) add("Isca boa", "✓"); if (R.medalha) add("Medalha de Santa Luzia", "✓"); Object.entries(R.missoes || {}).forEach(([k, v]) => { if (v === "ativa") add("Missão: " + MISSOES[k].titulo, MISSOES[k].falta()); }); if (R.chaveVo) add("Chave do alçapão", "✓"); if (ls("roca_fita")) add("Gravador do vô", "✓"); if (temMapaEsgoto()) add("Mapa do esgoto", "✓"); if (R.terco) add("Terço do vô", "✓"); add("Peças da caminhonete", R.pecas ? `${R.pecas}/3` : "0/3");
   const venda = valorVenda();
   el.rcPainel.innerHTML = `<div class="rc-caixa"><h2>Mochila</h2><p>${venda ? `O que você carrega vale <b style="color:#f2c94a">${venda} moedas</b> no caixote.` : "Nada para vender por enquanto."} Objetivo: ${objetivo()}.</p><div class="rc-moch-l">${l.join("")}</div>
@@ -1032,7 +1037,7 @@ function finalVerdade() {
 }
 
 /* ---------- save (só no single player) ---------- */
-const SAVE_FORA = new Set(["solido", "caixas", "arvores", "pedras", "flores", "cogumelos", "msg", "fx", "fxR", "poeira", "outros", "online", "morto", "venceu", "caido", "susto", "tremor", "alucina", "alma", "pisadeira", "tin", "pesca", "escondido", "escE", "fade", "menu", "rostoPoco", "espiar", "regando", "correndo", "perto", "deco", "decoInv", "nev", "seco", "cuca", "cu", "aranha", "mula", "saci", "esp", "vulto", "cachorro", "lobo", "sinoT", "boi", "iara", "mapi", "naIlha", "pradoT", "ferrAnim", "salaVolta", "barco", "boiuna", "noBarco", "chefe", "tiros", "esteira", "esteiraU", "lemIn", "lemArr", "armando", "mira", "explos"]);
+const SAVE_FORA = new Set(["solido", "caixas", "arvores", "pedras", "flores", "cogumelos", "msg", "fx", "fxR", "poeira", "outros", "online", "morto", "venceu", "caido", "susto", "tremor", "alucina", "alma", "pisadeira", "tin", "pesca", "escondido", "escE", "fade", "menu", "rostoPoco", "espiar", "regando", "correndo", "perto", "deco", "decoInv", "nev", "seco", "cuca", "cu", "aranha", "mula", "saci", "esp", "vulto", "cachorro", "lobo", "sinoT", "boi", "iara", "mapi", "naIlha", "pradoT", "ferrAnim", "salaVolta", "barco", "boiuna", "noBarco", "chefe", "tiros", "esteira", "esteiraU", "lemIn", "lemArr", "armando", "mira", "explos", "viagem", "pg"]);
 function salvarJogo(auto) {
   if (!R || R.online || R.menu || R.morto || R.venceu) return false;
   try { const d = {}; for (const k in R) if (!SAVE_FORA.has(k) && typeof R[k] !== "function") d[k] = R[k];
@@ -1108,8 +1113,10 @@ function objetivo() {
   if (R.lugar === "vila") return `descobrir o que aconteceu (pistas ${np}/${NPISTAS})` + (ehNoite() ? " · a vila dorme: volte de dia" : "");
   if (R.lugar === "baixada" || R.lugar === "mina") return objetivoBaixada();
   if (R.lugar === "lagoa") return objetivoLagoa();
+  if (R.viagem) return "viajando de trem"; if (R.lugar === "serra") return objetivoSerra(); if (R.lugar === "floresta") return objetivoFloresta();
   if (R.lugar === "sotao") return ls("roca_seg_bau") ? "o baú do sótão já foi aberto" : R.chaveBau ? "abrir o baú do sótão com a chave" : "descobrir onde está a chave do baú";
   if (R.lugar === "cripta") return "ler o livro de batismos da cripta";
+  if (R.lugar === "estacao" && !R.predio && (tremOk() || ls("roca_trem_visto"))) return tremOk() ? "suba na cabine da Maria-Fumaça (na frente do trem) e parta pra Estação da Serra" : `consertar a Maria-Fumaça (peças ${pecasTrem().length}/5) · o diário diz onde estão`;
   if (R.lugar === "estacao") return `explorar o trem velho (achados ${achadosTrem().length}/${ACHADOS_TREM.length})` + (temNeblina() ? " · NEBLINA: devagar, luz apagada e se esconda se ouvir as pernas" : ehNoite() ? " · o trem acendeu as luzes sozinho" : "");
   if (R.pecas >= 3) return "leve tudo até a caminhonete no portão e vá embora!";
   if (!R.online) { const pv = passoVo(); if (pv.i < 5) return `A vó · capítulo ${pv.i + 1}/5: ${pv.txt}` + (ehNoite() && pv.i !== 3 ? " · sobreviva até amanhecer" : "") + (R.pecas ? ` · caminhonete ${R.pecas}/3` : ""); }
@@ -1130,6 +1137,7 @@ function atualizarPesca(dt) {
   if (R.pesca) { R.pesca.t += dt; if (!R.pesca.fisgou && R.pesca.t > R.pesca.morde) { R.pesca.fisgou = true; R.pesca.ft = 0; S.fisga(); } if (R.pesca.fisgou) { R.pesca.ft += dt; if (R.pesca.ft > .9) { R.pesca = null; efeito("O peixe escapou", "#e8e2d4"); } } }
 }
 function moverLocal(dt) {
+  if (R.viagem) { R.viagem.t += dt; if (R.viagem.t >= R.viagem.dur) chegarViagem(); return; }
   // movimento
   let dx = joy.dx, dy = joy.dy; if (CONTROLE.dx || CONTROLE.dy) { dx = CONTROLE.dx; dy = CONTROLE.dy; }
   if (teclas["a"] || teclas["arrowleft"]) dx = -1; if (teclas["d"] || teclas["arrowright"]) dx = 1; if (teclas["w"] || teclas["arrowup"]) dy = -1; if (teclas["s"] || teclas["arrowdown"]) dy = 1;
@@ -1144,6 +1152,8 @@ function moverLocal(dt) {
   else if (R.lugar === "vila") { if (R.predio) andaLivre(R.int, dx, dy, vel, dt, livrePredio); else { andaLivre(R.eu, dx, dy, vel, dt, livreVila); if (R.eu.y < .5) voltarSitio(); } }
   else if (R.lugar === "baixada") { if (!BX) montarBaixada(); if (R.predio) andaLivre(R.int, dx, dy, vel * .9, dt, livrePredioBx); else { andaLivre(R.eu, dx, dy, vel * (naPoca(R.eu) ? .6 : noCanavial(R.eu) ? .8 : 1), dt, livreBaixada); if (R.eu.y > BXH - .4) voltarDaBaixada(); else if (R.eu.x < .4) irLagoa(); } }
   else if (R.lugar === "lagoa") moverLagoa(dt, dx, dy, vel);
+  else if (R.lugar === "serra") moverSerra(dt, dx, dy, vel);
+  else if (R.lugar === "floresta") moverFloresta(dt, dx, dy, vel);
   else if (R.lugar === "mina") { if (!MINA) montarMina(); andaLivre(R.eu, dx, dy, vel * .9, dt, livreMina); }
   else if (SALAS[R.lugar]) andaLivre(R.int, dx, dy, vel * .85, dt, livreSala);
   else if (R.lugar === "estacao") { if (!EST) montarEstacao(); if (R.predio) andaLivre(R.int, dx, dy, vel * .9, dt, livreVagao); else if (!R.escE) { andaLivre(R.eu, dx, dy, vel, dt, livreEstacao); if (R.eu.x < .45) voltarDaEstacao(); } }
@@ -1167,7 +1177,7 @@ function atualizar(dt) {
   const antesNoite = ehNoite(); R.t += dt; const agoraNoite = ehNoite();
   if (!antesNoite && agoraNoite) comecaNoite();
   if (antesNoite && !agoraNoite) amanhece();
-  moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); if (R.lugar === "estacao") atualizarNevoa(dt); if (R.lugar === "baixada") { atualizarIara(dt); atualizarBoi(dt); } if (R.lugar === "lagoa" || (R.online !== "guest" && jogadores().some(P => P.lugar === "lagoa"))) atualizarLagoa(dt); if (R.lugar === "mina") atualizarMina(dt); atualizarMedo(dt); atualizarClimaLocal(dt); if (MATA || jogadores().some(J => J.lugar === "mata")) { if (!MATA) montarMata(); atualizarMata(dt); }
+  moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); if (R.lugar === "estacao") atualizarNevoa(dt); if (R.lugar === "baixada") { atualizarIara(dt); atualizarBoi(dt); } if (R.lugar === "lagoa" || (R.online !== "guest" && jogadores().some(P => P.lugar === "lagoa"))) atualizarLagoa(dt); if (R.online !== "guest" && jogadores().some(P => P.lugar === "floresta")) atualizarFloresta(dt); if (R.lugar === "mina") atualizarMina(dt); atualizarMedo(dt); atualizarClimaLocal(dt); if (MATA || jogadores().some(J => J.lugar === "mata")) { if (!MATA) montarMata(); atualizarMata(dt); }
   const nLuz = jogadores().filter(P => P.lanterna).length;
   if (nLuz) { R.oleo -= (R.lanternaBoa ? .5 : .9) * (R.lampiao ? .5 : 1) * dt * nLuz; if (R.oleo <= 0) { R.oleo = 0; if (R.lanterna) efeito("A lanterna apagou", "#f2a33a"); R.lanterna = false; outros().forEach(o => o.lanterna = false); } }
   outros().forEach(o => { if (o.regando > 0) o.regando -= dt; });
@@ -2370,6 +2380,10 @@ function rostoMonstro(quem, r, ab, tm) { // desenha o rosto centrado na origem (
     for (const l of [-1, 1]) { const g2 = c.createRadialGradient(l * r * .24, -r * .12, 0, l * r * .24, -r * .12, r * .2); g2.addColorStop(0, "#fff8c0"); g2.addColorStop(.4, "#ff8a1a"); g2.addColorStop(1, "rgba(200,40,0,0)"); c.fillStyle = g2; c.beginPath(); c.arc(l * r * .24, -r * .12, r * .2, 0, 7); c.fill(); }
     c.fillStyle = "#0a0a2a"; c.beginPath(); c.ellipse(0, r * .28, r * .32, r * .06 + r * .12 * ab, 0, 0, 7); c.fill(); dentes(r * .28 - (r * .06 + r * .12 * ab) * .8, r * .5, 8, r * .1, true);
     c.strokeStyle = "#ff3a2a"; c.lineWidth = 3; c.beginPath(); c.moveTo(0, r * .3); c.lineTo(0, r * .62 + Math.sin(tm * 14) * 4); c.moveTo(0, r * .6); c.lineTo(-r * .08, r * .72); c.moveTo(0, r * .6); c.lineTo(r * .08, r * .72); c.stroke(); // língua bifurcada
+  } else if (quem === "pedegarrafa") { // cara peluda, dois olhinhos amarelos e a boca aberta gritando
+    c.fillStyle = "#3a2a1a"; c.beginPath(); c.ellipse(0, 0, r * .85, r * .95, 0, 0, 7); c.fill(); c.strokeStyle = "#1e140a"; c.lineWidth = 2.5; for (let i = 0; i < 46; i++) { const a = i / 46 * PI * 2; c.beginPath(); c.moveTo(Math.cos(a) * r * .7, Math.sin(a) * r * .8); c.lineTo(Math.cos(a) * r * 1.02, Math.sin(a) * r * 1.1 + 4); c.stroke(); }
+    c.fillStyle = "#5a4430"; c.beginPath(); c.ellipse(0, r * .05, r * .55, r * .6, 0, 0, 7); c.fill(); for (const s2 of [-1, 1]) { c.fillStyle = "#ffe060"; c.beginPath(); c.arc(s2 * r * .22, -r * .25, r * .1, 0, 7); c.fill(); c.fillStyle = "#1a0a00"; c.beginPath(); c.arc(s2 * r * .22, -r * .25, r * .04, 0, 7); c.fill(); }
+    c.fillStyle = "#1a0404"; c.beginPath(); c.ellipse(0, r * .3, r * .22, r * .1 + r * .25 * ab, 0, 0, 7); c.fill(); c.strokeStyle = "rgba(255,255,255,.35)"; c.lineWidth = 2; for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(0, r * .3, r * (.4 + i * .18 + (tm % .6)), -.5, .5); c.stroke(); }
   } else if (quem === "mapinguari") { // um olho só no meio da testa e a boca na barriga
     c.fillStyle = "#3a2a1a"; c.beginPath(); c.ellipse(0, r * .1, r * .9, r * 1, 0, 0, 7); c.fill(); c.strokeStyle = "#1e140a"; c.lineWidth = 2; for (let i = 0; i < 40; i++) { const a = i / 40 * PI * 2; c.beginPath(); c.moveTo(Math.cos(a) * r * .7, r * .1 + Math.sin(a) * r * .8); c.lineTo(Math.cos(a) * r * .92, r * .1 + Math.sin(a) * r * 1.02); c.stroke(); }
     c.fillStyle = "#f2e0a0"; c.beginPath(); c.ellipse(0, -r * .45, r * .22, r * .18, 0, 0, 7); c.fill(); c.fillStyle = "#1a0a00"; c.beginPath(); c.arc(0, -r * .45, r * .09, 0, 7); c.fill(); c.fillStyle = "rgba(255,255,255,.6)"; c.beginPath(); c.arc(r * .04, -r * .5, r * .03, 0, 7); c.fill();
@@ -2421,7 +2435,7 @@ function desenharFx() {
   R.fxR && R.fxR.forEach(f => { if (f.x != null && ((f.lugar || "sitio") !== (R.lugar || "sitio") || R.predio)) return; const a = 1 - f.t / 1.8, x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 30; if (R.dentro && f.x != null) return; c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(20, TS * .46))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.8)"; c.lineWidth = 4.5; c.strokeText(f.txt, x, y); c.fillText(f.txt, x, y); c.textAlign = "start"; c.globalAlpha = 1; });
   const a = R.aranha, m = R.mula;
   { const C = R.chefe, briga = R.lugar === "lagoa" && C && !["dorme", "fim", "morto"].includes(C.fase); if (el.rcDica.classList.contains("baixo") !== !!briga) el.rcDica.classList.toggle("baixo", !!briga); }
-  el.rcDica.textContent = R.lugar === "esgoto" ? (R.tin && R.tin.fase === "caca" ? "ELE TE VIU! Corre pro esconderijo mais perto!" : "Ele é mais rápido que você. Se ouvir casco, se esconda.") : R.lugar === "mata" && !R.caido ? (ehNoite() && !R.predio ? "Tem alguém assobiando na trilha. Corre pra casinha ou volta pro sítio." : "") : R.lugar === "vila" && !R.caido ? (ehNoite() && !luzesVila() ? "A vila apagou. Todo mundo dorme... menos você." : "") : (R.lugar === "baixada" || R.lugar === "mina") && !R.caido ? dicaBaixada() : R.lugar === "lagoa" && !R.caido ? dicaLagoa() : R.lugar === "estacao" && !R.caido ? (R.escE ? "" : temNeblina() && R.nev && R.nev.fase === "caca" ? "ELE TE OUVIU! Corre pro esconderijo mais perto ou pra dentro de um vagão!" : temNeblina() ? "Neblina: não corra, apague a lanterna e se esconda se ouvir as pernas." : ehNoite() ? "Não tem ninguém no trem. Então quem acendeu as luzes?" : "") : R.caido ? (R.caido.fora ? "Você não tem mais vidas. Agora é com a sua amiga." : "Você caiu. Só a sua amiga pode te levantar!") : a.fase === "ataque" ? "Ela te viu! Corra para dentro de casa!" : (a.fase === "aviso" || a.fase === "anda") && !R.dentro ? (noMilharal(R.eu) ? "No milharal ela não te enxerga. Fique quieta." : "Juntas estalando... apague a lanterna e fique parada!")
+  el.rcDica.textContent = R.viagem ? "" : R.lugar === "floresta" ? dicaFloresta() : R.lugar === "serra" ? "" : R.lugar === "esgoto" ? (R.tin && R.tin.fase === "caca" ? "ELE TE VIU! Corre pro esconderijo mais perto!" : "Ele é mais rápido que você. Se ouvir casco, se esconda.") : R.lugar === "mata" && !R.caido ? (ehNoite() && !R.predio ? "Tem alguém assobiando na trilha. Corre pra casinha ou volta pro sítio." : "") : R.lugar === "vila" && !R.caido ? (ehNoite() && !luzesVila() ? "A vila apagou. Todo mundo dorme... menos você." : "") : (R.lugar === "baixada" || R.lugar === "mina") && !R.caido ? dicaBaixada() : R.lugar === "lagoa" && !R.caido ? dicaLagoa() : R.lugar === "estacao" && !R.caido ? (R.escE ? "" : temNeblina() && R.nev && R.nev.fase === "caca" ? "ELE TE OUVIU! Corre pro esconderijo mais perto ou pra dentro de um vagão!" : temNeblina() ? "Neblina: não corra, apague a lanterna e se esconda se ouvir as pernas." : ehNoite() ? "Não tem ninguém no trem. Então quem acendeu as luzes?" : "") : R.caido ? (R.caido.fora ? "Você não tem mais vidas. Agora é com a sua amiga." : "Você caiu. Só a sua amiga pode te levantar!") : a.fase === "ataque" ? "Ela te viu! Corra para dentro de casa!" : (a.fase === "aviso" || a.fase === "anda") && !R.dentro ? (noMilharal(R.eu) ? "No milharal ela não te enxerga. Fique quieta." : "Juntas estalando... apague a lanterna e fique parada!")
     : m.fase === "aviso" && !R.dentro ? "O chão está brilhando! Saia da linha!" : R.dentro ? "" : R.seco.fase === "anda" || R.seco.fase === "aviso" ? "A mata estalou. Corra para dentro de casa!" : R.cachorro && R.cachorro.fase === "lobo" ? "Corra para casa!"
     : R.esp.fase === "vivo" && !R.esp.parado ? "O espantalho está andando. Ilumine ele!" : R.saci.fase === "anda" ? (R.peneira ? "Redemoinho! Pegue o Saci com a peneira!" : "Redemoinho! Fuja dele: o Saci rouba moedas") : R.vela && !velaNaMao() ? "Siga o som do sino e ache a vela" : velaNaMao() ? "Leve a vela até a cruz do cemitério" : "";
   if ((a.fase === "anda" || a.fase === "ataque") && !R.dentro && (R.lugar || "sitio") === "sitio") { // olho que mostra o quanto ela já te notou
@@ -2442,7 +2456,8 @@ function loop(ts) {
   if (R.online === "host" && outros().length) { Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .1; enviarTodos(estadoPara()); } }
   const tm = ts / 1000;
   c.setTransform(DPRr, 0, 0, DPRr, 0, 0);
-  if (R.lugar === "esgoto") desenharEsgoto(tm);
+  if (R.viagem) desenharViagem(tm);
+  else if (R.lugar === "esgoto") desenharEsgoto(tm);
   else if (R.lugar === "mata") { if (R.predio === "porao") desenharPorao(tm); else if (R.predio) { if (R.espiar) desenharEspiar(tm); else desenharCabanaDentro(tm); } else desenharMata(tm); }
   else if (R.lugar === "vila") { if (R.predio) desenharPredio(tm); else { desenharVila(tm); desenharLuzVila(tm); desenharVagalumesENevoa(tm); } }
   else if (R.lugar === "estacao") { if (R.predio) desenharVagaoDentro(tm); else desenharEstacao(tm); }
@@ -2450,6 +2465,8 @@ function loop(ts) {
   else if (R.lugar === "mina") desenharMina(tm);
   else if (SALAS[R.lugar]) desenharSala(tm);
   else if (R.lugar === "lagoa") desenharLagoa(tm);
+  else if (R.lugar === "serra") desenharSerra(tm);
+  else if (R.lugar === "floresta") desenharFloresta(tm);
   else if (R.dentro) { if (R.espiar) desenharEspiar(tm); else desenharDentro(tm); } else { if (R.venceu && R.venceu.t > 1) { CAMINHONETE.x += .0; } desenharMundo(tm); desenharLuz(tm); }
   desenharFerrAnim(tm); desenharClima(tm); desenharMedo(tm); desenharBrilhoCoisasVo(tm);
   if (R.fimVo) { c.fillStyle = `rgba(0,0,0,${cl((R.fimVo.t - 1.5) / 3.5, 0, 1)})`; c.fillRect(0, 0, W, H); }
@@ -3448,7 +3465,7 @@ const achadosTrem = () => { try { return JSON.parse(ls("roca_trem") || "[]"); } 
 const COISAS_T = {
   breque: [
     { x: .95, y: 1.95, dia: ["Um fogareiro de ferro. O chefe do trem esquentava café aqui nas viagens de madrugada."], noite: ["O fogareiro está quente. Tem uma chaleira chiando em cima dele."] },
-    { x: 4.55, y: 1.9, t: "Cofre", dia: ["Um cofre pequeno, trancado. Alguém riscou na tampa: 3 · 1 · 5."], noite: ["Alguém está girando o segredo do cofre. Por dentro. Clique. Clique. Clique."] },
+    { x: 4.55, y: 1.9, t: "Cofre", fn: () => ehNoite() && !temPecaTrem("regulador") ? falar(["Alguém está girando o segredo do cofre. Por dentro. Clique. Clique. Clique.", "Parou."], abrirCofreBreque, "Yasmin") : abrirCofreBreque() },
     { x: 6.6, y: 2.2, dia: ["A cama do chefe do trem. O cobertor está dobrado certinho, esperando ele voltar."], noite: ["O colchão está afundado. Do tamanho de alguém deitado. Não tem ninguém deitado."] },
     { x: .9, y: 3.35, t: "Subir na lanterneta", fn: () => falar(["Subi na lanterneta, a torrinha de vidro em cima do breque. Dá pra ver o sítio inteiro daqui.", ehNoite() ? "A janela da casa da vó está acesa. Tem alguém parado nela, olhando pra cá." : "A casa da vó, o lago, o milharal... e lá longe a fumaça da vila. O trem via tudo isso toda quinta."], null, "Yasmin") },
     { x: 2.65, y: 3.5, dia: ["Bandeirinhas vermelhas e verdes e lanternas de sinal. Vermelho: pare. Verde: pode ir."], noite: ["Todas as bandeirinhas verdes sumiram. Só sobraram as vermelhas."] },
@@ -3587,6 +3604,7 @@ function oQueFazerEstacao() {
     if (s.x > v.iw - 1.05 && Math.abs(s.y - 2.65) < .85) { if (i >= 0 && i < ORDEM_V.length - 1) return { t: "Vagão da frente", fn: () => trocarVagao(1), loc: 1 }; if (v.id === "passageiros") return { t: "Porta trancada", loc: 1, fn: () => falar(["A porta da frente dá pro tender, o vagão da lenha. Está emperrada.", "Pra chegar na locomotiva tem que descer e subir pela escadinha da cabine."], null, "Yasmin") }; }
     const a = ACHADOS_TREM.find(a => a.v === v.id), l = achadosTrem();
     if (a && Math.hypot(s.x - a.x, s.y - a.y) < 1) return { t: l.includes(a.k) ? "Reler" : "Procurar", fn: () => lerAchadoTrem(a), loc: 1 };
+    if (v.id === "loco" && Math.hypot(s.x - 4.55, s.y - 3.15) < 1) return { t: tremOk() ? "Partir pra Serra" : pecasTrem().length >= 5 ? "Consertar a Maria-Fumaça" : "Examinar a máquina", fn: maquinaTrem, loc: 1 };
     const o = coisaPerto(COISAS_T[v.id] || [], s, 1); if (o) return { t: o.t || "Olhar", fn: () => olharCoisa(o), loc: o.t === "Pegar lenha" ? 0 : 1 };
     return null; }
   const p = R.eu;
@@ -3724,7 +3742,7 @@ function desenharLoco(v, x0, x1, gy, tm, nt) {
   c.fillStyle = "#b8902e"; c.beginPath(); c.ellipse(X(1.55), yc - T * .55, T * .2, T * .12, 0, 0, 7); c.fill(); c.fillStyle = "#3a2a10"; c.font = `800 ${Math.max(7, Math.round(T * .13))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.fillText("Nº 3", X(1.55), yc - T * .51); c.textAlign = "start"; // plaquinha
   sujeiraTrem(v, ca0, cTop, ca1 - ca0, yc - cTop);
   // fumaça: de noite a chaminé solta fumaça, mesmo apagada
-  if (nt > .3) for (let i = 0; i < 7; i++) { const f = (tm * .18 + i / 7) % 1, fx = ch + f * T * 1.6 + Math.sin(tm + i) * T * .15, fy = ct - f * T * 2.6, r = T * (.14 + f * .5); c.fillStyle = `rgba(150,150,150,${.3 * (1 - f) * nt})`; c.beginPath(); c.arc(fx, fy, r, 0, 7); c.fill(); }
+  const vivo = tremOk(), nf = vivo ? 12 : 7; if (nt > .3 || vivo) for (let i = 0; i < nf; i++) { const f = (tm * (vivo ? .4 : .18) + i / nf) % 1, fx = ch + f * T * 1.6 + Math.sin(tm + i) * T * .15, fy = ct - f * T * 2.6, r = T * (.14 + f * .5); c.fillStyle = `rgba(${vivo ? "220,220,220" : "150,150,150"},${(vivo ? .5 : .3 * nt) * (1 - f)})`; c.beginPath(); c.arc(fx, fy, r, 0, 7); c.fill(); }
 }
 /* ---------- a estação e o que tem em volta ---------- */
 function desenharPredioEstacao(tm, nt) {
@@ -4203,7 +4221,7 @@ const COISAS_BXI = {
   engenho: [
     { x: 5.9, y: 3.4, t: "Moenda", fn: () => moerCana() },
     { x: 1.2, y: 2.3, dia: ["O cocho do caldo de cana. Seco, rachado, com um cheiro doce que não sai da madeira."], noite: ["O cocho está cheio. De um caldo escuro, quase vermelho. Ninguém moeu nada."] },
-    { x: 9.9, y: 2.45, t: "Fornalha", dia: ["A fornalha com os tachos de cobre onde fervia o caldo até virar rapadura. Ainda tem cinza lá dentro."], noite: ["A fornalha está quente. Um tacho está borbulhando. Sozinho."] },
+    { x: 9.9, y: 2.45, t: "Fornalha", fn: () => !temPecaTrem("injetor") ? falar(["Atrás da fornalha tem uma caldeirinha de ferro, e aparafusada nela uma peça de bronze: um injetor d'água.", "Na plaquinha: R.F.R. · MARIA-FUMAÇA Nº 3. É peça do trem! O engenho pegou emprestado e nunca devolveu.", "Desparafusei com cuidado. Vai servir na Maria-Fumaça da estação velha."], () => pegarPecaTrem("injetor"), "Yasmin") : falar(ehNoite() ? ["A fornalha está quente. Um tacho está borbulhando. Sozinho."] : ["A fornalha com os tachos de cobre onde fervia o caldo até virar rapadura. Ainda tem cinza lá dentro."], null, "Yasmin") },
     { x: 1.2, y: 3.7, t: "Alambique", dia: ["Um alambique de cobre todo esverdeado. Na plaquinha: Santa Dora · 1951."], noite: ["Está pingando alguma coisa da serpentina do alambique. Tic. Tic. Tic."] },
     { x: 10.6, y: 3.8, dia: ["Formas de madeira de fazer rapadura. Tem uma ainda com rapadura dentro, dura feito pedra."], noite: ["As formas estão todas cheias de rapadura fresquinha, ainda mole. Em 1966?"] },
     { x: 3.2, y: 4, dia: ["Sacos de açúcar mascavo empedrado. Os ratos já desistiram deles."], noite: ["Um dos sacos está respirando. Devagar."] }],
@@ -4624,13 +4642,13 @@ function montarMina() {
   const cel = (cx, cy) => ({ x: cx * MCEL + 2, y: cy * MCEL + 2 });
   const grau = (cx, cy) => viz.filter(([dx, dy]) => { const x = cx + dx, y = cy + dy; if (x < 0 || y < 0 || x >= MCW || y >= MCH) return false; return dx ? !sol[cy * MCEL + 1][Math.max(cx, x) * MCEL] : !sol[Math.max(cy, y) * MCEL][cx * MCEL + 1]; }).length;
   const becos = []; for (let cy = 0; cy < MCH; cy++) for (let cx = 0; cx < MCW; cx++) if ((cx || cy) && grau(cx, cy) === 1) becos.push({ cx, cy, d: cx + cy * 1.3 + r() * 2 }); becos.sort((a, b) => b.d - a.d);
-  const fio = cel(becos[0].cx, becos[0].cy), carta = cel(becos[1].cx, becos[1].cy);
+  const fio = cel(becos[0].cx, becos[0].cy), carta = cel(becos[1].cx, becos[1].cy), bB = becos[Math.min(2, becos.length - 1)], biela = cel(bB.cx, bB.cy);
   // veios de ouro: na parede de cima de alguns corredores
   const veios = []; for (let i = 0; i < 200 && veios.length < 8; i++) { const x = 1 + Math.floor(r() * (MNW - 2)), y = 1 + Math.floor(r() * (MNH - 2)); if (sol[y][x] || !sol[y - 1][x] || x + y < 8 || veios.some(v => Math.hypot(v.x - x, v.y - y) < 6) || Math.hypot(fio.x - x - .5, fio.y - y) < 2 || Math.hypot(carta.x - x - .5, carta.y - y) < 2) continue; veios.push({ i: veios.length, x: x + .5, y: y + .25 }); }
   const escoras = []; for (let y = 1; y < MNH - 1; y++) for (let x = 1; x < MNW - 1; x++) if (!sol[y][x] && sol[y - 1][x] && (x * 7 + y * 3) % 5 === 0) escoras.push({ x: x + .5, y: y + .02 });
   const trilhos = []; for (let y = 1; y < MNH - 1; y++) for (let x = 1; x < MNW - 1; x++) if (!sol[y][x] && (x % MCEL === 2 || y % MCEL === 2) && (x + y) % 3 !== 0) trilhos.push({ x, y, h: !sol[y][x - 1] && !sol[y][x + 1] });
   const ossos = Array.from({ length: 9 }, () => { const b = becos[2 + Math.floor(r() * Math.max(1, becos.length - 2))] || becos[0]; return { ...cel(b.cx, b.cy), k: r() }; });
-  MINA = { sol, fio, carta, veios, escoras, trilhos, ossos, saida: { x: 2, y: 1.6 } }; CHAO_MINA = Chao(pintarChaoMina, MNW, MNH);
+  MINA = { sol, fio, carta, biela, veios, escoras, trilhos, ossos, saida: { x: 2, y: 1.6 } }; CHAO_MINA = Chao(pintarChaoMina, MNW, MNH);
 }
 function pintarChaoMina(g) {
   const P = 32, S2 = MINA.sol; g.fillStyle = "#14110e"; g.fillRect(0, 0, MNW * P, MNH * P);
@@ -4649,6 +4667,7 @@ function sairMina() { R.lugar = "baixada"; R.predio = null; R.mapi = null; R.eu.
 function oQueFazerMina() {
   const p = R.eu; if (dist(p, MINA.saida) < 1.3) return { t: "Sair da mina", fn: sairMina, loc: 1 };
   const pg = minaPegos(); for (const v of MINA.veios) if (dist(p, { x: v.x, y: v.y + .55 }) < .95) return pg.includes(v.i) ? { t: "Veio vazio", loc: 1, fn: () => efeito("Já tirei a pepita desse veio hoje.", "#e8e2d4") } : { t: "Picar o veio", loc: 1, fn: () => picarVeio(v) };
+  if (!temPecaTrem("biela") && MINA.biela && dist(p, MINA.biela) < 1.1) return { t: "Pegar a biela", loc: 1, fn: () => falar(["Encostada na parede do beco tem uma barra de ferro comprida, com um furo redondo em cada ponta. Gravado: R.F.R. · MARIA-FUMAÇA Nº 3.", "É a biela do trem! A peça que liga o pistão às rodas. Alguém trouxe pra cá e escondeu no fundo da mina."], () => pegarPecaTrem("biela"), "Yasmin") };
   if (!R.fioCobre && !ls("roca_antena") && dist(p, MINA.fio) < 1.1) return { t: "Pegar o fio", loc: 1, fn: () => { R.fioCobre = true; S.colher(); falar(["Um rolo de fio de cobre dos trilhos velhos. Pesado, mas dá pra levar.", "Isso serve pra consertar a antena da torre!"], null, "Yasmin"); hud(); } };
   if (dist(p, MINA.carta) < 1.1) return { t: achadosBx().includes("mina") ? "Reler" : "Papel no prego", loc: 1, fn: () => lerAchadoBx("mina") };
   for (const o of MINA.ossos) if (dist(p, o) < .9) return { t: "Olhar", loc: 1, fn: () => falar([o.k < .5 ? "Ossos. Grandes demais pra ser de cachorro. Pequenos demais pra ser de boi." : "Um capacete de mineiro amassado, com a lâmpada quebrada. Tem marca de dente nele."], null, "Yasmin") };
@@ -4710,6 +4729,7 @@ function desenharMina(tm) {
   MINA.escoras.forEach(e => obj.push([e.y, () => { const x = PX(e.x), y = PY(e.y); if (!naTela(x, y, 60)) return; c.fillStyle = "#5a3a1e"; c.fillRect(x - TS * .5, y - TS * .9, TS * .12, TS * .9); c.fillRect(x + TS * .38, y - TS * .9, TS * .12, TS * .9); c.fillRect(x - TS * .56, y - TS * .98, TS * 1.12, TS * .14); c.fillStyle = "rgba(0,0,0,.3)"; c.fillRect(x - TS * .38, y - TS * .84, TS * .76, 3); }]));
   MINA.veios.forEach(v => obj.push([v.y, () => { const x = PX(v.x), y = PY(v.y); if (!naTela(x, y, 60)) return; const ok = !pg.includes(v.i); c.fillStyle = "#3a342c"; c.fillRect(x - TS * .45, y - TS * .7, TS * .9, TS * .7); for (let i = 0; i < 7; i++) { c.fillStyle = ok ? (i % 2 ? "#f2c94a" : "#c8962a") : "#5a5040"; c.beginPath(); c.moveTo(x - TS * .35 + i * TS * .11, y - TS * .2 - (i % 3) * TS * .12); c.lineTo(x - TS * .28 + i * TS * .11, y - TS * .32 - (i % 3) * TS * .12); c.lineTo(x - TS * .22 + i * TS * .11, y - TS * .18 - (i % 3) * TS * .12); c.fill(); } if (ok) { c.fillStyle = `rgba(255,230,140,${.3 + .3 * Math.sin(tm * 3 + v.i)})`; c.fillRect(x - TS * .1 + Math.sin(tm * 2 + v.i) * TS * .2, y - TS * .45, 2, 2); } }]));
   { const e = MINA.saida; obj.push([e.y + .3, () => { const x = PX(e.x), y = PY(e.y); c.fillStyle = "rgba(220,210,170,.18)"; c.beginPath(); c.moveTo(x - TS * .5, y - TS * 1.5); c.lineTo(x + TS * .5, y - TS * 1.5); c.lineTo(x + TS, y + TS * .5); c.lineTo(x - TS, y + TS * .5); c.fill(); c.fillStyle = "#5a3a1e"; c.fillRect(x - TS * .6, y - TS * 1.4, TS * .14, TS * 1.4); c.fillRect(x + TS * .46, y - TS * 1.4, TS * .14, TS * 1.4); c.fillRect(x - TS * .66, y - TS * 1.5, TS * 1.32, TS * .16); }]); }
+  if (!temPecaTrem("biela") && MINA.biela) { const b2 = MINA.biela; obj.push([b2.y, () => { const x = PX(b2.x), y = PY(b2.y); if (!naTela(x, y)) return; c.save(); c.translate(x, y - TS * .2); c.rotate(-.5); c.fillStyle = "#6a6e76"; c.fillRect(-TS * .5, -TS * .06, TS, TS * .12); c.fillStyle = "#8a8e96"; c.beginPath(); c.arc(-TS * .5, 0, TS * .12, 0, 7); c.arc(TS * .5, 0, TS * .12, 0, 7); c.fill(); c.fillStyle = "#1a1a1a"; c.beginPath(); c.arc(-TS * .5, 0, TS * .05, 0, 7); c.arc(TS * .5, 0, TS * .05, 0, 7); c.fill(); c.restore(); c.fillStyle = `rgba(255,220,120,${.25 + .2 * Math.sin(performance.now() / 300)})`; c.beginPath(); c.arc(x, y - TS * .2, TS * .6, 0, 7); c.fill(); }]); }
   if (!R.fioCobre && !ls("roca_antena")) { const f = MINA.fio; obj.push([f.y, () => { const x = PX(f.x), y = PY(f.y); if (!naTela(x, y)) return; c.strokeStyle = "#c87a3a"; c.lineWidth = 3; for (let i = 0; i < 4; i++) { c.beginPath(); c.ellipse(x, y - TS * .15, TS * (.2 + i * .04), TS * .1, 0, 0, 7); c.stroke(); } c.fillStyle = `rgba(242,201,74,${.35 + .3 * Math.sin(tm * 3)})`; c.beginPath(); c.arc(x, y - TS * .5, 3, 0, 7); c.fill(); }]); }
   { const f = MINA.carta; obj.push([f.y, () => { const x = PX(f.x), y = PY(f.y); if (!naTela(x, y)) return; c.fillStyle = "#c8b890"; c.fillRect(x - TS * .12, y - TS * 1.1, TS * .24, TS * .3); c.fillStyle = "#c8a050"; c.beginPath(); c.ellipse(x + TS * .3, y - TS * .1, TS * .2, TS * .12, 0, PI, 0); c.fill(); if (!achadosBx().includes("mina")) { c.fillStyle = `rgba(242,201,74,${.35 + .3 * Math.sin(tm * 3)})`; c.beginPath(); c.arc(x, y - TS * 1.25, 3, 0, 7); c.fill(); } }]); }
   MINA.ossos.forEach(o => obj.push([o.y, () => { const x = PX(o.x), y = PY(o.y); if (!naTela(x, y)) return; c.fillStyle = "#d8d0b8"; if (o.k < .5) { c.fillRect(x - TS * .25, y - 2, TS * .5, 4); c.beginPath(); c.arc(x - TS * .25, y, 4, 0, 7); c.arc(x + TS * .25, y, 4, 0, 7); c.fill(); } else { c.fillStyle = "#8a7a3a"; c.beginPath(); c.ellipse(x, y - TS * .12, TS * .22, TS * .16, 0, PI, 0); c.fill(); c.fillRect(x - TS * .26, y - TS * .12, TS * .52, 3); } }]));
@@ -5434,6 +5454,7 @@ const BENTO = { id: "bento", nome: "Seu Bento", look: { pele: "#8a5a3a", roupa: 
 const CORES_BARCO = [["#7a4a24", "Madeira"], ["#2a5a9a", "Azul"], ["#b82a1e", "Vermelho"], ["#3a7a3a", "Verde"], ["#e8c84a", "Amarelo"], ["#e8e2d4", "Branco"], ["#2a2a2e", "Preto"]];
 function opcoesBento() {
   const l = [], item = (nome, desc, preco, ok, fn) => { preco = caro(preco); l.push({ nome, desc, preco, ok: ok && R.moedas >= preco, fn }); }, B = R.barco;
+  if (ls("roca_ipupiara_morto") && !temPecaTrem("valvula")) item("Válvula da caldeira", "O Seu Bento pescou no Poção depois que o Ipupiara morreu. É peça do trem!", 0, true, () => pegarPecaTrem("valvula"));
   item(R.arpao ? "✓ Arpão de proa" : "Arpão de proa", "Um arpão grande montado na frente do barco. É a única arma que machuca o Ipupiara", 110, !R.arpao, () => { R.arpao = true; });
   item(R.arpaoBom ? "✓ Ponta farpada" : "Ponta farpada pro arpão", "Arpão mais forte e recarrega mais rápido", 70, R.arpao && !R.arpaoBom, () => { R.arpaoBom = true; });
   item(R.canhao ? "✓ Canhãozinho de popa" : "Canhãozinho de popa", "Atira rápido. Derruba tentáculo e piranha (no couro do Ipupiara não faz nem cócega)", 80, !R.canhao, () => { R.canhao = true; });
@@ -5538,10 +5559,10 @@ function danoBarco(d, txt) { const B = R.barco; if (!B) return; d *= R.casco ? .
   if (txt) efeito(seg > 0 ? `${txt} A armadura segurou! −${Math.round(resto)}` : `${txt} −${Math.round(resto)}`, seg > 0 ? "#f2c94a" : "#e2483d"); if (B.hp <= 0) afundarBarco("ipupiara"); }
 function atualizarChefe(dt) {
   if (ls("roca_ipupiara_morto")) { R.chefe = null; return; }
-  const C = R.chefe || (R.chefe = novoChefe()), B = R.barco; C.t += dt; C.flash = Math.max(0, C.flash - dt);
+  const C = R.chefe || (R.chefe = novoChefe()), B = R.barco; C.t += dt; C.flash = Math.max(0, C.flash - dt); if (C.nhac) C.nhac = Math.max(0, C.nhac - dt);
   const ocupado = B && Object.keys(B.postos).length > 0, dB = B ? Math.hypot(B.x - POCAO.x, B.y - POCAO.y) : 99;
   if (C.fase === "dorme") { C.hp = Math.min(C.hpMax, C.hp + dt * 2); if (!ocupado || dB > POCAO.r) { C.avisou = false; return; }
-    if (!R.arpao) { if (!C.avisou) { C.avisou = true; R.tremor = .8; tocarTom(38, 2.5, { tipo: "sawtooth", vol: .25, ate: 25, lp: 180 }); efeito("Uma sombra do tamanho de uma ilha passou embaixo do barco...", "#e2483d"); setTimeout(() => R && falar(["Tem uma coisa ENORME embaixo da gente. O barco inteiro levantou e desceu.", "Sem arma nenhuma, eu não fico aqui. O Seu Bento falou de um arpão..."], null, "Yasmin"), 600); } return; }
+    if (!R.arpao && !C.avisou) { C.avisou = true; setTimeout(() => R && falar(["Uma cabeça do tamanho de uma casa saiu da água do Poção!", "Eu não tenho arpão! Sem arpão eu não mato isso. REMA PRA LONGE, Yasmin!", "(O Seu Bento, na barraca do píer, vende o arpão de proa.)"], null, "Yasmin"), 2200); }
     const hpN = hpChefeBase(); if (Math.abs(hpN - C.hpMax) > 1) { C.hp = C.hp / C.hpMax * hpN; C.hpMax = hpN; }
     Object.assign(C, { fase: "surge", t: 0, x: POCAO.x, y: POCAO.y }); R.tremor = 1.2; tocarTom(40, 3, { tipo: "sawtooth", vol: .3, ate: 22, lp: 200 }); tocarRuido(2, { filtro: "lowpass", f: 300, vol: .4 }); efeito("O IPUPIARA ACORDOU!", "#e2483d"); if (R.sino) [0, .4, .8, 1.2].forEach(q => tocarTom(880, .6, { tipo: "sine", vol: .07, quando: q })); if (R.papagaio) setTimeout(() => R && efeito("Zé: \"REMA! REMA! CURRUPACO!\"", "#7ad86b"), 900);
     if (!ls("roca_ipupiara_visto")) { ls("roca_ipupiara_visto", 1); setTimeout(() => R && falar(["A água do Poção subiu feito um morro. E de dentro dela... uma cabeça do tamanho da casa da vó, cheia de dente, com uma corrente enferrujada no pescoço.", "É o Ipupiara. A corrente é a do Santa Dora. O vô está lá dentro de algum jeito, eu sei.", "Miau! AS GUELRAS, YASMIN! Quando brilharem vermelho, arpão nelas!"], null, "Yasmin"), 500); } return; }
@@ -5561,15 +5582,15 @@ function atualizarChefe(dt) {
   else if (C.fase === "exposto") { virar(); if (C.t > (fase3 ? 3 : 3.8)) proximo(); }
   else if (C.fase === "tentaculos") { virar(); if (C.t > 2.6 / vel) { C.fase = "exposto"; C.t = 0; } }
   else if (C.fase === "cuspe") { virar(); C.k -= dt; if (C.k <= 0 && C.t < 2.4) { C.k = fase2 ? .32 : .45; const lead = .5, tx = B.x + Math.cos(B.ang) * B.v * lead, ty = B.y + Math.sin(B.ang) * B.v * lead, a = Math.atan2(ty - (C.y - .6), tx - C.x) + rnd(-.12, .12), v = 7.5 * vel; C.cusp.push({ x: C.x + Math.cos(a) * 2, y: C.y - .6 + Math.sin(a) * 2, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0 }); tocarRuido(.25, { filtro: "bandpass", f: 600, vol: .2 }); } if (C.t > 3) { C.fase = "exposto"; C.t = 0; } }
-  else if (C.fase === "mergulha") { if (C.t > 1.2) { C.fase = "investe"; C.t = 0; const a = Math.atan2(B.y - C.y, B.x - C.x); C.vx = Math.cos(a) * 9 * vel; C.vy = Math.sin(a) * 9 * vel; C.bateu = false; efeito("Uma onda está vindo por baixo! DESVIA!", "#e2483d"); } }
-  else if (C.fase === "investe") { const nx = C.x + C.vx * dt, ny = C.y + C.vy * dt; if (aguaLg(nx, ny) && LG.fundo(nx, ny) > 1.5) { C.x = nx; C.y = ny; } else C.t = 99; if (!C.bateu && Math.hypot(B.x - C.x, B.y - C.y) < 1.8) { C.bateu = true; danoBarco(22, "O Ipupiara bateu no barco!"); B.v = -2.5; } if (C.t > 1.6) { C.fase = "surge"; C.t = .6; tocarRuido(1.2, { filtro: "lowpass", f: 300, vol: .35 }); R.tremor = .6; } }
-  else if (C.fase === "sorve") { virar(); const d = Math.hypot(B.x - C.x, B.y - C.y); if (d < 2.4) { C.k -= dt; if (C.k <= 0) { C.k = .7; danoBarco(10, "Mordida!"); } } if (C.t > 4.5) { C.fase = "exposto"; C.t = 0; } }
+  else if (C.fase === "mergulha") { if (C.t > 1.2) { C.fase = "investe"; C.t = 0; const a = Math.atan2(B.y - C.y, B.x - C.x); C.a = a; C.vx = Math.cos(a) * 7.5 * vel; C.vy = Math.sin(a) * 7.5 * vel; C.bateu = false; efeito("ELE VEM COM A BOCA ABERTA! DESVIA!", "#e2483d"); tocarTom(50, 1.4, { tipo: "sawtooth", vol: .25, ate: 90, lp: 300 }); } }
+  else if (C.fase === "investe") { const nx = C.x + C.vx * dt, ny = C.y + C.vy * dt; if (aguaLg(nx, ny) && LG.fundo(nx, ny) > 1.5) { C.x = nx; C.y = ny; } else C.t = 99; if (!C.bateu && Math.hypot(B.x - C.x, B.y - C.y) < 1.8) { C.bateu = true; C.nhac = .5; danoBarco(22, "NHAC! O Ipupiara mordeu o barco!"); tocarRuido(.3, { filtro: "bandpass", f: 900, vol: .4 }); B.v = -2.5; } if (C.t > 2) { C.fase = "surge"; C.t = .6; tocarRuido(1.2, { filtro: "lowpass", f: 300, vol: .35 }); R.tremor = .6; } }
+  else if (C.fase === "sorve") { virar(); const d = Math.hypot(B.x - C.x, B.y - C.y); if (d < 2.4) { C.k -= dt; if (C.k <= 0) { C.k = .7; C.nhac = .35; danoBarco(10, "Mordida!"); } } if (C.t > 4.5) { C.fase = "exposto"; C.t = 0; } }
   else if (C.fase === "piranhas") { virar(); if (C.t > 1.5) { C.fase = "exposto"; C.t = 0; } }
   C.som = (C.som || 0) - dt; if (C.som <= 0) { C.som = 2.2 + Math.random() * 2; const [v, pn] = somEm(C.x, C.y); tocarTom(42 + Math.random() * 10, 1.6, { tipo: "sawtooth", vol: .14 * v + .04, ate: 28, lp: 220, pan: pn }); }
 }
 function matarChefe() {
   const C = R.chefe; C.fase = "morto"; C.t = 0; C.tent = []; C.cusp = []; C.pir = []; ls("roca_ipupiara_morto", 1); R.moedas += 300; S.moedas(); R.tremor = 2; tocarTom(35, 4, { tipo: "sawtooth", vol: .35, ate: 18, lp: 160 }); efeito("O IPUPIARA MORREU! +300 moedas", "#f2c94a");
-  setTimeout(() => R && falar(["O Ipupiara urrou, virou de barriga pra cima e afundou devagar no Poção. A corrente do Santa Dora afundou junto.", "Aí a água ficou clara. Clarinha, até o fundo. E lá embaixo, no meio das algas, uma luz amarela piscando... piscando.", "Uma lanterna de barco. Que pisca. O vô sempre disse: nunca reme pra uma luz que não pisca. Essa pisca.", "Miau... acho que ele está dizendo obrigado, Yasmin. A Boiuna nunca mais vai subir."], () => lerAchadoLg("ipupiara"), "Yasmin"), 1500);
+  setTimeout(() => R && falar(["O Ipupiara urrou, virou de barriga pra cima e afundou devagar no Poção. A corrente do Santa Dora afundou junto.", "Aí a água ficou clara. Clarinha, até o fundo. E lá embaixo, no meio das algas, uma luz amarela piscando... piscando.", "Uma lanterna de barco. Que pisca. O vô sempre disse: nunca reme pra uma luz que não pisca. Essa pisca.", "Miau... acho que ele está dizendo obrigado, Yasmin. A Boiuna nunca mais vai subir.", "E quando o Ipupiara virou, caiu da barriga dele uma peça de bronze, que boiou até o barco: uma válvula com a gravação R.F.R. · MARIA-FUMAÇA Nº 3.", "A válvula da caldeira do trem da estação velha! Ele guardou isso esse tempo todo."], () => { pegarPecaTrem("valvula"); lerAchadoLg("ipupiara"); }, "Yasmin"), 1500);
 }
 function desenharBarco(x, y, ang, tm, o = {}) {
   const X = PX(x), Y = PY(y), T = TS, cor = R.corBarco || "#7a4a24", B = R.barco, bal = Math.sin(tm * 1.8 + x) * 1.5, hp = B ? B.hp / hpBarcoMax() : 1; if (!naTela(X, Y, T * 3)) return;
@@ -5644,12 +5665,14 @@ function desenharTiro(t, tm) { const X = PX(t.x), Y = PY(t.y) - TS * .25; if (!n
   if (t.k === "arpao") { c.save(); c.translate(X, Y); c.rotate(a); c.fillStyle = "#8a6038"; c.fillRect(-TS * .6, -2, TS * .6, 4); c.fillStyle = "#c8c8d0"; c.beginPath(); c.moveTo(0, -6); c.lineTo(TS * .25, 0); c.lineTo(0, 6); c.fill(); c.restore(); c.strokeStyle = "rgba(200,180,140,.6)"; c.lineWidth = 1; c.beginPath(); c.moveTo(X, Y); const B = R.barco; if (B) { const sp = seatPos("arpao"); c.quadraticCurveTo((X + PX(sp.x)) / 2, (Y + PY(sp.y)) / 2 + 10, PX(sp.x), PY(sp.y) - TS * .2); } c.stroke(); }
   else { c.fillStyle = "#1a1a1e"; c.beginPath(); c.arc(X, Y, 4, 0, 7); c.fill(); c.fillStyle = "rgba(220,220,220,.4)"; c.beginPath(); c.arc(X - t.vx * .03, Y - t.vy * .03, 5, 0, 7); c.fill(); } }
 /* ---------- o Ipupiara (gigante: a cabeça é do tamanho de uma casa) ---------- */
+let bocaSuave = .1; // a abertura da boca anda devagar (quanto mais perto o barco, mais abre)
 function desenharChefe(C, tm) {
   if (!C || C.fase === "dorme" || C.fase === "fim") return; const T = TS, X = PX(C.x), Y = PY(C.y); if (!naTela(X, Y, T * 14)) return;
-  const sub = C.fase === "mergulha" || C.fase === "investe", subindo = C.fase === "surge" ? Math.min(1, C.t / 1.6) : C.fase === "morto" ? Math.max(0, 1 - C.t / 3.5) : sub ? 0 : 1, d = Math.cos(C.a) >= 0 ? 1 : -1, ab = C.fase === "sorve" ? 1 : C.fase === "cuspe" ? .5 + .5 * Math.abs(Math.sin(tm * 8)) : C.fase === "exposto" ? .25 : .1;
+  const inv = C.fase === "investe", sub = C.fase === "mergulha", subindo = C.fase === "surge" ? Math.min(1, C.t / 1.6) : C.fase === "morto" ? Math.max(0, 1 - C.t / 3.5) : sub ? 0 : inv ? Math.min(.6, C.t * 2) : 1, d = inv ? (C.vx >= 0 ? 1 : -1) : Math.cos(C.a) >= 0 ? 1 : -1, ab = C.fase === "sorve" ? 1 : C.fase === "cuspe" ? .5 + .5 * Math.abs(Math.sin(tm * 8)) : C.fase === "exposto" ? .25 : .1;
   // sombra gigante na água + bolhas
   c.fillStyle = `rgba(4,10,14,${.55 - subindo * .2})`; c.beginPath(); c.ellipse(X - d * T * 3, Y + T * .5, T * 7, T * 2.6, 0, 0, 7); c.fill();
   for (let i = 0; i < 14; i++) { const q = (tm * .9 + i / 14) % 1; c.strokeStyle = `rgba(220,240,250,${.4 * (1 - q)})`; c.lineWidth = 1.5; c.beginPath(); c.ellipse(X + Math.sin(i * 2.1) * T * 3, Y + Math.cos(i * 1.7) * T, T * (.2 + q * .5), T * (.08 + q * .2), 0, 0, 7); c.stroke(); }
+  if (inv) { c.strokeStyle = "rgba(240,250,255,.8)"; c.lineWidth = 3; for (let i = 0; i < 3; i++) { c.beginPath(); c.ellipse(X - Math.sign(C.vx || 1) * i * T * .9, Y + T * .2, T * (2.6 - i * .4), T * (.7 - i * .1), 0, 0, 7); c.stroke(); } }
   if (sub) { if (C.fase === "investe") { c.strokeStyle = "rgba(240,250,255,.8)"; c.lineWidth = 3; for (let i = 0; i < 3; i++) { c.beginPath(); c.ellipse(X - Math.sign(C.vx || 1) * i * T * .9, Y, T * (2.2 - i * .4), T * (.6 - i * .1), Math.atan2(C.vy, C.vx), 0, 7); c.stroke(); } } return; }
   const sobe = T * 4 * subindo, hx = X, hy = Y - sobe, fl = C.flash > 0;
   c.save(); c.beginPath(); c.rect(X - T * 16, Y - T * 16, T * 32, T * 16 + T * .2); c.clip(); // só o que está acima da água
@@ -5666,7 +5689,7 @@ function desenharChefe(C, tm) {
   // crista de espinhos
   c.fillStyle = "#b8a878"; for (let i = 0; i < 7; i++) { const sx = hx - d * T * (2 - i * .45), sy = hy - T * (1.45 + Math.sin(i * .9) * .2); c.beginPath(); c.moveTo(sx - 6, sy + 8); c.lineTo(sx - d * 4, sy - T * (.6 + (i % 2) * .3)); c.lineTo(sx + 6, sy + 8); c.fill(); }
   // a bocona: quanto mais perto o barco, mais ele abre pra engolir
-  const Bb = R.barco, dBoca = Bb ? Math.hypot(Bb.x - C.x, Bb.y - C.y) : 99, perto = cl(1 - (dBoca - 2.5) / 7, 0, 1), ab2 = Math.max(ab, Math.pow(perto, 1.2)), drop = T * (.25 + ab2 * 1.9), bx = hx + d * T * 1.35, byy = hy + T * .35;
+  const Bb = R.barco, dBoca = Bb ? Math.hypot(Bb.x - C.x, Bb.y - C.y) : 99, perto = cl((14 - dBoca) / 11, 0, 1), alvoB = C.nhac > 0 ? .02 : Math.max(ab, Math.pow(perto, 1.1)); bocaSuave += (alvoB - bocaSuave) * (C.nhac > 0 ? .5 : .08); const ab2 = bocaSuave, drop = T * (.25 + ab2 * 1.9), bx = hx + d * T * 1.35, byy = hy + T * .35;
   c.save(); c.translate(bx, byy); c.scale(d, 1); const jaw = x => drop * (x + T * 1.7) / (T * 3.2), X0 = -T * 1.7, X1 = T * 1.55;
   // dentro da boca: garganta, céu da boca e língua
   const bocaP = () => { c.beginPath(); c.moveTo(X0, -T * .05); c.lineTo(X1, -T * .05); c.lineTo(X1, jaw(X1)); c.lineTo(X0, jaw(X0) + T * .05); c.closePath(); };
@@ -5822,10 +5845,12 @@ function objetivosLista() {
   const principais = [
     { t: "Descobrir o que aconteceu com a vó", p: `${vo}/${voT} coisas da vó`, feito: vo >= voT, d: "Converse com o pessoal da Vila Sossego e junte as coisas dela. Seguir a história dela é o caminho pro fim." },
     { t: "Sobreviver às noites", d: "Cada bicho tem uma regra. Estão todas na aba \"Os bichos\"." },
-    { t: "Consertar a caminhonete (o jeito caro de fugir)", p: `${R.pecas || 0}/3 peças`, feito: (R.pecas || 0) >= 3, d: "As peças ficam na loja da vila. Fugir sem saber de nada custa caro." }];
+    { t: "Consertar a caminhonete (o jeito caro de fugir)", p: `${R.pecas || 0}/3 peças`, feito: (R.pecas || 0) >= 3, d: "As peças ficam na loja da vila. Fugir sem saber de nada custa caro." },
+    { t: "Consertar a Maria-Fumaça e subir a serra", p: `${pecasTrem().length}/5 peças`, feito: tremOk(), d: tremOk() ? "O trem anda! Na cabine da Maria-Fumaça (estação velha), parta pra Estação da Serra." : pecasTrem().length >= 5 ? "Você tem as 5 peças: leve tudo pra cabine da Maria-Fumaça, na estação velha." : "Falta: " + PECAS_TREM.filter(z => !temPecaTrem(z.k)).map(z => `${z.nome} (${z.onde.charAt(0).toLowerCase() + z.onde.slice(1)})`).join(" · ") + "." }];
   const sec = [
+    { t: "A Floresta da Serra", p: `${n(() => achadosFl().length)}/${ACHADOS_FL.length}`, feito: n(() => achadosFl().length) >= ACHADOS_FL.length, d: florestaLiberada() ? "Depois da porteira da Estação da Serra. De noite, NUNCA saia da trilha." : "Fase paga: a porteira fica na Estação da Serra, depois da viagem de trem." },
     { t: "Arrumar a casa da vó", p: `${cons}/${CONSERTOS.length}`, feito: cons >= CONSERTOS.length, d: "Na frente da casa: \"Arrumar a casa\". Ferramentas na loja de construção." },
-    { t: "Matar o Ipupiara", feito: !!ls("roca_ipupiara_morto"), d: R.arpao ? "No Poção, oeste da Lagoa Grande. Arpão nas guelras quando brilharem." : "Compre o arpão de proa com o Seu Bento, na Lagoa Grande." },
+    { t: "Matar o Ipupiara", feito: !!ls("roca_ipupiara_morto"), d: R.arpao ? "No Poção, oeste da Lagoa Grande. Arpão nas guelras quando brilharem. Ele guarda a válvula da caldeira do trem." : "Compre o arpão de proa com o Seu Bento, na Lagoa Grande." },
     { t: "Achados da Lagoa Grande", p: `${n(() => achadosLg().length)}/${ACHADOS_LG.length}`, feito: n(() => achadosLg().length) >= ACHADOS_LG.length },
     { t: "Achados da Baixada do Rio", p: `${n(() => achadosBx().length)}/${ACHADOS_BX.length}`, feito: n(() => achadosBx().length) >= ACHADOS_BX.length },
     { t: "O trem da estação velha", p: `${n(() => achadosTrem().length)}/${n(() => ACHADOS_TREM.length)}`, feito: n(() => achadosTrem().length) >= n(() => ACHADOS_TREM.length) },
@@ -5834,6 +5859,402 @@ function objetivosLista() {
     { t: "Consertar a antena da torre", feito: !!ls("roca_antena"), d: "O fio de cobre está no fundo da mina." },
     { t: "Deixar o barco do vô pronto pra briga", p: `${["arpao", "canhao", "casco", "vela", "colete", "dinamite"].filter(k => R[k]).length + (R.armCouro || R.armFerro ? 1 : 0)}/7`, feito: ["arpao", "canhao", "casco", "vela", "colete", "dinamite"].every(k => R[k]) && (R.armCouro || R.armFerro), d: "Arpão, canhão, casco reforçado, vela e coletes, com o Seu Bento." }];
   return { principais, secundarios: sec };
+}
+
+/* =====================================================================
+   O TREM CONSERTADO: as 5 peças da Maria-Fumaça, a viagem subindo a
+   serra, a Estação da Serra (a linha está interditada mais à frente) e
+   a porteira da Floresta da Serra, uma fase paga (compra no Google Play).
+   ===================================================================== */
+const PECAS_TREM = [
+  { k: "valvula", nome: "Válvula da caldeira", onde: "O Ipupiara engoliu. Mate ele na Lagoa Grande" },
+  { k: "biela", nome: "Biela de ferro", onde: "Num beco lá no fundo da mina da Baixada" },
+  { k: "injetor", nome: "Injetor d'água", onde: "Na caldeira da moenda, dentro do engenho da Baixada" },
+  { k: "manometro", nome: "Manômetro", onde: "O Seu Juvêncio vende, na oficina da Vila Sossego" },
+  { k: "regulador", nome: "Regulador", onde: "No cofre do breque do trem. O segredo está riscado na tampa" }];
+const pecasTrem = () => { try { return JSON.parse(ls("roca_pecas_trem") || "[]"); } catch (e) { return []; } };
+const temPecaTrem = k => pecasTrem().includes(k);
+const tremOk = () => !!ls("roca_trem_ok");
+function pegarPecaTrem(k) { const l = pecasTrem(); if (l.includes(k)) return; l.push(k); ls("roca_pecas_trem", JSON.stringify(l)); const p = PECAS_TREM.find(q => q.k === k);
+  S.colher(); tocarTom(660, .15, { tipo: "triangle", vol: .06 }); tocarTom(990, .25, { tipo: "triangle", vol: .06, quando: .12 }); efeito(`Peça do trem: ${p.nome} (${l.length}/5)`, "#f2c94a");
+  if (l.length >= 5) setTimeout(() => R && efeito("As 5 peças! Leve pra cabine da Maria-Fumaça", "#f2c94a"), 1600); hud(); }
+// o cofre do breque: o segredo 3 · 1 · 5 está riscado na tampa
+function abrirCofreBreque() {
+  if (temPecaTrem("regulador")) return falar(["O cofre está aberto e vazio. O regulador já está comigo."], null, "Yasmin");
+  const dig = [0, 0, 0]; painelAberto = true; el.rcPainel.hidden = false;
+  const pint = () => {
+    el.rcPainel.innerHTML = `<div class="rc-caixa" style="max-width:560px"><h2>Cofre do breque</h2><p>Um cofre de ferro com três rodinhas de número. Alguém riscou na tampa, com prego: <b>3 · 1 · 5</b>.</p><p style="opacity:.75">Toque em cada número pra girar.</p>
+      <div class="rc-linha" style="justify-content:center;gap:16px;margin:10px 0">${dig.map((d, i) => `<button type="button" class="rc-op dest" data-d="${i}" style="font-size:40px!important;min-width:78px;min-height:78px">${d}</button>`).join("")}</div>
+      <div class="rc-linha"><button type="button" class="rc-op dest" id="rcAbrirCofre">Abrir</button><button type="button" class="rc-op" id="rcFechar">Fechar</button></div></div>`;
+    el.rcPainel.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => { dig[+b.dataset.d] = (dig[+b.dataset.d] + 1) % 10; tocarTom(1400, .03, { tipo: "square", vol: .04 }); pint(); document.querySelector(`[data-d="${b.dataset.d}"]`).focus(); }));
+    document.getElementById("rcAbrirCofre").addEventListener("click", () => {
+      if (dig.join("") === "315") { fecharPainel(); tocarRuido(.4, { filtro: "lowpass", f: 500, vol: .25 }); falar(["Clique, clique, CLAQUE. A porta do cofre abriu rangendo.", "Dentro tem uma alavanca de bronze embrulhada num pano de óleo, com uma etiqueta: \"Regulador da Maria-Fumaça nº 3. Tirado pra ela não partir. — Zé Carvoeiro, 17/03/1966\".", "O maquinista tirou a peça de propósito. Pra ninguém mais levar o trem embora."], () => pegarPecaTrem("regulador"), "Yasmin"); }
+      else { tocarRuido(.25, { filtro: "lowpass", f: 300, vol: .2 }); efeito("Clique. Não abriu.", "#e8e2d4"); } });
+    document.getElementById("rcFechar").addEventListener("click", fecharPainel); };
+  pint(); focarPrimeiro();
+}
+function comprarManometro() {
+  const preco = caro(180); if (temPecaTrem("manometro")) return falar(["Já te vendi o manômetro, menina. Cuida dele."], null, "Seu Juvêncio");
+  if (R.moedas < preco) return falar(["Manômetro de caldeira? Tenho um aqui, de locomotiva mesmo. Coisa rara.", `Faço por ${preco} moedas. Junta o dinheiro e volta.`], null, "Seu Juvêncio");
+  falar(["Manômetro de caldeira? Pra que você quer isso, menina?", "...Pra Maria-Fumaça da estação velha? Hm. Faz sessenta anos que ninguém tem coragem de mexer naquele trem.", `Tá. ${preco} moedas. E se aquilo andar, me avisa. Eu quero ver.`], () => { R.moedas -= preco; S.moedas(); pegarPecaTrem("manometro"); }, "Seu Juvêncio");
+}
+// a máquina da Maria-Fumaça (na cabine): examinar, consertar e partir
+function maquinaTrem() {
+  if (tremOk()) return viajarTrem("serra");
+  const l = pecasTrem(); ls("roca_trem_visto", 1);
+  if (l.length >= 5) return falar(["Coloquei tudo no lugar: a válvula na caldeira, a biela nas rodas, o injetor, o manômetro e o regulador.", "Enchi a fornalha com a lenha do tender e risquei o fósforo. A agulha do manômetro foi subindo... subindo...", "PSSSSHHHHH! A Maria-Fumaça respirou. Depois de sessenta anos, ela está VIVA.", "O caderno do maquinista diz que a linha sobe a serra até a Estação da Serra. Dá pra ir!"],
+    () => { ls("roca_trem_ok", 1); S.vapor(); S.apitoTrem(null, null, 1); R.tremor = .6; efeito("A MARIA-FUMAÇA FUNCIONA!", "#f2c94a"); hud(); }, "Yasmin");
+  const falta = PECAS_TREM.filter(p => !l.includes(p.k));
+  falar(["A Maria-Fumaça está inteira por fora, mas por dentro falta coisa. O caderno do maquinista tem a lista do que foi tirado.", `Faltam ${falta.length} peças: ${falta.map(p => p.nome.toLowerCase()).join(", ")}.`, ...falta.slice(0, 3).map(p => `${p.nome}: ${p.onde.charAt(0).toLowerCase() + p.onde.slice(1)}.`), "(Tudo fica anotado no diário, na aba Objetivos.)"], () => hud(), "Yasmin");
+}
+
+/* ---------- a viagem de trem: cena de lado, com a serra passando ---------- */
+function viajarTrem(para) {
+  if (painelAberto) fecharPainel(); R.predio = null; R.dentro = false; R.correndo = false; R.escE = null;
+  R.viagem = { t: 0, para, dur: 11 }; S.apitoTrem(null, null, 1); setTimeout(() => R && R.viagem && S.vapor(), 500); hud();
+}
+function chegarViagem() { const v = R.viagem; R.viagem = null;
+  if (v.para === "serra") irSerra(); else { irEstacao(); const lo = vagao("loco"); R.eu.x = lo.porta; R.eu.y = TREM_Y1 + .7; cam.x = R.eu.x; cam.y = R.eu.y; if (R.trocado) enviar({ t: "pos", x: R.eu.x, y: R.eu.y }); }
+  S.apitoTrem(null, null, .5); R.fade = 1; hud(); }
+const LEGENDAS_IDA = [[0, "A Maria-Fumaça apitou. Depois de sessenta anos, ela andou."], [.18, "Passamos pelo sítio da vó. Tinha alguém na janela, acenando."], [.36, "A linha começou a subir a serra. Araucária pra todo lado."], [.55, "Túnel. Escuro. Alguém bateu no vidro, do lado de fora."], [.7, "Estação da Serra. O fim da linha... pelo menos por enquanto."]];
+const LEGENDAS_VOLTA = [[0, "De volta pra Roça. A serra vai ficando pra trás."], [.3, "Lá de cima dá pra ver a Lagoa Grande brilhando."], [.55, "O túnel de novo. Dessa vez ninguém bateu."], [.7, "A Estação da Roça. O relógio continua parado nas 3 e 15."]];
+function desenharViagem(tm) {
+  { const rr = document.getElementById("roca"); if (rr && !rr.classList.contains("rc-viajando")) { rr.classList.add("rc-viajando"); const tira = () => { if (R && R.viagem) return setTimeout(tira, 300); rr.classList.remove("rc-viajando"); }; setTimeout(tira, 300); } }
+  const v = R.viagem, q = cl(v.t / v.dur, 0, 1), nt = horaNoite(), ida = v.para === "serra", vel = Math.min(1, v.t / 2.5) * (q > .85 ? Math.max(.15, (1 - q) / .15) : 1), anda = v.t * 60 * (.4 + vel * .6);
+  c.save(); if (!ida) { c.translate(W, 0); c.scale(-1, 1); }
+  // céu, sol ou lua
+  const ceu = c.createLinearGradient(0, 0, 0, H * .7); if (nt > .5) { ceu.addColorStop(0, "#0a1024"); ceu.addColorStop(1, "#28304a"); } else { ceu.addColorStop(0, "#5aa0d8"); ceu.addColorStop(1, "#cfe4ee"); } c.fillStyle = ceu; c.fillRect(0, 0, W, H);
+  c.fillStyle = nt > .5 ? "#f0ecd8" : "#fff2c0"; c.beginPath(); c.arc(W * .78, H * .16, H * .06, 0, 7); c.fill(); if (nt > .5) for (let i = 0; i < 40; i++) { c.fillStyle = `rgba(255,255,240,${.3 + .3 * Math.sin(tm * 2 + i)})`; c.fillRect((i * 97.3) % W, (i * 41.7) % (H * .45), 2, 2); }
+  const serra = (base, amp, k, lento, cor) => { c.fillStyle = cor; c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W + 10; x += 10) { const X = x + anda * lento; c.lineTo(x, base - (Math.sin(X * .004 * k) * .6 + Math.sin(X * .011 * k + 1) * .3 + Math.sin(X * .023 * k + 2) * .1) * amp - amp * q * .6); } c.lineTo(W, H); c.fill(); };
+  serra(H * .5, H * .16, 1, .05, nt > .5 ? "#1a2034" : "#7a96b0"); serra(H * .58, H * .14, 1.6, .15, nt > .5 ? "#141a24" : "#5a7a62");
+  // araucárias na encosta do meio
+  for (let i = 0; i < 14; i++) { const x = ((i * 137 - anda * .35) % (W + 160) + W + 160) % (W + 160) - 80, b = H * .66 + Math.sin(i * 3) * 8, h = H * (.12 + (i % 3) * .03); c.fillStyle = nt > .5 ? "#0e140e" : "#2a4a2a"; c.fillRect(x - 2, b - h, 4, h); for (let j = 0; j < 3; j++) { c.beginPath(); c.ellipse(x, b - h + j * h * .12, h * (.32 - j * .07), h * .07, 0, PI, 0); c.fill(); } }
+  c.fillStyle = nt > .5 ? "#1a2414" : "#5a7a34"; c.fillRect(0, H * .68, W, H * .32);
+  // postes do telégrafo passando rápido
+  for (let i = 0; i < 4; i++) { const x = ((i * W / 3 - anda * 1.4) % (W * 1.333) + W * 1.333) % (W * 1.333) - 40; c.fillStyle = nt > .5 ? "#1a140c" : "#4a3420"; c.fillRect(x, H * .42, 6, H * .4); c.fillRect(x - 14, H * .45, 34, 4); c.strokeStyle = "rgba(20,20,20,.5)"; c.lineWidth = 1; c.beginPath(); c.moveTo(x - 14, H * .45); c.quadraticCurveTo(x - W * .15, H * .5, x - W * .33, H * .45); c.stroke(); }
+  // trilho e dormentes
+  const gyT = H * .84; c.fillStyle = "#5a5048"; c.fillRect(0, gyT - 4, W, H * .1); for (let i = 0; i < W / 22 + 2; i++) { const x = ((i * 22 - anda * 3) % (W + 44) + W + 44) % (W + 44) - 22; c.fillStyle = "#3a2a1a"; c.fillRect(x, gyT, 12, 10); } c.fillStyle = "#8a8a90"; c.fillRect(0, gyT - 2, W, 3);
+  // o trem (usa o desenho da estação, num TS próprio)
+  { const TS0 = TS, cx0 = cam.x, cy0 = cam.y; TS = Math.min(W / 17, H / 6.2); cam.x = 35.4; cam.y = TRILHO_Y + .45 - (gyT + TS * .02 - H / 2) / TS; const bal = Math.sin(tm * 14) * .6;
+    c.save(); c.translate(0, bal); for (const id of ["passageiros", "tender", "loco"]) { const v2 = { ...vagao(id) }; v2.x = { passageiros: 24.6, tender: 32.6, loco: 36.6 }[id]; try { desenharCarro(v2, tm, nt); } catch (e) {} }
+      // fumaça grossa saindo da chaminé e indo pra trás
+      const chx = PX(36.6 + 6.15), chy = PY(TRILHO_Y) - TS * 2.25; for (let i = 0; i < 14; i++) { const f = (tm * .9 + i / 14) % 1; c.fillStyle = `rgba(${nt > .5 ? "120,120,120" : "230,230,230"},${.55 * (1 - f)})`; c.beginPath(); c.arc(chx - f * W * .55 * (.3 + vel * .7), chy - f * TS * 2.4 + Math.sin(tm * 3 + i) * 6, TS * (.25 + f * 1.1), 0, 7); c.fill(); }
+      if (nt > .4) { const g = c.createRadialGradient(PX(36.6 + 7.1), PY(TRILHO_Y) - TS * .9, 0, PX(36.6 + 7.1), PY(TRILHO_Y) - TS * .9, TS * 5); g.addColorStop(0, "rgba(255,230,150,.45)"); g.addColorStop(1, "rgba(255,230,150,0)"); c.fillStyle = g; c.fillRect(PX(36.6 + 7.1) - TS, PY(TRILHO_Y) - TS * 6, TS * 8, TS * 10); }
+    c.restore(); TS = TS0; cam.x = cx0; cam.y = cy0; }
+  // túnel
+  const tun = cl(Math.min((q - .53) / .03, (.69 - q) / .03), 0, 1); if (tun > 0) { c.fillStyle = `rgba(4,4,6,${.96 * tun})`; c.fillRect(0, 0, W, H); if (tun > .9) { c.fillStyle = "rgba(255,210,120,.25)"; for (let i = 0; i < 6; i++) c.fillRect(W * .25 + i * W * .07, H * .55, W * .03, H * .08); } }
+  c.restore();
+  // legenda e fade
+  const L = ida ? LEGENDAS_IDA : LEGENDAS_VOLTA; let txt = L[0][1]; for (const [k, t2] of L) if (q >= k) txt = t2;
+  c.font = `600 ${Math.round(Math.max(17, Math.min(26, W / 36)))}px "Crimson Pro", Georgia, serif`; const tw = c.measureText(txt).width + 40, bx = W / 2 - tw / 2, by = H * .06; c.fillStyle = "rgba(246,234,208,.94)"; c.fillRect(bx, by, tw, 44); c.strokeStyle = "#2a1a0c"; c.lineWidth = 3; c.strokeRect(bx, by, tw, 44); c.fillStyle = "#2a1a0c"; c.textAlign = "center"; c.fillText(txt, W / 2, by + 29); c.textAlign = "start";
+  const fd = Math.max(1 - v.t / .8, (v.t - v.dur + .9) / .9); if (fd > 0) { c.fillStyle = `rgba(0,0,0,${cl(fd, 0, 1)})`; c.fillRect(0, 0, W, H); }
+}
+
+/* ---------- a Estação da Serra ---------- */
+const SRW = 44, SRH = 30;
+const TREM_SR = [{ ...vagao("passageiros"), x: 4.6 }, { ...vagao("tender"), x: 12.6 }, { ...vagao("loco"), x: 16.6 }];
+TREM_SR.forEach(v => { if (v.porta) v.porta = v.porta - vagao(v.id).x + v.x; });
+const ESTACAO_SR = { x: 21.6, y: 12.9, w: 7.2, h: 3.4 }, PORTEIRA_FL = { x: 16, y: 27.4 }, ARISTIDES_P = { x: 20.6, y: 12.2 }, BARREIRA = { x: 32, y: 9.4 };
+const ARISTIDES = { id: "aristides", nome: "Seu Aristides", look: { pele: "#c8946a", roupa: "#2a3a5a", cabelo: "#e8e8e8", chapeu: "#2a3a5a", barba: 0, calca: "#2a2a34", velho: 1 } };
+let SR = null, CHAO_SR = null;
+function montarSerra() {
+  let sd = 9157; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  const arv = []; for (let i = 0; i < 3000 && arv.length < 70; i++) { const x = r() * SRW, y = r() * SRH; if (y > 6.5 && y < 17.5 && x < 31.5) continue; if (x > 11.5 && x < 20.5 && y > 12 && y < 28) continue; if (y > 23.5 && Math.abs(x - 16) < 7) continue; if (x > ESTACAO_SR.x - 1 && x < ESTACAO_SR.x + ESTACAO_SR.w + 1 && y > 11 && y < ESTACAO_SR.y + ESTACAO_SR.h + 1.5) continue; if (x > 29 && y < 16) continue; if (y > 26.6) continue; if (arv.some(a => Math.hypot(a.x - x, a.y - y) < 1.6)) continue; arv.push({ x, y, h: 3.4 + r() * 2.4, k: r(), t: r() < .75 ? 0 : 2 }); }
+  const pedras = []; for (let i = 0; i < 26; i++) pedras.push({ x: 30.5 + r() * 9, y: 6 + r() * 9.5, r: .35 + r() * .9, k: r() });
+  SR = { arv, pedras }; CHAO_SR = Chao(pintarChaoSerra, SRW, SRH);
+}
+function pintarChaoSerra(g) {
+  const P = 32; g.fillStyle = "#4e6a34"; g.fillRect(0, 0, SRW * P, SRH * P);
+  for (let i = 0; i < 2600; i++) { const s = semInd(i + 7e6), x = (s % 9973) / 9973 * SRW * P, y = ((s >> 7) % 7919) / 7919 * SRH * P; if (!vis(x, y)) continue; g.fillStyle = i % 3 ? "rgba(120,150,70,.25)" : "rgba(40,60,26,.3)"; g.beginPath(); g.ellipse(x, y, 6 + i % 18, 3 + i % 8, i, 0, 7); g.fill(); }
+  // encosta de pedra ao norte, cascalho e trilho
+  g.fillStyle = "#6a6258"; g.fillRect(0, 0, SRW * P, 8.2 * P); for (let i = 0; i < 260; i++) { const x = (i * 37.3) % (SRW * P), y = (i * 13.7) % (8 * P); g.fillStyle = i % 2 ? "rgba(40,36,30,.35)" : "rgba(160,150,130,.25)"; g.beginPath(); g.ellipse(x, y, 10 + i % 22, 6 + i % 9, i, 0, 7); g.fill(); }
+  g.fillStyle = "#7a7268"; g.fillRect(0, 8.2 * P, SRW * P, 2.2 * P); for (let i = 0; i < 900; i++) { g.fillStyle = i % 2 ? "rgba(50,46,40,.4)" : "rgba(180,170,150,.35)"; g.fillRect((i * 17.9) % (SRW * P), 8.2 * P + (i * 7.3) % (2.2 * P), 3, 3); }
+  for (let x = 0; x < 32 * P; x += 22) { g.fillStyle = "#4a3422"; g.fillRect(x, 8.75 * P, 12, 1.1 * P); } g.fillStyle = "#9a9aa2"; g.fillRect(0, 8.95 * P, 32 * P, 4); g.fillRect(0, 9.65 * P, 32 * P, 4);
+  // plataforma de pedra
+  g.fillStyle = "#a8a090"; g.fillRect(2.6 * P, 10.35 * P, 28.6 * P, 2.1 * P); g.strokeStyle = "rgba(60,54,44,.35)"; g.lineWidth = 2; for (let x = 2.6 * P; x < 31.2 * P; x += P * .9) { g.beginPath(); g.moveTo(x, 10.35 * P); g.lineTo(x, 12.45 * P); g.stroke(); } g.fillStyle = "#e8c84a"; g.fillRect(2.6 * P, 10.35 * P, 28.6 * P, 5);
+  // terra da barreira e a trilha até a porteira
+  g.fillStyle = "#6a5236"; g.beginPath(); g.ellipse(36 * P, 10 * P, 9 * P, 6 * P, 0, 0, 7); g.fill();
+  g.strokeStyle = "#8a6a44"; g.lineWidth = 1.6 * P; g.lineCap = "round"; g.beginPath(); g.moveTo(16 * P, 12.4 * P); g.quadraticCurveTo(15 * P, 20 * P, 16 * P, 28 * P); g.stroke(); g.strokeStyle = "rgba(60,40,20,.25)"; g.lineWidth = 3; for (let i = 0; i < 40; i++) { g.beginPath(); g.ellipse((15.3 + (i * .37) % 1.4) * P, (13 + i * .37) * P, 5, 3, 0, 0, 7); g.stroke(); }
+  g.fillStyle = "#1e3018"; g.fillRect(0, 28 * P, SRW * P, 2 * P);
+}
+const COISAS_SR = [
+  { x: 9.6, y: 12.5, r: 1.1, t: "Placa", dia: ["ESTAÇÃO DA SERRA · KM 251 · ALT. 1.180 m", "Embaixo, menor: ← ROÇA 37 km · TÚNEL 7 → · CAPITAL 165 km"], noite: ["A placa está coberta de orvalho. Alguém escreveu com o dedo: VOLTA."] },
+  { x: 30.4, y: 11.6, r: 1.4, t: "Barreira", dia: ["A serra desabou em cima da linha. Pedras do tamanho do galinheiro e uma araucária deitada atravessando os trilhos.", "Uma placa torta: LINHA INTERDITADA · DESLIZAMENTO · MARÇO DE 1966. Daqui o trem não passa."], noite: ["Do outro lado das pedras, longe, um apito de trem. Mas o único trem que existe está aqui atrás de mim."] },
+  { x: 26.4, y: 12.4, r: 1, t: "Relógio", dia: ["O relógio da estação marca 4 e 40. Aqui ele parou mais tarde que lá embaixo."], noite: ["O relógio está andando. Certinho. Tic, tac."] },
+  { x: 6.2, y: 12.2, r: 1, t: "Banco", dia: ["Um banco de madeira com uma mala esquecida embaixo. A etiqueta diz: Zé Carvoeiro."], noite: ["A mala está aberta. Dentro tem um chapéu de maquinista, molhado de sereno."] }];
+function irSerra() {
+  if (!SR) montarSerra(); R.lugar = "serra"; R.predio = null; R.dentro = false; R.eu.oco = false; const lo = TREM_SR[2]; R.eu.x = lo.porta; R.eu.y = 10.9; cam.x = R.eu.x; cam.y = R.eu.y; R.fade = 1; hud();
+  if (R.trocado) enviar({ t: "pos", x: R.eu.x, y: R.eu.y });
+  if (!ls("roca_serra_visto")) { ls("roca_serra_visto", 1); setTimeout(() => R && falar(["Estação da Serra. O ar aqui em cima é frio e cheira a pinho.", "Mais pra frente a linha está soterrada: a serra desabou em cima dos trilhos. O trem não passa daqui.", "Mas lá embaixo tem uma porteira grande, com uma placa: FLORESTA DA SERRA."], null, "Yasmin"), 700); }
+}
+function irSerraDaFloresta() { if (!SR) montarSerra(); R.lugar = "serra"; R.predio = null; R.eu.oco = false; R.eu.x = PORTEIRA_FL.x; R.eu.y = PORTEIRA_FL.y - .9; cam.x = R.eu.x; cam.y = R.eu.y; R.fade = 1; S.porta(); hud(); if (R.trocado) enviar({ t: "pos", x: R.eu.x, y: R.eu.y }); }
+function livreSerra(x, y) { if (x < .5 || x > SRW - .5 || y < 10.45 || y > PORTEIRA_FL.y - .25) return false; const E = ESTACAO_SR; if (x > E.x && x < E.x + E.w && y > E.y + .4 && y < E.y + E.h + .1) return false; if (x > 29.6 && y < 14.5) return false; for (const a of SR.arv) if (Math.abs(a.x - x) < .4 && Math.abs(a.y - y) < .3) return false; return true; }
+function moverSerra(dt, dx, dy, vel) { if (!SR) montarSerra(); andaLivre(R.eu, dx, dy, vel, dt, livreSerra); }
+let convAr = 0;
+const FALAS_AR = [
+  ["Ora, ora... um trem! Faz sessenta anos que eu espero um trem nessa estação.", "Eu sou o Aristides, chefe da Estação da Serra. Era, pelo menos. A linha caiu em 1966 e eu fiquei por aqui."],
+  ["Depois daqui a linha ia pro Túnel 7 e descia pra Capital. Mas a serra desabou em cima dos trilhos, olha lá.", "Ninguém nunca veio limpar. Dizem que a floresta não deixa."],
+  ["A porteira lá embaixo é da Floresta da Serra. Mata fechada, araucária de quinhentos anos, cachoeira, o túnel velho...", "E de noite tem o grito. Parece gente perdida chamando socorro. NUNCA saia da trilha atrás do grito, menina."],
+  ["Seu avô passou por aqui uma vez, sabia? O Sebastião. Entrou na floresta com uma lanterna e uma fotografia.", "Voltou três dias depois, sem a fotografia. E nunca me contou o que viu."],
+  ["O Tibúrcio, o mateiro, acampa lá dentro, pro lado do sol nascente. Se for entrar, procura ele. Ele sabe as regras do mato."]];
+function conversarAristides() { const l = FALAS_AR[convAr % FALAS_AR.length]; convAr++; falar(ehNoite() ? [...l, "(Ele olha pro escuro da porteira e baixa a voz.) Hoje não, menina. De noite, não."] : l, null, ARISTIDES.nome); }
+function oQueFazerSerra() {
+  if (!SR) montarSerra(); const p = R.eu;
+  for (const v of TREM_SR) if (v.porta && Math.abs(p.x - v.porta) < .9 && p.y < 11.6) return { t: "Voltar de trem", loc: 1, fn: () => viajarTrem("roca") };
+  if (Math.hypot(p.x - PORTEIRA_FL.x, p.y - PORTEIRA_FL.y) < 1.6) return { t: florestaLiberada() ? "Entrar na floresta" : "Porteira da floresta", loc: 1, fn: () => florestaLiberada() ? irFloresta() : abrirCompraFloresta() };
+  if (dist(p, ARISTIDES_P) < 1.3) return { t: "Conversar", loc: 1, fn: conversarAristides };
+  if (Math.hypot(p.x - (ESTACAO_SR.x + 2), p.y - (ESTACAO_SR.y + ESTACAO_SR.h + .4)) < 1) return { t: "Sala do chefe", loc: 1, fn: () => falar(ehNoite() ? ["A sala do chefe da estação. O telégrafo está batendo sozinho: tec-tec, tec... S-O-S."] : ["A sala do chefe da estação: telégrafo, um fogão de lenha, a escala dos trens na parede. O último da lista: 17/03/1966, às 4 e 40. Riscado."], null, "Yasmin") };
+  const o = coisaPerto(COISAS_SR, p, 1); if (o) return { t: o.t || "Olhar", fn: () => olharCoisa(o), loc: 1 };
+  return null;
+}
+function objetivoSerra() { return florestaLiberada() ? `entrar na Floresta da Serra (achados ${achadosFl().length}/${ACHADOS_FL.length}) · a porteira fica no fim da trilha` : "a Floresta da Serra fica depois da porteira, no fim da trilha · ou volte de trem"; }
+function desenharAraucaria(x, y, h, k, tm, nt) { // x,y em pixels na base
+  const T = TS, H2 = h * T, bal = Math.sin(tm * .9 + x * .01) * T * .05; sombra(x + T * .4, y, T * .9, T * .25, .3);
+  c.fillStyle = nt > .5 ? "#2a1e14" : "#5a3e26"; c.fillRect(x - T * .1, y - H2, T * .2, H2); c.fillStyle = "rgba(0,0,0,.25)"; c.fillRect(x + T * .02, y - H2, T * .08, H2);
+  const verde = nt > .5 ? ["#0e1c10", "#14261a"] : ["#1e3a22", "#2e5230"]; for (let j = 0; j < 4; j++) { const yy = y - H2 + j * T * .32, w = T * (1.5 - j * .28 + k * .3); c.fillStyle = verde[j % 2]; c.beginPath(); c.moveTo(x - w + bal, yy - T * .05); c.quadraticCurveTo(x + bal, yy - T * .55, x + w + bal, yy - T * .05); c.quadraticCurveTo(x + bal, yy - T * .2, x - w + bal, yy - T * .05); c.fill(); for (const s of [-1, 1]) { c.beginPath(); c.arc(x + s * w * .95 + bal, yy - T * .12, T * .13, 0, 7); c.fill(); } }
+}
+function desenharSerra(tm) {
+  if (!SR) montarSerra(); const nt = horaNoite();
+  cam.x += (R.eu.x - cam.x) * .1; cam.y += (R.eu.y - .8 - cam.y) * .1; cam.x = cl(cam.x, W / TS / 2, SRW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2 - 2, SRH - H / TS / 2); if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+  c.fillStyle = "#4e6a34"; c.fillRect(0, 0, W, H); desenharChaoChunks(CHAO_SR);
+  const obj = [];
+  TREM_SR.forEach(v => obj.push([TRILHO_Y + .5, () => desenharCarro(v, tm, nt)]));
+  SR.arv.forEach(a => obj.push([a.y, () => { const X = PX(a.x), Y = PY(a.y); if (!naTela(X, Y - a.h * TS / 2, a.h * TS)) return; a.t === 2 ? desenharArvore({ x: a.x, y: a.y, r: .9 + a.k * .4, c: 4 }, tm) : desenharAraucaria(X, Y, a.h, a.k, tm, nt); }]));
+  SR.pedras.forEach(pd => obj.push([pd.y, () => { const X = PX(pd.x), Y = PY(pd.y); if (!naTela(X, Y)) return; sombra(X, Y, pd.r * TS, pd.r * TS * .3, .3); c.fillStyle = pd.k > .5 ? "#7a7268" : "#6a6258"; c.beginPath(); c.ellipse(X, Y - pd.r * TS * .4, pd.r * TS, pd.r * TS * .62, 0, 0, 7); c.fill(); c.fillStyle = "rgba(255,255,255,.12)"; c.beginPath(); c.ellipse(X - pd.r * TS * .3, Y - pd.r * TS * .7, pd.r * TS * .4, pd.r * TS * .2, 0, 0, 7); c.fill(); }]));
+  obj.push([10.4, () => { const X = PX(31.5), Y = PY(9.6); c.save(); c.translate(X, Y); c.rotate(-.12); c.fillStyle = "#4a3422"; c.fillRect(0, -TS * .22, TS * 7, TS * .44); c.fillStyle = "#3a2818"; for (let i = 0; i < 6; i++) c.fillRect(TS * (1 + i), -TS * .4, TS * .12, TS * .3); c.fillStyle = "#1e3a22"; c.beginPath(); c.ellipse(TS * 7, 0, TS * 1.2, TS * .7, 0, 0, 7); c.fill(); c.restore(); }]);
+  obj.push([11.9, () => { const X = PX(30.4), Y = PY(11.9); c.fillStyle = "#4a3a2a"; c.fillRect(X - 2, Y - TS * 1.1, 4, TS * 1.1); c.save(); c.translate(X, Y - TS * 1.1); c.rotate(.15); c.fillStyle = "#e8e2d0"; c.fillRect(-TS * .8, -TS * .3, TS * 1.6, TS * .5); c.fillStyle = "#c8281e"; c.fillRect(-TS * .8, -TS * .3, TS * 1.6, TS * .09); c.fillStyle = "#2a1a0c"; c.font = `800 ${Math.round(TS * .14)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText("LINHA", 0, -TS * .06); c.fillText("INTERDITADA", 0, TS * .12); c.textAlign = "start"; c.restore(); }]);
+  obj.push([ESTACAO_SR.y + ESTACAO_SR.h, () => { const E = ESTACAO_SR, X = PX(E.x), Y = PY(E.y + .5), w = E.w * TS, h = (E.h - .5) * TS; casaRural(X, Y, w, h, { parede: "#cfc6b4", barrado: "#5a3a2a", tel: "#5a3a2a", alt: 1, porta: "#3a2a1a", pfx: .28, janelas: [.62, .82], janCor: "#3a4a5a", luz: () => nt > .5 ? "rgba(255,210,130,.8)" : null }, tm, nt); c.fillStyle = "#2a1a0c"; c.fillRect(X + w * .3, Y - TS * .5, w * .4, TS * .34); c.fillStyle = "#f0e6c8"; c.font = `800 ${Math.round(TS * .2)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText("ESTAÇÃO DA SERRA", X + w / 2, Y - TS * .26); c.textAlign = "start"; }]);
+  obj.push([PORTEIRA_FL.y, () => desenharPorteiraFl(tm, nt)]);
+  obj.push([ARISTIDES_P.y, () => desenharNpc(ARISTIDES, PX(ARISTIDES_P.x), PY(ARISTIDES_P.y), TS, tm, { dir: -1 })]);
+  for (const [lx] of [[4], [12], [24], [29]]) obj.push([12.1, () => { const X = PX(lx), Y = PY(12.1); if (!naTela(X, Y)) return; c.fillStyle = "#2a2a2e"; c.fillRect(X - 2, Y - TS * 1.5, 4, TS * 1.5); c.fillStyle = nt > .4 ? "#ffd27a" : "#b8b0a0"; c.fillRect(X - 5, Y - TS * 1.62, 10, 10); }]);
+  for (const ou of outros()) if (ou.lugar === "serra") obj.push([ou.eu.y, () => desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: ou.nome || "Amigo(a)" })]);
+  obj.push([R.eu.y, () => desenharVoce(PX(R.eu.x), PY(R.eu.y), tm)]);
+  obj.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
+  // neblina da serra
+  for (let i = 0; i < 6; i++) { const x = PX(((i * 9.7 + tm * .3) % (SRW + 10)) - 5), y = PY(4 + (i * 5.3) % 24); const g = c.createRadialGradient(x, y, 0, x, y, TS * 5); g.addColorStop(0, `rgba(220,226,230,${.12 + nt * .06})`); g.addColorStop(1, "rgba(220,226,230,0)"); c.fillStyle = g; c.fillRect(x - TS * 5, y - TS * 5, TS * 10, TS * 10); }
+  if (nt > .02) luzSimples(nt, [[PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * raioLuz(R), R.lanterna ? 1 : .75], ...[4, 12, 24, 29].map(lx => [PX(lx), PY(12.1) - TS * 1.5, TS * 2.6, .85]), [PX(ESTACAO_SR.x + 5), PY(ESTACAO_SR.y + 2), TS * 2, .6], ...outros().filter(o => o.lugar === "serra").map(o => [PX(o.eu.x), PY(o.eu.y) - TS * .4, TS * raioLuz(o), .7])]);
+}
+// escuridão com furos de luz (igual às outras áreas)
+function luzSimples(nt, furos, escuro = .86) {
+  const lw = luzCv.width, lh = luzCv.height, kk = lw / W; lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(6,10,20,${(R.luaCheia ? escuro - .14 : escuro) * nt})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
+  for (const [x, y, r, f] of furos) { if (x < -r || x > W + r || y < -r || y > H + r) continue; const g = lc.createRadialGradient(x * kk, y * kk, 0, x * kk, y * kk, r * kk); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * kk, (y - r) * kk, r * 2 * kk, r * 2 * kk); }
+  lc.globalCompositeOperation = "source-over"; c.drawImage(luzCv, 0, 0, W, H);
+}
+function desenharPorteiraFl(tm, nt) {
+  const X = PX(PORTEIRA_FL.x), Y = PY(PORTEIRA_FL.y), T = TS; if (!naTela(X, Y, T * 4)) return; const aberta = florestaLiberada();
+  c.fillStyle = "#0e1a0c"; c.fillRect(X - T * 6, Y + T * .1, T * 12, T * 1.4); for (let i = -5; i <= 5; i++) desenharAraucaria(X + i * T * 1.1, Y + T * .9, 3 + (i * i) % 3 * .5, .5, tm, Math.max(nt, .6));
+  for (const s of [-1, 1]) { c.fillStyle = "#3a2818"; c.fillRect(X + s * T * 1.5 - T * .14, Y - T * 2.2, T * .28, T * 2.3); c.fillStyle = "#2a1a10"; c.fillRect(X + s * T * 1.5 - T * .2, Y - T * 2.3, T * .4, T * .14); }
+  c.fillStyle = "#5a3e24"; c.beginPath(); c.moveTo(X - T * 1.75, Y - T * 1.95); c.quadraticCurveTo(X, Y - T * 2.55, X + T * 1.75, Y - T * 1.95); c.lineTo(X + T * 1.75, Y - T * 1.6); c.quadraticCurveTo(X, Y - T * 2.2, X - T * 1.75, Y - T * 1.6); c.fill();
+  c.fillStyle = "#f0e2b8"; c.font = `800 ${Math.round(T * .22)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText("FLORESTA DA SERRA", X, Y - T * 1.86); c.textAlign = "start";
+  if (aberta) { for (const s of [-1, 1]) { c.save(); c.translate(X + s * T * 1.4, Y); c.scale(s * .35, 1); c.fillStyle = "#6a4a2a"; for (let i = 0; i < 4; i++) c.fillRect(-T * 1.3, -T * (.25 + i * .32), T * 1.3, T * .1); c.restore(); } }
+  else { c.fillStyle = "#6a4a2a"; for (let i = 0; i < 4; i++) c.fillRect(X - T * 1.36, Y - T * (.3 + i * .34), T * 2.72, T * .11); c.fillRect(X - T * .06, Y - T * 1.4, T * .12, T * 1.2); c.strokeStyle = "#5a5e66"; c.lineWidth = 3; c.beginPath(); c.moveTo(X - T * .5, Y - T * .5); c.lineTo(X + T * .5, Y - T * .9); c.moveTo(X - T * .5, Y - T * .9); c.lineTo(X + T * .5, Y - T * .5); c.stroke(); c.fillStyle = "#c8a030"; c.fillRect(X - T * .14, Y - T * .78, T * .28, T * .24); c.strokeStyle = "#c8a030"; c.lineWidth = 2.5; c.beginPath(); c.arc(X, Y - T * .78, T * .1, PI, 0); c.stroke(); c.fillStyle = "#2a1a0c"; c.fillRect(X - 1.5, Y - T * .7, 3, T * .08); }
+}
+
+/* ---------- a compra da Floresta (Google Play) ---------- */
+const PROD_FLORESTA = "floresta_serra";
+let PRECO_FL = "";
+const compraTeste = () => { try { return !!(window.Android && Android.compraTeste && Android.compraTeste()); } catch (e) { return false; } };
+const lojaPlay = () => { try { return !!(window.Android && Android.comprar); } catch (e) { return false; } };
+const florestaLiberada = () => !!ls("roca_floresta_paga") || compraTeste();
+window.rocaCompra = (id, st) => {
+  const msg = document.getElementById("rcCompraMsg");
+  if (id === PROD_FLORESTA && st === "ok") { const nova = !ls("roca_floresta_paga"); ls("roca_floresta_paga", 1); if (document.getElementById("rcComprarFl")) { fecharPainel(); if (R) { efeito("FLORESTA DA SERRA LIBERADA!", "#9bd86b"); falar(["A porteira destrancou com um estalo. O cadeado caiu no chão, sozinho.", "Obrigada por comprar a Floresta da Serra! Agora é entrar... e não sair da trilha de noite."], null, "Yasmin"); } } else if (nova && R) efeito("Floresta da Serra liberada", "#9bd86b"); if (R) hud(); return; }
+  const t = { cancelou: "Compra cancelada.", pendente: "Pagamento pendente: assim que a Google Play confirmar, a floresta abre.", semloja: "Não deu pra falar com a Google Play agora. Confira a internet e tente de novo.", semproduto: "A floresta ainda não está à venda na loja. Tente mais tarde.", erro: "Deu um erro na compra. Tente de novo." }[st];
+  if (msg && t) msg.textContent = t;
+};
+window.rocaPreco = (id, p) => { if (id !== PROD_FLORESTA || !p) return; PRECO_FL = p; const b = document.getElementById("rcComprarFl"); if (b) b.innerHTML = `🌲 Comprar · ${p}`; };
+try { if (window.Android && Android.restaurarCompras) setTimeout(() => { try { Android.restaurarCompras(); Android.pedirPreco(PROD_FLORESTA); } catch (e) {} }, 2500); } catch (e) {}
+function abrirCompraFloresta() {
+  painelAberto = true; el.rcPainel.hidden = false; const play = lojaPlay();
+  el.rcPainel.innerHTML = `<div class="rc-caixa" style="max-width:720px"><h2>🌲 Floresta da Serra</h2>
+    <p>Uma fase nova inteira depois da porteira: mata fechada de araucária, cachoeira, o Túnel 7 da ferrovia, o acampamento do Seu Tibúrcio, seis achados da história do vô Sebastião e um bicho novo, o <b>Pé-de-Garrafa</b>.</p>
+    <p>É uma expansão paga: comprando uma vez, ela fica liberada pra sempre na sua conta da Google Play.</p>
+    ${play ? "" : `<p style="color:#f2a33a">A compra é feita pela Google Play: baixe a Roça Assombrada pela Play Store no celular pra comprar.</p>`}
+    <div class="rc-linha"><button type="button" class="rc-op dest" id="rcComprarFl" ${play ? "" : "disabled"}>🌲 Comprar${PRECO_FL ? " · " + PRECO_FL : ""}</button>${play ? `<button type="button" class="rc-op" id="rcRestaurarFl">Já comprei</button>` : ""}<button type="button" class="rc-op" id="rcFechar">Agora não</button></div><p id="rcCompraMsg" style="min-height:1.4em"></p></div>`;
+  if (play) { document.getElementById("rcComprarFl").addEventListener("click", () => { document.getElementById("rcCompraMsg").textContent = "Abrindo a Google Play..."; try { Android.comprar(PROD_FLORESTA); } catch (e) { rocaCompra(PROD_FLORESTA, "erro"); } });
+    document.getElementById("rcRestaurarFl").addEventListener("click", () => { document.getElementById("rcCompraMsg").textContent = "Procurando sua compra..."; try { Android.restaurarCompras(); } catch (e) {} setTimeout(() => { const m = document.getElementById("rcCompraMsg"); if (m && !florestaLiberada()) m.textContent = "Não achei compra da floresta nessa conta da Google Play."; }, 4000); });
+    try { Android.pedirPreco(PROD_FLORESTA); } catch (e) {} }
+  document.getElementById("rcFechar").addEventListener("click", fecharPainel); focarPrimeiro();
+}
+
+/* =====================================================================
+   A FLORESTA DA SERRA (fase paga). Mata fechada de araucária, rio com
+   ponte de tronco, cachoeira, o Túnel 7 tapado, a capela dos
+   ferroviários, o acampamento do Tibúrcio e a caverna do Pé-de-Garrafa.
+   De noite: NUNCA saia da trilha. Fora dela, o Pé-de-Garrafa te acha.
+   Seguro: trilha, fogueira do Tibúrcio, capela, oco das árvores, e ele
+   não atravessa água.
+   ===================================================================== */
+const FLW = 96, FLH = 72;
+const TRILHAS_FL = [[[48, 71.6], [48, 64], [44, 58], [46, 50], [52, 44], [50, 38]], [[50, 38], [44, 36], [36, 32], [28, 30], [21, 24.5], [17.4, 18.4]], [[50, 38], [56, 38.4], [64, 40], [72, 38], [78.4, 36.6]], [[50, 38], [50, 32], [52, 24], [56, 16], [60, 10], [62, 6]], [[36, 32], [34, 40], [31.4, 45.6]], [[56, 16], [66, 14], [76, 12.4], [85.6, 10.6]]];
+const RIO_FL = [[0, 50], [10, 53], [20, 51], [30, 54], [40, 52.5], [50, 54], [60, 52], [72, 55], [84, 53], [96, 55]], CORREGO_FL = [[13, 18.4], [11, 26], [12.4, 34], [9, 42], [8, 52]];
+const PONTE_FL = [[44.2, 56.6], [45.4, 50.6]], CLAREIRA_FL = { x: 50, y: 38, r: 4.6 }, POCO_FL = { x: 13, y: 15.4, r: 3.4 };
+const TUNEL_FL = { x: 62, y: 4.2 }, CAVERNA_FL = { x: 86, y: 8.4 }, ACAMP_FL = { x: 80, y: 36.6 }, CAPELA_FL = { x: 30, y: 47.2 }, ENTRADA_FL = { x: 48, y: 70.4 };
+const OCOS_FL = [[42.4, 61], [38.6, 34.6], [61, 41.8], [54.2, 21.2], [23.6, 27.6], [70.6, 14.6]];
+const TIBURCIO = { id: "tiburcio", nome: "Seu Tibúrcio", look: { pele: "#8a5a36", roupa: "#4a5a2a", cabelo: "#d0c8b8", chapeu: "#6a5030", barba: 1, calca: "#3a3424", velho: 1 } }, TIBURCIO_P = { x: 78.4, y: 37.4 };
+const ACHADOS_FL = [
+  { k: "tunel", x: 62, y: 6.6, onde: "a boca do Túnel 7", txt: "TÚNEL 7 · RAMAL DA SERRA · 1958. A boca do túnel foi tapada com tijolo e cimento. Escrito a carvão nos tijolos: \"Fechado por ordem do engenheiro, 20/03/1966. Ninguém mais passa. Tem gente lá dentro que não é mais gente.\" Encostei o ouvido no tijolo. Lá dentro, bem longe, um apito de trem." },
+  { k: "capela", x: 30, y: 48.6, onde: "a capela dos ferroviários", txt: "Uma capelinha de tábua com doze cruzes em volta, uma pra cada homem que morreu abrindo o Túnel 7. Doze nomes pintados. A décima terceira cruz é nova, de madeira clara, sem nome nenhum. E tem flor fresca em todas." },
+  { k: "cachoeira", x: 17.2, y: 16.4, onde: "a pedra da cachoeira", txt: "Uma pedra lisa do lado da cachoeira, riscada a canivete: \"Quem se perder, segue a água. A água sempre desce pra Roça. — S.\" S de Sebastião. O vô esteve aqui." },
+  { k: "acampamento", x: 82.6, y: 37.4, onde: "o caderno do Tibúrcio", txt: "Caderno do Tibúrcio, mateiro: \"Regras da serra. 1: de noite, trilha. Sempre trilha. 2: o grito parece gente pedindo socorro. Não é gente. 3: a pegada dele é redonda, igual fundo de garrafa. 4: ele não passa água corrente e não chega perto de fogo. 5: se apertar, entra no oco de um jequitibá velho e não respira.\"" },
+  { k: "oco", x: OCOS_FL[3][0], y: OCOS_FL[3][1], onde: "o oco do jequitibá grande", txt: "No fundo do oco, embrulhada num saco de estopa, a fotografia que o vô levou: duas moças de tranças, iguaizinhas, na plataforma da Estação da Roça. Atrás, a letra da vó: \"Eu e a Dora, 1965\". A Dora é a de olho fechado. Ou será que é a outra?" },
+  { k: "caverna", x: CAVERNA_FL.x, y: CAVERNA_FL.y + 2.2, onde: "a boca da caverna", txt: "Na boca da caverna, no meio de garrafa quebrada e osso de bicho, um quepe de maquinista com o nome bordado: Zé Carvoeiro. O maquinista do último trem. Ele tirou o regulador da Maria-Fumaça pra ninguém partir... e veio sozinho pra serra, a pé. Atrás do grito." }];
+const achadosFl = () => { try { return JSON.parse(ls("roca_fl") || "[]"); } catch (e) { return []; } };
+function lerAchadoFl(a) { const l = achadosFl(), novo = !l.includes(a.k); if (novo) { l.push(a.k); ls("roca_fl", JSON.stringify(l)); S.colher(); }
+  falar([a.txt], () => { if (novo) { efeito(`Achado da floresta (${l.length}/${ACHADOS_FL.length})`, "#c8b8e8"); if (l.length === ACHADOS_FL.length) setTimeout(() => R && falar(["Seis achados. A foto da vó e da Dora, o quepe do Zé, a pedra do vô, o túnel tapado...", "O vô veio atrás da Dora até aqui. O maquinista também. Os dois seguiram o grito.", "Seu Tibúrcio disse que eu sou a primeira que sai dessa floresta com tudo isso na mochila. Ele me deu um saquinho de moedas antigas pra eu nunca mais voltar. (+400 moedas)"], () => { R.moedas += 400; S.moedas(); hud(); }, "Yasmin"), 600); } hud(); }, "Yasmin"); }
+let FL = null, CHAO_FL = null;
+const dSeg = (px, py, ax, ay, bx, by) => { const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy, t = l ? cl(((px - ax) * dx + (py - ay) * dy) / l, 0, 1) : 0; return Math.hypot(px - ax - dx * t, py - ay - dy * t); };
+const dLinha = (px, py, L) => { let m = 1e9; for (let i = 0; i < L.length - 1; i++) m = Math.min(m, dSeg(px, py, L[i][0], L[i][1], L[i + 1][0], L[i + 1][1])); return m; };
+function montarFloresta() {
+  const G = 2, gw = FLW * G, gh = FLH * G, dtr = new Float32Array(gw * gh), agua = new Uint8Array(gw * gh);
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const x = (i + .5) / G, y = (j + .5) / G; let d = Math.min(...TRILHAS_FL.map(L => dLinha(x, y, L))); d = Math.min(d, Math.max(0, Math.hypot(x - CLAREIRA_FL.x, y - CLAREIRA_FL.y) - CLAREIRA_FL.r)); dtr[j * gw + i] = d;
+    const rio = dLinha(x, y, RIO_FL) < 1.45, cor = dLinha(x, y, CORREGO_FL) < .6, poco = Math.hypot(x - POCO_FL.x, (y - POCO_FL.y) * 1.25) < POCO_FL.r; agua[j * gw + i] = (rio || cor || poco) && !(rio && dSeg(x, y, ...PONTE_FL[0], ...PONTE_FL[1]) < .75) ? 1 : 0; }
+  let sd = 4242; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  const aguaEm = (x, y) => { const i = Math.floor(x * G), j = Math.floor(y * G); return i < 0 || j < 0 || i >= gw || j >= gh ? 0 : agua[j * gw + i]; }, trilhaEm = (x, y) => { const i = cl(Math.floor(x * G), 0, gw - 1), j = cl(Math.floor(y * G), 0, gh - 1); return dtr[j * gw + i]; };
+  const perto = (x, y, m) => [[TUNEL_FL.x, TUNEL_FL.y + 2, 4], [CAVERNA_FL.x, CAVERNA_FL.y, 4], [ACAMP_FL.x + 1, ACAMP_FL.y, 6.6], [CAPELA_FL.x, CAPELA_FL.y, 4.4], [POCO_FL.x, POCO_FL.y - 1, POCO_FL.r + 3.4], ...OCOS_FL.map(o => [o[0], o[1], 2.2])].some(([a, b, rr]) => Math.hypot(x - a, y - b) < rr + m);
+  const arv = [], ocup = new Map(); for (let i = 0; i < 30000 && arv.length < 900; i++) { const x = 1 + r() * (FLW - 2), y = 4.5 + r() * (FLH - 5); if (trilhaEm(x, y) < 1.9 || aguaEm(x, y) || dLinha(x, y, RIO_FL) < 2.4 || dLinha(x, y, CORREGO_FL) < 1.4 || perto(x, y, 0) || (y > FLH - 3 && Math.abs(x - 48) < 4)) continue; const gx = Math.floor(x), gy = Math.floor(y); let cheio = false; for (let i2 = -1; i2 <= 1 && !cheio; i2++) for (let j2 = -1; j2 <= 1 && !cheio; j2++) { const l2 = ocup.get((gx + i2) + "," + (gy + j2)); if (l2 && l2.some(a => Math.abs(a.x - x) < 1.1 && Math.abs(a.y - y) < .8)) cheio = true; } if (cheio) continue; const k = r(); if (k < .7 && x > 3 && x < 23.5 && y > 7 && y < 26) continue; const na = { x, y, k, t: k < .52 ? 0 : k < .7 ? 1 : k < .84 ? 2 : k < .94 ? 3 : 4, h: 3.6 + r() * 2.6 }; arv.push(na); const kk = gx + "," + gy; if (!ocup.has(kk)) ocup.set(kk, []); ocup.get(kk).push(na); }
+  OCOS_FL.forEach(([x, y]) => arv.push({ x, y, k: .5, t: 5, h: 5, oco: 1 }));
+  const cel = new Map(); arv.forEach(a => { const k = Math.floor(a.x) + "," + Math.floor(a.y); if (!cel.has(k)) cel.set(k, []); cel.get(k).push(a); });
+  const cogu = []; for (let i = 0; i < 4000 && cogu.length < 90; i++) { const x = r() * FLW, y = 5 + r() * (FLH - 6); if (aguaEm(x, y) || trilhaEm(x, y) < 1.2) continue; cogu.push({ x, y, k: r() }); }
+  const pedras = []; for (let i = 0; i < 3000 && pedras.length < 70; i++) { const x = r() * FLW, y = 4 + r() * (FLH - 5); if (aguaEm(x, y) || trilhaEm(x, y) < 1.3 || perto(x, y, 0)) continue; pedras.push({ x, y, r: .25 + r() * .5, k: r() }); }
+  const troncos = []; for (let i = 0; i < 2000 && troncos.length < 18; i++) { const x = 3 + r() * (FLW - 6), y = 6 + r() * (FLH - 9); if (aguaEm(x, y) || trilhaEm(x, y) < 2.4 || perto(x, y, 1)) continue; troncos.push({ x, y, a: r() * PI, l: 1.6 + r() * 1.4 }); }
+  FL = { dtr, agua, gw, gh, G, aguaEm, trilhaEm, arv, cel, cogu, pedras, troncos, vaga: Array.from({ length: 50 }, (_, i) => ({ x: r() * FLW, y: r() * FLH, f: r() * 6 })) }; CHAO_FL = Chao(pintarChaoFloresta, FLW, FLH);
+}
+function pintarChaoFloresta(g) {
+  const P = 32; g.fillStyle = "#2c4220"; g.fillRect(0, 0, FLW * P, FLH * P);
+  for (let i = 0; i < 9000; i++) { const s = semInd(i + 9e6), x = (s % 9973) / 9973 * FLW * P, y = ((s >> 7) % 7919) / 7919 * FLH * P; if (!vis(x, y)) continue; g.fillStyle = ["rgba(90,60,30,.32)", "rgba(60,90,40,.3)", "rgba(20,36,14,.35)", "rgba(130,100,50,.22)"][i % 4]; g.beginPath(); g.ellipse(x, y, 5 + i % 16, 3 + i % 7, i, 0, 7); g.fill(); }
+  // samambaias e musgo pelo chão
+  for (let i = 0; i < 2600; i++) { const s = semInd(i + 11e6), x = (s % 9973) / 9973 * FLW * P, y = ((s >> 7) % 7919) / 7919 * FLH * P; if (!vis(x, y, 40)) continue; if (FL.trilhaEm(x / P, y / P) < 1.3 || FL.aguaEm(x / P, y / P)) continue; g.strokeStyle = i % 3 ? "#3e6a2a" : "#4a7a32"; g.lineWidth = 1.6; const a0 = (i % 7) * .9; for (let k = 0; k < 5; k++) { const a = a0 + k * 1.25, l = 9 + (i % 5) * 2; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a) * l * .6, y + Math.sin(a) * l * .3 - 4, x + Math.cos(a) * l, y + Math.sin(a) * l * .5); g.stroke(); } }
+  // paredão de pedra no norte
+  g.fillStyle = "#4a4640"; g.fillRect(0, 0, FLW * P, 3.8 * P); for (let i = 0; i < 400; i++) { g.fillStyle = i % 2 ? "rgba(20,18,14,.35)" : "rgba(140,130,110,.25)"; g.beginPath(); g.ellipse((i * 41.3) % (FLW * P), (i * 7.9) % (3.8 * P), 12 + i % 20, 6 + i % 8, 0, 0, 7); g.fill(); }
+  g.fillStyle = "#4a4640"; g.beginPath(); g.ellipse(13 * P, 10.6 * P, 9 * P, 4 * P, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(CAVERNA_FL.x * P, CAVERNA_FL.y * P, 5 * P, 3.4 * P, 0, 0, 7); g.fill();
+  // trilhas de terra batida com pedrinhas
+  g.lineCap = "round"; g.lineJoin = "round"; for (const [w, cor] of [[2.4, "#5a4428"], [1.9, "#7a5c38"], [1.1, "#8a6c44"]]) { g.strokeStyle = cor; g.lineWidth = w * P; for (const L of TRILHAS_FL) { g.beginPath(); L.forEach(([x, y], i) => i ? g.lineTo(x * P, y * P) : g.moveTo(x * P, y * P)); g.stroke(); } }
+  g.fillStyle = "#7a6038"; g.beginPath(); g.arc(CLAREIRA_FL.x * P, CLAREIRA_FL.y * P, CLAREIRA_FL.r * P, 0, 7); g.fill(); g.fillStyle = "#5a7a34"; g.beginPath(); g.arc(CLAREIRA_FL.x * P, CLAREIRA_FL.y * P, (CLAREIRA_FL.r - .8) * P, 0, 7); g.fill();
+  for (let i = 0; i < 1400; i++) { const s = semInd(i + 13e6), x = (s % 9973) / 9973 * FLW * P, y = ((s >> 7) % 7919) / 7919 * FLH * P; if (!vis(x, y)) continue; if (FL.trilhaEm(x / P, y / P) > .7) continue; g.fillStyle = i % 2 ? "rgba(180,160,120,.5)" : "rgba(60,44,24,.4)"; g.beginPath(); g.ellipse(x, y, 3 + i % 4, 2 + i % 3, i, 0, 7); g.fill(); }
+  // o trilho velho subindo pro túnel
+  for (let y = 6 * P; y < 12 * P; y += 18) { g.fillStyle = "#3a2a1a"; g.fillRect(59.4 * P + (12 * P - y) * .35, y, 1.4 * P, 8); } g.strokeStyle = "#6a6058"; g.lineWidth = 4; for (const o of [.25, 1.15]) { g.beginPath(); g.moveTo(59.4 * P + o * P + 2.1 * P, 6 * P); g.lineTo(59.4 * P + o * P, 12 * P); g.stroke(); }
+  // água: rio, córrego e o poço da cachoeira
+  const agua = (L, w) => { for (const [ww, cor] of [[w + .5, "#4a5a36"], [w, "#2e5a5a"], [w * .6, "#356a6a"]]) { g.strokeStyle = cor; g.lineWidth = ww * 2 * P; g.beginPath(); L.forEach(([x, y], i) => i ? g.lineTo(x * P, y * P) : g.moveTo(x * P, y * P)); g.stroke(); } };
+  agua(RIO_FL, 1.45); agua(CORREGO_FL, .6);
+  g.fillStyle = "#4a5a36"; g.beginPath(); g.ellipse(POCO_FL.x * P, POCO_FL.y * P, (POCO_FL.r + .5) * P, (POCO_FL.r + .5) / 1.25 * P, 0, 0, 7); g.fill(); g.fillStyle = "#24525a"; g.beginPath(); g.ellipse(POCO_FL.x * P, POCO_FL.y * P, POCO_FL.r * P, POCO_FL.r / 1.25 * P, 0, 0, 7); g.fill(); g.fillStyle = "#1a3e48"; g.beginPath(); g.ellipse(POCO_FL.x * P, POCO_FL.y * P - P, POCO_FL.r * .55 * P, POCO_FL.r * .4 * P, 0, 0, 7); g.fill();
+  // o chão do acampamento
+  g.fillStyle = "#6a5434"; g.beginPath(); g.ellipse((ACAMP_FL.x + 1) * P, (ACAMP_FL.y - .4) * P, 4.4 * P, 3 * P, 0, 0, 7); g.fill();
+}
+function irFloresta() {
+  if (!florestaLiberada()) return abrirCompraFloresta(); if (!FL) montarFloresta(); R.lugar = "floresta"; R.predio = null; R.dentro = false; R.eu.oco = false; R.eu.x = ENTRADA_FL.x; R.eu.y = ENTRADA_FL.y; cam.x = R.eu.x; cam.y = R.eu.y; R.fade = 1; S.porta(); hud();
+  if (R.trocado) enviar({ t: "pos", x: R.eu.x, y: R.eu.y });
+  if (!ls("roca_fl_visto")) { ls("roca_fl_visto", 1); setTimeout(() => R && falar(["A Floresta da Serra. As araucárias são tão altas que o sol chega no chão em fatias.", "Tem uma trilha de terra batida, com pedrinha branca. O Seu Aristides disse: de noite, NUNCA saia da trilha.", "Miau... eu não gosto daqui, Yasmin. O mato está quieto demais."], null, "Yasmin"), 700); }
+}
+function livreFloresta(x, y) { if (!FL) return false; if (x < .5 || x > FLW - .5 || y < 3.9 || y > FLH - .2) return false; if (FL.aguaEm(x, y)) return false;
+  if (y < 13 && Math.hypot((x - 13) / 9, (y - 10.6) / 4) < 1) return false; if (Math.hypot((x - CAVERNA_FL.x) / 5, (y - CAVERNA_FL.y) / 3.4) < 1 && y < CAVERNA_FL.y + 1.6) return false;
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const l = FL.cel.get((Math.floor(x) + i) + "," + (Math.floor(y) + j)); if (l) for (const a of l) if (Math.abs(a.x - x) < (a.t === 5 ? .9 : .32) && Math.abs(a.y - y) < (a.t === 5 ? .45 : .24)) return false; }
+  if (Math.hypot(x - (ACAMP_FL.x + 2.4), y - (ACAMP_FL.y - 1.6)) < 1.2) return false; if (Math.abs(x - CAPELA_FL.x) < 1.2 && y > CAPELA_FL.y - 1 && y < CAPELA_FL.y + .7) return false; return true; }
+function moverFloresta(dt, dx, dy, vel) { if (!FL) montarFloresta(); if (R.eu.oco) return; andaLivre(R.eu, dx, dy, vel, dt, livreFloresta); if (R.eu.y > FLH - .45) irSerraDaFloresta(); }
+const naTrilhaFl = p => FL && FL.trilhaEm(p.x, p.y) < 1.25;
+const seguroFl = p => !!(p.eu ? p.eu.oco : p.oco) || naTrilhaFl(p.eu || p) || Math.hypot((p.eu || p).x - ACAMP_FL.x, (p.eu || p).y - ACAMP_FL.y) < 5 || Math.hypot((p.eu || p).x - CAPELA_FL.x, (p.eu || p).y - CAPELA_FL.y) < 3.6;
+function ocoPerto(p) { return OCOS_FL.find(([x, y]) => Math.hypot(p.x - x, p.y - (y + .7)) < 1.1); }
+function entrarOco(o) { R.eu.oco = true; R.eu.x = o[0]; R.eu.y = o[1] + .5; R.lanterna = false; tocarRuido(.4, { filtro: "lowpass", f: 500, vol: .15 }); efeito("Dentro do oco. Quietinha...", "#9ad0d8"); if (o === OCOS_FL[3] && !achadosFl().includes("oco") && !ehNoite()) setTimeout(() => R && lerAchadoFl(ACHADOS_FL[4]), 500); hud(); }
+function sairOco() { R.eu.oco = false; R.eu.y += .55; tocarRuido(.3, { filtro: "lowpass", f: 600, vol: .12 }); hud(); }
+let convTib = 0;
+const FALAS_TIB = [
+  ["Ê, gente nova na serra! E menina ainda. Senta aí perto do fogo.", "Tibúrcio, mateiro. Cinquenta anos nessa floresta. Conheço cada araucária pelo nome."],
+  ["Escuta bem, que eu só falo uma vez: de noite, você anda na TRILHA. A de pedrinha branca.", "Fora dela, o Pé-de-Garrafa te acha. Ele grita igual gente perdida. Quem vai atrás do grito, não volta."],
+  ["Ele não passa água corrente e não chega perto de fogo. Aqui no meu fogo e na capela você dorme sossegada.", "E se apertar: entra no oco de um jequitibá velho. Tem uns seis pela mata. Ele passa do lado e não te vê."],
+  ["Seu avô, o Sebastião? Conheci, sim. Veio procurando uma moça de tranças. Dizia que a mulher dele tinha uma irmã igualzinha.", "Deixou alguma coisa escondida no oco do jequitibá grande, lá pro norte, no caminho do túnel. Nunca mexi."],
+  ["O Túnel 7 tá tapado desde 66. E a caverna, pro lado do nascente, depois do túnel... é a casa dele. Só vai de dia. DE DIA."]];
+function conversarTiburcio() { const l = FALAS_TIB[convTib % FALAS_TIB.length]; convTib++; falar(l, null, TIBURCIO.nome); }
+function oQueFazerFloresta() {
+  if (!FL) montarFloresta(); const p = R.eu;
+  if (p.oco) return { t: "Sair do oco", loc: 1, fn: sairOco };
+  const o = ocoPerto(p); if (o) return { t: "Entrar no oco", loc: 1, fn: () => entrarOco(o) };
+  if (dist(p, TIBURCIO_P) < 1.3) return { t: "Conversar", loc: 1, fn: conversarTiburcio };
+  for (const a of ACHADOS_FL) { if (a.k === "oco") continue; if (Math.hypot(p.x - a.x, p.y - a.y) < 1.3) { if (a.k === "caverna" && ehNoite()) return { t: "Caverna", loc: 1, fn: () => falar(["Não. De noite não. Lá dentro tem um grito parado, esperando."], null, "Yasmin") }; return { t: achadosFl().includes(a.k) ? "Reler" : a.k === "cachoeira" ? "Olhar a pedra" : a.k === "tunel" ? "Olhar o túnel" : a.k === "acampamento" ? "Ler o caderno" : a.k === "capela" ? "Entrar na capela" : "Olhar", loc: 1, fn: () => lerAchadoFl(a) }; } }
+  if (Math.hypot(p.x - POCO_FL.x, p.y - POCO_FL.y) < POCO_FL.r + 1.2) return { t: "Beber da cachoeira", loc: 1, fn: () => { R.folego = 100; R.medo = Math.max(0, (R.medo || 0) - 20); S.colher(); efeito("Água gelada da serra. Fôlego cheio!", "#9ad0d8"); } };
+  if (p.y > FLH - 1.6 && Math.abs(p.x - 48) < 2.4) return { t: "Voltar pra estação", loc: 1, fn: irSerraDaFloresta };
+  return null;
+}
+function objetivoFloresta() { const n = achadosFl().length; if (ehNoite()) return R.eu.oco ? "escondida no oco · saia quando o grito passar" : `DE NOITE: fique na trilha de terra · achados ${n}/${ACHADOS_FL.length}`; return n >= ACHADOS_FL.length ? "você achou tudo na Floresta da Serra · volte de trem quando quiser" : `explorar a Floresta da Serra (achados ${n}/${ACHADOS_FL.length}) · ache o Seu Tibúrcio, pro lado do nascente`; }
+function dicaFloresta() { const G2 = R.pg; if (R.eu.oco) return "Escondida no oco. Ele não te vê aqui."; if (G2 && G2.fase === "caca") return G2.alvo === slotAtual() ? "ELE TE ACHOU! VOLTA PRA TRILHA ou entra num oco!" : "Ele está caçando alguém! Volta pra trilha!"; if (ehNoite() && !naTrilhaFl(R.eu) && !seguroFl(R)) return "Fora da trilha, de noite. Ele escuta você..."; return ""; }
+/* ---------- o Pé-de-Garrafa (anfitrião) ---------- */
+function atualizarFloresta(dt) {
+  if (!FL) montarFloresta(); if (R.online === "guest") return; const G2 = R.pg || (R.pg = { fase: "longe", t: 0, prox: 8, x: 0, y: 0, dir: 1, rastro: [] }); G2.t += dt; if (R.morto || R.venceu) return;
+  const alvos = jogadores().filter(P => P.lugar === "floresta" && !P.caido); if (!alvos.length) { G2.fase = "longe"; return; }
+  if (!ehNoite()) { if (G2.fase !== "longe") { G2.fase = "longe"; G2.t = 0; } return; }
+  for (const P of alvos) { const fora = !seguroFl(P); P.foraFl = fora ? (P.foraFl || 0) + dt : Math.max(0, (P.foraFl || 0) - dt * 2); }
+  if (G2.fase === "longe") { G2.prox -= dt; if (G2.prox <= 0) { G2.prox = rnd(9, 16); const P = alvos[Math.floor(Math.random() * alvos.length)], a = Math.random() * PI * 2; gritoPe(P.eu.x + Math.cos(a) * 14, P.eu.y + Math.sin(a) * 10, .6); }
+    const P = alvos.find(q => q.foraFl > 2.6); if (P) { let a = Math.random() * PI * 2, x = P.eu.x, y = P.eu.y; for (let i = 0; i < 20; i++) { a = Math.random() * PI * 2; x = P.eu.x + Math.cos(a) * 10; y = P.eu.y + Math.sin(a) * 8; if (!FL.aguaEm(x, y) && x > 1 && y > 5 && x < FLW - 1 && y < FLH - 1) break; } Object.assign(G2, { fase: "caca", t: 0, x, y, alvo: jogadores().indexOf(P), rastro: [] }); gritoPe(x, y, 1.2); R.tremor = .5; R.medo = Math.min(100, (R.medo || 0) + 20); } return; }
+  const P = jogadores()[G2.alvo];
+  if (G2.fase === "caca") { if (!P || P.lugar !== "floresta" || P.caido) { G2.fase = "sai"; G2.t = 0; return; }
+    if (seguroFl(P) && G2.t > .6) { G2.fase = "sai"; G2.t = 0; gritoPe(G2.x, G2.y, 1); efeito(P === R ? "Ele parou na beira da trilha. E gritou de raiva." : "Ele parou na beira da trilha.", "#e8e2d4"); return; }
+    const dx = P.eu.x - G2.x, dy = P.eu.y - G2.y, d = Math.hypot(dx, dy) || 1, v = 3.5 * dt; G2.dir = dx >= 0 ? 1 : -1; const nx = G2.x + dx / d * v, ny = G2.y + dy / d * v;
+    if (!FL.aguaEm(nx, ny)) { G2.x = nx; G2.y = ny; } else if (!FL.aguaEm(nx, G2.y)) G2.x = nx; else if (!FL.aguaEm(G2.x, ny)) G2.y = ny;
+    const u = G2.rastro[G2.rastro.length - 1]; if (!u || Math.hypot(u.x - G2.x, u.y - G2.y) > .7) { G2.rastro.push({ x: G2.x, y: G2.y }); if (G2.rastro.length > 14) G2.rastro.shift(); tocarRuido(.12, { filtro: "lowpass", f: 300, vol: .2 * Math.max(.2, 1 - d / 12) }); }
+    G2.som = (G2.som || 0) - dt; if (G2.som <= 0) { G2.som = rnd(2.2, 3.6); gritoPe(G2.x, G2.y, 1); }
+    if (d < .85) comJogador(P, () => morrer("pedegarrafa", "O Pé-de-Garrafa te achou fora da trilha. O grito parou, e aí ficou um silêncio muito grande.", "De noite na Floresta da Serra, fique na trilha de terra. Fogo, capela, oco de árvore e água corrente também protegem.")); return; }
+  if (G2.fase === "sai") { G2.x += G2.dir * -2.4 * dt; if (G2.t > 3.5) { G2.fase = "longe"; G2.prox = rnd(10, 18); } }
+}
+function gritoPe(x, y, forca) { const [v, pn] = somEm(x, y); const k = (v * .8 + .2) * forca; tocarTom(520, 1.6, { tipo: "sawtooth", vol: .05 * k, ate: 300, lp: 1400, pan: pn, wet: .7 }); tocarTom(780, 1.2, { tipo: "triangle", vol: .04 * k, ate: 420, quando: .15, pan: pn, wet: .7 }); if (forca >= 1 && R.lugar === "floresta") efeito("\"ÔÔÔÔ... SOCORRO... AQUI...\"", "#e2483d"); }
+function desenharPeGarrafa(G2, tm) { const X = PX(G2.x), Y = PY(G2.y), T = TS; if (!naTela(X, Y, T * 3)) return; const pulo = Math.abs(Math.sin(tm * 7)) * T * .18, a = G2.fase === "sai" ? Math.max(0, 1 - G2.t / 3) : 1; if (a <= 0) return;
+  c.save(); c.globalAlpha = a; sombra(X, Y, T * .5, T * .15, .4); c.translate(X, Y - pulo); c.scale(G2.dir, 1);
+  c.fillStyle = "#2a1e14"; c.beginPath(); c.moveTo(-T * .14, -T * .8); c.lineTo(T * .14, -T * .8); c.lineTo(T * .12, -T * .12); c.lineTo(-T * .12, -T * .12); c.fill(); // a perna só
+  c.fillStyle = "#1a120a"; c.beginPath(); c.ellipse(0, -T * .06, T * .22, T * .1, 0, 0, 7); c.fill(); c.strokeStyle = "#5a4a3a"; c.lineWidth = 2; c.beginPath(); c.ellipse(0, -T * .06, T * .13, T * .06, 0, 0, 7); c.stroke(); // o pé de fundo de garrafa
+  c.fillStyle = "#3a2a1a"; c.beginPath(); c.ellipse(0, -T * 1.35, T * .55, T * .7, 0, 0, 7); c.fill(); c.strokeStyle = "#1e140a"; c.lineWidth = 2; for (let i = 0; i < 24; i++) { const an = i / 24 * PI * 2; c.beginPath(); c.moveTo(Math.cos(an) * T * .45, -T * 1.35 + Math.sin(an) * T * .6); c.lineTo(Math.cos(an) * T * .62, -T * 1.35 + Math.sin(an) * T * .76 + 4); c.stroke(); } // pelo
+  c.fillStyle = "#4a3624"; c.beginPath(); c.arc(T * .05, -T * 1.35, T * .12, 0, 7); c.fill(); c.fillStyle = "#1a0e06"; c.beginPath(); c.arc(T * .05, -T * 1.35, T * .05, 0, 7); c.fill(); // umbigo
+  const br = Math.sin(tm * 5) * .4; for (const s of [-1, 1]) { c.save(); c.translate(s * T * .4, -T * 1.7); c.rotate(s * (.3 + br * .3)); c.fillStyle = "#3a2a1a"; c.fillRect(-T * .07, 0, T * .14, T * .95); c.strokeStyle = "#c8b8a0"; c.lineWidth = 2; for (let i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(i * 3, T * .95); c.lineTo(i * 5, T * 1.1); c.stroke(); } c.restore(); }
+  c.fillStyle = "#3a2a1a"; c.beginPath(); c.arc(0, -T * 2.15, T * .34, 0, 7); c.fill(); for (let i = 0; i < 12; i++) { c.strokeStyle = "#1e140a"; c.beginPath(); c.moveTo(-T * .3 + i * T * .055, -T * 2.4); c.lineTo(-T * .34 + i * T * .06, -T * 2.62 - (i % 3) * 3); c.stroke(); }
+  c.fillStyle = "#ffe060"; c.beginPath(); c.arc(T * .1, -T * 2.22, T * .07, 0, 7); c.arc(T * .26, -T * 2.2, T * .06, 0, 7); c.fill(); c.fillStyle = "#1a0a00"; c.beginPath(); c.arc(T * .12, -T * 2.22, T * .025, 0, 7); c.arc(T * .27, -T * 2.2, T * .022, 0, 7); c.fill();
+  c.fillStyle = "#1a0606"; c.beginPath(); c.ellipse(T * .19, -T * 2.02, T * .08, T * .05 + T * .05 * Math.abs(Math.sin(tm * 6)), 0, 0, 7); c.fill(); c.restore(); }
+/* ---------- desenho da floresta ---------- */
+function desenharArvoreFl(a, tm, nt) {
+  const X = PX(a.x), Y = PY(a.y), T = TS; if (X < -T * 3 || X > W + T * 3 || Y < -T || Y > H + a.h * T + T) return; const esc = nt > .5;
+  if (a.t === 0) return desenharAraucaria(X, Y, a.h, a.k, tm, nt);
+  if (a.t === 5 || a.t === 1) { // jequitibá: tronco grosso com raízes de tábua (e o oco)
+    const g2 = a.t === 5 ? 1.25 : .9; sombra(X + T * .4, Y, T * 1.6 * g2, T * .4, .35); c.fillStyle = esc ? "#2a2018" : "#6a5440"; c.beginPath(); c.moveTo(X - T * .9 * g2, Y); c.quadraticCurveTo(X - T * .35 * g2, Y - T * .3, X - T * .32 * g2, Y - T * 2.6 * g2); c.lineTo(X + T * .32 * g2, Y - T * 2.6 * g2); c.quadraticCurveTo(X + T * .35 * g2, Y - T * .3, X + T * .9 * g2, Y); c.fill();
+    c.fillStyle = "rgba(0,0,0,.2)"; c.fillRect(X + T * .05, Y - T * 2.6 * g2, T * .25 * g2, T * 2.5 * g2); c.strokeStyle = "rgba(0,0,0,.25)"; c.lineWidth = 1.5; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(X - T * .25 + i * T * .12, Y - T * .2); c.lineTo(X - T * .22 + i * T * .11, Y - T * 2.4 * g2); c.stroke(); }
+    if (a.oco) { const dentro = R.eu.oco && Math.hypot(R.eu.x - a.x, R.eu.y - (a.y + .5)) < .3; c.fillStyle = "#0a0604"; c.beginPath(); c.ellipse(X, Y - T * .55, T * .28, T * .45, 0, 0, 7); c.fill(); if (dentro) { c.fillStyle = "#f4f0e6"; c.beginPath(); c.arc(X - 4, Y - T * .62, 2.2, 0, 7); c.arc(X + 4, Y - T * .62, 2.2, 0, 7); c.fill(); } }
+    const cor = esc ? ["#0e1a0e", "#142414"] : ["#26421e", "#345a26", "#41702e"]; [[0, -3.3, 1.5], [-1.1, -3, 1.1], [1.1, -3.05, 1.15], [-.4, -4, 1.1], [.6, -3.9, 1]].forEach(([ox, oy, s], i) => { c.fillStyle = cor[i % cor.length]; c.beginPath(); c.arc(X + ox * T * g2, Y + oy * T * g2 + Math.sin(tm + a.x + i) * 2, T * s * g2, 0, 7); c.fill(); }); return; }
+  if (a.t === 2) { // samambaiaçu
+    sombra(X, Y, T * .6, T * .18, .3); c.fillStyle = esc ? "#1e1610" : "#4a3626"; c.fillRect(X - T * .08, Y - T * 1.8, T * .16, T * 1.8); c.strokeStyle = esc ? "#14261a" : "#3e7a2e"; c.lineWidth = 2.5; for (let i = 0; i < 9; i++) { const an = -PI / 2 + (i - 4) * .38 + Math.sin(tm + i) * .04, l = T * (1 + (i % 3) * .15); c.beginPath(); c.moveTo(X, Y - T * 1.8); c.quadraticCurveTo(X + Math.cos(an) * l * .6, Y - T * 1.8 + Math.sin(an) * l * .6 - T * .3, X + Math.cos(an) * l, Y - T * 1.8 + Math.sin(an) * l * .35 + T * .3); c.stroke(); } return; }
+  if (a.t === 3) { // palmito juçara
+    c.fillStyle = esc ? "#1e1a14" : "#6a6250"; c.fillRect(X - T * .05, Y - T * 3.4, T * .1, T * 3.4); c.strokeStyle = esc ? "#14261a" : "#4a8a32"; c.lineWidth = 2; for (let i = 0; i < 7; i++) { const an = -PI / 2 + (i - 3) * .5; c.beginPath(); c.moveTo(X, Y - T * 3.4); c.quadraticCurveTo(X + Math.cos(an) * T * .9, Y - T * 3.4 + Math.sin(an) * T * .5 - T * .2, X + Math.cos(an) * T * 1.3, Y - T * 3.4 + T * .5); c.stroke(); } return; }
+  sombra(X, Y, T * .55, T * .16, .25); c.fillStyle = esc ? "#101c10" : "#2e5222"; c.beginPath(); c.arc(X, Y - T * .4, T * .55, 0, 7); c.fill(); c.fillStyle = esc ? "#142214" : "#3a6a2a"; c.beginPath(); c.arc(X - T * .2, Y - T * .55, T * .3, 0, 7); c.fill(); }
+function desenharFloresta(tm) {
+  if (!FL) montarFloresta(); const nt = horaNoite(), T = TS;
+  const perCach = Math.hypot(R.eu.x - POCO_FL.x, R.eu.y - POCO_FL.y) < 10; cam.x += (R.eu.x - cam.x) * .1; cam.y += ((perCach ? Math.min(R.eu.y - .9, POCO_FL.y - .6) : R.eu.y - .9) - cam.y) * .1; cam.x = cl(cam.x, W / T / 2, FLW - W / T / 2); cam.y = cl(cam.y, H / T / 2, FLH - H / T / 2); if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+  c.fillStyle = "#2c4220"; c.fillRect(0, 0, W, H); desenharChaoChunks(CHAO_FL);
+  const vx0 = cam.x - W / T / 2 - 3, vx1 = cam.x + W / T / 2 + 3, vy0 = cam.y - H / T / 2 - 1, vy1 = cam.y + H / T / 2 + 7, vis2 = (x, y) => x > vx0 && x < vx1 && y > vy0 && y < vy1;
+  // brilho da água
+  for (let i = 0; i < 90; i++) { const L = i % 3 ? RIO_FL : CORREGO_FL, s = (i * .137 + tm * .04) % 1, k2 = Math.floor(s * (L.length - 1)), f = s * (L.length - 1) - k2, x = L[k2][0] + (L[k2 + 1][0] - L[k2][0]) * f, y = L[k2][1] + (L[k2 + 1][1] - L[k2][1]) * f + Math.sin(i) * .6; if (!vis2(x, y)) continue; c.fillStyle = `rgba(220,240,240,${.25 + .15 * Math.sin(tm * 3 + i)})`; c.fillRect(PX(x), PY(y), 7, 1.5); }
+  const obj = [];
+  FL.arv.forEach(a => { if (vis2(a.x, a.y)) obj.push([a.y, () => desenharArvoreFl(a, tm, nt)]); });
+  FL.pedras.forEach(pd => { if (vis2(pd.x, pd.y)) obj.push([pd.y, () => { const X = PX(pd.x), Y = PY(pd.y); sombra(X, Y, pd.r * T, pd.r * T * .3, .3); c.fillStyle = nt > .5 ? "#3a3a36" : "#7a786c"; c.beginPath(); c.ellipse(X, Y - pd.r * T * .35, pd.r * T, pd.r * T * .6, 0, 0, 7); c.fill(); c.fillStyle = "#4a7a2a"; c.beginPath(); c.ellipse(X - pd.r * T * .2, Y - pd.r * T * .8, pd.r * T * .5, pd.r * T * .18, 0, 0, 7); c.fill(); }]); });
+  FL.troncos.forEach(tr => { if (vis2(tr.x, tr.y)) obj.push([tr.y, () => { const X = PX(tr.x), Y = PY(tr.y); c.save(); c.translate(X, Y); c.rotate(tr.a * .25); c.fillStyle = "#4a3624"; c.fillRect(-tr.l * T / 2, -T * .18, tr.l * T, T * .32); c.fillStyle = "#8a6a4a"; c.beginPath(); c.ellipse(tr.l * T / 2, -T * .02, T * .07, T * .16, 0, 0, 7); c.fill(); c.fillStyle = "#4a7a2a"; for (let i = 0; i < 4; i++) { c.beginPath(); c.ellipse(-tr.l * T * .3 + i * T * .3, -T * .18, 6, 3, 0, 0, 7); c.fill(); } c.restore(); }]); });
+  FL.cogu.forEach(cg => { if (vis2(cg.x, cg.y)) obj.push([cg.y, () => { const X = PX(cg.x), Y = PY(cg.y), br = nt > .4 && cg.k > .5; c.fillStyle = "#e8e0c8"; c.fillRect(X - 1.5, Y - 6, 3, 6); c.fillStyle = br ? `rgba(140,255,200,${.7 + .3 * Math.sin(tm * 2 + cg.x)})` : cg.k > .5 ? "#c8402a" : "#c8a060"; c.beginPath(); c.ellipse(X, Y - 6, 5, 3.5, 0, PI, 0); c.fill(); }]); });
+  // a ponte de tronco, a cachoeira, o túnel, a caverna, a capela e o acampamento
+  obj.push([PONTE_FL[0][1] - 2.4, () => { const [a0, b0] = PONTE_FL, X0 = PX(a0[0]), Y0 = PY(a0[1] - 1.2), X1 = PX(b0[0]), Y1 = PY(b0[1] + 1.2); c.strokeStyle = "#4a3624"; c.lineWidth = T * .5; c.beginPath(); c.moveTo(X0 - T * .22, Y0); c.lineTo(X1 - T * .22, Y1); c.stroke(); c.strokeStyle = "#5a4430"; c.beginPath(); c.moveTo(X0 + T * .22, Y0); c.lineTo(X1 + T * .22, Y1); c.stroke(); c.strokeStyle = "#7a5a3a"; c.lineWidth = 2; for (let i = 0; i < 9; i++) { const q = i / 8, x = X0 + (X1 - X0) * q, y = Y0 + (Y1 - Y0) * q; c.beginPath(); c.moveTo(x - T * .5, y); c.lineTo(x + T * .5, y); c.stroke(); } c.strokeStyle = "#c8b080"; c.lineWidth = 1.5; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(X0 + s * T * .55, Y0 - T * .4); c.lineTo(X1 + s * T * .55, Y1 - T * .4); c.stroke(); } }]);
+  obj.push([POCO_FL.y - POCO_FL.r / 1.25 + .1, () => { const X = PX(POCO_FL.x), Y = PY(POCO_FL.y - POCO_FL.r / 1.25 + .2); if (!naTela(X, Y, T * 5)) return; c.fillStyle = "#4a4640"; c.beginPath(); c.moveTo(X - T * 3.4, Y); c.lineTo(X - T * 2.8, Y - T * 3.2); c.lineTo(X + T * 2.8, Y - T * 3.2); c.lineTo(X + T * 3.4, Y); c.fill(); c.fillStyle = "#5a7a34"; c.fillRect(X - T * 2.9, Y - T * 3.35, T * 5.8, T * .25); c.fillStyle = "rgba(0,0,0,.25)"; for (let i = 0; i < 6; i++) c.fillRect(X - T * 2.6 + i * T * .9, Y - T * 3.2, T * .1, T * 3.2); const g = c.createLinearGradient(0, Y - T * 3.2, 0, Y); g.addColorStop(0, "rgba(220,240,250,.9)"); g.addColorStop(1, "rgba(180,220,235,.7)"); c.fillStyle = g; c.fillRect(X - T * 1.1, Y - T * 3.2, T * 2.2, T * 3.2); c.strokeStyle = "rgba(255,255,255,.8)"; c.lineWidth = 2; for (let i = 0; i < 9; i++) { const xx = X - T + i * T * .25, o = (tm * 120 + i * 37) % (T * 3); c.beginPath(); c.moveTo(xx, Y - T * 3.2 + o); c.lineTo(xx, Y - T * 3.2 + o + T * .6); c.stroke(); } for (let i = 0; i < 14; i++) { const q = (tm * .8 + i / 14) % 1; c.fillStyle = `rgba(240,250,255,${.5 * (1 - q)})`; c.beginPath(); c.arc(X + Math.sin(i * 2.3) * T * 1.4, Y + T * .2 - q * T * .8, T * (.15 + q * .35), 0, 7); c.fill(); } }]);
+  obj.push([TUNEL_FL.y + .3, () => { const X = PX(TUNEL_FL.x), Y = PY(TUNEL_FL.y + .3); if (!naTela(X, Y, T * 4)) return; c.fillStyle = "#3e3a34"; c.fillRect(X - T * 2.4, Y - T * 3.4, T * 4.8, T * 3.4); c.fillStyle = "#6a6258"; c.beginPath(); c.moveTo(X - T * 1.6, Y); c.lineTo(X - T * 1.6, Y - T * 1.8); c.arc(X, Y - T * 1.8, T * 1.6, PI, 0); c.lineTo(X + T * 1.6, Y); c.fill(); c.fillStyle = "#8a4a32"; c.beginPath(); c.moveTo(X - T * 1.25, Y); c.lineTo(X - T * 1.25, Y - T * 1.8); c.arc(X, Y - T * 1.8, T * 1.25, PI, 0); c.lineTo(X + T * 1.25, Y); c.fill(); c.strokeStyle = "rgba(40,20,10,.5)"; c.lineWidth = 1; for (let r2 = 0; r2 < 10; r2++) { const yy = Y - r2 * T * .3; c.beginPath(); c.moveTo(X - T * 1.25, yy); c.lineTo(X + T * 1.25, yy); c.stroke(); for (let k = 0; k < 6; k++) { const xx = X - T * 1.25 + (k + (r2 % 2) * .5) * T * .42; c.beginPath(); c.moveTo(xx, yy); c.lineTo(xx, yy - T * .3); c.stroke(); } } c.fillStyle = "#e8e2d0"; c.font = `800 ${Math.round(T * .24)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText("TÚNEL 7", X, Y - T * 3.05); c.font = `700 ${Math.round(T * .16)}px "JetBrains Mono", monospace`; c.fillStyle = "rgba(20,10,0,.75)"; c.fillText("FECHADO", X, Y - T * 1.2); c.textAlign = "start"; }]);
+  obj.push([CAVERNA_FL.y + 1.4, () => { const X = PX(CAVERNA_FL.x), Y = PY(CAVERNA_FL.y + 1.4); if (!naTela(X, Y, T * 5)) return; c.fillStyle = "#4a4640"; c.beginPath(); c.ellipse(X, Y - T * 1.2, T * 4.4, T * 2.6, 0, PI, 0); c.fill(); c.fillStyle = "#0a0806"; c.beginPath(); c.ellipse(X, Y - T * .1, T * 1.4, T * 1.5, 0, PI, 0); c.fill(); if (ehNoite()) { c.fillStyle = "#ffe060"; c.beginPath(); c.arc(X - 5, Y - T * .9, 2, 0, 7); c.arc(X + 5, Y - T * .88, 2, 0, 7); c.fill(); } for (let i = 0; i < 7; i++) { const bx = X - T * 2 + i * T * .62, by = Y + T * .3 + Math.sin(i * 3) * 6; c.save(); c.translate(bx, by); c.rotate(i * 1.3); c.fillStyle = i % 2 ? "rgba(60,120,60,.8)" : "rgba(120,90,40,.8)"; c.fillRect(-3, -8, 6, 12); c.fillRect(-1.5, -12, 3, 4); c.restore(); } }]);
+  obj.push([CAPELA_FL.y + .6, () => { const X = PX(CAPELA_FL.x), Y = PY(CAPELA_FL.y + .6); if (!naTela(X, Y, T * 4)) return; sombra(X, Y, T * 1.4, T * .3, .35); for (let i = 0; i < 12; i++) { const a = PI * .1 + i / 11 * PI * .8, cx = X + Math.cos(a) * T * 2.6, cy = Y + T * .4 + Math.sin(a) * T * .9; c.fillStyle = "#e8e2d0"; c.fillRect(cx - 1.5, cy - T * .45, 3, T * .45); c.fillRect(cx - 5, cy - T * .34, 10, 3); c.fillStyle = ["#e2483d", "#f2c94a", "#b8a0e8"][i % 3]; c.beginPath(); c.arc(cx + 3, cy - 2, 2.4, 0, 7); c.fill(); }
+    c.fillStyle = "#8a6a4a"; c.fillRect(X - T * .9, Y - T * 1.4, T * 1.8, T * 1.4); c.fillStyle = "rgba(0,0,0,.2)"; for (let i = 0; i < 6; i++) c.fillRect(X - T * .9 + i * T * .3, Y - T * 1.4, 1.5, T * 1.4); c.fillStyle = "#4a2a1a"; c.beginPath(); c.moveTo(X - T * 1.05, Y - T * 1.35); c.lineTo(X, Y - T * 2.1); c.lineTo(X + T * 1.05, Y - T * 1.35); c.fill(); c.strokeStyle = "#e8e2d0"; c.lineWidth = 2.5; c.beginPath(); c.moveTo(X, Y - T * 2.1); c.lineTo(X, Y - T * 2.5); c.moveTo(X - T * .12, Y - T * 2.36); c.lineTo(X + T * .12, Y - T * 2.36); c.stroke(); c.fillStyle = "#2a1a0c"; c.fillRect(X - T * .22, Y - T * .75, T * .44, T * .75); c.fillStyle = `rgba(255,200,110,${.6 + .3 * Math.sin(tm * 7)})`; c.fillRect(X - T * .06, Y - T * .55, T * .12, T * .16); }]);
+  obj.push([ACAMP_FL.y - 1, () => { const X = PX(ACAMP_FL.x + 2.4), Y = PY(ACAMP_FL.y - 1); if (!naTela(X, Y, T * 4)) return; sombra(X, Y, T * 1.4, T * .3, .3); c.fillStyle = "#5a6a3a"; c.beginPath(); c.moveTo(X - T * 1.3, Y); c.lineTo(X, Y - T * 1.4); c.lineTo(X + T * 1.3, Y); c.fill(); c.fillStyle = "#3a4a24"; c.beginPath(); c.moveTo(X - T * .3, Y); c.lineTo(X, Y - T * 1.1); c.lineTo(X + T * .3, Y); c.fill(); c.strokeStyle = "#c8b080"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(X, Y - T * 1.4); c.lineTo(X - T * 1.8, Y + T * .1); c.moveTo(X, Y - T * 1.4); c.lineTo(X + T * 1.8, Y + T * .1); c.stroke(); }]);
+  obj.push([ACAMP_FL.y + .2, () => { const X = PX(ACAMP_FL.x), Y = PY(ACAMP_FL.y + .2); if (!naTela(X, Y, T * 3)) return; c.fillStyle = "#4a3a2a"; for (let i = 0; i < 6; i++) { c.save(); c.translate(X, Y); c.rotate(i * 1.05); c.fillRect(-T * .35, -3, T * .7, 6); c.restore(); } for (let i = 0; i < 6; i++) { const f = 1 + .3 * Math.sin(tm * 12 + i * 2); c.fillStyle = i % 2 ? "#ffb030" : "#ff6a1a"; c.beginPath(); c.moveTo(X - T * .22 + i * T * .09, Y); c.quadraticCurveTo(X - T * .15 + i * T * .07, Y - T * .45 * f, X - T * .08 + i * T * .09, Y - T * .6 * f); c.quadraticCurveTo(X + i * T * .05, Y - T * .3, X - T * .1 + i * T * .09, Y); c.fill(); } c.strokeStyle = "#3a3a3a"; c.lineWidth = 2; c.beginPath(); c.moveTo(X - T * .6, Y); c.lineTo(X - T * .3, Y - T * .9); c.lineTo(X + T * .3, Y - T * .9); c.lineTo(X + T * .6, Y); c.stroke(); c.fillStyle = "#2a2a2a"; c.beginPath(); c.arc(X, Y - T * .62, T * .18, 0, PI); c.fill(); for (const s of [-1, 1]) { c.fillStyle = "#5a4430"; c.fillRect(X + s * T * 1.1 - T * .45, Y + T * .25, T * .9, T * .2); } for (let i = 0; i < 4; i++) { const q = (tm * .5 + i / 4) % 1; c.fillStyle = `rgba(160,160,160,${.3 * (1 - q)})`; c.beginPath(); c.arc(X + Math.sin(tm + i) * 5, Y - T * (.8 + q * 1.6), T * (.1 + q * .3), 0, 7); c.fill(); } }]);
+  obj.push([TIBURCIO_P.y, () => desenharNpc(TIBURCIO, PX(TIBURCIO_P.x), PY(TIBURCIO_P.y), T, tm, { dir: 1 })]);
+  // pegadas redondas do Pé-de-Garrafa e ele
+  const G2 = R.pg; if (G2 && G2.rastro) G2.rastro.forEach((p2, i) => obj.push([p2.y - .4, () => { const X = PX(p2.x), Y = PY(p2.y); c.strokeStyle = `rgba(30,20,10,${.25 + i * .03})`; c.lineWidth = 2; c.beginPath(); c.ellipse(X, Y, 5, 2.6, 0, 0, 7); c.stroke(); c.beginPath(); c.ellipse(X, Y, 2, 1, 0, 0, 7); c.stroke(); }]));
+  if (G2 && (G2.fase === "caca" || G2.fase === "sai")) obj.push([G2.y, () => desenharPeGarrafa(G2, tm)]);
+  for (const ou of outros()) if (ou.lugar === "floresta" && !ou.eu.oco) obj.push([ou.eu.y, () => desenharVoce(PX(ou.eu.x), PY(ou.eu.y), tm, { q: ou, nome: ou.nome || "Amigo(a)" })]);
+  if (!R.eu.oco) obj.push([R.eu.y, () => desenharVoce(PX(R.eu.x), PY(R.eu.y), tm)]);
+  obj.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
+  // de dia: raios de sol entre as araucárias; de noite: vaga-lume e neblina
+  if (nt < .5) { c.save(); c.globalCompositeOperation = "lighter"; for (let i = 0; i < 6; i++) { const x = ((i * 260 - cam.x * T * .3) % (W + 400) + W + 400) % (W + 400) - 200; c.fillStyle = `rgba(255,240,180,${.05 * (1 - nt * 2)})`; c.beginPath(); c.moveTo(x, 0); c.lineTo(x + 80, 0); c.lineTo(x + 280, H); c.lineTo(x + 160, H); c.fill(); } c.restore(); }
+  else for (const f of FL.vaga) { const x = f.x + Math.sin(tm * .7 + f.f) * 1.4, y = f.y + Math.cos(tm * .5 + f.f) * 1; if (!vis2(x, y)) continue; const a = .5 + .5 * Math.sin(tm * 4 + f.f * 3); c.fillStyle = `rgba(220,255,140,${a})`; c.beginPath(); c.arc(PX(x), PY(y) - T, 2.2, 0, 7); c.fill(); }
+  if (nt > .2) for (let i = 0; i < 7; i++) { const x = PX(((i * 13.7 + tm * .25) % (FLW + 10)) - 5), y = PY(8 + (i * 9.3) % 60); const g = c.createRadialGradient(x, y, 0, x, y, T * 6); g.addColorStop(0, `rgba(190,200,210,${.12 * nt})`); g.addColorStop(1, "rgba(190,200,210,0)"); c.fillStyle = g; c.fillRect(x - T * 6, y - T * 6, T * 12, T * 12); }
+  if (nt > .02) { const furos = [[PX(R.eu.x), PY(R.eu.y) - T * .4, T * (R.eu.oco ? 1 : raioLuz(R)), R.lanterna ? 1 : .7], [PX(ACAMP_FL.x), PY(ACAMP_FL.y) - T * .3, T * (5 + Math.sin(tm * 9) * .2), 1], [PX(CAPELA_FL.x), PY(CAPELA_FL.y) - T * .5, T * 2.4, .8], [PX(POCO_FL.x), PY(POCO_FL.y), T * 3, .35]];
+    for (const ou of outros()) if (ou.lugar === "floresta") furos.push([PX(ou.eu.x), PY(ou.eu.y) - T * .4, T * raioLuz(ou), .7]);
+    FL.cogu.forEach(cg => { if (cg.k > .5 && vis2(cg.x, cg.y)) furos.push([PX(cg.x), PY(cg.y) - 6, T * .7, .5]); }); FL.vaga.forEach(f => { const x = f.x + Math.sin(tm * .7 + f.f) * 1.4, y = f.y + Math.cos(tm * .5 + f.f) * 1; if (vis2(x, y)) furos.push([PX(x), PY(y) - T, T * .35, .6]); });
+    if (G2 && G2.fase === "caca") furos.push([PX(G2.x), PY(G2.y) - T * 2.2, T * .5, .5]); luzSimples(nt, furos, .9); }
 }
 
 /* ---------- as coisas da vó e o final alternativo ----------
@@ -6196,6 +6617,7 @@ function oQueFazerVila() {
     if (Math.hypot(s.x - 7.9, s.y - 2.85) < 1) return { t: R.andar ? "Descer" : "Subir", fn: trocarAndar, loc: 1 };
     const n = npcAqui();
     if (n && cartaPara(n)) return cartaPara(n);
+    if (n && n.id === "juvencio" && !npcOnde(n).dorme && ls("roca_trem_visto") && !temPecaTrem("manometro")) return { t: "Comprar manômetro", fn: comprarManometro, loc: 1 };
     if (n) { const o = npcOnde(n); if (o.dorme) return { t: "Ouvir", fn: () => conversar(n), loc: 1 }; if (n.loja && lojaAberta(n.casa)) return { t: "Loja", fn: () => abrirLoja(n), loc: 1 }; return { t: "Conversar", fn: () => conversar(n), loc: 1 }; }
     if (R.andar === 0 && Math.hypot(s.x - 3.5, s.y - 3.25) < 1.4 && predio(R.predio).balcao && !npcAqui()) return { t: "Balcão", fn: () => falar([ehNoite() ? "Não tem ninguém no balcão. Lá em cima, alguma coisa range." : "O balcão está vazio. Fechou cedo hoje."], null, "Yasmin"), loc: 1 };
     return null;
@@ -6705,7 +7127,7 @@ function hostReceber(id, d, conn) {
   if (d.t === "nome") { j.nome = limparNome(d.nome) || j.nome; const o = outros().find(x => x.nid === id); if (o) o.nome = j.nome; avisarLobby(); return; }
   if (d.t === "chat") { const txt = limparTexto(d.txt); if (!txt) return; enviarTodos({ t: "chat", txt, nome: j.nome, slot: j.slot }); receberChat(txt, j.nome, j.slot); return; }
   if (!R || R.online !== "host") return; const o = outros().find(x => x.nid === id); if (!o) return;
-  if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; o.lugar = ["vila", "mata", "esgoto", "estacao", "baixada", "mina", "lagoa", "sotao", "cripta"].includes(d.lugar) ? d.lugar : "sitio"; if (d.lem) { o.lemIn = d.lem; o.lemT = performance.now(); } else o.lemIn = null; if (d.mira != null && R.barco && R.barco.mira) { const pk = postoDeSlot(o.slot); if (pk === "arpao" || pk === "canhao") R.barco.mira[pk] = d.mira; } o.predio = d.predio || null; o.andar = d.andar | 0; if (d.int) o.int = d.int; o.conv = d.conv || {}; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); if (o.gato && GATO_CORES[d.gc]) o.gato.cor = d.gc; }
+  if (d.t === "eu") { if (!o.caido) { Object.assign(o.eu, d.eu); o.dentro = d.dentro; o.sala = d.sala; o.lugar = ["vila", "mata", "esgoto", "estacao", "baixada", "mina", "lagoa", "sotao", "cripta", "serra", "floresta"].includes(d.lugar) ? d.lugar : "sitio"; if (d.lem) { o.lemIn = d.lem; o.lemT = performance.now(); } else o.lemIn = null; if (d.mira != null && R.barco && R.barco.mira) { const pk = postoDeSlot(o.slot); if (pk === "arpao" || pk === "canhao") R.barco.mira[pk] = d.mira; } o.predio = d.predio || null; o.andar = d.andar | 0; if (d.int) o.int = d.int; o.conv = d.conv || {}; } o.lanterna = d.lanterna && R.oleo > 0 && !o.caido; o.correndo = d.correndo; o.chapeu = d.chapeu; o.semente = cl(d.semente | 0, 0, R.sementes.length - 1); if (o.gato && GATO_CORES[d.gc]) o.gato.cor = d.gc; }
   else if (d.t === "acao") { comJogador(o, () => { const a = oQueFazer(); if (a && !a.loc && a.t.split(" ")[0] === String(d.nome).split(" ")[0]) a.fn(); }); hud(); }
   else if (d.t === "compra") { const op = comJogador(o, () => (d.loja ? opcoesLoja(d.loja) : opcoesBancada())).find(x => x.nome.replace(/^✓ /, "") === d.nome); if (op && op.ok) { R.moedas -= op.preco; comJogador(o, op.fn); S.moedas(); hud(); } }
   else if (d.t === "deco") { if (aplicarDeco(d.alvo, d.chave)) S.colher(); hud(); }
@@ -6763,7 +7185,7 @@ function estadoPara() {
   const pl = q => ({ lugar: q.lugar, predio: q.predio, andar: q.andar, int: q.int, roupa: q.roupa, eu: { x: q.eu.x, y: q.eu.y, dir: q.eu.dir, anda: q.eu.anda, fase: q.eu.fase }, dentro: q.dentro, sala: q.sala, lanterna: q.lanterna, regando: q.regando, chapeu: q.chapeu, caido: q.caido ? { quem: q.caido.quem, fora: q.caido.fora } : null, velaCom: q.velaCom, cor: q.cor, perto: q.perto, vidas: q.vidas, agua: q.agua, slot: q === R ? 0 : q.slot, nome: q === R ? R.nome : q.nome, gato: q.gato ? { x: q.gato.x, y: q.gato.y, dir: q.gato.dir, anda: q.gato.anda, cor: q === R ? (ls("roca_gato_cor") || "preto") : q.gato.cor } : null });
   const vs = {}; outros().forEach(o => { vs[o.slot] = { roupa: o.roupa, garrafada: o.garrafada, broa: o.broa, caido: o.caido ? { quem: o.caido.quem, fora: o.caido.fora } : null, velaCom: o.velaCom, regando: o.regando, agua: o.agua, vidas: o.vidas }; });
   return { t: "s", T: R.t, dia: R.dia, moedas: R.moedas, agua: R.agua, aguaMax: R.aguaMax, oleo: R.oleo, vel: R.vel, lanternaBoa: R.lanternaBoa, sementes: R.sementes, vara: R.vara, pecas: R.pecas, peneira: R.peneira,
-    missoes: R.missoes, mprog: R.mprog, apito: R.apito, guizo: R.guizo, isca: R.isca, medalha: R.medalha, enxada: R.enxada, lampiao: R.lampiao, ferradura: R.ferradura, sal: R.sal, arruda: R.arruda, aguaBenta: R.aguaBenta, patua: R.patua, remoBom: R.remoBom, proa: R.proa, bandBarco: R.bandBarco, corBarco: R.corBarco, farolDia: R.farolDia, arpao: R.arpao, arpaoBom: R.arpaoBom, canhao: R.canhao, casco: R.casco, vela: R.vela, colete: R.colete, arpaoDuplo: R.arpaoDuplo, bacamarte: R.bacamarte, dinamite: R.dinamite, armCouro: R.armCouro, armFerro: R.armFerro, armEq: R.armEq, boiaSv: R.boiaSv, sino: R.sino, rede: R.rede, papagaio: R.papagaio, lago: jogadores().some(P => P.lugar === "lagoa") ? { barco: R.barco, boiuna: R.boiuna, chefe: R.chefe, tiros: R.tiros, explos: R.explos } : null, enterr: R.enterr, buracos: R.buracos, chaveBau: R.chaveBau, inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
+    missoes: R.missoes, mprog: R.mprog, apito: R.apito, guizo: R.guizo, isca: R.isca, medalha: R.medalha, enxada: R.enxada, lampiao: R.lampiao, ferradura: R.ferradura, sal: R.sal, arruda: R.arruda, aguaBenta: R.aguaBenta, patua: R.patua, remoBom: R.remoBom, proa: R.proa, bandBarco: R.bandBarco, corBarco: R.corBarco, farolDia: R.farolDia, arpao: R.arpao, arpaoBom: R.arpaoBom, canhao: R.canhao, casco: R.casco, vela: R.vela, colete: R.colete, arpaoDuplo: R.arpaoDuplo, bacamarte: R.bacamarte, dinamite: R.dinamite, armCouro: R.armCouro, armFerro: R.armFerro, armEq: R.armEq, boiaSv: R.boiaSv, sino: R.sino, rede: R.rede, papagaio: R.papagaio, lago: jogadores().some(P => P.lugar === "lagoa") ? { barco: R.barco, boiuna: R.boiuna, chefe: R.chefe, tiros: R.tiros, explos: R.explos } : null, pg: jogadores().some(P => P.lugar === "floresta") ? R.pg : null, enterr: R.enterr, buracos: R.buracos, chaveBau: R.chaveBau, inv: R.inv, colheita: R.colheita, peixes: R.peixes, extra: R.extra, ovos: R.ovos, frutas: R.frutas, mel: R.mel, lamparinas: R.lamparinas, pisadeira: R.pisadeira, canteiros: R.canteiros.map(k => [k.aberto, k.covas]),
     cachorro: R.cachorro, seco: R.seco, vulto: R.vulto, vela: R.vela, velaEntregue: R.velaEntregue, velaHoje: R.velaHoje, alma: R.alma, galinhas: R.galinhas, porcos: R.porcos,
     aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp, curu: R.curu, cuca: R.cuca, deco: R.deco, decoInv: R.decoInv, clima: R.clima, climaAmanha: R.climaAmanha, luaCheia: R.luaCheia, encomenda: R.encomenda, raioN: R.raioN || 0, queimado: R.queimado, sinoT: R.sinoT, sinoUsado: R.sinoUsado, fx: R.fx, morto: R.morto, venceu: R.venceu ? { t: R.venceu.t } : null, tempoTotal: R.tempoTotal,
     jogs: jogadores().map(pl), vs };
@@ -6778,7 +7200,7 @@ function aplicarEstado(d) {
   d.voce = d.vs && d.vs[R.slot];
   ["missoes", "mprog", "apito", "guizo", "isca", "medalha", "enxada", "lampiao", "ferradura", "sal", "arruda", "aguaBenta", "patua", "remoBom", "proa", "bandBarco", "corBarco", "farolDia", "arpao", "arpaoBom", "canhao", "casco", "vela", "colete", "arpaoDuplo", "bacamarte", "dinamite", "armCouro", "armFerro", "armEq", "boiaSv", "sino", "rede", "papagaio", "enterr", "buracos", "chaveBau", "dia", "moedas", "aguaMax", "oleo", "vel", "lanternaBoa", "sementes", "vara", "pecas", "peneira", "inv", "colheita", "peixes", "extra", "ovos", "frutas", "mel", "lamparinas", "pisadeira",
     "cachorro", "seco", "vulto", "vela", "velaEntregue", "velaHoje", "alma", "galinhas", "porcos", "aranha", "mula", "saci", "esp", "curu", "cuca", "queimado", "sinoT", "sinoUsado", "tempoTotal"].forEach(k => { R[k] = d[k]; }); if (d.deco) { R.deco = d.deco; R.decoInv = d.decoInv || {}; } R.clima = d.clima || "sol"; R.climaAmanha = d.climaAmanha; R.luaCheia = !!d.luaCheia; R.encomenda = d.encomenda || null; if ((d.raioN || 0) !== (R.raioN || 0)) { if (R.raioN != null) trovao(); R.raioN = d.raioN || 0; }
-  if (d.lago) { const bv = R.barco; if (bv && d.lago.barco && Math.hypot(bv.x - d.lago.barco.x, bv.y - d.lago.barco.y) < 4) { const nb = d.lago.barco; nb.ax = nb.x; nb.ay = nb.y; nb.x = bv.x; nb.y = bv.y; let da = nb.ang - bv.ang; while (da > PI) da -= 2 * PI; while (da < -PI) da += 2 * PI; nb.aa = nb.ang; nb.ang = bv.ang; } R.barco = d.lago.barco; const cv = R.chefe; if (cv && d.lago.chefe) suave(cv, d.lago.chefe); R.chefe = d.lago.chefe; R.boiuna = d.lago.boiuna; R.tiros = d.lago.tiros || []; R.explos = d.lago.explos || []; }
+  if (d.lago) { const bv = R.barco; if (bv && d.lago.barco && Math.hypot(bv.x - d.lago.barco.x, bv.y - d.lago.barco.y) < 4) { const nb = d.lago.barco; nb.ax = nb.x; nb.ay = nb.y; nb.x = bv.x; nb.y = bv.y; let da = nb.ang - bv.ang; while (da > PI) da -= 2 * PI; while (da < -PI) da += 2 * PI; nb.aa = nb.ang; nb.ang = bv.ang; } R.barco = d.lago.barco; const cv = R.chefe; if (cv && d.lago.chefe) suave(cv, d.lago.chefe); R.chefe = d.lago.chefe; R.boiuna = d.lago.boiuna; R.tiros = d.lago.tiros || []; R.explos = d.lago.explos || []; } R.pg = d.pg || null;
   R.t = d.T; R.fxR = d.fx || []; R.semente = cl(R.semente, 0, R.sementes.length - 1);
   d.canteiros.forEach(([a, cv2], i) => { R.canteiros[i].aberto = a; R.canteiros[i].covas = cv2; });
   if (d.voce) { R.roupa = d.voce.roupa; R.garrafada = d.voce.garrafada; if (d.voce.broa > 0 && !(R.broa > 0)) R.broa = d.voce.broa; R.agua = d.voce.agua; R.vidas = d.voce.vidas; if (d.voce.caido) { cairLocal(d.voce.caido.quem); R.caido.fora = d.voce.caido.fora; } else if (R.caido && R.caido.t > 2.5) R.caido = null; R.velaCom = d.voce.velaCom; if (d.voce.regando > 0) R.regando = d.voce.regando; }
@@ -6797,7 +7219,7 @@ function atualizarConvidado(dt) {
   if (R.venceu) { R.venceu.t += dt; if (R.venceu.t > 4.5 && !R.venceu.tela) { R.venceu.tela = true; telaFim("venceu"); } return; }
   if (R.caido) R.caido.t += dt;
   R.t += dt; // o relógio anda entre um pacote e outro
-  moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); if (R.lugar === "estacao") atualizarNevoa(dt); if (R.lugar === "baixada") { atualizarIara(dt); atualizarBoi(dt); } if (R.lugar === "lagoa" || (R.online !== "guest" && jogadores().some(P => P.lugar === "lagoa"))) atualizarLagoa(dt); if (R.lugar === "mina") atualizarMina(dt); atualizarMedo(dt); atualizarClimaLocal(dt); atualizarPesca(dt);
+  moverLocal(dt); if (R.lugar === "esgoto") atualizarEsgoto(dt); if (R.lugar === "estacao") atualizarNevoa(dt); if (R.lugar === "baixada") { atualizarIara(dt); atualizarBoi(dt); } if (R.lugar === "lagoa" || (R.online !== "guest" && jogadores().some(P => P.lugar === "lagoa"))) atualizarLagoa(dt); if (R.online !== "guest" && jogadores().some(P => P.lugar === "floresta")) atualizarFloresta(dt); if (R.lugar === "mina") atualizarMina(dt); atualizarMedo(dt); atualizarClimaLocal(dt); atualizarPesca(dt);
   if (R.oleo <= 0) R.lanterna = false;
   R.perto = calcPerto(); musicaPasso(dt);
   Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .066; enviar({ t: "eu", eu: { x: R.eu.x, y: R.eu.y, dir: R.eu.dir, anda: R.eu.anda, fase: R.eu.fase }, dentro: R.dentro, sala: R.sala, lugar: R.lugar, predio: R.predio, andar: R.andar, int: R.int, conv: R.conv, lanterna: R.lanterna, correndo: R.correndo, chapeu: R.chapeu, semente: R.semente, gc: ls("roca_gato_cor") || "preto", lem: R.lemArr || null, mira: R.armando ? R.mira : null }); }
