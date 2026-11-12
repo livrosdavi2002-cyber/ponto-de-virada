@@ -1,7 +1,7 @@
 /* Funciona sem internet depois da primeira visita (versão para iPhone / navegador) */
 const VERSAO = "ue-2";
 const ARQUIVOS = ["./", "index.html", "manifest.webmanifest", "historias.js", "cinema.js", "cinema2.js", "cinema3.js", "historias2.js", "corposeco.js",
-  "sobrevivencia.js", "modos.js", "acoes.js", "mundo.js", "casa.js", "criaturas.js", "grupo.js", "predio.js", "roca.js", "lib/peerjs.min.js", "lib/three.min.js",
+  "sobrevivencia.js", "modos.js", "acoes.js", "mundo.js", "casa.js", "criaturas.js", "grupo.js", "predio.js", "roca.js", "lib/peerjs.min.js",
   "fonts/big-shoulders-display-latin-500-normal.woff2", "fonts/big-shoulders-display-latin-800-normal.woff2", "fonts/newsreader-latin-400-normal.woff2",
   "fonts/newsreader-latin-500-normal.woff2", "fonts/newsreader-latin-400-italic.woff2", "fonts/jetbrains-mono-latin-400-normal.woff2", "fonts/jetbrains-mono-latin-600-normal.woff2",
   "icones/icone-180.png", "icones/icone-192.png", "icones/icone-512.png"];
