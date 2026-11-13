@@ -187,11 +187,11 @@ function novoJogo() {
     [TRATOR.x - .8, TRATOR.y - .5, TRATOR.x + .6, TRATOR.y + .1], [CAMINHONETE.x - 1.3, CAMINHONETE.y - .3, CAMINHONETE.x + 1.3, CAMINHONETE.y + 1], [CAPELA.x - .2, CAPELA.y - 1.5, CAPELA.x + CAPELA.w + .2, CAPELA.y + CAPELA.h + .05],
     [CHIQUEIRO.x0, CHIQUEIRO.y0, CHIQUEIRO.x1, CHIQUEIRO.y1], [BALANCO.x - .75, BALANCO.y - .2, BALANCO.x + .75, BALANCO.y + .05], [VACA.x - .9, VACA.y - .45, VACA.x + 1.3, VACA.y + .1], [COCHO.x - .6, COCHO.y - .3, COCHO.x + .6, COCHO.y + .05], [LENHA.x - .55, LENHA.y - .35, LENHA.x + .55, LENHA.y + .05], [CARRIOLA.x - .5, CARRIOLA.y - .25, CARRIOLA.x + .5, CARRIOLA.y + .05]];
   { const P = PROPS_SITIO; caixas.push([P.correio.x - .15, P.correio.y - .15, P.correio.x + .15, P.correio.y + .05], [P.tanque.x - .5, P.tanque.y - .4, P.tanque.x + .5, P.tanque.y + .05], [P.carroca.x - .75, P.carroca.y - .35, P.carroca.x + .65, P.carroca.y + .05], [P.aboboras.x - .45, P.aboboras.y - .3, P.aboboras.x + .45, P.aboboras.y + .05]); }
-  caixas.push([CHAFARIZ.x - 1, CHAFARIZ.y - .55, CHAFARIZ.x + 1, CHAFARIZ.y + .05], [POSTE.x - .12, POSTE.y - .12, POSTE.x + .12, POSTE.y + .05], [BEBEDOURO.x - .62, BEBEDOURO.y - .3, BEBEDOURO.x + .62, BEBEDOURO.y + .05]); caixas.push([MOINHO.x - .1, MOINHO.y + .3, MOINHO.x + MOINHO.w + .1, MOINHO.y + MOINHO.h + .05], [FORNO.x - .7, FORNO.y - .3, FORNO.x + .7, FORNO.y + .2]); POMAR2.forEach(q => bloq(q.x - .2, q.y - .2, .4, .4)); COLMEIAS.forEach(([x, y]) => caixas.push([x - .32, y - .4, x + .32, y + .05])); FENOS.forEach(([x, y]) => caixas.push([x - .6, y - .4, x + .6, y + .05]));
+  caixas.push([CASARAO.x - .25, CASARAO.y + 1.7, CASARAO.x + CASARAO.w + .25, CASARAO.y + CASARAO.h + .25], [BICA.x - .35, BICA.y - .3, BICA.x + .35, BICA.y + .05]); caixas.push([CHAFARIZ.x - 1, CHAFARIZ.y - .55, CHAFARIZ.x + 1, CHAFARIZ.y + .05], [POSTE.x - .12, POSTE.y - .12, POSTE.x + .12, POSTE.y + .05], [BEBEDOURO.x - .62, BEBEDOURO.y - .3, BEBEDOURO.x + .62, BEBEDOURO.y + .05]); caixas.push([MOINHO.x - .1, MOINHO.y + .3, MOINHO.x + MOINHO.w + .1, MOINHO.y + MOINHO.h + .05], [FORNO.x - .7, FORNO.y - .3, FORNO.x + .7, FORNO.y + .2]); POMAR2.forEach(q => bloq(q.x - .2, q.y - .2, .4, .4)); COLMEIAS.forEach(([x, y]) => caixas.push([x - .32, y - .4, x + .32, y + .05])); FENOS.forEach(([x, y]) => caixas.push([x - .6, y - .4, x + .6, y + .05]));
   POMAR.forEach(([x, y]) => bloq(x - .2, y - .2, .4, .4));
   const arvores = [];
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) { const fora = x < CERCA.x0 || x >= CERCA.x1 || y < CERCA.y0 || y >= CERCA.y1; if (fora && !(x >= 22 && x <= 28 && y >= CERCA.y1) && !(x < CERCA.x0 && y >= 15 && y <= 18) && srnd() < .55 && !(x >= CERCA.x1 && y >= 20 && y <= 23) && !(x >= 33 && x <= 35 && y < CERCA.y0)) arvores.push({ x: x + .5 + (srnd() - .5) * .6, y: y + .5 + (srnd() - .5) * .6, r: .7 + srnd() * .55, c: Math.floor(srnd() * 5) }); }
-  [[8, 7], [44.4, 21], [7.6, 31], [21.8, 31.4], [33.2, 21.6], [7.4, 25]].forEach(([x, y]) => { arvores.push({ x, y, r: .9, c: Math.floor(srnd() * 5) }); solido[Math.floor(y)][Math.floor(x)] = true; });
+  [[8, 7], [44.4, 21], [7.6, 31], [13.2, 31.4], [33.2, 21.6], [7.4, 25]].forEach(([x, y]) => { arvores.push({ x, y, r: .9, c: Math.floor(srnd() * 5) }); solido[Math.floor(y)][Math.floor(x)] = true; });
   const pedras = [], flores = [], cogumelos = [];
   for (let i = 0; i < 24; i++) { const x = rnd(CERCA.x0 + .5, CERCA.x1 - .5), y = rnd(CERCA.y0 + .5, CERCA.y1 - .5); if (solido[Math.floor(y)][Math.floor(x)]) continue; (i % 3 === 0 ? pedras : i % 3 === 1 ? flores : cogumelos).push({ x, y, k: Math.random() }); }
   R = {
@@ -400,7 +400,7 @@ function _pintarChaoSitio(g) {
   trilha([[8.4, 19.05], [23.6, 19.05], [25.2, 19.05]], .7); trilha([[25.2, 18.4], [26, 18.4]], .5); // o corredor da horta e a entrada do curral
   trilha([[17.2, 13.6], [18.7, 12.3], [19.5, 10.9]], .75); trilha([[9.8, 13.7], [8.5, 12.5], [7.8, 10.9]], .6);
   trilha([[25.2, 13.6], [28.6, 13.4], [28.6, 12.2]], .7); trilha([[28.6, 13.4], [39, 13.4], [39, 12]], .8); trilha([[39, 13.4], [40.55, 14.6], [40.55, 21.2]], .7);
-  trilha([[25.2, 27.4], [31.2, 27.4]], .7); trilha([[25.2, 23.75], [31, 23.5], [38.8, 23.05], [42, 23.3], [42, 24.9]], .7);
+  trilha([[25.2, 27.4], [31.2, 27.4]], .7); trilha([[19.6, 30.2], [19.6, 30.7], [25.2, 30.7]], .7); // caminho do casarão trilha([[25.2, 23.75], [31, 23.5], [38.8, 23.05], [42, 23.3], [42, 24.9]], .7);
   trilha([[25.2, 33], [25.2, 38]], 1.4); // estrada que sai pelo portão
   trilha([[39, 13.4], [50.4, 13.4], [50.4, 22.2], [53.3, 22.2], [53.3, 21]], .8); trilha([[42, 23.2], [44.6, 23.3], [49.7, 23.6], [49.7, 30.4], [55, 30.4]], .7); trilha([[50.4, 13.4], [53.4, 12.4]], .6);
   trilha([[53.3, 22.2], [57, 22.2], [60.5, 22], [65, 21.8]], .8); // caminho que sai pela porteira do leste até a estação velha
@@ -750,6 +750,9 @@ function oQueFazer() {
   if (dist(p, CAIXOTE) < 1.2) { const v = valorVenda(); return { t: v ? `Vender ${v}` : "Caixote", fn: vender }; }
   if (dist(p, POCO) < 1.4) return { t: "Tirar água", fn: tirarAgua };
   if (reparoOk("chafariz") && dist(p, { x: CHAFARIZ.x, y: CHAFARIZ.y + .3 }) < 1.6) return { t: "Encher no chafariz", fn: tirarAgua };
+  if (reparoOk("bica") && dist(p, { x: BICA.x, y: BICA.y + .3 }) < 1.2) return { t: "Encher na bica", fn: tirarAgua };
+  if (reparoOk("balanco") && dist(p, { x: BALANCO.x, y: BALANCO.y + .3 }) < 1.2) return { t: "Balançar", loc: 1, fn: () => { R.medo = 0; R.folego = Math.min(100, (R.folego || 0) + 30); tocarTom(520, .5, { vol: .03, ate: 640 }); efeito("Balançou um pouquinho. O medo passou.", "#9bd86b"); hud(); } };
+  if (dist(p, CASARAO.porta) < 1.4) return casaraoPronto() ? { t: "Entrar no casarão", loc: 1, fn: () => irSala("casarao") } : { t: `Casarão ${casaraoN()}/${ETAPAS_CASARAO.length}`, loc: 1, fn: tentarEtapa };
   if (R.vela && !velaNaMao() && dist(p, R.vela) < 1.1) return { t: "Pegar vela", fn: pegarVela };
   if (dist(p, CRUZ) < 1.5 && R.velaCom) return { t: "Deixar vela", fn: entregarVela };
   if (dist(p, CAMINHONETE) < 2) return { t: R.pecas >= 3 ? "Ir embora!" : "Caminhonete", fn: () => R.pecas >= 3 ? irEmbora() : efeito(`Faltam ${3 - R.pecas} peças (na bancada)`, "#e8e2d4") };
@@ -1364,7 +1367,7 @@ function comecaNoite() { R.luaCheia = R.dia >= 2 && Math.random() < .2; if (R.lu
   R.velaT = rnd(22, 50); R.velaP = rnd(.1, .32); efeito((R.lugar || "sitio") !== "sitio" ? "Anoiteceu" : R.velaHoje ? "Anoiteceu... o sino vai tocar" : "Anoiteceu · hoje o sino está quieto", "#9aa8c8"); tocarTom(220, 2, { vol: .04, ate: 165, wet: .8 }); }
 function amanhece() {
   if (R.velaHoje && !R.velaEntregue && jogadores().some(P => (P.lugar || "sitio") === "sitio")) { R.alma = { t: 0 }; return; } // a alma vem cobrar (só se tem alguém no sítio)
-  R.dia++; R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(12, R.ovos + 3 + (R.galinhasComeram ? 3 : 0)); R.galinhasComeram = false; R.porcosComeram = false; novoDiaFazenda(); repovoarMato(); novoDiaExtras(); R.mel = R.mel.map(() => 1); R.saci.pego = false; R.saci.hoje = Math.random() < .3; R.saci.prox = rnd(80, 150);
+  R.dia++; if (casaraoPronto()) { R.moedas += 6; setTimeout(() => R && efeito("+6 moedas: o aluguel do casarão", "#f2c94a"), 2500); } R.leiteHoje = 0; R.vacaComeu = 0; R.lenhaHoje = 0; R.velaHoje = false; R.vela = null; R.velaCom = false; outros().forEach(o => o.velaCom = false); R.ovos = Math.min(12, R.ovos + 3 + (R.galinhasComeram ? 3 : 0)); R.galinhasComeram = false; R.porcosComeram = false; novoDiaFazenda(); repovoarMato(); novoDiaExtras(); R.mel = R.mel.map(() => 1); R.saci.pego = false; R.saci.hoje = Math.random() < .3; R.saci.prox = rnd(80, 150);
   jogadores().forEach(P => { P.vidas = 1; if (P.caido && P.caido.fora) { P.caido = null; P.lugar = "sitio"; P.predio = null; P.dentro = false; P.eu.x = CASA.porta.x + (P === R ? -.5 : (P.slot || 1) * .45 - .1); P.eu.y = CASA.porta.y + .7; if (P !== R) enviarPara(P.nid, { t: "pos", x: P.eu.x, y: P.eu.y }); } });
   if (R.online) efeito("Amanheceu: o coração voltou", "#e2483d"); efeito(`Dia ${R.dia}`, "#f2c94a"); mudarDia(); setTimeout(() => R && !R.morto && salvarJogo(true), 1500);
   Object.assign(R.esp, { x: ESPANTALHO.x, y: ESPANTALHO.y, fase: "poste" }); if (R.aranha.fase !== "longe") R.aranha.fase = "sai"; R.mula.fase = "longe";
@@ -2027,6 +2030,110 @@ function desenharBebedouro(tm) { const x = PX(BEBEDOURO.x), y = PY(BEBEDOURO.y);
   if (arteNova()) arte("bebedouro" + (ok ? 1 : 0), x, y, T * .68, T * 1.15, T * 1.4, T * 1.2, (X, Y) => bebedouroArte(X, Y, ok)); else { c.fillStyle = "#7a5a36"; c.fillRect(x - T * .6, y - T * .45, T * 1.2, T * .32); }
   if (ok) { const k = (tm * 1.4) % 1; c.fillStyle = `rgba(170,220,240,${.9 - k * .6})`; c.fillRect(x + T * .21, y - T * .85 + k * T * .4, 2, 3); }
 }
+/* ---------- o CASARÃO: a casa grande caindo aos pedaços perto da horta. Reforma em 12 etapas, cada uma muda o desenho; pronto, dá pra entrar e rende aluguel ---------- */
+const CASARAO = { x: 16.6, y: 26.0, w: 6, h: 3.6, porta: { x: 19.6, y: 30.0 } };
+const ETAPAS_CASARAO = [
+  { nome: "Tirar o entulho", precisa: { vassoura: 1, pa: 1 }, n: 3, txt: "Varreu o caco de telha e tirou a pedra caída da frente. Dá pra chegar perto agora." },
+  { nome: "Escorar as paredes", precisa: { martelo: 1, tabuas: 3 }, n: 3, txt: "Pregou escoras de tábua nas paredes que estavam tombando." },
+  { nome: "Levantar as paredes caídas", precisa: { martelo: 1, tijolos: 2 }, n: 4, txt: "Levantou de novo a parede que tinha desabado, tijolo por tijolo." },
+  { nome: "Trocar o assoalho", precisa: { martelo: 1, tabuas: 3 }, n: 4, txt: "Arrancou as tábuas podres do chão e pregou tábua nova." },
+  { nome: "Montar as vigas do telhado", precisa: { martelo: 1, tabuas: 3, corda: 1 }, n: 4, txt: "Subiu as vigas e amarrou firme. Já dá pra ver o formato do telhado." },
+  { nome: "Cobrir o telhado", precisa: { martelo: 1, telhaR: 3 }, n: 4, txt: "Telha por telha, o casarão ganhou telhado de novo. Não chove mais lá dentro." },
+  { nome: "Pôr vidro nas janelas", precisa: { martelo: 1, vidro: 2 }, n: 3, txt: "Tirou as tábuas pregadas nas janelas e pôs vidro novo." },
+  { nome: "Porta nova", precisa: { martelo: 1, tabuas: 2, engrenagem: 1 }, n: 4, txt: "Porta nova de tábua, com dobradiça engraxada. Ela fecha sem ranger." },
+  { nome: "Refazer a varanda", precisa: { martelo: 1, tabuas: 3 }, n: 4, txt: "A varanda tem chão e esteio de novo. Dá até pra sentar." },
+  { nome: "Levantar a chaminé", precisa: { martelo: 1, tijolos: 2 }, n: 3, txt: "A chaminé voltou a ficar de pé." },
+  { nome: "Caiar as paredes", precisa: { cal: 2 }, n: 3, txt: "Duas demãos de cal. O casarão ficou branquinho, com barrado azul." },
+  { nome: "Arrumar por dentro", precisa: { martelo: 1, tabuas: 3, tela: 1 }, n: 5, txt: "Montou cama, mesa e armário, e pôs tela nas janelas. O casarão ficou pronto!" }];
+const casaraoN = () => Math.min(ETAPAS_CASARAO.length, (R && R.deco && R.deco.casarao) || 0), casaraoPronto = () => casaraoN() >= ETAPAS_CASARAO.length;
+function tentarEtapa() {
+  const i = casaraoN(), e = ETAPAS_CASARAO[i]; if (!e) return; const rp = { k: "casarao" + i, nome: e.nome, precisa: e.precisa, n: e.n };
+  if (R.online === "guest") return falar(["Quem manda na obra do casarão é o dono do sítio. Ajuda ele a juntar material!"], null, "Yasmin");
+  if (!temPrecisa(rp)) return falar([`Casarão, etapa ${i + 1} de ${ETAPAS_CASARAO.length}: ${e.nome.toLowerCase()}.`, `Pra essa etapa precisa: ${listaPrecisa(rp)}.`, "Tem tudo na loja de construção do Seu Nonato, na vila."], null, "Yasmin");
+  abrirMini("prego", { n: e.n, nome: e.nome }, res => { if (!res.ok) return; if (casaraoN() !== i || !temPrecisa(rp)) return;
+    for (const [m, n] of Object.entries(e.precisa)) if (!FERR.some(f => f[0] === m)) R.decoInv["x:" + m] -= n;
+    R.deco.casarao = i + 1; salvarDeco(); faiscas(CASARAO.porta.x, CASARAO.porta.y - 1.2, ["#e8d8a8", "#f2c94a", "#9a7a4a"], 22, 1.4); R.ferrAnim = { k: "martelo", ate: performance.now() / 1000 + .8 };
+    efeito(`Casarão: ${i + 1}/${ETAPAS_CASARAO.length}`, "#9bd86b"); falar(casaraoPronto() ? [e.txt, "Agora dá pra entrar. E tem gente da vila querendo alugar um quarto: todo dia ele rende 6 moedas."] : [e.txt, `Próxima etapa: ${ETAPAS_CASARAO[i + 1].nome.toLowerCase()}.`], null, "Yasmin"); hud(); });
+}
+function casaraoArte(X, Y, w, h, n) { const T = TS; SD_ARTE = 211 + n * 3;
+  const caiado = n >= 11, parede = caiado ? "#ece4d0" : "#a8a090", tel = "#8a3a22";
+  // chaminé (atrás do telhado)
+  const chx = X + w * .78; if (n >= 10) { tijolos(chx, Y - T * 2.35, T * .45, T * 1.3, "#8a4e3a", T * .13); c.fillStyle = "#2a2a2a"; c.fillRect(chx - 3, Y - T * 2.4, T * .45 + 6, 5); } else if (n >= 6) tijolos(chx, Y - T * 1.55, T * .45, T * .5, "#7a4a3a", T * .13);
+  // paredes
+  const pg = c.createLinearGradient(0, Y, 0, Y + h); pg.addColorStop(0, tomCor(parede, .9)); pg.addColorStop(1, tomCor(parede, 1.03));
+  if (n >= 3) { c.fillStyle = pg; c.fillRect(X, Y, w, h); }
+  else { c.fillStyle = pg; c.beginPath(); c.moveTo(X, Y + h); c.lineTo(X, Y); c.lineTo(X + w * .3, Y); c.lineTo(X + w * .38, Y + h * .25); c.lineTo(X + w * .5, Y + h * .15); c.lineTo(X + w * .62, Y + h * .45); c.lineTo(X + w * .74, Y + h * .3); c.lineTo(X + w * .86, Y + h * .55); c.lineTo(X + w, Y + h * .4); c.lineTo(X + w, Y + h); c.fill();
+    c.save(); c.clip(); tijolos(X + w * .3, Y, w * .7, h * .7, "#7a4a3a", T * .14); c.restore(); } // parede caída, tijolo aparecendo
+  if (!caiado) { for (let i = 0; i < 80; i++) { c.fillStyle = ra() < .5 ? "rgba(0,0,0,.09)" : "rgba(255,255,255,.08)"; c.fillRect(X + ra() * w, Y + ra() * h, 2, 2); } [[.06, .1, .14, .14], [.55, .55, .12, .16], [.84, .2, .1, .12]].forEach(([fx, fy, fw, fh]) => { if (n < 3 && fx > .3) return; c.save(); c.beginPath(); c.ellipse(X + w * (fx + fw / 2), Y + h * (fy + fh / 2), w * fw / 2, h * fh / 2, .3, 0, 7); c.clip(); tijolos(X + w * fx - 4, Y + h * fy - 4, w * fw + 8, h * fh + 8, "#8a4e3a", T * .13); c.restore(); });
+    for (let i = 0; i < 8; i++) { c.fillStyle = "rgba(50,40,24,.2)"; c.beginPath(); c.ellipse(X + ra() * w, Y + h * (.2 + ra() * .7), w * .05, h * .08, 0, 0, 7); c.fill(); } }
+  else { for (let i = 0; i < 40; i++) { c.fillStyle = "rgba(0,0,0,.04)"; c.fillRect(X + ra() * w, Y + ra() * h, 2, 2); } const bg = c.createLinearGradient(0, Y + h * .8, 0, Y + h); bg.addColorStop(0, "#4a72a8"); bg.addColorStop(1, "#2e4a78"); c.fillStyle = bg; c.fillRect(X, Y + h * .8, w, h * .2); }
+  c.fillStyle = tomCor(parede, .8); c.fillRect(X - 2, Y + h * .48, w + 4, T * .09); // friso entre os andares
+  muroPedras(X - 3, Y + h - T * .26, w + 6, T * .26, "#6a645a", T * .15);
+  // janelas: 4 em cima e 2 embaixo
+  const jan = [[.08, .1], [.32, .1], [.58, .1], [.82, .1], [.12, .58], [.74, .58]];
+  jan.forEach(([fx, fy], i) => { const jx = X + w * fx, jy = Y + h * fy, jw = w * .12, jh = h * .28; if (n < 3 && fy < .3 && fx > .3) return;
+    c.fillStyle = "#2a1a10"; c.fillRect(jx - 3, jy - 3, jw + 6, jh + 6); c.fillStyle = "#0c0a08"; c.fillRect(jx, jy, jw, jh);
+    if (n >= 7) { const vg = c.createLinearGradient(jx, jy, jx + jw, jy + jh); vg.addColorStop(0, "#5a6e7c"); vg.addColorStop(1, "#22303a"); c.fillStyle = vg; c.fillRect(jx, jy, jw, jh); c.fillStyle = "rgba(255,255,255,.18)"; c.beginPath(); c.moveTo(jx + jw * .15, jy + jh); c.lineTo(jx + jw * .45, jy); c.lineTo(jx + jw * .6, jy); c.lineTo(jx + jw * .3, jy + jh); c.fill(); c.fillStyle = "#2a1a10"; c.fillRect(jx + jw / 2 - 1.2, jy, 2.4, jh); c.fillRect(jx, jy + jh / 2 - 1.2, jw, 2.4);
+      [jx - jw * .38 - 3, jx + jw + 3].forEach((sx, k2) => { for (let b = 0; b < 3; b++) tabua(sx, jy + b * jh / 3, jw * .38, jh / 3, caiado ? "#3a5a8a" : "#5a4a3a", 300 + i * 9 + k2 * 3 + b); });
+      if (n >= 12 && fy < .3) { c.fillStyle = "#5a3a22"; c.fillRect(jx - 4, jy + jh + 2, jw + 8, 5); ["#c83a2a", "#e8c84a", "#e8e2d8", "#d86a9a"].forEach((cor, k3) => { c.fillStyle = cor; c.beginPath(); c.arc(jx + k3 * jw / 3, jy + jh, 2.4, 0, 7); c.fill(); }); } }
+    else { c.save(); c.translate(jx + jw / 2, jy + jh / 2); [-.6, .6].forEach(a => { c.save(); c.rotate(a); tabua(-jw * .7, -T * .06, jw * 1.4, T * .12, "#6a5a42", 330 + i); c.restore(); }); c.restore(); } }); // tábuas pregadas em X
+  // porta
+  const px = CASARAO.porta.x - CASARAO.x, pdx = X + px * T, py = Y + h; c.fillStyle = "#1a100a"; c.fillRect(pdx - T * .48, py - h * .42, T * .96, h * .42);
+  if (n >= 8) { tabuasV(pdx - T * .42, py - h * .4, T * .84, h * .4, caiado ? "#3a5a8a" : "#5a3a22", 4, 360); c.fillStyle = "#c8a050"; c.beginPath(); c.arc(pdx + T * .28, py - h * .2, 3, 0, 7); c.fill(); c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(pdx - T * .42, py - h * .4, T * .84, 3); }
+  else { c.save(); c.translate(pdx - T * .2, py - h * .1); c.rotate(-.5); tabua(-T * .3, -T * .06, T * .6, T * .12, "#5a4a32", 371); c.restore(); }
+  // telhado
+  const tx0 = X - T * .4, tx1 = X + w + T * .4, ty = Y - T * 1.9;
+  if (n >= 6) { c.save(); c.beginPath(); c.moveTo(tx0, Y + 5); c.lineTo(X + T * .6, ty); c.lineTo(X + w - T * .6, ty); c.lineTo(tx1, Y + 5); c.closePath(); c.clip(); telhas(tx0, ty, tx1, Y + 5, tel, 8); c.restore(); c.strokeStyle = tomCor(tel, 1.4); c.lineWidth = T * .07; c.lineJoin = "round"; c.beginPath(); c.moveTo(tx0, Y + 5); c.lineTo(X + T * .6, ty); c.lineTo(X + w - T * .6, ty); c.lineTo(tx1, Y + 5); c.stroke(); c.lineJoin = "miter"; }
+  else if (n >= 5) { c.strokeStyle = "#6a4a2a"; c.lineWidth = T * .08; c.lineCap = "round"; for (let k = 0; k <= 8; k++) { const xx = X + w * k / 8; c.beginPath(); c.moveTo(xx, Y + 3); c.lineTo(X + T * .6 + (w - T * 1.2) * k / 8, ty); c.stroke(); } c.beginPath(); c.moveTo(X + T * .6, ty); c.lineTo(X + w - T * .6, ty); c.moveTo(tx0, Y + 4); c.lineTo(tx1, Y + 4); c.stroke(); c.lineCap = "butt"; } // vigas
+  else { c.strokeStyle = "#4a3420"; c.lineWidth = T * .07; c.lineCap = "round"; [[.08, -.6, .3], [.2, -.9, -.2], [.9, -.4, .1]].forEach(([fx, a, b]) => { if (n < 3 && fx > .3) return; c.beginPath(); c.moveTo(X + w * fx, Y + 2); c.lineTo(X + w * fx + T * b, Y + T * a); c.stroke(); }); c.lineCap = "butt"; } // vigas quebradas
+  // trepadeira (some quando caia)
+  if (!caiado) { c.strokeStyle = "#3a5a24"; c.lineWidth = 1.6; c.beginPath(); c.moveTo(X + 4, Y + h); for (let i = 1; i < 14; i++) c.lineTo(X + 4 + Math.sin(i * 1.3) * T * .15 + i * 2, Y + h - i * h / 14); c.stroke(); c.fillStyle = "#4a7a2e"; for (let i = 1; i < 14; i++) { c.beginPath(); c.ellipse(X + 4 + Math.sin(i * 1.3) * T * .15 + i * 2 + 3, Y + h - i * h / 14, 3.5, 2, .5, 0, 7); c.fill(); } }
+  // escoras
+  if (n >= 2 && n < 4) [[.2, -1], [.85, 1]].forEach(([fx, s]) => { c.save(); c.translate(X + w * fx, Y + h); c.rotate(s * -.55); tabua(-T * .06, -h * .75, T * .12, h * .75, "#8a6a3e", 380 + fx * 9); c.restore(); });
+  // varanda
+  const vy = Y + h, vw = w + T * .4;
+  if (n >= 9) { for (let i = 0; i < 12; i++) { c.save(); c.translate(X - T * .2 + i * vw / 12 + vw / 24, vy + T * .25); c.rotate(PI / 2); tabua(-T * .25, -vw / 24, T * .5, vw / 12, "#6a4a2c", 390 + i); c.restore(); } c.fillStyle = "#3e2a18"; c.fillRect(X - T * .2, vy + T * .46, vw, T * .1);
+    [0, .33, .67, 1].forEach(k => { const ex = X - T * .1 + k * (w + T * .2); c.save(); c.translate(ex, vy + T * .45); c.rotate(PI / 2); tabua(-h * .62, -T * .06, h * .62, T * .12, "#7a5a34", 400 + k * 9); c.restore(); }); c.fillStyle = "#5a3a22"; c.fillRect(X - T * .25, vy - h * .19, vw + T * .1, T * .1); }
+  else if (n >= 1) { for (let i = 0; i < 5; i++) { c.save(); c.translate(X + w * (.1 + i * .2), vy + T * .3); c.rotate((ra() - .5) * .6); tabua(-T * .3, -T * .05, T * .6, T * .1, "#5a4a32", 410 + i); c.restore(); } }
+  // entulho na frente
+  if (n < 1) { for (let i = 0; i < 18; i++) pedraA(X + w * (.05 + ra() * .9), vy + T * (.05 + ra() * .45), T * (.06 + ra() * .08), T * (.05 + ra() * .05), tomCor("#8a8474", .7 + ra() * .4), ra() * 3); for (let i = 0; i < 6; i++) { c.save(); c.translate(X + w * ra(), vy + T * .3 * ra()); c.rotate(ra() * 3); c.fillStyle = tomCor(tel, .8 + ra() * .3); c.fillRect(-T * .1, -T * .04, T * .2, T * .08); c.restore(); } for (let i = 0; i < 4; i++) { c.save(); c.translate(X + w * ra(), vy + T * .2); c.rotate((ra() - .5) * 2); tabua(-T * .35, -T * .05, T * .7, T * .1, "#4a3a2a", 420 + i); c.restore(); } }
+}
+function desenharCasarao(tm) { const C = CASARAO, x = PX(C.x), y = PY(C.y), w = C.w * TS, h = C.h * TS; if (!naTela(x + w / 2, y, w * 1.2)) return; const n = casaraoN(), T = TS;
+  sombra(x + w / 2, y + h + 4, w * .62, T * .32, .38);
+  arte("casarao|" + n, x, y, T * .55, T * 2.5, w + T * 1.1, h + T * 3.15, (X, Y) => casaraoArte(X, Y, w, h, n));
+  if (n >= 12) { const nt = horaNoite(); [[.08, .1], [.32, .1], [.58, .1], [.82, .1], [.12, .58], [.74, .58]].forEach(([fx, fy], i) => { if (nt < .35 || (i + Math.floor(tm * .05)) % 3 === 0) return; c.fillStyle = `rgba(255,${190 + Math.sin(tm * 3 + i) * 15},110,${.55 * nt})`; c.fillRect(x + w * fx + 2, y + h * fy + 2, w * .12 - 4, h * .28 - 4); });
+    for (let i = 0; i < 4; i++) { const k = (tm * .25 + i / 4) % 1; c.fillStyle = `rgba(190,190,195,${.2 * (1 - k)})`; c.beginPath(); c.arc(x + w * .78 + T * .22 + Math.sin(tm * .8 + i) * 6 * k, y - T * 2.45 - k * T * 1.6, 5 + k * 14, 0, 7); c.fill(); } }
+  else if (n === 0) { c.fillStyle = "#e8d8b0"; c.save(); c.translate(x + w * .5, y + h + T * .7); c.rotate(-.05); c.fillRect(-T * .5, -T * .16, T, T * .3); c.fillStyle = "#3a2410"; c.font = `800 ${Math.round(T * .15)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("CASARÃO", 0, 0); c.textAlign = "start"; c.textBaseline = "alphabetic"; c.restore(); }
+}
+// móveis do casarão por dentro (tipos terminados em C)
+function movelCasarao(m, X, Y, s) { const [mx, my, mw, mh, tipo] = m, x = X(mx), y = Y(my), w = mw * s, h = mh * s;
+  if (tipo === "camaC") { tabua(x, y, w, h * .3, "#6a4a2a", 1); c.fillStyle = "#e8e0d0"; c.fillRect(x + 3, y + h * .3, w - 6, h * .6); c.fillStyle = "#c8302a"; c.fillRect(x + 3, y + h * .55, w - 6, h * .35); c.fillStyle = "rgba(255,255,255,.25)"; for (let i = 0; i < 6; i++) c.fillRect(x + 5 + i * w / 6, y + h * .55, 2, h * .35); c.fillStyle = "#f4f0e8"; c.fillRect(x + 6, y + h * .34, w * .3, h * .16); tabua(x, y + h * .9, w, h * .1, "#5a3a20", 2); }
+  else if (tipo === "armarioC") { tabuasV(x, y - h * .9, w, h * 1.9, "#7a5232", 3, 20); c.fillStyle = "rgba(0,0,0,.4)"; c.fillRect(x + w / 2 - 1, y - h * .9, 2, h * 1.9); c.fillStyle = "#c8a050"; c.fillRect(x + w / 2 - 6, y + h * .1, 3, 6); c.fillRect(x + w / 2 + 3, y + h * .1, 3, 6); }
+  else if (tipo === "fogaoC") { tijolos(x, y, w, h, "#9a5a3e", s * .18); c.fillStyle = "#2a2a2a"; c.fillRect(x, y, w, h * .22); c.fillStyle = "#1a1a1a"; c.beginPath(); c.arc(x + w * .3, y + h * .1, s * .14, 0, 7); c.arc(x + w * .7, y + h * .1, s * .14, 0, 7); c.fill(); c.fillStyle = "#ff8a3a"; c.fillRect(x + w * .3, y + h * .55, w * .4, h * .25); c.fillStyle = "#6a6a6a"; c.fillRect(x + w * .6, y - h * .3, w * .25, h * .3); }
+  else if (tipo === "estanteC") { tabuasV(x, y - h, w, h * 2, "#6a4628", 3, 40); for (let r = 0; r < 4; r++) { c.fillStyle = "#3a2414"; c.fillRect(x, y - h + r * h * .5, w, 3); for (let b = 0; b < 6; b++) { c.fillStyle = ["#8a2a1e", "#2a4a6a", "#4a6a2a", "#c8a050"][(r + b) % 4]; c.fillRect(x + 3 + b * w / 6.5, y - h + r * h * .5 + 4, w / 8, h * .4); } } }
+  else if (tipo === "mesaC") { c.fillStyle = "#e8dcc0"; c.fillRect(x - 3, y - 3, w + 6, h + 6); tabua(x, y, w, h, "#8a6a42", 60); c.fillStyle = "#f4f0e8"; c.beginPath(); c.arc(x + w * .5, y + h * .5, s * .18, 0, 7); c.fill(); c.fillStyle = "#e8a020"; c.beginPath(); c.arc(x + w * .5, y + h * .5, s * .1, 0, 7); c.fill(); [[-.35, .2], [w / s + .05, .2]].forEach(([ox, oy]) => tabua(x + ox * s, y + oy * s, s * .3, s * .5, "#6a4a2a", 70)); }
+  else if (tipo === "sofaC") { c.fillStyle = "#5a3a6a"; c.fillRect(x, y, w, h); c.fillStyle = "#6e4a82"; c.fillRect(x + 4, y + 4, w - 8, h * .45); c.fillStyle = "#4a2e58"; c.fillRect(x, y, w * .12, h); c.fillRect(x + w * .88, y, w * .12, h); c.fillStyle = "#e8c84a"; c.fillRect(x + w * .2, y + h * .2, w * .2, h * .25); }
+  else if (tipo === "vasoC") { c.fillStyle = "#a8582a"; c.beginPath(); c.moveTo(x + w * .2, y + h * .4); c.lineTo(x + w * .8, y + h * .4); c.lineTo(x + w * .7, y + h); c.lineTo(x + w * .3, y + h); c.fill(); for (let i = 0; i < 9; i++) { c.fillStyle = i % 2 ? "#3e6a2a" : "#5a8a3a"; c.beginPath(); c.ellipse(x + w / 2 + Math.cos(i * .7 - 2.3) * w * .35, y + h * .3 + Math.sin(i * .7 - 2.3) * h * .35, w * .16, h * .08, i * .7, 0, 7); c.fill(); } }
+}
+// bica de bambu no pomar: depois de consertada enche o regador
+const BICA = { x: 33.0, y: 19.6 };
+function bicaArte(X, Y, ok) { const T = TS; SD_ARTE = ok ? 221 : 222;
+  // barril
+  c.save(); c.beginPath(); c.ellipse(X, Y - T * .3, T * .32, T * .36, 0, 0, 7); c.rect(X - T * .3, Y - T * .62, T * .6, T * .62); c.clip(); tabuasV(X - T * .32, Y - T * .66, T * .64, T * .68, "#7a5a36", 5, 500); c.restore();
+  c.fillStyle = "#3a3632"; c.fillRect(X - T * .32, Y - T * .5, T * .64, 3); c.fillRect(X - T * .32, Y - T * .18, T * .64, 3);
+  c.fillStyle = "#2a1a0e"; c.beginPath(); c.ellipse(X, Y - T * .62, T * .3, T * .1, 0, 0, 7); c.fill(); c.fillStyle = ok ? "#4a8aa8" : "#3a2e1e"; c.beginPath(); c.ellipse(X, Y - T * .6, T * .25, T * .07, 0, 0, 7); c.fill();
+  // forquilha
+  c.strokeStyle = "#5a3e24"; c.lineWidth = T * .07; c.lineCap = "round"; c.beginPath(); c.moveTo(X - T * .8, Y); c.lineTo(X - T * .8, Y - T * 1.05); c.lineTo(X - T * .92, Y - T * 1.25); c.moveTo(X - T * .8, Y - T * 1.05); c.lineTo(X - T * .68, Y - T * 1.25); c.stroke(); c.lineCap = "butt";
+  // bambu
+  const seg = (x0, y0, x1, y1) => { c.strokeStyle = "#5a7a2a"; c.lineWidth = T * .11; c.lineCap = "round"; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); c.strokeStyle = "#9ac04a"; c.lineWidth = T * .04; c.beginPath(); c.moveTo(x0, y0 - T * .025); c.lineTo(x1, y1 - T * .025); c.stroke(); c.lineCap = "butt"; for (let k = .25; k < 1; k += .25) { c.fillStyle = "#3a5a1a"; c.beginPath(); c.arc(x0 + (x1 - x0) * k, y0 + (y1 - y0) * k, T * .06, 0, 7); c.fill(); } };
+  if (ok) seg(X - T * 1.5, Y - T * 1.3, X - T * .05, Y - T * 1.0); else { seg(X - T * 1.5, Y - T * 1.3, X - T * .85, Y - T * 1.17); seg(X - T * .6, Y - T * .2, X - T * .05, Y - T * .05); }
+}
+function desenharBica(tm) { const x = PX(BICA.x), y = PY(BICA.y); if (!naTela(x, y, 160)) return; const ok = reparoOk("bica"), T = TS; sombra(x, y, T * .4, T * .1, .3);
+  arte("bica" + (ok ? 1 : 0), x, y, T * 1.6, T * 1.45, T * 2, T * 1.5, (X, Y) => bicaArte(X, Y, ok));
+  if (ok) { c.strokeStyle = "rgba(170,220,240,.8)"; c.lineWidth = 2.5; c.beginPath(); c.moveTo(x - T * .05, y - T * 1.0); c.quadraticCurveTo(x + T * .05, y - T * .85, x + T * .02, y - T * .62); c.stroke(); for (let i = 0; i < 3; i++) { const k = (tm * .8 + i / 3) % 1; c.strokeStyle = `rgba(220,245,255,${.5 * (1 - k)})`; c.lineWidth = 1; c.beginPath(); c.ellipse(x + T * .02, y - T * .6, T * .05 + k * T * .2, (T * .05 + k * T * .2) * .3, 0, 0, 7); c.stroke(); } }
+}
+// tábuas e caco no chão marcando o que está quebrado
+function estragoGenerico(rp) { const X = PX(rp.x), Y = PY(rp.y); if (!naTela(X, Y)) return; [[-.3, .1, .4], [.15, -.05, -.3], [0, .2, 1.2]].forEach(([ox, oy, a], i) => { c.save(); c.translate(X + ox * TS, Y + oy * TS); c.rotate(a); c.fillStyle = "#5a4a32"; c.fillRect(-TS * .25, -3, TS * .5, 6); c.fillStyle = "rgba(255,230,190,.15)"; c.fillRect(-TS * .25, -3, TS * .5, 1.5); c.fillStyle = "#2a2622"; c.fillRect(-TS * .2 + i * 4, -1, 2, 2); c.restore(); }); }
 function desenharCasa(tm) {
   const x = PX(CASA.x), y = PY(CASA.y), w = CASA.w * TS, h = CASA.h * TS; if (!naTela(x + w / 2, y + h / 2, w)) return;
   if (arteNova()) { desenharCasaArte(tm, x, y, w, h); return; }
@@ -2707,7 +2814,7 @@ function desenharMundo(tm) {
   obj.push([CEMITERIO.y0 + 1, () => desenharCemiterio(tm)]);
   R.galinhas.forEach(g => obj.push([g.y, () => desenharGalinha(g, tm)]));
   R.canteiros.forEach(k => k.aberto && k.covas.forEach((cv2, i) => cv2 && obj.push([k.y + Math.floor(i / k.w) + .55, () => desenharPlanta(cv2, PX(k.x + i % k.w + .5), PY(k.y + Math.floor(i / k.w) + .55), tm)])));
-  obj.push([POCO.y + .3, () => desenharPoco(tm)]); obj.push([CHAFARIZ.y, () => desenharChafariz(tm)]); obj.push([POSTE.y, () => desenharPoste(tm)]); obj.push([BEBEDOURO.y, () => desenharBebedouro(tm)]);
+  obj.push([POCO.y + .3, () => desenharPoco(tm)]); obj.push([CHAFARIZ.y, () => desenharChafariz(tm)]); obj.push([POSTE.y, () => desenharPoste(tm)]); obj.push([BEBEDOURO.y, () => desenharBebedouro(tm)]); obj.push([CASARAO.y + CASARAO.h, () => desenharCasarao(tm)]); obj.push([BICA.y, () => desenharBica(tm)]);
   obj.push([CAIXOTE.y, () => desenharCaixote(tm)]);
   obj.push([CRUZ.y, () => desenharCruz(tm)]);
   obj.push([CAMINHONETE.y + .9 + offC, () => desenharCaminhonete(PX(CAMINHONETE.x), PY(CAMINHONETE.y + .9 + offC), tm, !!R.venceu)]);
@@ -5773,6 +5880,8 @@ function desenharCasaExtras(x, y, w, h, tm, frente) { // frente=false: o que fic
 const SALAS = {
   sotao: { nome: "Sótão do celeiro", iw: 10, ih: 6, pd: 5, chao: "#6a4e30", parede: "#7a2e22", volta: () => { R.lugar = "sitio"; R.predio = null; R.eu.x = CELEIRO.x + CELEIRO.w / 2; R.eu.y = CELEIRO.y + CELEIRO.h + .55; },
     moveis: [[.5, 1, 2.4, 1.3, "feno"], [4.3, 1, 1.5, .85, "bauVo"], [7, 1.05, 2, .7, "bici"], [.5, 3.9, 1.5, 1.1, "caixas"], [8.3, 4, 1.1, .9, "cavalinho"], [2.6, 4.3, 1.1, .7, "lampV"]] },
+  casarao: { nome: "Casarão", iw: 12, ih: 7, pd: 6, chao: "#7a5634", parede: "#c8b48e", volta: () => { R.lugar = "sitio"; R.predio = null; R.eu.x = CASARAO.porta.x; R.eu.y = CASARAO.porta.y + .5; },
+    moveis: [[.6, 1.05, 2.2, 1.3, "camaC"], [3.4, 1.05, 1.3, .7, "armarioC"], [7.6, 1.05, 1.8, .8, "fogaoC"], [10.1, 1.05, 1.3, .7, "estanteC"], [4.6, 3.1, 2.6, 1.2, "mesaC"], [.6, 4.9, 1, 1, "vasoC"], [9.4, 4.6, 2, .9, "sofaC"]] },
   cripta: { nome: "Cripta de Santa Luzia", iw: 10, ih: 6, pd: 1.2, chao: "#4a4640", parede: "#5a5650", volta: () => { R.lugar = "vila"; R.predio = "igreja"; R.andar = 0; R.int = { x: 1.3, y: 2.3, dir: 1 }; },
     moveis: [[3.6, 2.2, 2.8, 1.3, "sarcofago"], [7.6, 1, 1.9, .6, "velas"], [.5, 3.9, 1.2, 1.1, "ossos"], [8.2, 3.9, 1.3, 1.1, "grade"], [3.9, 4.6, 2.2, .5, "estante"]] } };
 const SEGREDOS = [
@@ -5802,17 +5911,20 @@ const COISAS_SALA = {
     { x: 8.8, y: 3.8, t: "Grade", dia: ["Uma grade de ferro tapando um túnel. Vem um vento frio lá de dentro, com cheiro de mato molhado.", "Esse túnel vai dar onde? Na mata?"], noite: ["Do outro lado da grade, bem longe, alguém está assobiando."] },
     { x: 2.5, y: .55, dia: ["Gavetas de pedra na parede, com plaquinhas de bronze. Uma diz: FAMÍLIA DA ROÇA. Está vazia."] }] };
 function irSala(k) { const S2 = SALAS[k]; R.salaVolta = { lugar: R.lugar }; R.lugar = k; R.predio = "sala"; R.dentro = false; R.int = { x: S2.pd, y: S2.ih - .75, dir: 1 }; R.fade = .6; S.porta(); S.rangido(); hud();
-  if (!ls("roca_sala_" + k)) { ls("roca_sala_" + k, 1); setTimeout(() => R && R.lugar === k && falar([k === "sotao" ? "O sótão do celeiro! Cheio de coisa velha da família: feno, caixas, um cavalinho de pau... e um baú trancado com cadeado." : "Uma escadinha de pedra atrás do altar... dá numa cripta. Frio, úmido, cheiro de vela apagada e de terra.", k === "sotao" ? "Miau. Cuidado com o assoalho, Yasmin. Tem tábua solta." : "Miau... aqui embaixo a gente fala baixinho, Yasmin."], null, "Yasmin"), 500); } }
+  if (!ls("roca_sala_" + k)) { ls("roca_sala_" + k, 1); setTimeout(() => R && R.lugar === k && falar(k === "casarao" ? ["O casarão por dentro! Cama arrumada, fogão de lenha, estante cheia de livro... nem parece aquela ruína.", "Miau. Aqui é quentinho. Dá pra deitar um pouco ou passar um café."] : [k === "sotao" ? "O sótão do celeiro! Cheio de coisa velha da família: feno, caixas, um cavalinho de pau... e um baú trancado com cadeado." : "Uma escadinha de pedra atrás do altar... dá numa cripta. Frio, úmido, cheiro de vela apagada e de terra.", k === "sotao" ? "Miau. Cuidado com o assoalho, Yasmin. Tem tábua solta." : "Miau... aqui embaixo a gente fala baixinho, Yasmin."], null, k === "casarao" ? "Sombrinha" : "Yasmin"), 500); } }
 function sairSala() { const S2 = SALAS[R.lugar]; if (!S2) return; S2.volta(); R.fade = .5; S.porta(); hud(); }
 function livreSala(x, y) { const S2 = SALAS[R.lugar]; if (!S2 || x < .5 || x > S2.iw - .5 || y < 1.15 || y > S2.ih - .35) return false; for (const [mx, my, mw, mh] of S2.moveis) if (x > mx - .2 && x < mx + mw + .2 && y > my && y < my + mh + .25) return false; return true; }
 function oQueFazerSala() { const k = R.lugar, S2 = SALAS[k], s = R.int;
-  if (s.y > S2.ih - 1.05 && Math.abs(s.x - S2.pd) < .9) return { t: k === "sotao" ? "Descer a escada" : "Subir pra igreja", fn: sairSala, loc: 1 };
+  if (s.y > S2.ih - 1.05 && Math.abs(s.x - S2.pd) < .9) return { t: k === "sotao" ? "Descer a escada" : k === "casarao" ? "Sair" : "Subir pra igreja", fn: sairSala, loc: 1 };
+  if (k === "casarao" && Math.hypot(s.x - 1.7, s.y - 2.7) < 1.1) return { t: "Deitar um pouco", loc: 1, fn: () => { R.folego = 100; R.medo = Math.max(0, (R.medo || 0) - 40); efeito("Cochilou uns minutinhos. Fôlego cheio.", "#9bd86b"); hud(); } };
+  if (k === "casarao" && Math.hypot(s.x - 8.5, s.y - 2.3) < 1.1) return { t: "Passar um café", loc: 1, fn: () => { R.medo = 0; efeito("Café quentinho. O medo foi embora.", "#e8c060"); hud(); } };
   if (k === "sotao" && Math.hypot(s.x - 5.05, s.y - 2.2) < 1) return { t: ls("roca_seg_bau") ? "Baú aberto" : R.chaveBau ? "Abrir o baú" : "Baú trancado", loc: 1, fn: () => { if (ls("roca_seg_bau")) return lerSegredo("bau"); if (!R.chaveBau) { ls("roca_dica_chave", 1); return falar(["Um baú de madeira com cadeado. Tem um bilhetinho amarrado na alça, com a letra da vó:", "\"A chave tá onde a laranja cai primeiro.\"", "O pé de laranja do pomar! O primeiro, lá no canto. Vou precisar de uma pá."], null, "Yasmin"); } S.porta(); R.moedas += 120; S.moedas(); efeito("+120 moedas (o dinheiro do vô)", "#f2c94a"); lerSegredo("bau"); } };
   if (k === "cripta" && Math.hypot(s.x - 5, s.y - 4.6) < 1.1) return { t: segredosAchados().includes("cripta") ? "Reler" : "Livro de batismos", loc: 1, fn: () => { if (!segredosAchados().includes("cripta")) { R.tremor = .4; tocarTom(60, 1.2, { vol: .2, ate: 40 }); } lerSegredo("cripta"); } };
   const o = coisaPerto(COISAS_SALA[k] || [], s, 1); if (o) return { t: o.t || "Olhar", fn: () => olharCoisa(o), loc: 1 }; return null; }
 function movelSala(m, X, Y, s, tm, nt) {
   const [mx, my, mw, mh, tipo] = m, R2 = (cx, cy, rw, rh, cor) => { c.fillStyle = cor; c.fillRect(X(cx), Y(cy), rw * s, rh * s); }, B = (cx, cy, r, cor) => { c.fillStyle = cor; c.beginPath(); c.arc(X(cx), Y(cy), r * s, 0, 7); c.fill(); };
   c.fillStyle = "rgba(0,0,0,.3)"; c.fillRect(X(mx) + 4, Y(my + mh) - 2, mw * s, 6);
+  if (/C$/.test(tipo)) return movelCasarao(m, X, Y, s);
   if (tipo === "feno") { for (let i = 0; i < 4; i++) { const fx = mx + (i % 2) * 1.2, fy = my + Math.floor(i / 2) * .62; R2(fx, fy, 1.15, .58, i % 3 ? "#d8b860" : "#c8a850"); c.strokeStyle = "rgba(120,90,30,.6)"; c.lineWidth = 1; for (let j = 0; j < 6; j++) { c.beginPath(); c.moveTo(X(fx + .1 + j * .17), Y(fy + .05)); c.lineTo(X(fx + .05 + j * .17), Y(fy + .53)); c.stroke(); } R2(fx + .25, fy, .04, .58, "#7a5a2a"); R2(fx + .85, fy, .04, .58, "#7a5a2a"); } }
   else if (tipo === "bauVo") { const aberto = !!ls("roca_seg_bau"); R2(mx, my, mw, mh, "#5a3a1e"); R2(mx, my + mh * .3, mw, .06, "#3a3a3a"); R2(mx + .3, my, .06, mh, "#3a3a3a"); R2(mx + mw - .36, my, .06, mh, "#3a3a3a"); if (aberto) { R2(mx + .08, my + .08, mw - .16, mh * .25, "#e8e0c8"); } else { B(mx + mw / 2, my + mh * .55, .09, "#c8a050"); R2(mx + mw / 2 - .04, my + mh * .55, .08, .12, "#1a1a1a"); } }
   else if (tipo === "bici") { const rg = nt > .5 ? tm * 3 : 0; [mx + .4, mx + 1.6].forEach((bx, i) => { c.strokeStyle = "#1a1a1a"; c.lineWidth = .06 * s; c.beginPath(); c.arc(X(bx), Y(my + .35), .3 * s, 0, 7); c.stroke(); if (i === 1) { c.save(); c.translate(X(bx), Y(my + .35)); c.rotate(rg); c.strokeStyle = "#8a8a8a"; c.lineWidth = 1; for (let j = 0; j < 4; j++) { c.rotate(PI / 4); c.beginPath(); c.moveTo(-.28 * s, 0); c.lineTo(.28 * s, 0); c.stroke(); } c.restore(); } }); c.strokeStyle = "#b82a1e"; c.lineWidth = .07 * s; c.beginPath(); c.moveTo(X(mx + .4), Y(my + .35)); c.lineTo(X(mx + 1), Y(my + .1)); c.lineTo(X(mx + 1.6), Y(my + .35)); c.lineTo(X(mx + 1.5), Y(my - .05)); c.stroke(); B(mx + 1.62, my - .05, .1, "#c8a050"); }
@@ -5834,6 +5946,7 @@ function desenharSala(tm) {
   else for (let i = 0; i < 12; i++) { c.fillStyle = i % 2 ? "rgba(0,0,0,.12)" : "rgba(255,255,255,.03)"; c.fillRect(X(0), Y(.9 + i * .42), iw * s, .42 * s); c.fillStyle = "rgba(0,0,0,.28)"; for (let x = (i * 1.37) % 2.2; x < iw; x += 2.2) c.fillRect(X(x), Y(.9 + i * .42), 1.5, .42 * s); if (i === 5) { c.fillStyle = "#1a120a"; c.fillRect(X(6.2), Y(.9 + i * .42), .9 * s, .42 * s); } } // uma tábua faltando
   c.fillStyle = S2.parede; c.fillRect(X(0), Y(0), iw * s, .9 * s); c.fillStyle = "rgba(0,0,0,.25)"; c.fillRect(X(0), Y(.62), iw * s, .28 * s);
   if (k === "sotao") { c.strokeStyle = "#3a1a10"; c.lineWidth = .12 * s; c.beginPath(); c.moveTo(X(0), Y(.9)); c.lineTo(X(iw / 2), Y(-.3)); c.lineTo(X(iw), Y(.9)); c.stroke(); const jx = X(5), jy = Y(.4); c.fillStyle = "#1a120a"; c.beginPath(); c.arc(jx, jy, .32 * s, 0, 7); c.fill(); c.fillStyle = nt > .5 ? "#04060e" : "#8ac0d8"; c.beginPath(); c.arc(jx, jy, .26 * s, 0, 7); c.fill(); c.strokeStyle = "#1a120a"; c.lineWidth = 3; c.beginPath(); c.moveTo(jx - .26 * s, jy); c.lineTo(jx + .26 * s, jy); c.moveTo(jx, jy - .26 * s); c.lineTo(jx, jy + .26 * s); c.stroke(); }
+  else if (k === "casarao") { for (let i = 0; i < 24; i++) { c.fillStyle = i % 2 ? "rgba(120,60,40,.12)" : "rgba(255,255,255,.05)"; c.fillRect(X(i * iw / 24), Y(0), iw / 24 * s, .62 * s); } [[2.2], [8.6]].forEach(([jx]) => { c.fillStyle = "#3a2414"; c.fillRect(X(jx - .05), Y(.08), 1.1 * s, .5 * s); c.fillStyle = horaNoite() > .5 ? "#141a28" : "#9ab8d0"; c.fillRect(X(jx), Y(.12), s, .42 * s); c.fillStyle = "#3a2414"; c.fillRect(X(jx + .48), Y(.12), .04 * s, .42 * s); c.fillStyle = "#c8302a"; c.fillRect(X(jx - .2), Y(.06), .22 * s, .52 * s); c.fillRect(X(jx + 1.0), Y(.06), .22 * s, .52 * s); }); c.fillStyle = "#5a3a22"; c.fillRect(X(5.2), Y(.12), .9 * s, .45 * s); c.fillStyle = "#e8d8a8"; c.fillRect(X(5.27), Y(.17), .76 * s, .35 * s); c.fillStyle = "#4a7a3a"; c.beginPath(); c.arc(X(5.65), Y(.36), .1 * s, 0, 7); c.fill(); }
   else { for (let i = 0; i < 8; i++) { c.fillStyle = "#4a4640"; c.fillRect(X(.4 + i * 1.2), Y(.12), .9 * s, .42 * s); c.fillStyle = "#a8884a"; c.fillRect(X(.62 + i * 1.2), Y(.28), .45 * s, .1 * s); } }
   c.fillStyle = "#1a120a"; c.fillRect(X(-.22), Y(0), .22 * s, ih * s + .2 * s); c.fillRect(X(iw), Y(0), .22 * s, ih * s + .2 * s); c.fillRect(X(-.22), Y(ih), (S2.pd - .55 + .22) * s, .22 * s); c.fillRect(X(S2.pd + .55), Y(ih), (iw - S2.pd - .55 + .22) * s, .22 * s);
   c.fillStyle = "#3a2a1a"; for (let i = 0; i < 4; i++) c.fillRect(X(S2.pd - .45), Y(ih - .2 + i * .1), .9 * s, .05 * s); // escada
@@ -6499,6 +6612,7 @@ function objetivosLista() {
     { t: "Consertar a Maria-Fumaça e subir a serra", p: `${pecasTrem().length}/5 peças`, feito: tremOk(), d: tremOk() ? "O trem anda! Na cabine da Maria-Fumaça (estação velha), parta pra Estação da Serra." : pecasTrem().length >= 5 ? "Você tem as 5 peças: leve tudo pra cabine da Maria-Fumaça, na estação velha." : "Falta: " + PECAS_TREM.filter(z => !temPecaTrem(z.k)).map(z => `${z.nome} (${z.onde.charAt(0).toLowerCase() + z.onde.slice(1)})`).join(" · ") + "." }];
   const sec = [
     { t: "Consertar a fazenda", p: `${REPAROS.filter(z => reparoOk(z.k)).length}/${REPAROS.length}`, feito: REPAROS.every(z => reparoOk(z.k)), d: "Celeiro, cercas, poço, galinheiro, pontes, catavento, trator, sino, moinho, chafariz, poste do lampião e bebedouro. Cada conserto dá uma vantagem. Material na loja de construção." },
+    { t: "Reformar o casarão", p: `${casaraoN()}/${ETAPAS_CASARAO.length}`, feito: casaraoPronto(), d: "A casa grande caindo aos pedaços perto da horta. São 12 etapas, cada uma com material da loja do Seu Nonato. Pronto, dá pra entrar e ele rende aluguel todo dia." },
     { t: "A Floresta da Serra", p: `${n(() => achadosFl().length)}/${ACHADOS_FL.length}`, feito: n(() => achadosFl().length) >= ACHADOS_FL.length, d: florestaLiberada() ? "Depois da porteira da Estação da Serra. De noite, NUNCA saia da trilha." : "Fase paga: a porteira fica na Estação da Serra, depois da viagem de trem." },
     { t: "Arrumar a casa da vó", p: `${cons}/${CONSERTOS.length}`, feito: cons >= CONSERTOS.length, d: "Na frente da casa: \"Arrumar a casa\". Ferramentas na loja de construção." },
     { t: "Matar o Ipupiara", feito: !!ls("roca_ipupiara_morto"), d: R.arpao ? "No Poção, oeste da Lagoa Grande. Arpão nas guelras quando brilharem. Ele guarda a válvula da caldeira do trem." : "Compre o arpão de proa com o Seu Bento, na Lagoa Grande." },
@@ -7059,7 +7173,7 @@ function festaFundo(g, w, h, t) { fundoMini(g, w, h, "#1a1030", "#3a1a1a"); for 
    A FAZENDA: consertos fora da casa (cada um com uma vantagem), estufa,
    moinho d'água, forno de barro, pomar maior e o porco fujão.
    ===================================================================== */
-MATERIAIS.push(["corda", "Corda de sisal", 10, 1, "Corda nova pro poço"], ["tela", "Rolo de tela", 20, 1, "Tela de arame pro galinheiro"], ["engrenagem", "Engrenagem e graxa", 35, 1, "Pra máquina velha voltar a girar"], ["bronze", "Remendo de bronze", 30, 1, "Pra trinca do sino da capela"]);
+MATERIAIS.push(["corda", "Corda de sisal", 10, 1, "Corda nova pro poço"], ["tela", "Rolo de tela", 20, 1, "Tela de arame pro galinheiro"], ["engrenagem", "Engrenagem e graxa", 35, 1, "Pra máquina velha voltar a girar"], ["bronze", "Remendo de bronze", 30, 1, "Pra trinca do sino da capela"], ["tijolos", "Tijolos e cimento", 25, 2, "Pra levantar parede caída e chaminé"], ["cal", "Saco de cal", 12, 1, "Pra caiar as paredes"]);
 const MOINHO = { x: 45.6, y: 27.5, w: 1.5, h: 1.9, roda: { x: 47.9, y: 28.6 } }, FORNO = { x: 22.3, y: 11.2 };
 const POMAR2 = [{ x: 35.6, y: 22.2, k: "manga", nome: "Mangueira", fruta: "manga", cor: "#f2b030" }, { x: 38.6, y: 22.2, k: "jabuticaba", nome: "Jabuticabeira", fruta: "jabuticaba", cor: "#2a1030" }, { x: 41.6, y: 22.2, k: "limao", nome: "Limoeiro", fruta: "limão", cor: "#7ac83a" }];
 const emEpoca = k => k === "limao" || (k === "manga" ? (R.dia % 6) < 3 : (R.dia % 6) >= 3);
@@ -7079,7 +7193,10 @@ const REPAROS = [
   { k: "moinho", nome: "Moinho d'água (roda parada)", x: MOINHO.x + .7, y: MOINHO.y + MOINHO.h + .6, precisa: { martelo: 1, tabuas: 3, engrenagem: 1 }, n: 5, txt: "Trocou as pás da roda e engraxou as engrenagens. A roda voltou a girar com o riacho!", ben: "o moinho mói milho e vira fubá" },
   { k: "chafariz", nome: "Chafariz (bomba quebrada e cano furado)", x: CHAFARIZ.x, y: CHAFARIZ.y + .7, precisa: { martelo: 1, bronze: 1, engrenagem: 1 }, n: 4, txt: "Trocou a bomba e o cano de bronze. A água voltou a jorrar!", ben: "dá pra encher o regador no chafariz, pertinho da horta" },
   { k: "poste", nome: "Poste do lampião (vidro quebrado)", x: POSTE.x + .4, y: POSTE.y + .4, precisa: { martelo: 1, vidro: 1, corda: 1 }, n: 3, txt: "Pôs vidro novo no lampião e pendurou firme no braço do poste.", ben: "toda noite o lampião acende sozinho e ilumina a horta" },
-  { k: "bebedouro", nome: "Bebedouro da Mimosa (tábua podre e bomba travada)", x: BEBEDOURO.x - .2, y: BEBEDOURO.y + .6, precisa: { martelo: 1, tabuas: 2 }, n: 3, txt: "Trocou a tábua do bebedouro e destravou a bomba. Água fresquinha pra Mimosa!", ben: "a Mimosa bebe água fresca e dá um balde de leite a mais" }];
+  { k: "bebedouro", nome: "Bebedouro da Mimosa (tábua podre e bomba travada)", x: BEBEDOURO.x - .2, y: BEBEDOURO.y + .6, precisa: { martelo: 1, tabuas: 2 }, n: 3, txt: "Trocou a tábua do bebedouro e destravou a bomba. Água fresquinha pra Mimosa!", ben: "a Mimosa bebe água fresca e dá um balde de leite a mais" },
+  { k: "chiqueiro", nome: "Chiqueiro (cerca arrebentada)", x: CHIQUEIRO.x0 - .4, y: (CHIQUEIRO.y0 + CHIQUEIRO.y1) / 2, precisa: { martelo: 1, tabuas: 2, tela: 1 }, n: 4, txt: "Reforçou a cerca do chiqueiro com tábua e tela.", ben: "os porcos não fogem mais pra comer a horta" },
+  { k: "balanco", nome: "Balanço (corda arrebentada)", x: BALANCO.x, y: BALANCO.y + .5, precisa: { martelo: 1, corda: 1, tabuas: 1 }, n: 3, txt: "Corda nova e assento novo. O balanço da vó voltou!", ben: "balançar um pouquinho faz o medo passar" },
+  { k: "bica", nome: "Bica de bambu (cano partido)", x: BICA.x - .4, y: BICA.y + .5, precisa: { martelo: 1, corda: 1 }, n: 3, txt: "Emendou o bambu e amarrou na forquilha. A água da mina voltou a cair no barril!", ben: "dá pra encher o regador na bica, no meio do pomar" }];
 const reparoOk = k => !!(R && R.deco && R.deco.reparos && R.deco.reparos[k]);
 const cercasOk = () => ["cerca1", "cerca2", "cerca3", "cerca4"].every(reparoOk);
 const listaPrecisa = rp => Object.entries(rp.precisa).map(([m, n]) => { const f = FERR.find(z => z[0] === m); return f ? f[1].toLowerCase() : `${(MATERIAIS.find(z => z[0] === m) || [m, m])[1].toLowerCase()}${n > 1 ? ` ×${n}` : ""}`; }).join(", ");
@@ -7109,7 +7226,7 @@ function novoDiaFazenda() { // a cada amanhecer
   if (reparoOk("galinheiro")) R.ovos = Math.min(14, R.ovos + 2);
   if (reparoOk("catavento")) { let n = 0; for (const k of R.canteiros) k.covas.forEach(c2 => { if (c2 && c2.seca && c2.est < 3) { c2.seca = false; c2.t = 0; n++; } }); if (n) setTimeout(() => R && efeito("O catavento regou a horta!", "#5ab0e0"), 2200); }
   if (R.mercado) for (const k in R.mercado) { R.mercado[k] *= .5; if (R.mercado[k] < .5) delete R.mercado[k]; }
-  if (R.dia >= 2 && !R.porcoFuga && Math.random() < .3) setTimeout(() => R && !ehNoite() && soltarPorco(), rnd(20000, 60000));
+  if (R.dia >= 2 && !R.porcoFuga && !reparoOk("chiqueiro") && Math.random() < .3) setTimeout(() => R && !ehNoite() && soltarPorco(), rnd(20000, 60000));
   if (R.dia % 7 === 6) setTimeout(() => R && efeito("Hoje é sábado: festa junina na praça da vila, no fim da tarde!", "#f2c94a"), 3500);
 }
 const velPonte = p => { if (p.x < RIACHO.x0 - .2 || p.x > RIACHO.x1 + .2) return 1; for (const [i, y] of PONTES.entries()) if (Math.abs(p.y - y) < .9 && !reparoOk(i ? "ponteS" : "ponteN")) return .45; return 1; };
@@ -7166,7 +7283,7 @@ function desenharFazendaExtra(obj, tm) {
 }
 const POCAS_CHUVA = [[13, 13.6, .6], [25.2, 16, .7], [25.2, 25, .6], [33, 13.4, .7], [40.6, 18, .5], [20, 13.6, .5], [8.4, 19.05, .5], [44.6, 23.3, .6], [28.6, 27.4, .5]];
 function estragoY(rp) { return rp.k === "celeiro" ? CELEIRO.y + CELEIRO.h + .02 : rp.k === "poco" ? POCO.y + .4 : rp.k.startsWith("ponte") ? rp.y - .8 : rp.k === "catavento" ? CATAVENTO.y + .7 : rp.k === "trator" ? TRATOR.y + .15 : rp.k === "sino" ? CAPELA.y + CAPELA.h + .1 : rp.k === "moinho" ? -1 : rp.k === "galinheiro" ? 11.8 : rp.y - .3; }
-function desenharEstrago(rp, tm) { const T = TS, k = rp.k; if (k === "chafariz" || k === "poste" || k === "bebedouro") return;
+function desenharEstrago(rp, tm) { const T = TS, k = rp.k; if (k === "chafariz" || k === "poste" || k === "bebedouro" || k === "bica") return; if (k === "chiqueiro" || k === "balanco") return estragoGenerico(rp);
   if (k === "celeiro") { const X = PX(CELEIRO.x), Y = PY(CELEIRO.y), w = CELEIRO.w * T, h = CELEIRO.h * T; if (!naTela(X + w / 2, Y + h / 2, w)) return; c.fillStyle = "#140c08"; c.beginPath(); c.moveTo(X + w * .18, Y + h * .12); c.lineTo(X + w * .32, Y + h * .08); c.lineTo(X + w * .36, Y + h * .22); c.lineTo(X + w * .24, Y + h * .28); c.lineTo(X + w * .15, Y + h * .2); c.fill(); c.fillStyle = "#1a0e08"; c.fillRect(X + w * .42, Y + h * .55, w * .17, h * .45); c.save(); c.translate(X + w * .6, Y + h); c.rotate(.5); c.fillStyle = "#7a2a1e"; c.fillRect(0, -h * .42, w * .16, h * .42); c.strokeStyle = "#e8e2d0"; c.lineWidth = 2; c.beginPath(); c.moveTo(0, -h * .42); c.lineTo(w * .16, 0); c.stroke(); c.restore(); return; }
   if (k.startsWith("cerca")) { const X = PX(rp.x), Y = PY(rp.y); if (!naTela(X, Y)) return; const hz = k === "cerca2" || k === "cerca4"; c.save(); c.translate(X, Y); c.fillStyle = "#5a3a20"; for (let i = 0; i < 3; i++) { c.save(); c.rotate((hz ? 0 : PI / 2) + (i - 1) * .35); c.fillRect(-T * .5, -3 + i * 5, T, 5); c.restore(); } c.fillStyle = "#4a3018"; c.save(); c.rotate(.6); c.fillRect(-3, -T * .6, 6, T * .6); c.restore(); c.restore(); return; }
   if (k === "poco") { const X = PX(POCO.x), Y = PY(POCO.y); if (!naTela(X, Y)) return; c.strokeStyle = "#8a7a5a"; c.lineWidth = 2; c.beginPath(); c.moveTo(X + T * .05, Y - T * .9); c.quadraticCurveTo(X + T * .2, Y - T * .5, X + T * .1, Y - T * .3); c.moveTo(X + T * .1, Y - T * .3); c.lineTo(X + T * .02, Y - T * .2); c.moveTo(X + T * .1, Y - T * .3); c.lineTo(X + T * .18, Y - T * .22); c.stroke(); c.fillStyle = "#5a5e66"; c.save(); c.translate(X + T * .7, Y + T * .3); c.rotate(1.2); c.fillRect(-T * .25, -2, T * .5, 4); c.restore(); return; }
