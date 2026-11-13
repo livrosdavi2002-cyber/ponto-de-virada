@@ -396,7 +396,7 @@ function _pintarChaoSitio(g) {
   const TRL = [], trilha = (pts, w, escura) => TRL.push([pts, w * 1.12, escura ? "mata" : "sitio"]);
 
   trilha([[8.6, 13.75], [6.9, 15.1], [6.6, 16.9], [-1, 17]], .85, true); // trilha escura que entra na mata
-  trilha([[13, 11.8], [13, 13.6], [25.2, 13.6], [25.2, 30.2]], 1.15); trilha([[13, 13.6], [8.6, 13.75]], .85);
+  trilha([[15.45, 13.5], [25.2, 13.5], [25.2, 30.2]], 1.05); trilha([[10.55, 13.5], [8.6, 13.5]], .8); // as duas trilhas param embaixo da calçada
   trilha([[8.4, 19.05], [23.6, 19.05], [25.2, 19.05]], .7); trilha([[25.2, 18.4], [26, 18.4]], .5); // o corredor da horta e a entrada do curral
   trilha([[17.2, 13.6], [18.7, 12.3], [19.5, 10.9]], .75); trilha([[9.8, 13.7], [8.5, 12.5], [7.8, 10.9]], .6);
   trilha([[25.2, 13.6], [28.6, 13.4], [28.6, 12.2]], .7); trilha([[28.6, 13.4], [39, 13.4], [39, 12]], .8); trilha([[39, 13.4], [40.55, 14.6], [40.55, 21.2]], .7);
@@ -406,16 +406,28 @@ function _pintarChaoSitio(g) {
   trilha([[53.3, 22.2], [57, 22.2], [60.5, 22], [65, 21.8]], .8); // caminho que sai pela porteira do leste até a estação velha
   trilha([[34.5, 13.4], [34.5, 8], [34.5, -1]], .75); // caminho que sai pela porteira do norte até a Baixada do Rio
   caminhosTerra(g, P, TRL);
-  { // calçada de pé-de-moleque na frente da casa: retângulo reto, pedra por pedra, com meio-fio
-    const x0 = 10.4 * P, x1 = 15.6 * P, y0 = 11.7 * P, y1 = 13.95 * P, t = .42 * P; let sd2 = 91; const r3 = () => { sd2 = (sd2 * 16807) % 2147483647; return (sd2 - 1) / 2147483646; };
-    g.fillStyle = "rgba(30,24,14,.35)"; g.fillRect(x0 - 4, y0 - 2, x1 - x0 + 8, y1 - y0 + 7); // sombrinha em volta
-    g.fillStyle = "#3e3428"; g.fillRect(x0, y0, x1 - x0, y1 - y0); // o rejunte de terra
-    for (let yy = y0 + t * .5, lin = 0; yy < y1 - t * .2; yy += t * .82, lin++) for (let xx = x0 + t * .5 + (lin % 2) * t * .5; xx < x1 - t * .2; xx += t * .98) {
-      const px = xx + (r3() - .5) * 2, py = yy + (r3() - .5) * 2, rw = t * (.44 + r3() * .06), rh = t * (.36 + r3() * .05), cor = ["#8a8272", "#76705f", "#9a907c", "#6e6a5e", "#857a66"][Math.floor(r3() * 5)];
-      g.fillStyle = "rgba(20,14,8,.55)"; g.beginPath(); g.ellipse(px + 1, py + 1.6, rw, rh, 0, 0, 7); g.fill();
-      const gr = g.createLinearGradient(px - rw, py - rh, px + rw, py + rh); gr.addColorStop(0, tomCor(cor, 1.32)); gr.addColorStop(.5, cor); gr.addColorStop(1, tomCor(cor, .72)); g.fillStyle = gr; g.beginPath(); g.ellipse(px, py, rw, rh, (r3() - .5) * .4, 0, 7); g.fill();
-      if (r3() < .12) { g.fillStyle = "rgba(90,120,40,.7)"; g.fillRect(px + rw * .6, py - 1, 2, 3); } } // um capinzinho entre as pedras
-    g.fillStyle = "#5e584c"; g.fillRect(x0 - 3, y1, x1 - x0 + 6, 4); g.fillRect(x0 - 3, y0, 3, y1 - y0); g.fillRect(x1, y0, 3, y1 - y0); g.fillStyle = "rgba(255,255,255,.18)"; g.fillRect(x0 - 3, y1, x1 - x0 + 6, 1); // meio-fio
+  { // calçada de pé-de-moleque na frente da casa: cantos redondos, pedras miúdas, beirada de pedras maiores e capim invadindo
+    const X0 = 10.45, X1 = 15.55, Y0 = 11.72, Y1 = 14.15, RC = .9, t = .3 * P; let sd2 = 91; const r3 = () => { sd2 = (sd2 * 16807) % 2147483647; return (sd2 - 1) / 2147483646; };
+    const forma = (m = 0) => { g.beginPath(); g.roundRect((X0 - m) * P, (Y0 - m) * P, (X1 - X0 + m * 2) * P, (Y1 - Y0 + m * 2) * P, [RC * .25 * P, RC * .25 * P, (RC + m) * P, (RC + m) * P]); };
+    g.fillStyle = "rgba(40,30,16,.35)"; forma(.12); g.fill(); // terra pisada em volta
+    g.fillStyle = "#3a3026"; forma(); g.fill(); // rejunte
+    g.save(); forma(); g.clip();
+    for (let yy = Y0 * P + t * .45, lin = 0; yy < Y1 * P; yy += t * .8, lin++) for (let xx = X0 * P + (lin % 2) * t * .5; xx < X1 * P + t; xx += t * .95) {
+      const px = xx + (r3() - .5) * 2.4, py = yy + (r3() - .5) * 2, rw = t * (.42 + r3() * .08), rh = t * (.34 + r3() * .06), cor = ["#8a8272", "#76705f", "#9a907c", "#6e6a5e", "#857a66", "#7e7462"][Math.floor(r3() * 6)];
+      g.fillStyle = "rgba(20,14,8,.5)"; g.beginPath(); g.ellipse(px + .8, py + 1.3, rw, rh, 0, 0, 7); g.fill();
+      const gr = g.createLinearGradient(px - rw, py - rh, px + rw, py + rh); gr.addColorStop(0, tomCor(cor, 1.3)); gr.addColorStop(.55, cor); gr.addColorStop(1, tomCor(cor, .74)); g.fillStyle = gr; g.beginPath(); g.ellipse(px, py, rw, rh, (r3() - .5) * .5, 0, 7); g.fill();
+    }
+    const sb = g.createLinearGradient(0, Y0 * P, 0, (Y0 + .7) * P); sb.addColorStop(0, "rgba(10,6,2,.45)"); sb.addColorStop(1, "rgba(10,6,2,0)"); g.fillStyle = sb; g.fillRect(X0 * P, Y0 * P, (X1 - X0) * P, .7 * P); // sombra da varanda
+    g.restore();
+    // beirada: pedras maiores seguindo a curva (menos em cima, que encosta na varanda)
+    const borda = []; const passo = .36; for (let y = Y0 + .3; y < Y1 - RC; y += passo) { borda.push([X0, y], [X1, y]); }
+    for (let a = 0; a <= PI / 2 + .01; a += passo / RC) { borda.push([X0 + RC - Math.cos(a) * RC, Y1 - RC + Math.sin(a) * RC], [X1 - RC + Math.cos(a) * RC, Y1 - RC + Math.sin(a) * RC]); }
+    for (let x = X0 + RC; x < X1 - RC; x += passo) borda.push([x, Y1]);
+    borda.forEach(([bx, by]) => { const px = bx * P + (r3() - .5) * 2, py = by * P + (r3() - .5) * 2, rw = .2 * P * (.9 + r3() * .3), rh = .16 * P * (.9 + r3() * .3), cor = ["#9a9282", "#867e6c", "#a8a090"][Math.floor(r3() * 3)];
+      g.fillStyle = "rgba(20,14,8,.55)"; g.beginPath(); g.ellipse(px + 1, py + 1.6, rw, rh, 0, 0, 7); g.fill(); const gr = g.createLinearGradient(px - rw, py - rh, px + rw, py + rh); gr.addColorStop(0, tomCor(cor, 1.3)); gr.addColorStop(1, tomCor(cor, .75)); g.fillStyle = gr; g.beginPath(); g.ellipse(px, py, rw, rh, r3() * 3, 0, 7); g.fill(); });
+    // capim invadindo a beirada e entre as pedras
+    for (let i = 0; i < 46; i++) { const k = r3(), lado = r3(); let bx, by; if (lado < .3) { bx = X0 + (r3() - .3) * .3; by = Y0 + .4 + k * (Y1 - Y0 - .6); } else if (lado < .6) { bx = X1 + (r3() - .7) * .3; by = Y0 + .4 + k * (Y1 - Y0 - .6); } else if (lado < .9) { bx = X0 + .6 + k * (X1 - X0 - 1.2); by = Y1 + (r3() - .6) * .25; } else { bx = X0 + .4 + k * (X1 - X0 - .8); by = Y0 + .5 + r3() * (Y1 - Y0 - .8); }
+      g.strokeStyle = r3() < .5 ? "#5e8a2e" : "#78a43c"; g.lineWidth = 1.4; g.beginPath(); for (let f = 0; f < 3; f++) { g.moveTo(bx * P + (f - 1) * 2, by * P + 1); g.lineTo(bx * P + (f - 1) * 3 + (r3() - .5) * 2, by * P - 3 - r3() * 4); } g.stroke(); }
   }
   // milharal: terra arada em fileiras
   g.fillStyle = "#6a5232"; g.fillRect(MILHARAL.x0 * P, MILHARAL.y0 * P, (MILHARAL.x1 - MILHARAL.x0) * P, (MILHARAL.y1 - MILHARAL.y0) * P);
