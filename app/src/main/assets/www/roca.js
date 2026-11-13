@@ -66,6 +66,14 @@ let cv, c, W = 0, H = 0, DPRr = 1, TS = 48, luzCv, lc, chaoCv, rodando = false, 
 const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
 const rnd = (a, b) => a + Math.random() * (b - a), cl = (v, a, b) => Math.max(a, Math.min(b, v)), mix = (a, b, k) => a + (b - a) * k;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+let DTQ = 1 / 30; const kq = k => 1 - Math.pow(1 - k, DTQ * 30); // suavização que dá o mesmo resultado em 24, 30 ou 60 quadros
+// "juice": tremida por trauma (o quadrado deixa a pancada pequena quase parada e a grande forte), pausinha no impacto e faíscas
+const SHK = { x: 0, y: 0 }, PARTS = []; let HITSTOP = 0;
+const tremeOn = () => ls("roca_tremer") !== "0";
+function calcTremida(tm) { SHK.x = SHK.y = 0; if (!R || !(R.tremor > 0) || !tremeOn()) return; const t = Math.min(1, R.tremor), k = t * t * .28; SHK.x = k * Math.sin(tm * 47) + k * .5 * Math.sin(tm * 83); SHK.y = k * .8 * Math.sin(tm * 53 + 1); }
+function pausinha(seg) { HITSTOP = Math.max(HITSTOP, seg); }
+function faiscas(x, y, cor, n = 10, forca = 1, lugar) { if (x == null || PARTS.length > 160) return; for (let i = 0; i < n; i++) { const a = Math.random() * PI * 2, v = rnd(1.2, 3.2) * forca; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .6 - rnd(1, 2.6) * forca, z: 0, t: 0, vida: rnd(.45, .8), cor: Array.isArray(cor) ? cor[i % cor.length] : cor, r: rnd(2, 4.5), lugar: lugar || (R && R.lugar) || "sitio" }); } }
+function moedinhas(n, x, y) { if (x == null) return; for (let i = 0; i < Math.min(14, n); i++) PARTS.push({ x: x + rnd(-.3, .3), y: y - .4, vx: rnd(-1.6, 1.6), vy: rnd(-4.5, -2.6), t: 0, vida: rnd(.7, 1), cor: "#f2c94a", r: 4.2, moeda: 1, lugar: (R && R.lugar) || "sitio" }); }
 let semente = 1; const srnd = () => { semente = (semente * 16807) % 2147483647; return (semente - 1) / 2147483646; };
 
 /* ---------- som (WebAudio, com posição no espaço) ---------- */
@@ -101,12 +109,12 @@ function tocarRuido(dur, o = {}) {
   s.start(t, Math.random()); s.stop(t + dur + .05);
 }
 const S = {
-  passo() { tocarRuido(.06, { filtro: "lowpass", f: 420, vol: .05, wet: 0 }); },
+  passo() { tocarRuido(.06, { filtro: "lowpass", f: 420 * rnd(.82, 1.2), vol: .05 * rnd(.75, 1.1), wet: 0 }); },
   plantar() { tocarRuido(.12, { filtro: "lowpass", f: 300, vol: .2 }); tocarTom(180, .12, { vol: .08, ate: 90 }); },
-  regar() { tocarRuido(.5, { filtro: "highpass", f: 2600, vol: .07, atk: .05 }); },
-  colher() { tocarTom(660, .12, { vol: .08 }); tocarTom(990, .18, { vol: .06, quando: .07 }); },
+  regar() { tocarRuido(.5 * rnd(.85, 1.15), { filtro: "highpass", f: 2600 * rnd(.9, 1.12), vol: .07, atk: .05 }); },
+  colher() { const k = [1, 1.06, 1.12, .95][Math.floor(Math.random() * 4)]; tocarTom(660 * k, .12, { vol: .08 }); tocarTom(990 * k, .18, { vol: .06, quando: .07 }); },
   pronto(x, y) { const [v, p] = somEm(x, y); tocarTom(1320, .4, { vol: .05 * v + .01, pan: p, wet: .6 }); tocarTom(1760, .5, { vol: .035 * v + .008, pan: p, quando: .12, wet: .6 }); },
-  moedas() { [1200, 1500, 1800].forEach((f, i) => tocarTom(f, .12, { tipo: "triangle", vol: .06, quando: i * .07 })); },
+  moedas() { const k = rnd(.96, 1.05); [1200, 1500, 1800].forEach((f, i) => tocarTom(f * k, .12, { tipo: "triangle", vol: .06, quando: i * .07 })); },
   poco() { tocarRuido(.9, { filtro: "lowpass", f: 500, vol: .12, atk: .2 }); tocarTom(300, .2, { vol: .05, quando: .7, wet: .8 }); },
   miau(x, y) { const [v, p] = somEm(x, y); tocarTom(700, .35, { tipo: "triangle", vol: .05 * v, ate: 520, pan: p, lp: 2000 }); },
   queda() { tocarRuido(.08, { filtro: "lowpass", f: 600, vol: .1 }); },
@@ -118,7 +126,7 @@ const S = {
   apaga() { tocarRuido(.4, { filtro: "highpass", f: 1500, vol: .08, atk: .02 }); },
   respira() { tocarRuido(1.2, { filtro: "bandpass", f: 700, vol: .1, atk: .5, wet: .4 }); },
   susto() { gritoForte(); },
-  peixe() { tocarRuido(.3, { filtro: "highpass", f: 1500, vol: .12 }); tocarTom(440, .1, { vol: .06, quando: .05 }); },
+  peixe() { tocarRuido(.3, { filtro: "highpass", f: 1500 * rnd(.9, 1.1), vol: .12 }); tocarTom(440 * rnd(.92, 1.08), .1, { vol: .06, quando: .05 }); },
   fisga() { tocarTom(880, .08, { vol: .08 }); tocarTom(1100, .1, { vol: .08, quando: .09 }); },
   porta() { tocarTom(130, .5, { tipo: "sawtooth", vol: .04, ate: 190, lp: 800, atk: .1 }); },
   vitoria() { [523, 659, 784, 1046].forEach((f, i) => tocarTom(f, .6, { tipo: "triangle", vol: .08, quando: i * .15, wet: .5 })); },
@@ -655,15 +663,15 @@ function oQueFazer() {
   { const it = itemDaVez(), pc = pontoColocar(); if (it && it[0] === "m" && podePlantarFlor(pc)) return { t: "Plantar flor", fn: () => plantarFlor(it.slice(2)) }; if (it && it[0] === "o" && podeColocarObj(pc)) return { t: "Colocar " + nomeObjDeco(it.slice(2)).toLowerCase(), fn: () => colocarObjDeco(it.slice(2)) }; if (it && folhaPerto(pc, .65) >= 0) return { t: "Folhas no chão", loc: 1, fn: () => efeito(temFerr("rastelo") ? "Rastele as folhas primeiro, depois coloque" : "Tem folha seca aí. Compre um rastelo na loja de construção", "#e2a03d") }; }
   return null;
 }
-function acao() { if (!R || R.menu) return; if (R.msg) return proximaFala(); if (painelAberto) return; const o = oQueFazer(); if (!o) return; if (R.online === "guest" && !o.loc) { enviar({ t: "acao", nome: o.t }); tocarTom(700, .04, { vol: .03 }); return; } o.fn(); }
+function acao() { if (!R || R.menu) return; if (R.msg) return proximaFala(); if (painelAberto) return; const o = oQueFazer(); if (!o) { R.acBuf = .22; return; } R.acBuf = 0; if (R.online === "guest" && !o.loc) { enviar({ t: "acao", nome: o.t }); tocarTom(700, .04, { vol: .03 }); return; } o.fn(); }
 function efeito(txt, cor = "#9bd86b") { const dentro = R.dentro || R.predio, lugar = R.lugar || "sitio"; R.fx = R.fx.filter(f => !(f.txt === txt && f.t < 1)); const o = R.fx.filter(f => f.t < 1.2 && (f.lugar || "sitio") === lugar).length % 4; R.fx.push({ txt, cor, t: 0, x: dentro ? null : R.eu.x, y: dentro ? null : R.eu.y, lugar, o }); }
-function plantar(cp) { const tipo = R.sementes[R.semente]; if (PLANTAS[tipo].estufa && !cp.k.estufa) return efeito(`${PLANTAS[tipo].nome} só vinga dentro da estufa`, "#f2a33a"); cp.k.covas[cp.i] = { tipo, est: 0, seca: true, t: 0 }; if (reparoOk("trator")) { let n = 0; cp.k.covas.forEach((c2, i) => { if (!c2) { cp.k.covas[i] = { tipo, est: 0, seca: true, t: 0 }; n++; } }); if (n) efeito("O trator plantou o canteiro inteiro!", "#9bd86b"); } S.plantar(); }
-function regar(cp) { if (R.agua <= 0) return efeito("O regador está vazio. Vá ao poço.", "#5ab0e0"); R.agua--; const cv2 = cp.k.covas[cp.i]; cv2.seca = false; cv2.t = 0; R.regando = .6; S.regar(); hud(); }
-function colher(cp) { const cv2 = cp.k.covas[cp.i]; R.colheita[cv2.tipo] = (R.colheita[cv2.tipo] || 0) + 1; cp.k.covas[cp.i] = null; S.colher(); efeito(`+1 ${PLANTAS[cv2.tipo].nome}`); hud(); }
+function plantar(cp) { faiscas(cp.k.x + cp.i % cp.k.w + .5, cp.k.y + Math.floor(cp.i / cp.k.w) + .5, ["#6a4a2a", "#8a6a3a"], 5, .5); const tipo = R.sementes[R.semente]; if (PLANTAS[tipo].estufa && !cp.k.estufa) return efeito(`${PLANTAS[tipo].nome} só vinga dentro da estufa`, "#f2a33a"); cp.k.covas[cp.i] = { tipo, est: 0, seca: true, t: 0 }; if (reparoOk("trator")) { let n = 0; cp.k.covas.forEach((c2, i) => { if (!c2) { cp.k.covas[i] = { tipo, est: 0, seca: true, t: 0 }; n++; } }); if (n) efeito("O trator plantou o canteiro inteiro!", "#9bd86b"); } S.plantar(); }
+function regar(cp) { if (R.agua <= 0) return efeito("O regador está vazio. Vá ao poço.", "#5ab0e0"); R.agua--; const cv2 = cp.k.covas[cp.i]; cv2.seca = false; cv2.t = 0; R.regando = .6; S.regar(); faiscas(cp.k.x + cp.i % cp.k.w + .5, cp.k.y + Math.floor(cp.i / cp.k.w) + .4, ["#8ad0f0", "#c8ecff"], 6, .6); hud(); }
+function colher(cp) { const cv2 = cp.k.covas[cp.i]; R.colheita[cv2.tipo] = (R.colheita[cv2.tipo] || 0) + 1; cp.k.covas[cp.i] = null; S.colher(); faiscas(cp.k.x + cp.i % cp.k.w + .5, cp.k.y + Math.floor(cp.i / cp.k.w) + .4, [PLANTAS[cv2.tipo].cor, "#9bd86b", "#fff6c0"], 8, .8); efeito(`+1 ${PLANTAS[cv2.tipo].nome}`); hud(); }
 function tirarAgua() { R.agua = R.aguaMax; S.poco(); efeito("Regador cheio", "#5ab0e0"); if (ehNoite() && Math.random() < .25) setTimeout(() => { R.susto = 1.1; S.susto(); R.rostoPoco = 1; }, 600); hud(); }
 const precoMercado = (k, base, n, gravar) => { const M2 = R.mercado || (R.mercado = {}); let m = M2[k] || 0, v = 0; for (let i = 0; i < n; i++) { v += base * Math.max(.3, 1 - .045 * m); m++; } if (gravar) M2[k] = m; return v; };
 function valorVenda(gravar) { let v = 0; for (const [k, n] of Object.entries(R.colheita)) if (n > 0) v += precoMercado(k, PLANTAS[k].preco, n, gravar); for (const [k, n] of Object.entries(R.peixes)) if (n > 0) v += precoMercado(k, PEIXES.find(p => p[0] === k)[1], n, gravar); for (const [k, n] of Object.entries(R.extra)) if (n > 0 && EXTRAS[k]) v += precoMercado(k, EXTRAS[k][1], n, gravar); if (R.vara) v += R.inv.graveto + R.inv.folha; return Math.floor(v * (typeof reparoOk === "function" && reparoOk("celeiro") ? 1.1 : 1)); }
-function vender() { const cheio = Object.entries({ ...R.colheita, ...R.extra }).filter(([k, n]) => n > 0 && (R.mercado || {})[k] > 6).map(([k]) => PLANTAS[k] ? PLANTAS[k].nome.toLowerCase() : (EXTRAS[k] || [k])[0].toLowerCase()); const v = valorVenda(true); if (!v) return efeito("Nada para vender", "#e8e2d4"); R.moedas += v; R.colheita = {}; R.peixes = {}; R.extra = {}; if (cheio.length) setTimeout(() => R && efeito(`O comprador já está cheio de ${cheio.slice(0, 2).join(" e ")}: pagou menos`, "#f2a33a"), 900); if (R.vara) { R.inv.graveto = 0; R.inv.folha = 0; } S.moedas(); efeito(`+${v} moedas`, "#f2c94a"); hud(); }
+function vender() { const cheio = Object.entries({ ...R.colheita, ...R.extra }).filter(([k, n]) => n > 0 && (R.mercado || {})[k] > 6).map(([k]) => PLANTAS[k] ? PLANTAS[k].nome.toLowerCase() : (EXTRAS[k] || [k])[0].toLowerCase()); const v = valorVenda(true); if (!v) return efeito("Nada para vender", "#e8e2d4"); R.moedas += v; moedinhas(Math.ceil(v / 6), R.eu.x, R.eu.y); R.colheita = {}; R.peixes = {}; R.extra = {}; if (cheio.length) setTimeout(() => R && efeito(`O comprador já está cheio de ${cheio.slice(0, 2).join(" e ")}: pagou menos`, "#f2a33a"), 900); if (R.vara) { R.inv.graveto = 0; R.inv.folha = 0; } S.moedas(); efeito(`+${v} moedas`, "#f2c94a"); hud(); }
 function abrirCanteiro(k) { if (R.moedas < k.preco) return efeito(`Precisa de ${k.preco} moedas`, "#e8e2d4"); R.moedas -= k.preco; k.aberto = true; S.moedas(); efeito("Canteiro novo!"); hud(); }
 // a janela da frente, do lado da porta: dá para ver se tem bicho no terreiro antes de sair
 const JANELA_F = { x: 7.45 };
@@ -1053,17 +1061,21 @@ function finalVerdade() {
 
 /* ---------- save (só no single player) ---------- */
 const SAVE_FORA = new Set(["solido", "caixas", "arvores", "pedras", "flores", "cogumelos", "msg", "fx", "fxR", "poeira", "outros", "online", "morto", "venceu", "caido", "susto", "tremor", "alucina", "alma", "pisadeira", "tin", "pesca", "escondido", "escE", "fade", "menu", "rostoPoco", "espiar", "regando", "correndo", "perto", "deco", "decoInv", "nev", "seco", "cuca", "cu", "aranha", "mula", "saci", "esp", "vulto", "cachorro", "lobo", "sinoT", "boi", "iara", "mapi", "naIlha", "pradoT", "ferrAnim", "salaVolta", "barco", "boiuna", "noBarco", "chefe", "tiros", "esteira", "esteiraU", "lemIn", "lemArr", "armando", "mira", "explos", "viagem", "pg"]);
+const SAVE_V = 2;
+// cada passo leva o save de uma versão pra próxima; o carregamento aplica em ordem
+const MIGRA_SAVE = { 1: d => { (d.canteiros || []).forEach((k, i) => { if (CANTEIROS[i]) { k.x = CANTEIROS[i].x; k.y = CANTEIROS[i].y; } }); CANTEIROS.forEach((k, i) => { if (d.canteiros && !d.canteiros[i]) d.canteiros.push({ ...k, aberto: false, covas: Array.from({ length: k.w * k.h }, () => null) }); }); d.frutas2 = d.frutas2 || [{ n: 0, t: 0 }, { n: 0, t: 0 }, { n: 0, t: 0 }]; d.mercado = d.mercado || {}; return d; } };
+function lerSave(chave) { try { const x = JSON.parse(localStorage.getItem(chave) || "null"); if (!x || !x.d || typeof x.d.dia !== "number" || !Array.isArray(x.d.canteiros)) return null; let v = x.v || 1; if (v > SAVE_V) return null; while (v < SAVE_V) { x.d = (MIGRA_SAVE[v] || (d => d))(x.d); v++; } x.v = v; return x; } catch (e) { return null; } }
 function salvarJogo(auto) {
   if (!R || R.online || R.menu || R.morto || R.venceu) return false;
   try { const d = {}; for (const k in R) if (!SAVE_FORA.has(k) && typeof R[k] !== "function") d[k] = R[k];
-    localStorage.setItem("roca_save", JSON.stringify({ v: 1, quando: Date.now(), d })); efeito(auto ? "Jogo salvo (amanhecer)" : "Jogo salvo", "#9bd86b"); return true;
+    const novo = JSON.stringify({ v: SAVE_V, quando: Date.now(), d }); JSON.parse(novo); { const ant = localStorage.getItem("roca_save"); if (ant) localStorage.setItem("roca_save_bak", ant); } localStorage.setItem("roca_save", novo); efeito(auto ? "Jogo salvo (amanhecer)" : "Jogo salvo", "#9bd86b"); return true;
   } catch (e) { efeito("Não deu pra salvar", "#e2483d"); return false; }
 }
-function infoSave() { try { const x = JSON.parse(localStorage.getItem("roca_save") || "null"); if (!x || !x.d) return null; const dt = new Date(x.quando), hj = new Date(); const q = dt.toDateString() === hj.toDateString() ? `hoje ${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}` : `${dt.getDate()}/${dt.getMonth() + 1}`; return { dia: x.d.dia || 1, vidas: x.d.vidas || 1, quando: q }; } catch (e) { return null; } }
+function infoSave() { try { const x = lerSave("roca_save") || lerSave("roca_save_bak"); if (!x || !x.d) return null; const dt = new Date(x.quando), hj = new Date(); const q = dt.toDateString() === hj.toDateString() ? `hoje ${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}` : `${dt.getDate()}/${dt.getMonth() + 1}`; return { dia: x.d.dia || 1, vidas: x.d.vidas || 1, quando: q }; } catch (e) { return null; } }
 function carregarJogo() {
-  let x; try { x = JSON.parse(localStorage.getItem("roca_save") || "null"); } catch (e) {} if (!x || !x.d) return iniciarJogo("solo");
+  let x = lerSave("roca_save"), doBak = false; if (!x) { x = lerSave("roca_save_bak"); doBak = !!x; } if (!x || !x.d) return iniciarJogo("solo");
   fecharPainel(); mostrarTitulo(false); novoJogo(); const base = { seco: R.seco, aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp };
-  Object.assign(R, x.d, base); (R.canteiros || []).forEach((k, i) => { if (CANTEIROS[i]) { k.x = CANTEIROS[i].x; k.y = CANTEIROS[i].y; } }); CANTEIROS.forEach((k, i) => { if (!R.canteiros[i]) R.canteiros.push({ ...k, aberto: false, covas: Array.from({ length: k.w * k.h }, () => null) }); }); R.frutas2 = R.frutas2 || [{ n: 0, t: 0 }, { n: 0, t: 0 }, { n: 0, t: 0 }]; R.mercado = R.mercado || {}; R.online = null; R.menu = false; R.slot = 0; R.nome = meuNome() || "Jogador 1"; R.tutorial = 1;
+  Object.assign(R, MIGRA_SAVE[1](x.d), base); if (doBak) setTimeout(() => R && efeito("O save estava estragado: voltei pro anterior", "#f2a33a"), 1500); R.online = null; R.menu = false; R.slot = 0; R.nome = meuNome() || "Jogador 1"; R.tutorial = 1;
   R.lugar = "sitio"; R.predio = null; R.dentro = true; R.sala = { x: 2.2, y: 3.1, dir: 1 }; R.eu.x = CASA.porta.x; R.eu.y = CASA.porta.y + .55; R.fade = 1.2;
   if (typeof mudarDia === "function" && x.d.clima) R.clima = x.d.clima; hud(); efeito(`Bem-vinda de volta · Dia ${R.dia}`, "#f2c94a");
 }
@@ -1152,6 +1164,7 @@ function atualizarPesca(dt) {
   if (R.pesca) { R.pesca.t += dt; if (!R.pesca.fisgou && R.pesca.t > R.pesca.morde) { R.pesca.fisgou = true; R.pesca.ft = 0; S.fisga(); } if (R.pesca.fisgou) { R.pesca.ft += dt; if (R.pesca.ft > .9) { R.pesca = null; efeito("O peixe escapou", "#e8e2d4"); } } }
 }
 function moverLocal(dt) {
+  if (R.acBuf > 0) { R.acBuf -= dt; if (R.acBuf > 0 && !R.msg && !painelAberto) { const o = oQueFazer(); if (o && o.t !== "...") { R.acBuf = 0; acao(); } } }
   if (R.viagem) { R.viagem.t += dt; if (R.viagem.t >= R.viagem.dur) chegarViagem(); return; }
   // movimento
   let dx = joy.dx, dy = joy.dy; if (CONTROLE.dx || CONTROLE.dy) { dx = CONTROLE.dx; dy = CONTROLE.dy; }
@@ -1427,7 +1440,7 @@ function atualizarBichos(dt) {
 }
 
 /* ---------- desenho ---------- */
-const PX = x => (x - cam.x) * TS + W / 2, PY = y => (y - cam.y) * TS + H / 2;
+const PX = x => (x - cam.x - SHK.x) * TS + W / 2, PY = y => (y - cam.y - SHK.y) * TS + H / 2; // a tremida entra só no desenho: a câmera e o mundo continuam no lugar
 let cam = { x: 13, y: 12 };
 const naTela = (x, y, m = 120) => x > -m && x < W + m && y > -m && y < H + m;
 function sombra(x, y, rx, ry, a = .32) { c.fillStyle = `rgba(0,0,0,${a})`; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill(); }
@@ -2060,8 +2073,8 @@ function desenharSaci(s, tm) {
 }
 function desenharQueimado() { R.queimado.forEach(q => { const x = PX(q.x), y = PY(q.y); if (!naTela(x, y, 20)) return; const a = 1 - q.t / 3.5; c.fillStyle = `rgba(40,20,10,${.5 * a})`; c.beginPath(); c.ellipse(x, y, TS * .3, TS * .12, 0, 0, 7); c.fill(); c.fillStyle = `rgba(255,${130 + Math.random() * 80},40,${a})`; c.beginPath(); c.ellipse(x + Math.random() * 4 - 2, y - 4 - Math.random() * 8 * a, 2.4, 4 + 5 * a, 0, 0, 7); c.fill(); }); }
 function desenharMundo(tm) {
-  const offC = R.venceu ? Math.max(0, R.venceu.t - 1.5) * 2.2 : 0, alvo = R.venceu ? { x: CAMINHONETE.x, y: CAMINHONETE.y + offC } : R.espiar ? { x: CASA.porta.x + .6, y: CASA.porta.y + 2 } : R.eu; cam.x = mix(cam.x, alvo.x, .12); cam.y = mix(cam.y, alvo.y - .6, .12);
-  if (R.tremor > 0) { cam.x += rnd(-.06, .06); cam.y += rnd(-.06, .06); }
+  const offC = R.venceu ? Math.max(0, R.venceu.t - 1.5) * 2.2 : 0, alvo = R.venceu ? { x: CAMINHONETE.x, y: CAMINHONETE.y + offC } : R.espiar ? { x: CASA.porta.x + .6, y: CASA.porta.y + 2 } : R.eu; cam.x = mix(cam.x, alvo.x, kq(.12)); cam.y = mix(cam.y, alvo.y - .6, kq(.12));
+  
   c.fillStyle = "#1a2210"; c.fillRect(0, 0, W, H);
   desenharChaoChunks(CHAO_SITIO);
   // detalhes do chão: pedras, flores, cogumelos
@@ -2449,8 +2462,23 @@ function desenharSusto(tm) {
   const vg = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .2, W / 2, H / 2, Math.max(W, H) * .7); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, `rgba(60,0,0,${.75 * k})`); c.fillStyle = vg; c.fillRect(0, 0, W, H);
   if (R.morto) { c.fillStyle = `rgba(226,40,30,${.3 * Math.max(0, 1 - R.morto.t)})`; c.fillRect(0, 0, W, H); }
 }
+function alvoGuia() {
+  if (!R || R.dentro || R.predio || R.viagem || R.msg) return null; const L = R.lugar || "sitio";
+  if (velaNaMao() && L === "sitio") return { x: CRUZ.x, y: CRUZ.y, txt: "cruz" };
+  const tremVez = tremOk() || pecasTrem().length >= 5; const lo = vagao("loco");
+  if (tremVez && L === "sitio") return { x: MW - .3, y: 21.6, txt: "estação" };
+  if (tremVez && L === "estacao") return { x: lo.porta, y: TREM_Y1 + .6, txt: "cabine" };
+  if (L === "serra" && florestaLiberada() && achadosFl().length < ACHADOS_FL.length) return { x: PORTEIRA_FL.x, y: PORTEIRA_FL.y, txt: "floresta" };
+  if (L === "lagoa" && !R.arpao && !meuPosto()) return { x: BENTO_P.x, y: BENTO_P.y, txt: "Seu Bento" };
+  return null; }
+function desenharGuia(tm) { const a = alvoGuia(); if (!a) return; const X = PX(a.x), Y = PY(a.y), m = 70, dentro = X > m && X < W - m && Y > m + 40 && Y < H - m;
+  if (dentro) { const b = Math.abs(Math.sin(tm * 3)) * 10; c.fillStyle = "#f2c94a"; c.strokeStyle = "rgba(0,0,0,.6)"; c.lineWidth = 3; c.beginPath(); c.moveTo(X, Y - TS * 1.5 + b); c.lineTo(X - 12, Y - TS * 1.5 - 18 + b); c.lineTo(X + 12, Y - TS * 1.5 - 18 + b); c.closePath(); c.stroke(); c.fill(); return; }
+  const cx = W / 2, cy = H / 2, an = Math.atan2(Y - cy, X - cx), r = Math.min(W / 2 - 60, H / 2 - 70), ex = cx + Math.cos(an) * r, ey = cy + Math.sin(an) * r * .92, pul = 1 + .12 * Math.sin(tm * 5);
+  c.save(); c.translate(ex, ey); c.rotate(an); c.scale(pul, pul); c.fillStyle = "rgba(20,12,6,.7)"; c.beginPath(); c.arc(0, 0, 26, 0, 7); c.fill(); c.fillStyle = "#f2c94a"; c.beginPath(); c.moveTo(16, 0); c.lineTo(-8, -12); c.lineTo(-3, 0); c.lineTo(-8, 12); c.closePath(); c.fill(); c.restore();
+  c.font = `700 ${Math.round(Math.max(13, TS * .24))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.lineWidth = 3; c.strokeStyle = "rgba(0,0,0,.7)"; c.fillStyle = "#f2c94a"; c.strokeText(a.txt, ex, ey + 44); c.fillText(a.txt, ex, ey + 44); c.textAlign = "start"; }
 function desenharFx() {
-  R.fx.forEach(f => { if (f.x != null && ((f.lugar || "sitio") !== (R.lugar || "sitio") || R.predio)) return; const a = Math.min(1, (2.6 - f.t) / .8), x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 22 - (f.o || 0) * Math.max(24, TS * .5); c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(20, TS * .46))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.8)"; c.lineWidth = 4.5; const tw = c.measureText(f.txt).width, xx = tw > W - 20 ? W / 2 : cl(x, tw / 2 + 10, W - tw / 2 - 10); c.strokeText(f.txt, xx, y); c.fillText(f.txt, xx, y); c.textAlign = "start"; c.globalAlpha = 1; });
+  for (const q of PARTS) { if ((q.lugar || "sitio") !== (R.lugar || "sitio") || R.predio || R.dentro) continue; const X = PX(q.x), Y = PY(q.y), a = 1 - q.t / q.vida; if (!naTela(X, Y, 30)) continue; c.globalAlpha = Math.max(0, a); if (q.moeda) { const w = Math.abs(Math.cos(q.t * 14)) * q.r + 1; c.fillStyle = "#c8901a"; c.beginPath(); c.ellipse(X, Y, w + 1, q.r + 1, 0, 0, 7); c.fill(); c.fillStyle = "#f2c94a"; c.beginPath(); c.ellipse(X, Y, w, q.r, 0, 0, 7); c.fill(); } else { c.fillStyle = q.cor; c.beginPath(); c.arc(X, Y, q.r * (.5 + a * .5), 0, 7); c.fill(); } } c.globalAlpha = 1;
+  R.fx.forEach(f => { if (f.x != null && ((f.lugar || "sitio") !== (R.lugar || "sitio") || R.predio)) return; const a = Math.min(1, (2.6 - f.t) / .8), x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 22 - (f.o || 0) * Math.max(24, TS * .5); c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(20, TS * .46))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.8)"; c.lineWidth = 4.5; const tw = c.measureText(f.txt).width, xx = tw > W - 20 ? W / 2 : cl(x, tw / 2 + 10, W - tw / 2 - 10); const pop = f.t < .28 ? 1 + Math.sin(f.t / .28 * PI) * .35 : 1; if (pop !== 1) { c.save(); c.translate(xx, y); c.scale(pop, pop); c.strokeText(f.txt, 0, 0); c.fillText(f.txt, 0, 0); c.restore(); } else { c.strokeText(f.txt, xx, y); c.fillText(f.txt, xx, y); } c.textAlign = "start"; c.globalAlpha = 1; });
   R.fxR && R.fxR.forEach(f => { if (f.x != null && ((f.lugar || "sitio") !== (R.lugar || "sitio") || R.predio)) return; const a = 1 - f.t / 1.8, x = f.x == null ? W / 2 : PX(f.x), y = (f.y == null ? H * .3 : PY(f.y) - TS * 1.3) - f.t * 30; if (R.dentro && f.x != null) return; c.globalAlpha = Math.max(0, a); c.fillStyle = f.cor; c.font = `800 ${Math.round(Math.max(20, TS * .46))}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.8)"; c.lineWidth = 4.5; c.strokeText(f.txt, x, y); c.fillText(f.txt, x, y); c.textAlign = "start"; c.globalAlpha = 1; });
   const a = R.aranha, m = R.mula;
   { const C = R.chefe, briga = R.lugar === "lagoa" && C && !["dorme", "fim", "morto"].includes(C.fase); if (el.rcDica.classList.contains("baixo") !== !!briga) el.rcDica.classList.toggle("baixo", !!briga); }
@@ -2470,11 +2498,13 @@ function loop(ts) {
   lerControle(); const parado = painelAberto && !R.online && !R.msg, fps = parado ? 8 : window.fpsAlvo ? fpsAlvo() : 30; if (ultimo && ts - ultimo < 1000 / fps - 4) return;
   { const A = window.rocaAdapt || (window.rocaAdapt = { n: 0, soma: 0, ruim: 0 }); if (ultimo && !parado && !document.hidden) { A.n++; A.soma += ts - ultimo; if (A.n >= 90) { const media = A.soma / A.n; A.ruim = media > 1000 / fps * 1.45 ? A.ruim + 1 : 0; A.n = 0; A.soma = 0; if (A.ruim >= 2 && DPRr > 1.01) { window.rocaDprMax = 1; medir(); A.ruim = 0; } } } } // se não está dando conta, baixa a resolução sozinho (é o que mais esquenta) // 30 quadros por segundo bastam: o celular esquenta bem menos
   const t0 = performance.now(); window.rocaPerfN = (window.rocaPerfN || 0) + 1;
-  const dt = Math.min(.07, (ts - ultimo) / 1000 || 0); ultimo = ts;
+  let dt = Math.min(.07, (ts - ultimo) / 1000 || 0); ultimo = ts; DTQ = dt || 1 / 30;
+  if (HITSTOP > 0) { HITSTOP -= dt; dt *= .06; }
   if (R.online === "guest") atualizarConvidado(dt); else atualizar(dt);
+  for (const q of PARTS) { q.t += DTQ; q.x += q.vx * DTQ; q.y += q.vy * DTQ; q.vy += 9 * DTQ; } for (let i = PARTS.length - 1; i >= 0; i--) if (PARTS[i].t > PARTS[i].vida) PARTS.splice(i, 1);
   if (R.online === "host" && outros().length) { Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .1; enviarTodos(estadoPara()); } }
   const tm = ts / 1000;
-  c.setTransform(DPRr, 0, 0, DPRr, 0, 0);
+  c.setTransform(DPRr, 0, 0, DPRr, 0, 0); calcTremida(tm);
   if (R.viagem) desenharViagem(tm);
   else if (R.lugar === "esgoto") desenharEsgoto(tm);
   else if (R.lugar === "mata") { if (R.predio === "porao") desenharPorao(tm); else if (R.predio) { if (R.espiar) desenharEspiar(tm); else desenharCabanaDentro(tm); } else desenharMata(tm); }
@@ -2491,9 +2521,10 @@ function loop(ts) {
   if (R.fimVo) { c.fillStyle = `rgba(0,0,0,${cl((R.fimVo.t - 1.5) / 3.5, 0, 1)})`; c.fillRect(0, 0, W, H); }
   if (R.fade > 0) { c.fillStyle = `rgba(0,0,0,${Math.min(1, R.fade)})`; c.fillRect(0, 0, W, H); R.fade -= .05; }
   if (R.venceu && R.venceu.t > 1 && !R.dentro && (R.lugar || "sitio") === "sitio") { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + Math.max(0, R.venceu.t - 1.5) * 2.2); c.globalCompositeOperation = "lighter"; c.fillStyle = "rgba(255,240,200,.18)"; c.beginPath(); c.moveTo(x - TS * .8, y); c.lineTo(x - TS * 2, y + TS * 6); c.lineTo(x + TS * 2, y + TS * 6); c.lineTo(x + TS * .8, y); c.fill(); c.globalCompositeOperation = "source-over"; }
-  desenharFx(); desenharSusto(tm); desenharVitoria(tm);
+  desenharGuia(tm); desenharFx(); desenharSusto(tm); desenharVitoria(tm);
   // vinheta
   if (!VINHETA) { VINHETA = document.createElement("canvas"); VINHETA.width = Math.max(32, Math.round(W / 6)); VINHETA.height = Math.max(32, Math.round(H / 6)); const vg = VINHETA.getContext("2d"), w6 = VINHETA.width, h6 = VINHETA.height, gr = vg.createRadialGradient(w6 / 2, h6 / 2, Math.min(w6, h6) * .35, w6 / 2, h6 / 2, Math.max(w6, h6) * .75); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,.55)"); vg.fillStyle = gr; vg.fillRect(0, 0, w6, h6); } c.drawImage(VINHETA, 0, 0, W, H);
+  SHK.x = SHK.y = 0;
   { const dtq = performance.now() - t0; window.rocaMs = (window.rocaMs || 0) * .95 + dtq * .05; if (window.rocaTempos) { rocaTempos.push(dtq); if (rocaTempos.length > 400) rocaTempos.shift(); } }
 }
 
@@ -2908,8 +2939,8 @@ function desenharTinhoso(T, tm) {
 }
 function desenharEsgoto(tm) {
   if (!ESG) montarEsgoto();
-  const alvoC = R.eu; cam.x += (alvoC.x - cam.x) * .14; cam.y += (alvoC.y - .4 - cam.y) * .14; cam.x = cl(cam.x, W / TS / 2, EW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2, EH - H / TS / 2);
-  if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+  const alvoC = R.eu; cam.x += (alvoC.x - cam.x) * kq(.14); cam.y += (alvoC.y - .4 - cam.y) * kq(.14); cam.x = cl(cam.x, W / TS / 2, EW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2, EH - H / TS / 2);
+  
   c.fillStyle = "#0a0806"; c.fillRect(0, 0, W, H); desenharChaoChunks(CHAO_ESG);
   // água correndo na canaleta
   c.fillStyle = "rgba(120,160,150,.12)"; for (let i = 0; i < 40; i++) { const x = PX(((i * 7.13) % (EW - 2)) + 1), y = PY(((i * 3.7 + tm * .6) % (EH - 2)) + 1); c.fillRect(x, y, 2, 6); }
@@ -3360,8 +3391,8 @@ function desenharCabanaFora(tm) {
 }
 function desenharMata(tm) {
   if (!MATA) montarMata();
-  const alvoC = R.espiar && R.predio ? { x: CABANA.porta.x, y: CABANA.porta.y + 2.4 } : R.eu; cam.x += (alvoC.x - cam.x) * .12; cam.y += (alvoC.y - .6 - cam.y) * .12; cam.x = cl(cam.x, W / TS / 2, MTW - W / TS / 2 + 1); cam.y = cl(cam.y, H / TS / 2, MTH - H / TS / 2);
-  if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+  const alvoC = R.espiar && R.predio ? { x: CABANA.porta.x, y: CABANA.porta.y + 2.4 } : R.eu; cam.x += (alvoC.x - cam.x) * kq(.12); cam.y += (alvoC.y - .6 - cam.y) * kq(.12); cam.x = cl(cam.x, W / TS / 2, MTW - W / TS / 2 + 1); cam.y = cl(cam.y, H / TS / 2, MTH - H / TS / 2);
+  
   c.fillStyle = "#0c1008"; c.fillRect(0, 0, W, H);
   desenharChaoChunks(CHAO_MATA);
   // brilho na água do lago
@@ -3846,8 +3877,8 @@ const tm0 = () => performance.now() / 1000;
 function matoTufo(m, tm) { const X = PX(m.x), Y = PY(m.y); if (!naTela(X, Y, 40)) return; const alto = m.k > 1, n = alto ? 6 : 3, h = TS * (alto ? .9 + (m.k - 1) * .6 : .25 + m.k * .25); for (let i = 0; i < n; i++) { const o = (i - n / 2) * 3, b = Math.sin(tm * 1.3 + m.x + i) * (alto ? 4 : 1.5); c.strokeStyle = i % 2 ? "#6a7a36" : "#8a9a46"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(X + o, Y); c.quadraticCurveTo(X + o, Y - h * .5, X + o + b, Y - h); c.stroke(); } if (alto && m.k > 1.7) { c.fillStyle = "#d8c87a"; c.beginPath(); c.ellipse(X + 2, Y - h, 2, 5, .2, 0, 7); c.fill(); } }
 function desenharEstacao(tm) {
   if (!EST) montarEstacao();
-  const nt = horaNoite(); cam.x += (R.eu.x - cam.x) * .12; cam.y += (R.eu.y - .8 - cam.y) * .12; cam.x = cl(cam.x, W / TS / 2, ETW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2 - 1.5, ETH - H / TS / 2);
-  if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+  const nt = horaNoite(); cam.x += (R.eu.x - cam.x) * kq(.12); cam.y += (R.eu.y - .8 - cam.y) * kq(.12); cam.x = cl(cam.x, W / TS / 2, ETW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2 - 1.5, ETH - H / TS / 2);
+  
   c.fillStyle = "#1a2210"; c.fillRect(0, 0, W, H);
   desenharChaoChunks(CHAO_EST);
   const obj = [];
@@ -4522,8 +4553,8 @@ function aguaViva(tm, nt) { // brilhos e ondinhas por cima do rio pintado
 }
 function desenharBaixada(tm) {
   if (!BX) montarBaixada();
-  const nt = horaNoite(); cam.x += (R.eu.x - cam.x) * .12; cam.y += (R.eu.y - .8 - cam.y) * .12; cam.x = cl(cam.x, W / TS / 2, BXW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2 - 1.5, BXH - H / TS / 2);
-  if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+  const nt = horaNoite(); cam.x += (R.eu.x - cam.x) * kq(.12); cam.y += (R.eu.y - .8 - cam.y) * kq(.12); cam.x = cl(cam.x, W / TS / 2, BXW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2 - 1.5, BXH - H / TS / 2);
+  
   c.fillStyle = "#1a2210"; c.fillRect(0, 0, W, H);
   desenharChaoChunks(CHAO_BX); aguaViva(tm, nt);
   const pt = desenharPonteB(tm), obj = [];
@@ -4742,7 +4773,7 @@ function desenharMapinguari(M, tm, iluminado) {
 }
 function desenharMina(tm) {
   if (!MINA) montarMina();
-  cam.x += (R.eu.x - cam.x) * .14; cam.y += (R.eu.y - .4 - cam.y) * .14; cam.x = cl(cam.x, W / TS / 2, MNW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2, MNH - H / TS / 2); if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+  cam.x += (R.eu.x - cam.x) * kq(.14); cam.y += (R.eu.y - .4 - cam.y) * kq(.14); cam.x = cl(cam.x, W / TS / 2, MNW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2, MNH - H / TS / 2); 
   c.fillStyle = "#0a0806"; c.fillRect(0, 0, W, H); desenharChaoChunks(CHAO_MINA);
   const obj = [], pg = minaPegos();
   MINA.escoras.forEach(e => obj.push([e.y, () => { const x = PX(e.x), y = PY(e.y); if (!naTela(x, y, 60)) return; c.fillStyle = "#5a3a1e"; c.fillRect(x - TS * .5, y - TS * .9, TS * .12, TS * .9); c.fillRect(x + TS * .38, y - TS * .9, TS * .12, TS * .9); c.fillRect(x - TS * .56, y - TS * .98, TS * 1.12, TS * .14); c.fillStyle = "rgba(0,0,0,.3)"; c.fillRect(x - TS * .38, y - TS * .84, TS * .76, 3); }]));
@@ -5560,7 +5591,7 @@ function atualizarTiros(dt) {
       for (const tn of C.tent) if (tn.f === "de pe" && Math.hypot(tn.x - t.x, tn.y - t.y) < 1) { tn.hp -= t.k === "arpao" ? 2 : 1; t.vida = 0; tocarRuido(.15, { filtro: "lowpass", f: 500, vol: .2 }); if (tn.hp <= 0) { tn.f = "cai"; tn.t = 0; efeito("Tentáculo cortado!", "#9bd86b"); } break; }
       for (const pi of C.pir) if (pi.hp > 0 && Math.hypot(pi.x - t.x, pi.y - t.y) < .7) { pi.hp = 0; t.vida = 0; tocarRuido(.1, { filtro: "highpass", f: 1200, vol: .15 }); break; }
       if (t.vida > 0 && (C.fase !== "mergulha" && C.fase !== "investe") && Math.hypot(C.x - t.x, C.y - .8 - t.y) < 2.6) { t.vida = 0;
-        if (t.k === "arpao" && C.fase === "exposto") { const dano = R.arpaoBom ? 12 : 8; C.hp -= dano; C.cravados = Math.min(9, (C.cravados || 0) + 1); C.flash = .3; R.tremor = .3; tocarTom(80, .5, { tipo: "sawtooth", vol: .2, ate: 40, lp: 400 }); efeito(`ARPÃO NA GUELRA! −${dano}`, "#e2483d"); if (C.hp <= 0) matarChefe(); }
+        if (t.k === "arpao" && C.fase === "exposto") { const dano = R.arpaoBom ? 12 : 8; C.hp -= dano; C.cravados = Math.min(9, (C.cravados || 0) + 1); C.flash = .3; R.tremor = Math.max(R.tremor || 0, .6); pausinha(.1); faiscas(C.x, C.y - 2.4, ["#e2483d", "#ff8a6a", "#fff0d0"], 18, 1.4); tocarTom(80, .5, { tipo: "sawtooth", vol: .2, ate: 40, lp: 400 }); efeito(`ARPÃO NA GUELRA! −${dano}`, "#e2483d"); if (C.hp <= 0) matarChefe(); }
         else { tocarTom(1800, .08, { tipo: "square", vol: .05 }); if (!C.avisoCouro || C.avisoCouro < performance.now()) { C.avisoCouro = performance.now() + 4000; efeito(t.k === "arpao" ? "Bateu no couro! Espere as guelras brilharem" : "Bala não fura o couro dele. Só o arpão, na guelra", "#e8e2d4"); } } } }
     if (t.t > t.vida) t.vida = 0; }
   R.tiros = T.filter(t => t.vida > 0);
@@ -5574,7 +5605,7 @@ function novoChefe() { const hp = hpChefeBase(); return { fase: "dorme", t: 0, h
 function danoBarco(d, txt) { const B = R.barco; if (!B) return; d *= R.casco ? .8 : 1; let seg = 0; const am = armMax();
   if (am > 0) { if (B.arm == null) B.arm = am; if (B.arm > 0) { seg = Math.min(B.arm, d * (R.armEq === "ferro" ? .9 : .8)); B.arm -= seg; if (B.arm <= 0) { B.arm = 0; setTimeout(() => R && efeito("A armadura do barco quebrou!", "#f2a33a"), 500); tocarRuido(.6, { filtro: "highpass", f: 900, vol: .3 }); } } }
   let resto = d - seg; const mx = hpBarcoMax(); if (B.hp > mx * .3 && B.hp - resto < 1) resto = B.hp - 1; // uma pancada só nunca afunda um barco inteiro
-  B.hp -= resto; R.tremor = .6; tocarRuido(.5, { filtro: "lowpass", f: seg > resto ? 700 : 260, vol: .35 }); if (seg > 0) tocarTom(160, .25, { tipo: "square", vol: .07, ate: 90 }); try { vibrar(120); } catch (e) {}
+  B.hp -= resto; R.tremor = Math.max(R.tremor || 0, resto > 14 ? .9 : .55); if (resto > 14) pausinha(.08); faiscas(B.x, B.y - .3, ["#e8f4ff", "#9ad0e8"], resto > 14 ? 16 : 8, 1.2); tocarRuido(.5, { filtro: "lowpass", f: seg > resto ? 700 : 260, vol: .35 }); if (seg > 0) tocarTom(160, .25, { tipo: "square", vol: .07, ate: 90 }); try { vibrar(120); } catch (e) {}
   if (txt) efeito(seg > 0 ? `${txt} A armadura segurou! −${Math.round(resto)}` : `${txt} −${Math.round(resto)}`, seg > 0 ? "#f2c94a" : "#e2483d"); if (B.hp <= 0) afundarBarco("ipupiara"); }
 function atualizarChefe(dt) {
   if (ls("roca_ipupiara_morto")) { R.chefe = null; return; }
@@ -5792,7 +5823,7 @@ function desenharBoiuna(B, tm) {
 function desenharLagoa(tm) {
   if (!LG) montarLagoa(); const nt = horaNoite();
   { const C = R.chefe, briga = C && R.noBarco && !["dorme", "fim"].includes(C.fase) && Math.hypot(C.x - R.eu.x, C.y - R.eu.y) < 16, ax = briga ? R.eu.x * .5 + C.x * .5 : R.eu.x, ay = briga ? (R.eu.y - .5) * .62 + (C.y - 4.2) * .38 : R.eu.y - .5; // na briga, a câmera mostra o barco E o monstro
-    cam.x += (ax - cam.x) * .1; cam.y += (ay - cam.y) * .1; } cam.x = cl(cam.x, W / TS / 2, LGW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2, LGH - H / TS / 2); if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+    cam.x += (ax - cam.x) * kq(.1); cam.y += (ay - cam.y) * kq(.1); } cam.x = cl(cam.x, W / TS / 2, LGW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2, LGH - H / TS / 2); 
   c.fillStyle = "#1c4a62"; c.fillRect(0, 0, W, H); desenharChaoChunks(CHAO_LG);
   // brilho e ondinhas na água
   const k = nt > .5 ? "150,190,230" : "230,245,255";
@@ -5895,7 +5926,7 @@ const PECAS_TREM = [
 const pecasTrem = () => { try { return JSON.parse(ls("roca_pecas_trem") || "[]"); } catch (e) { return []; } };
 const temPecaTrem = k => pecasTrem().includes(k);
 const tremOk = () => !!ls("roca_trem_ok");
-function pegarPecaTrem(k) { const l = pecasTrem(); if (l.includes(k)) return; l.push(k); ls("roca_pecas_trem", JSON.stringify(l)); const p = PECAS_TREM.find(q => q.k === k);
+function pegarPecaTrem(k) { const l = pecasTrem(); if (l.includes(k)) return; l.push(k); ls("roca_pecas_trem", JSON.stringify(l)); const p = PECAS_TREM.find(q => q.k === k); faiscas(R.eu.x, R.eu.y - .6, ["#f2c94a", "#fff6c0", "#c8a050"], 22, 1.3); R.tremor = Math.max(R.tremor || 0, .35);
   S.colher(); tocarTom(660, .15, { tipo: "triangle", vol: .06 }); tocarTom(990, .25, { tipo: "triangle", vol: .06, quando: .12 }); efeito(`Peça do trem: ${p.nome} (${l.length}/5)`, "#f2c94a");
   if (l.length >= 5) setTimeout(() => R && efeito("As 5 peças! Leve pra cabine da Maria-Fumaça", "#f2c94a"), 1600); hud(); }
 // o cofre do breque: o segredo 3 · 1 · 5 está riscado na tampa
@@ -6035,7 +6066,7 @@ function desenharAraucaria(x, y, h, k, tm, nt) { // x,y em pixels na base
 }
 function desenharSerra(tm) {
   if (!SR) montarSerra(); const nt = horaNoite();
-  cam.x += (R.eu.x - cam.x) * .1; cam.y += (R.eu.y - .8 - cam.y) * .1; cam.x = cl(cam.x, W / TS / 2, SRW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2 - 2, SRH - H / TS / 2); if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+  cam.x += (R.eu.x - cam.x) * kq(.1); cam.y += (R.eu.y - .8 - cam.y) * kq(.1); cam.x = cl(cam.x, W / TS / 2, SRW - W / TS / 2); cam.y = cl(cam.y, H / TS / 2 - 2, SRH - H / TS / 2); 
   c.fillStyle = "#4e6a34"; c.fillRect(0, 0, W, H); desenharChaoChunks(CHAO_SR);
   const obj = [];
   TREM_SR.forEach(v => obj.push([TRILHO_Y + .5, () => desenharCarro(v, tm, nt)]));
@@ -6241,7 +6272,7 @@ function desenharArvoreFl(a, tm, nt) {
   sombra(X, Y, T * .55, T * .16, .25); c.fillStyle = esc ? "#101c10" : "#2e5222"; c.beginPath(); c.arc(X, Y - T * .4, T * .55, 0, 7); c.fill(); c.fillStyle = esc ? "#142214" : "#3a6a2a"; c.beginPath(); c.arc(X - T * .2, Y - T * .55, T * .3, 0, 7); c.fill(); }
 function desenharFloresta(tm) {
   if (!FL) montarFloresta(); const nt = horaNoite(), T = TS;
-  const perCach = Math.hypot(R.eu.x - POCO_FL.x, R.eu.y - POCO_FL.y) < 10; cam.x += (R.eu.x - cam.x) * .1; cam.y += ((perCach ? Math.min(R.eu.y - .9, POCO_FL.y - .6) : R.eu.y - .9) - cam.y) * .1; cam.x = cl(cam.x, W / T / 2, FLW - W / T / 2); cam.y = cl(cam.y, H / T / 2, FLH - H / T / 2); if (R.tremor > 0) { cam.x += rnd(-.05, .05); cam.y += rnd(-.05, .05); }
+  const perCach = Math.hypot(R.eu.x - POCO_FL.x, R.eu.y - POCO_FL.y) < 10; cam.x += (R.eu.x - cam.x) * kq(.1); cam.y += ((perCach ? Math.min(R.eu.y - .9, POCO_FL.y - .6) : R.eu.y - .9) - cam.y) * kq(.1); cam.x = cl(cam.x, W / T / 2, FLW - W / T / 2); cam.y = cl(cam.y, H / T / 2, FLH - H / T / 2); 
   c.fillStyle = "#2c4220"; c.fillRect(0, 0, W, H); desenharChaoChunks(CHAO_FL);
   const vx0 = cam.x - W / T / 2 - 3, vx1 = cam.x + W / T / 2 + 3, vy0 = cam.y - H / T / 2 - 1, vy1 = cam.y + H / T / 2 + 7, vis2 = (x, y) => x > vx0 && x < vx1 && y > vy0 && y < vy1;
   // brilho da água
@@ -6450,7 +6481,7 @@ const reparoOk = k => !!(R && R.deco && R.deco.reparos && R.deco.reparos[k]);
 const cercasOk = () => ["cerca1", "cerca2", "cerca3", "cerca4"].every(reparoOk);
 const listaPrecisa = rp => Object.entries(rp.precisa).map(([m, n]) => { const f = FERR.find(z => z[0] === m); return f ? f[1].toLowerCase() : `${(MATERIAIS.find(z => z[0] === m) || [m, m])[1].toLowerCase()}${n > 1 ? ` ×${n}` : ""}`; }).join(", ");
 const temPrecisa = rp => Object.entries(rp.precisa).every(([m, n]) => FERR.some(f => f[0] === m) ? temFerr(m) : qtdMat(m) >= n);
-function aplicarReparo(k) { const rp = REPAROS.find(z => z.k === k); if (!rp || reparoOk(k) || !temPrecisa(rp)) return false; for (const [m, n] of Object.entries(rp.precisa)) if (!FERR.some(f => f[0] === m)) R.decoInv["x:" + m] -= n;
+function aplicarReparo(k) { const rp = REPAROS.find(z => z.k === k); if (!rp || reparoOk(k) || !temPrecisa(rp)) return false; faiscas(rp.x, rp.y - .5, ["#e8d8a8", "#f2c94a", "#9a7a4a"], 16, 1.1); for (const [m, n] of Object.entries(rp.precisa)) if (!FERR.some(f => f[0] === m)) R.decoInv["x:" + m] -= n;
   R.deco.reparos = R.deco.reparos || {}; R.deco.reparos[k] = 1; if (k === "poco") { R.aguaMax += 2; R.agua = R.aguaMax; } salvarDeco(); return true; }
 function tentarReparo(rp) {
   if (!temPrecisa(rp)) return falar([`${rp.nome}.`, `Pra consertar precisa: ${listaPrecisa(rp)}.`, `Depois de consertado: ${rp.ben}.`, "Tudo isso tem na loja de construção do Seu Nonato, na vila."], null, "Yasmin");
@@ -7160,7 +7191,7 @@ function vultoDaVila(tm) {
 }
 function desenharVila(tm) {
   if (!VILA) montarVila();
-  cam.x += (R.eu.x - cam.x) * .12; cam.y += (R.eu.y - cam.y) * .12; cam.x = cl(cam.x, W / TS / 2, VW - W / TS / 2); cam.y = cl(cam.y, Math.min(4, VH / 2), VH - H / TS / 2);
+  cam.x += (R.eu.x - cam.x) * kq(.12); cam.y += (R.eu.y - cam.y) * kq(.12); cam.x = cl(cam.x, W / TS / 2, VW - W / TS / 2); cam.y = cl(cam.y, Math.min(4, VH / 2), VH - H / TS / 2);
   c.fillStyle = "#141a0e"; c.fillRect(0, 0, W, H);
   desenharChaoChunks(CHAO_VILA);
   desenharBueiro(tm); desenharVilaObjetos(tm);
@@ -7727,6 +7758,7 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
     <button type="button" class="rc-op" id="opVoz">${icB("voz")}Narração da história: ${lig(window.vozLigada !== false)}</button>
     <button type="button" class="rc-op" id="opFps">${icB("grafico")}Gráfico: ${fps === 60 ? "suave<small>60 quadros · mais bonito, esquenta mais</small>" : fps <= 24 ? "bateria<small>24 quadros e resolução menor · esquenta bem menos</small>" : "normal<small>30 quadros · o meio-termo</small>"}</button>
     ${window.PC ? `<button type="button" class="rc-op" id="opTela">${icB("telacheia")}Tela cheia (F11)</button>` : ""}
+    <button type="button" class="rc-op" id="opTreme">${icB("grafico")}Tremer a tela: ${tremeOn() ? "sim" : "não"}<small>Desligue se a tremida incomodar</small></button>
     <button type="button" class="rc-op" id="opHist">${icB("historia")}Apagar a história já vista<small>A abertura aparece de novo</small></button></div>
     <p style="font-size:12px;color:#b8b2a4">Roça Assombrada · versão ${window.ROCA_VERSAO || "1"}</p>
     <div class="rc-linha"><button type="button" class="rc-op dest" id="rcFechar">Voltar</button></div></div>`;
@@ -7735,6 +7767,7 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
   document.getElementById("opVoz").addEventListener("click", () => { if (window.alternarVozSolo) alternarVozSolo(); re(); });
   document.getElementById("opFps").addEventListener("click", () => { try { localStorage.setItem("pv_fps", fps === 30 ? "24" : fps <= 24 ? "60" : "30"); } catch (e) {} window.rocaDprMax = 0; medir(); re(); });
   const bt2 = document.getElementById("opTela"); if (bt2) bt2.addEventListener("click", () => PC.telaCheia());
+  document.getElementById("opTreme").addEventListener("click", () => { ls("roca_tremer", tremeOn() ? "0" : "1"); re(); });
   document.getElementById("opHist").addEventListener("click", () => { ls("roca_hist", ""); try { localStorage.removeItem("roca_hist"); } catch (e) {} efeito("A história vai aparecer de novo", "#e8e2d4"); re(); });
   document.getElementById("rcFechar").addEventListener("click", () => { fecharPainel(); menuInicial(); });
   focarPrimeiro();
@@ -7829,7 +7862,7 @@ function entrarSala() {
   const ir = () => { st("Procurando a sala..."); netEntrar(inp.value, () => st("Conectado! Entrando no lobby..."), st); };
   document.getElementById("rcIr").addEventListener("click", ir); inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") ir(); });
 }
-const MANTER_NOVO = new Set(["roca_hist", "roca_floresta_paga", "roca_nome", "roca_gato_v2", "roca_gato_cor"]);
+const MANTER_NOVO = new Set(["roca_hist", "roca_floresta_paga", "roca_nome", "roca_gato_v2", "roca_gato_cor", "roca_tremer"]);
 function apagarTudo() {
   try { const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("roca_") && !MANTER_NOVO.has(k)) ks.push(k); } ks.forEach(k => localStorage.removeItem(k)); } catch (e) {}
   FL = null; SR = null; convAr = 0; convTib = 0; bocaSuave = .1; if (typeof LG !== "undefined") LG = null;
