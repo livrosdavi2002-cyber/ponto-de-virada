@@ -1480,18 +1480,44 @@ function atualizarGato(dt) {
     else { const r = Math.random(); let q; if (r < .05) { q = "dourada"; R.ouro++; ls("roca_ouro", R.ouro); } else if (r < .2) { q = "moedas"; R.moedas += 3; } else if (r < .58) { q = "graveto"; R.inv.graveto++; } else { q = "folha"; R.inv.folha++; }
       R.fx.push({ txt: q === "dourada" ? "Moeda dourada!" : q === "moedas" ? "+3 moedas" : `+1 ${q}`, cor: q === "dourada" ? "#ffe680" : "#e8e2d4", t: 0, x: g.x, y: g.y }); S.miau(g.x, g.y); S.queda(); g.alvo = null; g.prox = rnd(20, 30); g.anda = 0; hud(); } }
 }
+/* ---------- Corpo-Seco pensa (IA de utilidade): pontua cada jeito de agir e escolhe o melhor ----------
+   Ele odeia luz parada (lampião, fogueira, forno, poste consertado): contorna a luz e, se você estiver dentro dela, fica rondando a beirada.
+   Mas a paciência acaba: quanto mais tempo rondando, mais vontade de atacar mesmo assim (e o tempo dele no sítio continua correndo). */
+function luzesSitio() {
+  const L = []; ((R.deco && R.deco.objs) || []).forEach(o => { if (o.t === "lampiao") L.push({ x: o.x, y: o.y - .3, r: 2.3 }); else if (o.t === "fogueira") L.push({ x: o.x, y: o.y, r: 2.8 }); else if (o.t === "forno") L.push({ x: o.x, y: o.y, r: 1.8 }); });
+  if (reparoOk("poste")) L.push({ x: POSTE.x + .42, y: POSTE.y + .4, r: 2.9 });
+  return L;
+}
+const luzEm = (p, L) => L.find(l => Math.hypot(p.x - l.x, p.y - l.y) < l.r);
+function desviarLuz(s, dx, dy) { // vai pro alvo, mas é empurrado pra fora das luzes que estão no caminho
+  let ax = dx, ay = dy; for (const l of luzesSitio()) { const ox = s.x - l.x, oy = s.y - l.y, d = Math.hypot(ox, oy) || .01, m = l.r + .8; if (d < m) { const k = (m - d) / m * 2.2; ax += ox / d * k; ay += oy / d * k; } }
+  const n = Math.hypot(ax, ay) || 1; return [ax / n, ay / n];
+}
+function decidirSeco(s, dt) {
+  const L = luzesSitio(), luz = luzEm(R.eu, L); if (!luz) { s.espera = 0; s.plano = "caca"; return { alvo: R.eu, vel: 1, desvia: true }; }
+  if (Math.hypot(s.x - luz.x, s.y - luz.y) < luz.r + 1.6) s.espera = (s.espera || 0) + dt; // a paciência só gasta quando ele já está na beirada da luz
+  const e = s.espera || 0, nota = { // cada opção ganha uma nota; a que ele já está fazendo ganha um bônus (pra não ficar trocando toda hora)
+    ronda: 1 - Math.min(.9, e / 14) + (s.plano === "ronda" ? .1 : 0),
+    ataca: .05 + Math.min(.9, e / 12) + (s.plano === "ataca" ? .1 : 0) };
+  s.plano = nota.ataca > nota.ronda ? "ataca" : "ronda";
+  if (s.plano === "ataca") return { alvo: R.eu, vel: .55, desvia: false }; // entra na luz, mas devagar, encolhido
+  s.ang = (s.ang ?? Math.atan2(s.y - luz.y, s.x - luz.x)) + dt * .55 * (s.giroDir || (s.giroDir = Math.random() < .5 ? 1 : -1)); // anda em volta da luz, sem entrar
+  if (Math.random() < dt * .25) s.giroDir *= -1;
+  return { alvo: { x: luz.x + Math.cos(s.ang) * (luz.r + .7), y: luz.y + Math.sin(s.ang) * (luz.r + .7) * .8 }, vel: .45, desvia: true };
+}
 function atualizarSeco(dt) {
   const s = R.seco; if (R.tutorial === 0) return;
   if (s.fase === "longe") { s.prox -= dt; if (s.prox <= 0) { s.fase = "aviso"; s.t = 0; const lado = Math.random() < .5; s.x = lado ? CERCA.x0 - 1.6 : CERCA.x1 + 1.6; s.y = rnd(CERCA.y0 + 4, CERCA.y1 - 4); S.estalos(s.x, s.y); efeito("A mata estalou...", "#e2483d"); } return; }
   s.t += dt;
-  if (s.fase === "aviso") { if (s.t > 1 && s.t % 2.2 < dt) S.estalos(s.x, s.y); if (s.t > 7) { s.fase = "anda"; s.t = 0; S.uivoSeco(s.x, s.y); } return; }
+  if (s.fase === "aviso") { if (s.t > 1 && s.t % 2.2 < dt) S.estalos(s.x, s.y); if (s.t > 7) { s.fase = "anda"; s.t = 0; s.espera = 0; s.plano = null; s.ang = null; s.rastro = []; S.uivoSeco(s.x, s.y); } return; }
   if (s.fase === "anda") {
-    const alvo = R.dentro ? { x: CASA.porta.x, y: CASA.porta.y + .85 } : R.eu, d = dist(s, alvo), v = 3.3; // de quatro, mais rápido que andando; na porta ele fica do lado de fora, visível pela janela
-    if (d > .05) { s.x += (alvo.x - s.x) / d * v * dt; s.y += (alvo.y - s.y) / d * v * dt; s.dir = alvo.x > s.x ? 1 : -1; s.fase2 = (s.fase2 || 0) + dt * 11; if (Math.random() < dt * 14) R.poeira.push({ x: s.x - s.dir * .5, y: s.y, t: 0 }); }
+    const alvo0 = R.dentro ? { x: CASA.porta.x, y: CASA.porta.y + .85 } : R.eu, plano = R.dentro ? null : decidirSeco(s, dt), alvo = plano ? plano.alvo : alvo0, d = dist(s, alvo), v = 3.3 * (plano ? plano.vel : 1); // de quatro, mais rápido que andando; na porta ele fica do lado de fora, visível pela janela
+    if (d > .05) { const dx = (alvo.x - s.x) / d, dy = (alvo.y - s.y) / d; let [ax, ay] = plano && plano.desvia ? desviarLuz(s, dx, dy) : [dx, dy]; s.x += ax * v * dt; s.y += ay * v * dt; s.dir = alvo.x > s.x ? 1 : -1; s.fase2 = (s.fase2 || 0) + dt * 11 * Math.max(.4, plano ? plano.vel : 1); if (Math.random() < dt * 14) R.poeira.push({ x: s.x - s.dir * .5, y: s.y, t: 0 }); }
+    s.rastroT = (s.rastroT || 0) - dt; if (s.rastroT <= 0) { s.rastroT = .07; (s.rastro = s.rastro || []).unshift({ x: s.x, y: s.y, f: s.fase2, dir: s.dir }); if (s.rastro.length > 3) s.rastro.pop(); }
     if (s.t % 1.6 < dt) { const [vv, pn] = somEm(s.x, s.y); tocarRuido(.12, { filtro: "lowpass", f: 260, vol: .3 * vv, pan: pn }); tocarTom(80, .5, { tipo: "sawtooth", vol: .06 * vv, ate: 50, lp: 300, pan: pn }); } // mandíbula batendo
     if (!R.dentro && d < 4) R.tremor = .1;
     if (R.dentro && d < .4) { s.bate = (s.bate || 0) - dt; if (s.bate <= 0) { s.bate = rnd(1.4, 2.6); bater(.9); R.tremor = .25; } }
-    if (!R.dentro && dist(s, R.eu) < .9) morrer("seco", "O Corpo-Seco te alcançou correndo de quatro.", "Quando a mata estalar, corra para dentro de casa e espere o suspiro. Use o Correr: andando ele te alcança.");
+    if (!R.dentro && dist(s, R.eu) < .9) morrer("seco", "O Corpo-Seco te alcançou correndo de quatro.", "Quando a mata estalar, corra para dentro de casa e espere o suspiro. Use o Correr: andando ele te alcança. Ele odeia luz de lampião e fogueira: fica rondando a beirada um tempo antes de entrar.");
     if (s.t > 22) { s.fase = "sai"; s.t = 0; S.suspiro(s.x, s.y); }
     return;
   }
@@ -2300,8 +2326,11 @@ function desenharVoce(x, y, tm, o = {}) {
     return; }
   const sent = !!o.sentada; if (sent) andaK = 0; if (!sent && !o.semSombra) sombra(x, y, 13 * s, 4.5 * s);
   c.save(); c.translate(x, y); c.scale(dir * s, s);
-  const sw = Math.sin(f) * 7 * andaK, bob = sent ? Math.sin(tm * 1.6) * .6 : Math.abs(Math.cos(f)) * 2 * andaK, tremeK = p > .6 ? Math.sin(tm * 40) * .8 : 0;
+  const parada = !sent && andaK < .2, resp = Math.sin(tm * (2 + p * 3)) * (.55 + p * .5); // respira (mais rápido com medo)
+  const sw = Math.sin(f) * 7 * andaK, bob = sent ? Math.sin(tm * 1.6) * .6 : Math.abs(Math.cos(f)) * 2 * andaK + (parada ? resp * .5 + .5 : 0), tremeK = p > .6 ? Math.sin(tm * 40) * .8 : 0;
   c.translate(tremeK, 0);
+  { const pis = Math.pow(1 - Math.abs(Math.cos(f)), 3) * andaK; if (pis > .01) c.scale(1 + pis * .035, 1 - pis * .045); } // pé no chão: amassa um tiquinho (dá peso ao passo)
+  const piscou = p < .45 && ((tm + (o.sd || 0)) % 3.7 < .11 || (tm + 1.9) % 8.3 < .1), olhaX = p > .25 ? Math.sin(tm * 2.7) * .7 * p : 0; // pisca de tempos em tempos; com medo, os olhos procuram em volta
   // trança de trás (balança quando anda)
   const tr = Math.sin(f * .5 + tm * 2) * 2 * (andaK + .3);
   c.fillStyle = rp.cabelo; for (let i = 0; i < 4; i++) { c.beginPath(); c.ellipse(-7 - i * .6 + tr * i * .3, -36 - bob + i * 4, 2.6, 2.4, 0, 0, 7); c.fill(); } c.fillStyle = rp.fita; c.fillRect(-9.5 + tr, -21 - bob, 4, 2.5);
@@ -2331,7 +2360,8 @@ function desenharVoce(x, y, tm, o = {}) {
   c.fillStyle = rp.pele; c.beginPath(); c.arc(0, -38 - bob, 8.2, 0, 7); c.fill();
   c.fillStyle = rp.cabelo; c.beginPath(); c.arc(-1, -39.5 - bob, 8.6, PI * .95, PI * 2.12); c.fill(); c.beginPath(); c.ellipse(-6, -36 - bob, 3.4, 6, .2, 0, 7); c.fill(); // franja e lateral
   c.fillStyle = rp.pele; c.beginPath(); c.ellipse(3.5, -36.5 - bob, 5.2, 5, 0, 0, 7); c.fill(); // rosto
-  c.fillStyle = "#1a1210"; const ol = 1.4 + p * 1.2; c.beginPath(); c.arc(2.6, -38 - bob, ol, 0, 7); c.arc(6.6, -38 - bob, ol * .9, 0, 7); c.fill(); c.fillStyle = "#fff"; c.beginPath(); c.arc(3, -38.6 - bob, .55, 0, 7); c.arc(7, -38.6 - bob, .5, 0, 7); c.fill();
+  if (piscou) { c.strokeStyle = "#1a1210"; c.lineWidth = 1.1; c.beginPath(); c.moveTo(1.4, -37.8 - bob); c.quadraticCurveTo(2.6, -37 - bob, 3.8, -37.8 - bob); c.moveTo(5.6, -37.8 - bob); c.quadraticCurveTo(6.6, -37 - bob, 7.6, -37.8 - bob); c.stroke(); }
+  else { c.fillStyle = "#1a1210"; const ol = 1.4 + p * 1.2; c.beginPath(); c.arc(2.6 + olhaX, -38 - bob, ol, 0, 7); c.arc(6.6 + olhaX, -38 - bob, ol * .9, 0, 7); c.fill(); c.fillStyle = "#fff"; c.beginPath(); c.arc(3 + olhaX, -38.6 - bob, .55, 0, 7); c.arc(7 + olhaX, -38.6 - bob, .5, 0, 7); c.fill(); }
   c.strokeStyle = "#1a1210"; c.lineWidth = .9; c.beginPath(); c.moveTo(1.4, -40.4 - bob); c.lineTo(2.4, -40.9 - bob); c.moveTo(6, -40.9 - bob); c.lineTo(7.2, -40.4 - bob); c.stroke(); // cílios
   if (p > .45) { c.fillStyle = "#1a1210"; c.beginPath(); c.ellipse(4.6, -33.6 - bob, 1.4, 2.1, 0, 0, 7); c.fill(); c.fillStyle = "rgba(160,200,230,.85)"; c.fillRect(1.5, -37 - bob + ((tm * 20) % 6), 1.3, 2.4); }
   else { c.strokeStyle = "#8a3a2a"; c.lineWidth = 1.1; c.beginPath(); c.arc(4.6, -34.6 - bob, 1.7, .2, PI - .2); c.stroke(); }
@@ -2574,7 +2604,12 @@ function desenharCruz(tm) {
 }
 /* ---------- monstros maiores: cada desenho é ampliado a partir do pé ---------- */
 function maior(fn, o, k, tm) { const x = PX(o.x), y = PY(o.y); c.save(); c.translate(x, y); c.scale(k, k); c.translate(-x, -y); fn(o, tm); c.restore(); }
-const desenharSeco = (o, tm) => maior(_desenharSeco, o, 1.35, tm);
+const desenharSeco = (o, tm) => { // surge da escuridão tremendo e some do mesmo jeito; correndo, deixa um rastro
+  if (o.fase === "anda" && o.rastro && !MOVEL && o.plano !== "ronda") o.rastro.forEach((r, i) => { if (i === 0) return; c.save(); c.globalAlpha = .16 / i; maior(_desenharSeco, { ...o, x: r.x, y: r.y, fase2: r.f, dir: r.dir }, 1.35, tm); c.restore(); });
+  const ap = o.fase === "anda" && o.t < 1.4 ? o.t / 1.4 : o.fase === "sai" && o.t > 4.4 ? Math.max(0, 1 - (o.t - 4.4) / 1.5) : 1;
+  if (ap >= 1) return maior(_desenharSeco, o, 1.35, tm);
+  const x = PX(o.x), y = PY(o.y), j = 1 - ap; c.save(); c.globalAlpha = ap * (.75 + .25 * Math.random()); c.translate(x, y); c.scale(1 + j * .3 * Math.sin(tm * 23), 1 + j * .22 * Math.sin(tm * 17 + 1)); c.translate(-x, -y); maior(_desenharSeco, o, 1.35, tm); c.restore();
+};
 const desenharCachorro = (o, tm) => maior(_desenharCachorro, o, o.fase === "lobo" ? 1.6 : o.fase === "vira" ? 1 + .6 * cl(o.t / 1.3, 0, 1) : 1, tm);
 const desenharEspantalho = (o, tm) => maior(_desenharEspantalho, o, 1.4, tm);
 const desenharAranha = (o, tm) => o.fase === "longe" ? 0 : maior(_desenharAranha, o, 1.3, tm);
@@ -2940,6 +2975,9 @@ function desenharMundo(tm) {
   if (nt < .5) for (let i = 0; i < 7; i++) { const k = (tm * .08 + i / 7) % 1, x = ((i * 137 + tm * 18) % (W + 40)) - 20, y = k * H; c.fillStyle = ["#c8662a", "#d89a2a", "#a8401e"][i % 3]; c.save(); c.translate(x + Math.sin(tm * 2 + i) * 10, y); c.rotate(tm * 2 + i); c.fillRect(-3, -1.5, 6, 3); c.restore(); }
   else for (let i = 0; i < 4; i++) { const k = (tm * .04 + i / 4) % 1; c.fillStyle = "rgba(170,180,200,.05)"; c.beginPath(); c.ellipse(((i * 290 + tm * 12) % (W + 400)) - 200, H * (.3 + i * .18), W * .35, H * .06, 0, 0, 7); c.fill(); } // neblina
 }
+// brilho pronto: gradiente redondo desenhado uma vez e só copiado (criar gradiente todo quadro pesa no celular)
+const BRILHO = new Map();
+function brilhoPronto(rgb, meio = 1) { const k = rgb + meio; let t = BRILHO.get(k); if (t) return t; t = document.createElement("canvas"); t.width = t.height = 128; const g = t.getContext("2d"), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, `rgba(${rgb},1)`); if (meio < 1) gr.addColorStop(.55, `rgba(${rgb},${meio})`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); BRILHO.set(k, t); return t; }
 function desenharLuz(tm) {
   const nt = horaNoite(), lw = luzCv.width, lh = luzCv.height, k = lw / W;
   const tarde = cl(1 - Math.abs(((R.t % CICLO) - (DIA - 14)) / 22), 0, 1) * (1 - nt);
@@ -2949,7 +2987,7 @@ function desenharLuz(tm) {
   lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh);
   if (R.raio > .12) return; lc.fillStyle = `rgba(6,10,24,${(R.luaCheia ? .74 : .92) * nt})`; lc.fillRect(0, 0, lw, lh);
   lc.globalCompositeOperation = "destination-out";
-  const furo = (x, y, r, a = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(.55, `rgba(0,0,0,${a * .7})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.beginPath(); lc.arc(x * k, y * k, r * k, 0, 7); lc.fill(); };
+  const FURO = brilhoPronto("0,0,0", .7), furo = (x, y, r, a = 1) => { if (a <= 0 || r <= 0) return; const rk = r * k; lc.globalAlpha = Math.min(1, a); lc.drawImage(FURO, x * k - rk, y * k - rk, rk * 2, rk * 2); lc.globalAlpha = 1; };
   const ex = PX(R.eu.x), ey = PY(R.eu.y) - TS * .4;
   if (R.dentro) furo(PX(CASA.porta.x + 1.6), PY(CASA.porta.y + .9), TS * 2.2, .55); else furo(ex, ey, TS * (R.lanterna ? (R.lanternaBoa ? 5.4 : 4.4) : 1.7) * (1 + Math.sin(tm * 9) * .01), R.lanterna ? 1 : .75);
   const lit = R.lamparinas.filter(v => v).length / 3;
@@ -2969,7 +3007,7 @@ function desenharLuz(tm) {
   for (let i = 0; i < 22; i++) { const fx = CERCA.x0 + 1 + (i * 7.3) % (CERCA.x1 - CERCA.x0 - 2) + Math.sin(tm * .4 + i) * 1.2, fy = CERCA.y0 + 1 + (i * 5.1) % (CERCA.y1 - CERCA.y0 - 2) + Math.cos(tm * .5 + i * 2) * .8, a = .5 + .5 * Math.sin(tm * 3 + i * 1.7); if (a > .3) furo(PX(fx), PY(fy), TS * .35, a * .8); }
   camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   c.globalCompositeOperation = "lighter";
-  const brilho = (x, y, r, rgb, a) => { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
+  const brilho = (x, y, r, rgb, a) => { if (a <= 0 || r <= 0) return; c.globalAlpha = Math.min(1, a); c.drawImage(brilhoPronto(rgb), x - r, y - r, r * 2, r * 2); c.globalAlpha = 1; };
   if (R.lanterna) brilho(ex, ey, TS * 3, "255,200,120", .14 * nt);
   if (R.vela && !velaNaMao()) brilho(PX(R.vela.x), PY(R.vela.y) - 16, TS * .9, "255,190,90", .35 * nt);
   ((R.deco && R.deco.objs) || []).forEach(o => { if (o.t === "lampiao") brilho(PX(o.x), PY(o.y) - TS * 1.9, TS * 1.1, "255,190,100", .3 * nt); });
@@ -3312,8 +3350,8 @@ function loop(ts) {
   else if (R.lugar === "lagoa") desenharLagoa(tm);
   else if (R.lugar === "serra") desenharSerra(tm);
   else if (R.lugar === "floresta") desenharFloresta(tm);
-  else if (R.dentro) { if (R.espiar) desenharEspiar(tm); else desenharDentro(tm); } else { if (R.venceu && R.venceu.t > 1) { CAMINHONETE.x += .0; } desenharMundo(tm); desenharLuz(tm); }
-  camadaFim(); desenharFerrAnim(tm); desenharClima(tm); desenharMedo(tm); desenharBrilhoCoisasVo(tm);
+  else if (R.dentro) { if (R.espiar) desenharEspiar(tm); else desenharDentro(tm); } else { if (R.venceu && R.venceu.t > 1) { CAMINHONETE.x += .0; } desenharMundo(tm); desenharNeblinaSitio(tm); desenharLuz(tm); desenharNeblinaSitio(tm, .35); }
+  camadaFim(); desenharFerrAnim(tm); desenharClima(tm); desenharMedo(tm); desenharAtmosfera(tm); desenharBrilhoCoisasVo(tm);
   if (R.fimVo) { c.fillStyle = `rgba(0,0,0,${cl((R.fimVo.t - 1.5) / 3.5, 0, 1)})`; c.fillRect(0, 0, W, H); }
   if (R.fade > 0) { c.fillStyle = `rgba(0,0,0,${Math.min(1, R.fade)})`; c.fillRect(0, 0, W, H); R.fade -= .05; }
   if (R.venceu && R.venceu.t > 1 && !R.dentro && (R.lugar || "sitio") === "sitio") { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + Math.max(0, R.venceu.t - 1.5) * 2.2); c.globalCompositeOperation = "lighter"; c.fillStyle = "rgba(255,240,200,.18)"; c.beginPath(); c.moveTo(x - TS * .8, y); c.lineTo(x - TS * 2, y + TS * 6); c.lineTo(x + TS * 2, y + TS * 6); c.lineTo(x + TS * .8, y); c.fill(); c.globalCompositeOperation = "source-over"; }
@@ -3762,7 +3800,7 @@ function desenharEsgoto(tm) {
   obj.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
   // escuridão total, só a lanterna
   const lw = luzCv.width, lh = luzCv.height, k = lw / W; lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = "rgba(1,2,2,.93)"; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
-  const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
+  const furo = (x, y, r, f = 1) => { if (f <= 0 || r <= 0) return; lc.globalAlpha = Math.min(1, f); lc.drawImage(brilhoPronto("0,0,0"), (x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); lc.globalAlpha = 1; };
   const ex = PX(R.eu.x), ey = PY(R.eu.y) - TS * .4; furo(ex, ey, TS * (R.escondido ? 1.3 : R.lanterna ? (R.lanternaBoa ? 5.4 : 4.6) : 3) * (1 + Math.sin(tm * 9) * .01), R.lanterna ? 1 : .85);
   furo(PX(ESG.escada.x), PY(ESG.escada.y) - TS, TS * 2.2, .55); for (const ou of outros()) if (ou.lugar === "esgoto") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * 2.4, .8);
   camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
@@ -4100,7 +4138,7 @@ function desenharPorao(tm) {
   desenharVoce(X(R.int.x), Y(R.int.y), tm, { dir: R.int.dir || 1, s: s * 1.05 });
   // escuro: só a luz da lanterna, do lampião e do alçapão
   const lw = luzCv.width, lh = luzCv.height, k = lw / W; lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = "rgba(2,2,4,.9)"; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
-  const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
+  const furo = (x, y, r, f = 1) => { if (f <= 0 || r <= 0) return; lc.globalAlpha = Math.min(1, f); lc.drawImage(brilhoPronto("0,0,0"), (x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); lc.globalAlpha = 1; };
   furo(X(R.int.x), Y(R.int.y - .5), s * (R.lanterna ? 3.6 : 2.3) * (1 + Math.sin(tm * 9) * .01), R.lanterna ? 1 : .85); furo(X(1.25), Y(.8), s * 1.8, .7); furo(X(4.87), Y(3.1), s * 1.5 * (.95 + .05 * Math.sin(tm * 11)), .8);
   for (const ou of outros()) if (ou.lugar === "mata" && ou.predio === "porao") furo(X(ou.int.x), Y(ou.int.y - .5), s * 2.2, .8);
   camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
@@ -4225,7 +4263,7 @@ function desenharMata(tm) {
   // escuro: a mata é escura até de dia
   const nt = horaNoite(), esc = .5 + .45 * nt, lw = luzCv.width, lh = luzCv.height, k = lw / W;
   lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(4,8,6,${esc})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
-  const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
+  const furo = (x, y, r, f = 1) => { if (f <= 0 || r <= 0) return; lc.globalAlpha = Math.min(1, f); lc.drawImage(brilhoPronto("0,0,0"), (x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); lc.globalAlpha = 1; };
   if (R.predio) furo(PX(CABANA.porta.x), PY(CABANA.porta.y + .6), TS * 2, .5); else furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * raioLuz(R) * (R.lanterna ? 1 : 1.3), R.lanterna ? 1 : .75);
   for (const ou of outros()) if (ou.lugar === "mata" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   if (nt > .3) furo(PX(CABANA.x + CABANA.w / 2), PY(CABANA.y + CABANA.h * .7), TS * 3, .6);
@@ -4707,7 +4745,7 @@ function desenharEstacao(tm) {
   if (nt <= .02) { desenharEscondidaE(); return; }
   const lw = luzCv.width, lh = luzCv.height, k = lw / W;
   lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(6,10,24,${(R.luaCheia ? .74 : .9) * nt})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
-  const furo = (x, y, r, f = 1) => { if (x < -r || x > W + r || y < -r || y > H + r) return; const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
+  const furo = (x, y, r, f = 1) => { if (x < -r || x > W + r || y < -r || y > H + r) return; if (f <= 0 || r <= 0) return; lc.globalAlpha = Math.min(1, f); lc.drawImage(brilhoPronto("0,0,0"), (x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); lc.globalAlpha = 1; };
   furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * raioLuz(R) * (R.lanterna ? 1 : 1.2), R.lanterna ? 1 : .75);
   for (const ou of outros()) if (ou.lugar === "estacao" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   LAMPIOES_E.forEach(([x, y], i) => { if (!(i === 2 && Math.sin(tm * 1.7) > .55)) furo(PX(x), PY(y) - TS * 1.9, TS * 2.6, .8); });
@@ -4717,7 +4755,7 @@ function desenharEstacao(tm) {
   if (dist(R.eu, { x: 51.3, y: 10.5 }) < 3 && Math.sin(tm * .9) > -.6) { furo(PX(50.4), gy - TS * 1.5, TS * 3.2, .9); furo(PX(53.5), gy - TS * 1.1, TS * 2.6, .7); } // o farol acende quando você chega perto
   camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   c.globalCompositeOperation = "lighter";
-  const brilho = (x, y, r, rgb, a) => { if (x < -r || x > W + r) return; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
+  const brilho = (x, y, r, rgb, a) => { if (x < -r || x > W + r) return; if (a <= 0 || r <= 0) return; c.globalAlpha = Math.min(1, a); c.drawImage(brilhoPronto(rgb), x - r, y - r, r * 2, r * 2); c.globalAlpha = 1; };
   LAMPIOES_E.forEach(([x, y], i) => { if (!(i === 2 && Math.sin(tm * 1.7) > .55)) brilho(PX(x), PY(y) - TS * 1.9, TS * 1.1, "255,190,100", .3 * nt); });
   TREM.forEach(v => { if (!v.iw || v.id === "loco") return; brilho(PX(v.x + v.w / 2), gy - TS * 1.2, TS * v.w * .45, "255,180,90", .07 * nt); });
   brilho(PX(4 - .35), gy - TS * 1.55, TS * .5, "255,40,30", .45 * nt); brilho(PX(SINAL.x - .12), PY(SINAL.y) - TS * 2.7, TS * .45, "90,255,120", .4 * nt); brilho(PX(44.8), gy - TS * 1.4, TS * .9, "255,120,40", .25 * nt);
@@ -5390,7 +5428,7 @@ function desenharBaixada(tm) {
   if (nt <= .02) return;
   const lw = luzCv.width, lh = luzCv.height, k = lw / W;
   lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(6,10,24,${(R.luaCheia ? .72 : .88) * nt})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
-  const furo = (x, y, r, f = 1) => { if (x < -r || x > W + r || y < -r || y > H + r) return; const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
+  const furo = (x, y, r, f = 1) => { if (x < -r || x > W + r || y < -r || y > H + r) return; if (f <= 0 || r <= 0) return; lc.globalAlpha = Math.min(1, f); lc.drawImage(brilhoPronto("0,0,0"), (x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); lc.globalAlpha = 1; };
   furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * raioLuz(R) * (R.lanterna ? 1 : 1.2), R.lanterna ? 1 : .75);
   for (const ou of outros()) if (ou.lugar === "baixada" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   furo(PX(ZEFA_C.x + ZEFA_C.w * .3), PY(ZEFA_C.y + ZEFA_C.h) - TS * .8, TS * 2.4, .75); furo(PX(CASEBRE.x + .8), PY(CASEBRE.y + CASEBRE.h) - TS * .6, TS * 1.6, .6); furo(PX(ENGENHO.x + 1.2), PY(ENGENHO.y + ENGENHO.h) - TS * 1, TS * 1.3, .4 + .3 * Math.sin(tm * 2.3));
@@ -5400,7 +5438,7 @@ function desenharBaixada(tm) {
   if (R.iara && R.iara.fase === "canta") furo(PX(R.iara.x), PY(R.iara.y) - TS * .4, TS * 1.6, .6);
   camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   c.globalCompositeOperation = "lighter";
-  const brilho = (x, y, r, rgb, a) => { if (x < -r || x > W + r || y < -r || y > H + r) return; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
+  const brilho = (x, y, r, rgb, a) => { if (x < -r || x > W + r || y < -r || y > H + r) return; if (a <= 0 || r <= 0) return; c.globalAlpha = Math.min(1, a); c.drawImage(brilhoPronto(rgb), x - r, y - r, r * 2, r * 2); c.globalAlpha = 1; };
   if (R.boi && R.boi.fase !== "longe") brilho(PX(R.boi.x), PY(R.boi.y) - TS * .4, TS * 3, "60,140,255", .35 * nt);
   if (R.iara && R.iara.fase === "canta") brilho(PX(R.iara.x), PY(R.iara.y) - TS * .3, TS * 1.4, "120,255,200", .18 * nt);
   brilho(PX(ZEFA_C.x + ZEFA_C.w * .3), PY(ZEFA_C.y + ZEFA_C.h) - TS * .9, TS * 1.2, "255,190,100", .25 * nt);
@@ -5598,7 +5636,7 @@ function desenharMina(tm) {
   obj.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
   for (let i = 0; i < 18; i++) { const f = (tm * .3 + i / 18) % 1; c.fillStyle = `rgba(150,180,170,${.25 * (1 - f)})`; c.fillRect(PX(((i * 5.13) % (MNW - 2)) + 1), PY(((i * 3.7) % (MNH - 2)) + 1) + f * TS, 1.5, 4); } // pingos do teto
   const lw = luzCv.width, lh = luzCv.height, k = lw / W; lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = "rgba(1,1,1,.95)"; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
-  const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
+  const furo = (x, y, r, f = 1) => { if (f <= 0 || r <= 0) return; lc.globalAlpha = Math.min(1, f); lc.drawImage(brilhoPronto("0,0,0"), (x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); lc.globalAlpha = 1; };
   const luz = R.lanterna && R.oleo > 0, tre = R.oleo < 15 && luz ? (Math.sin(tm * 23) > .3 ? 1 : .55) : 1; furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * (luz ? raioLuz(R) : 1.4) * tre * (1 + Math.sin(tm * 9) * .01), luz ? 1 : .7);
   furo(PX(MINA.saida.x), PY(MINA.saida.y) - TS, TS * 2.4, .6); for (const ou of outros()) if (ou.lugar === "mina") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), .8);
   camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
@@ -5912,6 +5950,15 @@ function novoDiaExtras() { // a cada amanhecer: caem folhas novas e aparece terr
   R.enterr = enterrados().filter(e => e.k); novosEnterrados(2, 1, 1); }
 function ESPECIAIS() { const l = []; if (!ls("roca_seg_tumulo")) l.push({ x: 44.2, y: 30.6, l: "sitio", k: "tumulo" }); if (ls("roca_dica_chave") && !R.chaveBau && !ls("roca_seg_bau")) l.push({ x: POMAR[5][0] + .7, y: POMAR[5][1] + .55, l: "sitio", k: "chave" }); return l; }
 const enterradoPerto = p => [...enterrados(), ...ESPECIAIS()].find(e => e.l === (R.lugar || "sitio") && Math.hypot(e.x - p.x, e.y - p.y) < .75);
+/* o que sai do buraco: tabela com peso por lugar (a mata guarda mais tesouro e mais coisa ruim; a baixada, mais moeda)
+   e proteção contra azar: depois de 4 buracos sem tesouro, o próximo é tesouro na certa */
+const TAB_CAVAR = { sitio: [["tesouro", 38], ["moedas", 24], ["comida", 16], ["enfeite", 12], ["bilhete", 10]], baixada: [["tesouro", 30], ["moedas", 34], ["comida", 8], ["enfeite", 18], ["bilhete", 10]], mata: [["tesouro", 42], ["moedas", 14], ["comida", 6], ["enfeite", 18], ["bilhete", 20]] };
+function sortearPeso(tab) { const tot = tab.reduce((a, [, w]) => a + w, 0); let r = Math.random() * tot; for (const [k, w] of tab) { if (r < w) return k; r -= w; } return tab[tab.length - 1][0]; }
+function sortearCavar(lugar, temTesouro) {
+  let tab = (TAB_CAVAR[lugar] || TAB_CAVAR.sitio).filter(([k]) => (k !== "tesouro" || temTesouro) && (k !== "bilhete" || R.cavaUlt !== "bilhete"));
+  const k = temTesouro && (R.cavaSem || 0) >= 4 ? "tesouro" : sortearPeso(tab);
+  R.cavaSem = k === "tesouro" ? 0 : (R.cavaSem || 0) + 1; R.cavaUlt = k; return k;
+}
 function cavar(e) {
   if (!temFerr("pa")) return falar(["A terra aqui está mexida, fofa... tem alguma coisa enterrada.", "Preciso de uma pá. A loja de construção do Seu Nonato vende."], null, "Yasmin");
   R.ferrAnim = { k: "pa", ate: performance.now() / 1000 + .9, x: e.x, y: e.y }; tocarRuido(.3, { filtro: "lowpass", f: 400, vol: .25 }); tocarRuido(.3, { filtro: "lowpass", f: 350, vol: .22, quando: .35 }); tocarRuido(.3, { filtro: "lowpass", f: 300, vol: .2, quando: .7 });
@@ -5919,12 +5966,12 @@ function cavar(e) {
   if (e.k === "tumulo") return setTimeout(() => { if (!R) return; ls("roca_seg_tumulo", 1); if (ehNoite()) { R.susto = 1.1; R.rostoPoco = 1; S.susto(); R.tremor = .6; } lerSegredo("tumulo"); hud(); }, 900);
   if (e.k === "chave") return setTimeout(() => { if (!R) return; R.chaveBau = true; S.colher(); falar(["Debaixo do pé de laranja, enrolada num pano de prato: uma chave de ferro, grande, com uma fitinha vermelha.", "É a chave do baú do sótão do celeiro!"], null, "Yasmin"); hud(); }, 900);
   const i = R.enterr.indexOf(e); if (i >= 0) R.enterr.splice(i, 1);
-  setTimeout(() => { if (!R) return; const r = Math.random(), ach = tesourosAchados(), falta = TESOUROS.filter(t => !ach.includes(t[0]));
-    if (r < .38 && falta.length) { const t = falta[Math.floor(Math.random() * falta.length)]; ach.push(t[0]); ls("roca_tesouros", JSON.stringify(ach)); R.moedas += 10; S.colher(); tocarTom(880, .3, { vol: .08 }); tocarTom(1320, .4, { vol: .07, quando: .15 });
+  setTimeout(() => { if (!R) return; const ach = tesourosAchados(), falta = TESOUROS.filter(t => !ach.includes(t[0])), saiu = sortearCavar(e.l || "sitio", falta.length > 0);
+    if (saiu === "tesouro") { const t = falta[Math.floor(Math.random() * falta.length)]; ach.push(t[0]); ls("roca_tesouros", JSON.stringify(ach)); R.moedas += 10; S.colher(); tocarTom(880, .3, { vol: .08 }); tocarTom(1320, .4, { vol: .07, quando: .15 });
       falar([`Achei: ${t[1]}! (${ach.length}/${TESOUROS.length} na coleção)`, t[2]], ach.length === TESOUROS.length ? () => { R.moedas += 150; S.moedas(); efeito("Coleção completa! +150 moedas", "#f2c94a"); falar(["Juntei todos os doze tesouros enterrados do sítio! O Seu Arlindo da vila ia ficar louco com isso.", "(Guardei tudo numa lata de biscoito. A coleção fica no diário.)"], null, "Yasmin"); hud(); } : null, "Yasmin"); }
-    else if (r < .62) { const m = 8 + Math.floor(Math.random() * 22); R.moedas += m; S.moedas(); efeito(`Uma latinha com ${m} moedas!`, "#f2c94a"); }
-    else if (r < .78) { const tipo = Math.random() < .5 ? "abobora" : "melancia"; R.colheita[tipo] = (R.colheita[tipo] || 0) + 1; S.colher(); efeito(`Um${tipo === "abobora" ? "a abóbora" : "a melancia"} esquecida, inteirinha!`, "#e07a2a"); }
-    else if (r < .9) { const o = ["toco", "cogumelos", "pedras", "pilao", "cesto"][Math.floor(Math.random() * 5)]; R.decoInv["o:" + o] = (R.decoInv["o:" + o] || 0) + 1; salvarDeco(); S.colher(); efeito(`Desenterrou: ${nomeObjDeco(o).toLowerCase()} (pra enfeitar)`, "#c8d870"); }
+    else if (saiu === "moedas") { const m = (e.l === "baixada" ? 12 : 8) + Math.floor(Math.random() * 22); R.moedas += m; S.moedas(); efeito(`Uma latinha com ${m} moedas!`, "#f2c94a"); }
+    else if (saiu === "comida") { const tipo = Math.random() < .5 ? "abobora" : "melancia"; R.colheita[tipo] = (R.colheita[tipo] || 0) + 1; S.colher(); efeito(`Um${tipo === "abobora" ? "a abóbora" : "a melancia"} esquecida, inteirinha!`, "#e07a2a"); }
+    else if (saiu === "enfeite") { const o = ["toco", "cogumelos", "pedras", "pilao", "cesto"][Math.floor(Math.random() * 5)]; R.decoInv["o:" + o] = (R.decoInv["o:" + o] || 0) + 1; salvarDeco(); S.colher(); efeito(`Desenterrou: ${nomeObjDeco(o).toLowerCase()} (pra enfeitar)`, "#c8d870"); }
     else { R.medo = Math.min(100, (R.medo || 0) + 15); R.tremor = .3; S.suspiro && S.suspiro(e.x, e.y); falar(["Uma caixinha de madeira... vazia. Só tem um bilhete dentro: \"NÃO CAVA MAIS AQUI\".", "A letra é igualzinha à minha."], null, "Yasmin"); }
     hud(); }, 900);
 }
@@ -6671,7 +6718,7 @@ function desenharLagoa(tm) {
   if (nt > .2) for (let i = 0; i < 8; i++) { const nx = ((i * 11.3 + tm * .25) % (LGW + 10)) - 5, ny = 10 + (i * 7.1) % 50, x = PX(nx), y = PY(ny); if (!naTela(x, y, 300)) continue; const g = c.createRadialGradient(x, y, 0, x, y, TS * 5); g.addColorStop(0, `rgba(170,190,200,${.1 * nt})`); g.addColorStop(1, "rgba(170,190,200,0)"); c.fillStyle = g; c.fillRect(x - TS * 5, y - TS * 5, TS * 10, TS * 10); }
   if (nt <= .02) return desenharBarraVidaChefe(R.chefe);
   const lw = luzCv.width, lh = luzCv.height, kk = lw / W; lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(6,10,26,${(R.luaCheia ? .7 : .86) * nt})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
-  const furo = (x, y, r, f = 1) => { if (x < -r || x > W + r || y < -r || y > H + r) return; const g = lc.createRadialGradient(x * kk, y * kk, 0, x * kk, y * kk, r * kk); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * kk, (y - r) * kk, r * 2 * kk, r * 2 * kk); };
+  const furo = (x, y, r, f = 1) => { if (x < -r || x > W + r || y < -r || y > H + r) return; if (f <= 0 || r <= 0) return; lc.globalAlpha = Math.min(1, f); lc.drawImage(brilhoPronto("0,0,0"), (x - r) * kk, (y - r) * kk, r * 2 * kk, r * 2 * kk); lc.globalAlpha = 1; };
   furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * (meuPosto() && R.proa ? 6 : raioLuz(R)), R.lanterna || (meuPosto() && R.proa) ? 1 : .75); if (R.barco && Object.keys(R.barco.postos || {}).length) furo(PX(R.barco.x), PY(R.barco.y), TS * (R.proa ? 5 : 2.6), .8); { const C = R.chefe; if (C && C.fase !== "dorme" && C.fase !== "fim") furo(PX(C.x), PY(C.y) - TS * 3, TS * 9, .75); } furo(PX(BARRACA_B.x), PY(BARRACA_B.y) - TS * .6, TS * 2.2, .7);
   for (const ou of outros()) if (ou.lugar === "lagoa") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), .7);
   if (R.farolDia === R.dia) { furo(PX(FAROL.x), PY(FAROL.y) - TS * 4.5, TS * 3, .9); const a = tm * .9; for (const s of [0, PI]) for (let j = 1; j < 7; j++) furo(PX(FAROL.x) + Math.cos(a + s) * TS * j * 2, PY(FAROL.y) - TS * 4.5 + Math.sin(a + s) * TS * j * .7, TS * (.8 + j * .3), .5); }
@@ -6903,7 +6950,7 @@ function desenharSerra(tm) {
 // escuridão com furos de luz (igual às outras áreas)
 function luzSimples(nt, furos, escuro = .86) {
   const lw = luzCv.width, lh = luzCv.height, kk = lw / W; lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(6,10,20,${(R.luaCheia ? escuro - .14 : escuro) * nt})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
-  for (const [x, y, r, f] of furos) { if (x < -r || x > W + r || y < -r || y > H + r) continue; const g = lc.createRadialGradient(x * kk, y * kk, 0, x * kk, y * kk, r * kk); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * kk, (y - r) * kk, r * 2 * kk, r * 2 * kk); }
+  for (const [x, y, r, f] of furos) { if (x < -r || x > W + r || y < -r || y > H + r) continue; if (f <= 0 || r <= 0) continue; lc.globalAlpha = Math.min(1, f); lc.drawImage(brilhoPronto("0,0,0"), (x - r) * kk, (y - r) * kk, r * 2 * kk, r * 2 * kk); lc.globalAlpha = 1; }
   lc.globalCompositeOperation = "source-over"; camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
 }
 function desenharPorteiraFl(tm, nt) {
@@ -7515,7 +7562,46 @@ function desenharMedo(tm) {
   const m = R.medo || 0;
   if (R.alucina && !R.dentro && !R.predio) { const a = R.alucina, x = PX(a.x), y = PY(a.y), al = Math.sin(Math.min(1, a.t / 1.6) * PI) * .8; c.fillStyle = `rgba(4,2,6,${al})`; c.beginPath(); c.ellipse(x, y - TS * .7, TS * .26, TS * .7, 0, 0, 7); c.fill(); c.beginPath(); c.arc(x, y - TS * 1.5, TS * .2, 0, 7); c.fill(); c.fillStyle = `rgba(255,250,240,${al})`; c.fillRect(x - TS * .09, y - TS * 1.53, 2.5, 2.5); c.fillRect(x + TS * .05, y - TS * 1.53, 2.5, 2.5); } // um vulto que não está lá
   if (m < 50) return; const k = (m - 50) / 50, bat = .6 + .4 * Math.abs(Math.sin(tm * (2.2 + k * 2.5)));
-  const g = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * (.48 - k * .12), W / 2, H / 2, Math.max(W, H) * .72); g.addColorStop(0, "rgba(90,0,10,0)"); g.addColorStop(1, `rgba(110,0,14,${.42 * k * bat})`); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  c.globalAlpha = Math.min(1, .42 * k * bat); c.drawImage(vinhetaPronta("110,0,14", .36 + (1 - k) * .12), 0, 0, W, H); c.globalAlpha = 1;
+}
+/* ---------- atmosfera: neblina rasteira, vinheta da noite e granulado de filme (tudo desenhado uma vez e só copiado) ---------- */
+const VINH = new Map();
+function vinhetaPronta(rgb, ini) { // escurece as bordas da tela; refaz só quando a tela muda de tamanho
+  const q = Math.round(ini * 20) / 20, kk = rgb + "|" + q + "|" + Math.round(W) + "x" + Math.round(H); let t = VINH.get(kk); if (t) return t;
+  if (VINH.size > 12) VINH.clear();
+  const s = .25, w = Math.max(16, Math.round(W * s)), h = Math.max(16, Math.round(H * s)); t = document.createElement("canvas"); t.width = w; t.height = h; const g = t.getContext("2d");
+  const gr = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * q, w / 2, h / 2, Math.max(w, h) * .72); gr.addColorStop(0, `rgba(${rgb},0)`); gr.addColorStop(1, `rgba(${rgb},1)`); g.fillStyle = gr; g.fillRect(0, 0, w, h); VINH.set(kk, t); return t;
+}
+let NEVOA_SPR = null, GRAO = null;
+function nevoaSpr() { // três "nuvens" de névoa, macias, em telas pequenas
+  if (NEVOA_SPR) return NEVOA_SPR; NEVOA_SPR = [];
+  for (let n = 0; n < 3; n++) { const t = document.createElement("canvas"); t.width = 256; t.height = 96; const g = t.getContext("2d"); let sd = 77 + n * 31; const r = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+    for (let i = 0; i < 9; i++) { const x = 40 + r() * 176, y = 30 + r() * 36, rr = 22 + r() * 26, gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, "rgba(255,255,255,.55)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(x - rr, y - rr, rr * 2, rr * 2); }
+    NEVOA_SPR.push(t); }
+  return NEVOA_SPR;
+}
+const grainOn = () => { const v = ls("roca_grao"); return v === "1" || (v !== "0" && !MOVEL); }; // granulado: no PC vem ligado, no celular desligado
+const nevoaOn = () => ls("roca_nevoa") !== "0";
+function forcaNevoa() { // quanto de névoa tem agora: noite, madrugada e dias nublados ou de chuva
+  const nt = horaNoite(), k = R.t % CICLO, manha = k < 26 ? 1 - k / 26 : 0, cl2 = climaHoje();
+  let f = nt * .55 + manha * .7; if (cl2 === "nublado") f += .2; if (chovendo()) f += .15; if (progNoite() > .7) f += .25; if (R.luaCheia) f *= .8; return cl(f, 0, 1);
+}
+function desenharNeblinaSitio(tm, luar = 0) { // luar: a segunda passada, por cima do escuro, bem fraquinha (a névoa clareada pela lua) // névoa rasteira presa ao chão: duas camadas andando em velocidades diferentes (dá profundidade)
+  if (!nevoaOn() || R.dentro) return; const f = forcaNevoa() * (luar ? luar * horaNoite() : 1); if (f < .03) return;
+  const spr = nevoaSpr(), n = MOVEL ? 9 : 14, T = TS;
+  for (let i = 0; i < n; i++) { const cam2 = i % 2, vel = cam2 ? .22 : .12, larg = (cam2 ? 7 : 9.5) * T, alt = larg * .36;
+    const wx = CERCA.x0 - 6 + ((i * 11.7 + tm * vel) % (CERCA.x1 - CERCA.x0 + 12)), wy = CERCA.y0 + 1 + ((i * 7.3) % (CERCA.y1 - CERCA.y0)) + Math.sin(tm * .2 + i) * .5;
+    const x = PX(wx), y = PY(wy); if (x < -larg || x > W + larg || y < -alt || y > H + alt) continue;
+    const borda = Math.min(1, Math.min(wx - CERCA.x0, CERCA.x1 - wx, wy - CERCA.y0) / 8); // mais grossa perto da mata, na beira do sítio
+    c.globalAlpha = f * (cam2 ? .32 : .22) * (1.25 - borda * .5); c.drawImage(spr[i % 3], x - larg / 2, y - alt * .7, larg, alt); }
+  c.globalAlpha = 1;
+}
+function desenharAtmosfera(tm) { // por cima de tudo (depois do medo): vinheta da noite e granulado
+  if (R.viagem || R.morto) return; const nt = horaNoite(), fora = aoArLivre();
+  const vn = (fora ? .5 : .32) * nt + (R.lugar === "mina" || R.lugar === "esgoto" ? .3 : 0);
+  if (vn > .02) { c.globalAlpha = Math.min(.85, vn); c.drawImage(vinhetaPronta("4,4,12", .42), 0, 0, W, H); c.globalAlpha = 1; }
+  if (grainOn() && (nt > .1 || !fora)) { if (!GRAO) { GRAO = document.createElement("canvas"); GRAO.width = GRAO.height = 128; const g = GRAO.getContext("2d"), im = g.createImageData(128, 128); for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = Math.random() < .5 ? 60 : 0; } g.putImageData(im, 0, 0); GRAO.pat = c.createPattern(GRAO, "repeat"); }
+    const ox = Math.floor(Math.random() * 128), oy = Math.floor(Math.random() * 128); c.save(); c.globalAlpha = .1 + .12 * nt; c.translate(-ox, -oy); c.fillStyle = GRAO.pat; c.fillRect(0, 0, W + 128, H + 128); c.restore(); }
 }
 // ---------- clima ----------
 function atualizarClima(dt) {
@@ -8030,7 +8116,7 @@ function desenharLuzVila(tm) {
   const nt = horaNoite(); if (nt <= .02) return; const lw = luzCv.width, lh = luzCv.height, k = lw / W;
   lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(4,6,14,${.9 * nt})`; lc.fillRect(0, 0, lw, lh);
   lc.globalCompositeOperation = "destination-out";
-  const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
+  const furo = (x, y, r, f = 1) => { if (f <= 0 || r <= 0) return; lc.globalAlpha = Math.min(1, f); lc.drawImage(brilhoPronto("0,0,0"), (x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); lc.globalAlpha = 1; };
   furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * raioLuz(R), R.lanterna ? 1 : .7);
   if (festaAgora()) { furo(PX(FOGUEIRA_FJ.x), PY(FOGUEIRA_FJ.y) - TS * .6, TS * (4.6 + Math.sin(tm * 9) * .2), 1); BARRACAS_FJ.forEach(b => furo(PX(b.x), PY(b.y) - TS, TS * 2.6, .9)); }
   for (const ou of outros()) if (ou.lugar === "vila" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
@@ -8587,6 +8673,8 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
     <button type="button" class="rc-op" id="opFps">${icB("grafico")}Gráfico: ${fps === 60 ? "suave<small>60 quadros · mais bonito, esquenta mais</small>" : fps <= 24 ? "bateria<small>24 quadros e resolução menor · esquenta bem menos</small>" : "normal<small>30 quadros · o meio-termo</small>"}</button>
     ${window.PC ? `<button type="button" class="rc-op" id="opTela">${icB("telacheia")}Tela cheia (F11)</button>` : ""}
     <button type="button" class="rc-op" id="opContorno">${icB("grafico")}Contorno e luz nos objetos: ${camadaLig() ? "sim" : "não"}<small>No celular vem desligado, porque pesa. Ligue se o seu aguentar.</small></button>
+    <button type="button" class="rc-op" id="opNevoa">${icB("grafico")}Neblina rasteira: ${nevoaOn() ? "sim" : "não"}<small>Névoa andando no chão à noite e de madrugada.</small></button>
+    <button type="button" class="rc-op" id="opGrao">${icB("grafico")}Granulado de filme: ${grainOn() ? "sim" : "não"}<small>Chiadinho de filme antigo à noite. No celular vem desligado.</small></button>
     <button type="button" class="rc-op" id="opTreme">${icB("grafico")}Tremer a tela: ${tremeOn() ? "sim" : "não"}<small>Desligue se a tremida incomodar</small></button>
     <button type="button" class="rc-op" id="opHist">${icB("historia")}Apagar a história já vista<small>A abertura aparece de novo</small></button></div>
     <p style="font-size:12px;color:#b8b2a4">Roça Assombrada · versão ${window.ROCA_VERSAO || "1"}</p>
@@ -8597,6 +8685,8 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
   document.getElementById("opFps").addEventListener("click", () => { try { localStorage.setItem("pv_fps", fps === 30 ? "24" : fps <= 24 ? "60" : "30"); } catch (e) {} window.rocaDprMax = 0; medir(); re(); });
   const bt2 = document.getElementById("opTela"); if (bt2) bt2.addEventListener("click", () => PC.telaCheia());
   document.getElementById("opContorno").addEventListener("click", () => { ls("roca_contorno", camadaLig() ? "0" : "1"); re(); });
+  document.getElementById("opNevoa").addEventListener("click", () => { ls("roca_nevoa", nevoaOn() ? "0" : "1"); re(); });
+  document.getElementById("opGrao").addEventListener("click", () => { ls("roca_grao", grainOn() ? "0" : "1"); re(); });
   document.getElementById("opTreme").addEventListener("click", () => { ls("roca_tremer", tremeOn() ? "0" : "1"); re(); });
   document.getElementById("opHist").addEventListener("click", () => { ls("roca_hist", ""); try { localStorage.removeItem("roca_hist"); } catch (e) {} efeito("A história vai aparecer de novo", "#e8e2d4"); re(); });
   document.getElementById("rcFechar").addEventListener("click", () => { fecharPainel(); menuInicial(); });
