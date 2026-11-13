@@ -1567,6 +1567,7 @@ const naTela = (x, y, m = 120) => x > -m && x < W + m && y > -m && y < H + m;
 function sombra(x, y, rx, ry, a = .32) { if (CAM.on && c === CAM.g) { const t = CAM.tela; t.save(); t.setTransform(c.getTransform()); t.fillStyle = `rgba(0,0,0,${a})`; t.beginPath(); t.ellipse(x, y, rx, ry, 0, 0, 7); t.fill(); t.restore(); return; } c.fillStyle = `rgba(0,0,0,${a})`; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill(); }
 function desenharArvore(a, tm, fruta) {
   const x = PX(a.x), y = PY(a.y), r = a.r * TS; if (x < -r * 2 || x > W + r * 2 || y < -r * 3 || y > H + r * 2) return;
+  if (arteNova()) { desenharArvoreArte(a, tm, fruta, x, y, r); return; }
   sombra(x + r * .2, y + r * .05, r * .9, r * .35, .35);
   c.fillStyle = "#3a2a1a"; c.fillRect(x - r * .12, y - r * 1.1, r * .24, r * 1.1); c.fillStyle = "rgba(0,0,0,.25)"; c.fillRect(x, y - r * 1.1, r * .12, r * 1.1);
   const cores = fruta ? ["#2e5a24", "#3a6a2a", "#4a7a32"] : [["#a8401e", "#c8662a", "#e09a3a"], ["#5a6a2a", "#6a7a36", "#8a9a46"], ["#b8862a", "#d8a83a", "#e8c85a"], ["#7a2a1e", "#9a3a24", "#b85a2a"], ["#3a4a24", "#4a5a2a", "#5a6a32"]][a.c];
@@ -1692,7 +1693,7 @@ const ARTE = new Map();
 // (x, y) = ponto de apoio na tela; o desenho vai de x-L até x-L+Wd e de y-Tp até y-Tp+Hd; fn(X, Y) desenha com o apoio em (X, Y)
 function arte(k, x, y, L, Tp, Wd, Hd, fn, op = {}) {
   const kk = k + "|" + Math.round(TS * 10) + "|" + DPRr; let p = ARTE.get(kk);
-  if (!p) { const d = DPRr, pad = 4, dest = document.createElement("canvas"); dest.width = Math.ceil((Wd + pad * 2) * d); dest.height = Math.ceil((Hd + pad * 2) * d); p = pintura(0, 0, Wd, Hd, () => fn(L, Tp), Object.assign({ luz: 1, chao: .12, contorno: 1.2 }, op), dest); ARTE.set(kk, p); if (ARTE.size > 90) ARTE.delete(ARTE.keys().next().value); }
+  if (!p) { const d = DPRr, pad = 4, dest = document.createElement("canvas"); dest.width = Math.ceil((Wd + pad * 2) * d); dest.height = Math.ceil((Hd + pad * 2) * d); p = pintura(0, 0, Wd, Hd, () => fn(L, Tp), Object.assign({ luz: 1, chao: .12, contorno: 1.2 }, op), dest); ARTE.set(kk, p); if (ARTE.size > 320) ARTE.delete(ARTE.keys().next().value); }
   c.drawImage(p.cv, 0, 0, p.cw, p.ch, x - L + p.x, y - Tp + p.y, p.w, p.h);
 }
 let SD_ARTE = 1; const ra = () => { SD_ARTE = (SD_ARTE * 16807) % 2147483647; return SD_ARTE / 2147483647; };
@@ -1864,6 +1865,48 @@ function fenoArte(X, Y) { const T = TS; SD_ARTE = 121;
   c.fillStyle = "#e0c060"; c.fillRect(X - T * .55, Y - T * .7, T * 1.1, T * .08); // topo mais claro
   for (let i = 0; i < 8; i++) { c.fillStyle = "#d8b860"; c.fillRect(X - T * .55 + ra() * T * 1.1, Y - T * .74, 1.5, T * .06); } // fiapos pra cima
   c.strokeStyle = "#8a2a1e"; c.lineWidth = 2; c.beginPath(); c.moveTo(X - T * .15, Y - T * .7); c.lineTo(X - T * .15, Y); c.moveTo(X + T * .22, Y - T * .7); c.lineTo(X + T * .22, Y); c.stroke(); // barbante
+}
+// árvore pintada: tronco com casca e raiz, copa feita de muitos tufos de folha em três tons, luz em cima/esquerda
+function arvoreArte(X, Y, r, cores, sd) { SD_ARTE = 131 + sd * 977;
+  // tronco com raízes e casca
+  const tg = c.createLinearGradient(X - r * .14, 0, X + r * .14, 0); tg.addColorStop(0, "#5a4028"); tg.addColorStop(.45, "#3e2a1a"); tg.addColorStop(1, "#1e140c"); c.fillStyle = tg;
+  c.beginPath(); c.moveTo(X - r * .26, Y); c.quadraticCurveTo(X - r * .12, Y - r * .15, X - r * .11, Y - r * 1.15); c.lineTo(X + r * .11, Y - r * 1.15); c.quadraticCurveTo(X + r * .12, Y - r * .15, X + r * .28, Y); c.closePath(); c.fill();
+  c.strokeStyle = "rgba(14,8,4,.55)"; c.lineWidth = 1; for (let i = 0; i < 5; i++) { const bx = X - r * .08 + i * r * .04; c.beginPath(); c.moveTo(bx, Y - r * .05); c.lineTo(bx + (ra() - .5) * 3, Y - r * (.5 + ra() * .5)); c.stroke(); }
+  c.strokeStyle = "#3e2a1a"; c.lineWidth = r * .07; c.lineCap = "round"; c.beginPath(); c.moveTo(X - r * .05, Y - r * .9); c.lineTo(X - r * .32, Y - r * 1.3); c.moveTo(X + r * .05, Y - r * 1); c.lineTo(X + r * .3, Y - r * 1.35); c.stroke(); c.lineCap = "butt"; // galhos
+  // copa: sombra interna escura, depois tufos do fundo pra frente
+  const cx = X, cy = Y - r * 1.6;
+  c.fillStyle = tomCor(cores[0], .7); c.beginPath(); c.ellipse(cx, cy, r * .95, r * .82, 0, 0, 7); c.fill();
+  const tufos = []; for (let i = 0; i < 26; i++) { const a = ra() * 6.28, d = Math.sqrt(ra()) * .78; tufos.push([cx + Math.cos(a) * d * r * .95, cy + Math.sin(a) * d * r * .8, r * (.22 + ra() * .14)]); }
+  tufos.sort((p, q) => (p[0] + p[1] * 1.4) - (q[0] + q[1] * 1.4)).reverse(); // os de baixo/direita primeiro (ficam atrás), os de cima/esquerda por cima
+  tufos.forEach(([tx, ty, tr]) => { const k = ((cx - tx) / r + (cy - ty) / r) * .5, cor = k > .2 ? cores[2] : k > -.25 ? cores[1] : cores[0];
+    c.fillStyle = "rgba(10,14,6,.28)"; c.beginPath(); c.arc(tx + tr * .15, ty + tr * .2, tr, 0, 7); c.fill();
+    const g = c.createRadialGradient(tx - tr * .35, ty - tr * .4, tr * .1, tx, ty, tr); g.addColorStop(0, tomCor(cor, 1.22)); g.addColorStop(1, tomCor(cor, .82)); c.fillStyle = g; c.beginPath(); c.arc(tx, ty, tr, 0, 7); c.fill();
+    for (let j = 0; j < 4; j++) { c.fillStyle = ra() < .5 ? `rgba(255,240,190,.18)` : "rgba(10,14,6,.2)"; c.beginPath(); c.ellipse(tx + (ra() - .5) * tr * 1.2, ty + (ra() - .5) * tr * 1.2, tr * .18, tr * .1, ra() * 3, 0, 7); c.fill(); } }); // folhinhas
+}
+const ARV_CORES = [["#a8401e", "#c8662a", "#e09a3a"], ["#5a6a2a", "#6a7a36", "#8a9a46"], ["#b8862a", "#d8a83a", "#e8c85a"], ["#7a2a1e", "#9a3a24", "#b85a2a"], ["#3a4a24", "#4a5a2a", "#5a6a32"]];
+function desenharArvoreArte(a, tm, fruta, x, y, r) {
+  sombra(x + r * .2, y + r * .05, r * .9, r * .35, .35);
+  const rq = Math.round(a.r * 20) / 20, v = ((Math.floor(a.x * 7 + a.y * 3) % 3) + 3) % 3, cores = fruta ? ["#2e5a24", "#3a6a2a", "#4a7a32"] : ARV_CORES[a.c] || ARV_CORES[1], R2 = rq * TS;
+  const bal = Math.sin(tm * 1.1 + a.x) * r * .04; c.save(); c.translate(x, y); c.transform(1, 0, -bal / (r * 2), 1, 0, 0);
+  arte("arv|" + (fruta ? "f" : a.c) + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v), { contorno: 1, chao: .05 });
+  c.restore();
+  if (fruta) for (let i = 0; i < 6; i++) { const on = i < fruta.n * 2, fx = x + Math.cos(i * 2.4) * r * .45 + bal, fy = y - r * 1.5 + Math.sin(i * 2.4) * r * .35; const g = c.createRadialGradient(fx - r * .03, fy - r * .03, 1, fx, fy, r * .1); g.addColorStop(0, on ? "#ffe0a0" : "#b8d870"); g.addColorStop(1, on ? (fruta.cor || "#f29a2a") : "#5a7a2a"); c.fillStyle = g; c.beginPath(); c.arc(fx, fy, r * .1, 0, 7); c.fill(); c.strokeStyle = "rgba(20,12,4,.5)"; c.lineWidth = .8; c.stroke(); }
+}
+// prédio da vila: reboco em cima, tábua embaixo, telhado de telha, chaminé de tijolo, fundação de pedra
+function predioBase(p, X, Y, w, h) { const T = TS; SD_ARTE = 141 + VPREDIOS.indexOf(p) * 31; const meio = Y + h * .46;
+  const pg = c.createLinearGradient(0, Y, 0, meio); pg.addColorStop(0, tomCor(p.cor2, 1.04)); pg.addColorStop(1, tomCor(p.cor2, .86)); c.fillStyle = pg; c.fillRect(X, Y, w, h * .46);
+  for (let i = 0; i < 60; i++) { c.fillStyle = ra() < .5 ? "rgba(0,0,0,.08)" : "rgba(255,255,255,.08)"; c.fillRect(X + ra() * w, Y + ra() * h * .46, 1.5, 1.5); } // textura do reboco
+  [[.06, .3, .14, .12], [.78, .08, .12, .1]].forEach(([fx, fy, fw, fh]) => { c.save(); c.beginPath(); c.ellipse(X + w * (fx + fw / 2), Y + h * (fy + fh / 2), w * fw / 2, h * fh / 2, .3, 0, 7); c.clip(); tijolos(X + w * fx - 4, Y + h * fy - 4, w * fw + 8, h * fh + 8, "#8a4e3a", T * .13); c.restore(); });
+  for (let i = 0; i < 4; i++) { c.fillStyle = "rgba(60,50,30,.18)"; c.beginPath(); c.ellipse(X + w * ra(), Y + h * (.36 + ra() * .08), w * .08, h * .03, 0, 0, 7); c.fill(); } // manchas de chuva
+  c.strokeStyle = "rgba(40,30,20,.4)"; c.lineWidth = 1; c.beginPath(); c.moveTo(X + w * .9, Y + h * .05); c.lineTo(X + w * .86, Y + h * .2); c.lineTo(X + w * .88, Y + h * .3); c.stroke();
+  const nb = 6, bh = (h * .54 - T * .2) / nb; for (let i = 0; i < nb; i++) tabua(X, meio + i * bh, w, bh, p.cor, i * 11 + 7);
+  tabua(X - 3, meio - 4, w + 6, 7, "#4a3020", 99); // beiral entre os andares
+  muroPedras(X - 2, Y + h - T * .2, w + 4, T * .2, "#6a645a", T * .14);
+  const sb = c.createLinearGradient(0, Y, 0, Y + T * .5); sb.addColorStop(0, "rgba(10,5,2,.5)"); sb.addColorStop(1, "rgba(10,5,2,0)"); c.fillStyle = sb; c.fillRect(X, Y, w, T * .5);
+  if (p.chamine) tijolos(X + w * .74, Y - T * 2.1, T * .4, T * .8, "#7a4a3a", T * .13);
+  c.save(); c.beginPath(); c.moveTo(X - T * .3, Y + 4); c.lineTo(X + T * .5, Y - T * 1.7); c.lineTo(X + w - T * .5, Y - T * 1.7); c.lineTo(X + w + T * .3, Y + 4); c.closePath(); c.clip(); telhas(X - T * .3, Y - T * 1.7, X + w + T * .3, Y + 4, p.tel, 6); c.restore();
+  c.strokeStyle = tomCor(p.tel, 1.4); c.lineWidth = T * .06; c.lineJoin = "round"; c.beginPath(); c.moveTo(X - T * .3, Y + 4); c.lineTo(X + T * .5, Y - T * 1.7); c.lineTo(X + w - T * .5, Y - T * 1.7); c.lineTo(X + w + T * .3, Y + 4); c.stroke(); c.lineJoin = "miter";
+  if (p.chamine) { c.fillStyle = "#2a2a2a"; c.fillRect(X + w * .74 - 3, Y - T * 2.14, T * .4 + 6, 5); }
 }
 function desenharCasa(tm) {
   const x = PX(CASA.x), y = PY(CASA.y), w = CASA.w * TS, h = CASA.h * TS; if (!naTela(x + w / 2, y + h / 2, w)) return;
@@ -7551,13 +7594,15 @@ function desenharPredioFora(p, tm) {
   const lit = luzesVila() && !apagaUm(VPREDIOS.indexOf(p)), noite = horaNoite();
   if (p.igreja) return desenharIgrejaFora(p, x, y, w, h, tm, lit);
   const meio = y + h * .46;
+  if (arteNova()) arte("predio|" + VPREDIOS.indexOf(p) + p.cor + p.cor2 + p.tel, x, y, TS * .35, TS * 2.2, w + TS * .7, h + TS * 2.25, (X, Y) => predioBase(p, X, Y, w, h)); else {
   c.fillStyle = p.cor2; c.fillRect(x, y, w, h * .46); c.fillStyle = "rgba(0,0,0,.12)"; for (let i = 0; i < 6; i++) c.fillRect(x + (i * .37 % 1) * w, y + h * (.05 + (i % 3) * .12), w * .1, h * .04); // reboco descascando
   c.fillStyle = p.cor; c.fillRect(x, meio, w, h * .54); c.strokeStyle = "rgba(0,0,0,.25)"; c.lineWidth = 1; for (let i = 1; i < 6; i++) { c.beginPath(); c.moveTo(x, meio + i * h * .09); c.lineTo(x + w, meio + i * h * .09); c.stroke(); }
   c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(x, meio - 3, w, 5); // beiral entre os andares
   // telhado
   c.fillStyle = p.tel; c.beginPath(); c.moveTo(x - TS * .3, y + 4); c.lineTo(x + TS * .5, y - TS * 1.7); c.lineTo(x + w - TS * .5, y - TS * 1.7); c.lineTo(x + w + TS * .3, y + 4); c.fill();
   c.strokeStyle = "rgba(0,0,0,.3)"; c.lineWidth = 2; for (let i = 1; i < 5; i++) { const yy = y - TS * 1.7 + i * TS * .36; c.beginPath(); c.moveTo(x - TS * .3 + (1 - i / 5) * TS * .8, yy); c.lineTo(x + w + TS * .3 - (1 - i / 5) * TS * .8, yy); c.stroke(); }
-  if (p.chamine) { c.fillStyle = "#5a4a3a"; c.fillRect(x + w * .74, y - TS * 2.1, TS * .4, TS * .8); if (!ehNoite()) for (let i = 0; i < 4; i++) { const f = (tm * .4 + i * .25) % 1; c.fillStyle = `rgba(200,200,200,${.25 * (1 - f)})`; c.beginPath(); c.arc(x + w * .74 + TS * .2 + f * 14, y - TS * 2.2 - f * TS * 1.2, 5 + f * 10, 0, 7); c.fill(); } }
+  }
+  if (p.chamine) { if (!arteNova()) { c.fillStyle = "#5a4a3a"; c.fillRect(x + w * .74, y - TS * 2.1, TS * .4, TS * .8); } if (!ehNoite()) for (let i = 0; i < 4; i++) { const f = (tm * .4 + i * .25) % 1; c.fillStyle = `rgba(200,200,200,${.25 * (1 - f)})`; c.beginPath(); c.arc(x + w * .74 + TS * .2 + f * 14, y - TS * 2.2 - f * TS * 1.2, 5 + f * 10, 0, 7); c.fill(); } }
   // janelas de cima (o quarto)
   [[.18, .1], [.62, .1]].forEach(([fx, fy], i) => { const jx = x + w * fx, jy = y + h * fy, jw = w * .2, jh = h * .26;
     c.fillStyle = lit ? `rgba(255,${190 + Math.sin(tm * 6 + i) * 10},110,.9)` : "#0c1018"; c.fillRect(jx, jy, jw, jh); c.strokeStyle = "#2a1a10"; c.lineWidth = 2.5; c.strokeRect(jx, jy, jw, jh); c.beginPath(); c.moveTo(jx + jw / 2, jy); c.lineTo(jx + jw / 2, jy + jh); c.stroke();
