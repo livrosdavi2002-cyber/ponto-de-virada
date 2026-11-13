@@ -1908,6 +1908,25 @@ function predioBase(p, X, Y, w, h) { const T = TS; SD_ARTE = 141 + VPREDIOS.inde
   c.strokeStyle = tomCor(p.tel, 1.4); c.lineWidth = T * .06; c.lineJoin = "round"; c.beginPath(); c.moveTo(X - T * .3, Y + 4); c.lineTo(X + T * .5, Y - T * 1.7); c.lineTo(X + w - T * .5, Y - T * 1.7); c.lineTo(X + w + T * .3, Y + 4); c.stroke(); c.lineJoin = "miter";
   if (p.chamine) { c.fillStyle = "#2a2a2a"; c.fillRect(X + w * .74 - 3, Y - T * 2.14, T * .4 + 6, 5); }
 }
+// casa de roça (Baixada e outras): reboco com textura, barrado, fundação de pedra, telha ou sapê, porta de tábua
+function sape(x0, y0, x1, y1, cor, alt) { const T = TS, fil = Math.max(3, Math.round(alt * 4)); c.fillStyle = tomCor(cor, .55); c.fillRect(x0, y0, x1 - x0, y1 - y0);
+  for (let f = 0; f < fil; f++) { const yy = y0 + (y1 - y0) * f / fil, fh = (y1 - y0) / fil * 1.25; for (let x = x0; x < x1; x += 2.2) { c.strokeStyle = tomCor(cor, .75 + ra() * .5); c.lineWidth = 1.4; c.beginPath(); c.moveTo(x, yy); c.lineTo(x + (ra() - .3) * 3, yy + fh * (.8 + ra() * .35)); c.stroke(); } c.fillStyle = "rgba(20,12,4,.35)"; c.fillRect(x0, yy + fh - 2, x1 - x0, 2); } }
+function casaRuralBase(X, Y, w, h, o) { const T = TS; SD_ARTE = 151 + Math.round(w + h * 3);
+  const pg = c.createLinearGradient(0, Y, 0, Y + h); pg.addColorStop(0, tomCor(o.parede, .9)); pg.addColorStop(1, tomCor(o.parede, 1.02)); c.fillStyle = pg; c.fillRect(X, Y, w, h);
+  if (o.sape) { c.strokeStyle = "rgba(60,40,20,.35)"; c.lineWidth = 2; for (let i = 0; i < 9; i++) { c.beginPath(); c.moveTo(X + i * w / 8, Y); c.lineTo(X + i * w / 8 + (ra() - .5) * 3, Y + h); c.stroke(); } for (let i = 0; i < 12; i++) { c.fillStyle = "rgba(40,24,10,.25)"; c.beginPath(); c.ellipse(X + ra() * w, Y + ra() * h, T * .12, T * .06, 0, 0, 7); c.fill(); } } // pau-a-pique: varas e barro
+  else { for (let i = 0; i < 70; i++) { c.fillStyle = ra() < .5 ? "rgba(0,0,0,.07)" : "rgba(255,255,255,.1)"; c.fillRect(X + ra() * w, Y + ra() * h, 1.5, 1.5); } c.save(); c.beginPath(); c.ellipse(X + w * .82, Y + h * .4, w * .07, h * .1, .3, 0, 7); c.clip(); tijolos(X + w * .74, Y + h * .28, w * .16, h * .26, "#8a4e3a", T * .13); c.restore(); }
+  for (let i = 0; i < 5; i++) { c.fillStyle = "rgba(60,50,30,.15)"; c.beginPath(); c.ellipse(X + ra() * w, Y + h * (.8 + ra() * .12), w * .06, h * .05, 0, 0, 7); c.fill(); }
+  if (o.barrado) { const bg = c.createLinearGradient(0, Y + h * .78, 0, Y + h); bg.addColorStop(0, tomCor(o.barrado, 1.1)); bg.addColorStop(1, tomCor(o.barrado, .8)); c.fillStyle = bg; c.fillRect(X, Y + h * .78, w, h * .22); for (let i = 0; i < 10; i++) { c.fillStyle = tomCor(o.parede, .95); c.fillRect(X + ra() * w, Y + h * .78 + ra() * h * .2, 3 + ra() * 5, 2); } } // tinta descascando
+  muroPedras(X - 2, Y + h - T * .14, w + 4, T * .14, "#6a645a", T * .12);
+  const sb = c.createLinearGradient(0, Y, 0, Y + T * .45); sb.addColorStop(0, "rgba(10,5,2,.5)"); sb.addColorStop(1, "rgba(10,5,2,0)"); c.fillStyle = sb; c.fillRect(X, Y, w, T * .45);
+  // porta de tábua com batente
+  const px = X + w * o.pfx, py = Y + h; c.fillStyle = "#1a100a"; c.fillRect(px - T * .4, py - h * .62, T * .8, h * .62); tabuasV(px - T * .34, py - h * .6, T * .68, h * .6, o.porta, 3, 700 + Math.round(px)); c.fillStyle = "#c8a050"; c.beginPath(); c.arc(px + T * .2, py - h * .3, 2.4, 0, 7); c.fill(); c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(px - T * .34, py - h * .6, T * .68, 3);
+  // telhado
+  const tx0 = X - T * .35, tx1 = X + w + T * .35, ty = Y - T * o.alt; c.save(); c.beginPath(); c.moveTo(tx0, Y + 5); c.lineTo(X + T * .4, ty); c.lineTo(X + w - T * .4, ty); c.lineTo(tx1, Y + 5); c.closePath(); c.clip();
+  if (o.sape) sape(tx0, ty, tx1, Y + 6, o.tel, o.alt); else telhas(tx0, ty, tx1, Y + 5, o.tel, Math.max(4, Math.round(o.alt * 4))); c.restore();
+  if (o.sape) { for (let x = tx0; x < tx1; x += 2.5) { c.strokeStyle = tomCor(o.tel, .7 + ra() * .4); c.lineWidth = 1.3; c.beginPath(); c.moveTo(x, Y + 3); c.lineTo(x + (ra() - .5) * 2, Y + 6 + ra() * 5); c.stroke(); } } // beirada desfiada do sapê
+  else { c.strokeStyle = tomCor(o.tel, 1.35); c.lineWidth = T * .06; c.lineJoin = "round"; c.beginPath(); c.moveTo(tx0, Y + 5); c.lineTo(X + T * .4, ty); c.lineTo(X + w - T * .4, ty); c.lineTo(tx1, Y + 5); c.stroke(); c.lineJoin = "miter"; }
+}
 function desenharCasa(tm) {
   const x = PX(CASA.x), y = PY(CASA.y), w = CASA.w * TS, h = CASA.h * TS; if (!naTela(x + w / 2, y + h / 2, w)) return;
   if (arteNova()) { desenharCasaArte(tm, x, y, w, h); return; }
@@ -4918,6 +4937,15 @@ function pegoBoi() {
 /* ---------- desenhos da Baixada (vista de cima e de lado, igual ao sítio) ---------- */
 function casaRural(X, Y, w, h, o, tm, nt) { // X,Y = canto de cima da parede; w,h em pixels
   const T = TS; sombra(X + w / 2, Y + h + 3, w * .58, T * .3, .35);
+  if (arteNova()) { const k = ["rural", o.parede, o.barrado, o.tel, o.sape, o.alt, o.porta, o.pfx, Math.round(w), Math.round(h)].join("|");
+    arte(k, X, Y, T * .45, T * o.alt + T * .12, w + T * .9, h + T * o.alt + T * .2, (X2, Y2) => casaRuralBase(X2, Y2, w, h, o));
+    const px = X + w * o.pfx, py = Y + h;
+    (o.janelas || []).forEach((fx, i) => { const jx = X + w * fx, jy = Y + h * .22, jw = T * .72, jh = h * .36, aceso = o.luz && o.luz(i);
+      c.fillStyle = "#2a1a10"; c.fillRect(jx - 3, jy - 3, jw + 6, jh + 6); const vg = c.createLinearGradient(jx, jy, jx + jw, jy + jh); vg.addColorStop(0, aceso || (nt > .5 ? "#141a24" : "#5a6e7c")); vg.addColorStop(1, aceso || (nt > .5 ? "#06080c" : "#2a3640")); c.fillStyle = vg; c.fillRect(jx, jy, jw, jh);
+      if (!aceso) { c.fillStyle = "rgba(255,255,255,.14)"; c.beginPath(); c.moveTo(jx + jw * .15, jy + jh); c.lineTo(jx + jw * .4, jy); c.lineTo(jx + jw * .55, jy); c.lineTo(jx + jw * .3, jy + jh); c.fill(); }
+      c.fillStyle = "#2a1a10"; c.fillRect(jx + jw / 2 - 1.2, jy, 2.4, jh); c.fillRect(jx, jy + jh / 2 - 1.2, jw, 2.4);
+      [jx - 8, jx + jw + 1].forEach((sx, k2) => { for (let b = 0; b < 3; b++) tabua(sx, jy + b * jh / 3, 7, jh / 3, o.janCor || o.porta, 800 + i * 7 + k2 * 3 + b); }); });
+    return { px, py }; }
   c.fillStyle = o.parede; c.fillRect(X, Y, w, h); c.fillStyle = "rgba(0,0,0,.1)"; for (let i = 0; i < 7; i++) c.fillRect(X + ((i * .37) % 1) * w, Y + h * (.15 + (i % 4) * .2), w * .08, h * .05); // reboco gasto
   if (o.barrado) { c.fillStyle = o.barrado; c.fillRect(X, Y + h * .78, w, h * .22); }
   c.fillStyle = "rgba(0,0,0,.22)"; c.fillRect(X, Y, w, 5); // sombra do beiral
