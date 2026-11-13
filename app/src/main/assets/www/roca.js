@@ -1956,6 +1956,22 @@ function igrejaArte(X, Y, w, h) { const T = TS, tx = X + w / 2, cP = "#c8c0b0"; 
   // plaquinha de pedra com o nome
   c.fillStyle = "#8a8474"; c.fillRect(tx - T * 1, Y + h * .5, T * 2, T * .3); c.fillStyle = "rgba(255,255,255,.2)"; c.fillRect(tx - T * 1, Y + h * .5, T * 2, 1.5); c.fillStyle = "#2a2420"; c.font = `700 ${Math.round(TS * .19)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("SANTA LUZIA", tx, Y + h * .5 + T * .15); c.textAlign = "start"; c.textBaseline = "alphabetic";
 }
+function arvoreMataArte(a, tm, x, y, r) {
+  const rq = Math.round(a.r * 20) / 20, v = ((Math.floor(a.x * 7 + a.y * 3) % 3) + 3) % 3, kb = a.k < .33 ? 0 : a.k < .66 ? 1 : 2, R2 = rq * TS;
+  const cores = [["#1e2c14", "#2a3a1a", "#364a22"], ["#18240e", "#223214", "#2c401a"], ["#2a2412", "#383018", "#463c1e"]][kb], bal = Math.sin(tm * .9 + a.x) * r * .05;
+  c.save(); c.translate(x, y); c.transform(1, 0, -bal / (r * 2), 1, 0, 0);
+  arte("arvM|" + kb + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v + 5), { contorno: 1, chao: .05, luz: .8 }); c.restore();
+}
+function cabanaArte(X, Y, w, h) { const T = TS; SD_ARTE = 171;
+  const nb = 11, bh = h * .75 / nb; for (let i = 0; i < nb; i++) { tabua(X, Y + h * .25 + i * bh, w, bh, "#4a3622", 400 + i); c.fillStyle = "rgba(0,0,0,.4)"; c.fillRect(X, Y + h * .25 + (i + 1) * bh - 1.5, w, 1.5); [X - bh * .2, X + w + bh * .2].forEach(ex => { c.fillStyle = "#3a2816"; c.beginPath(); c.arc(ex, Y + h * .25 + (i + .5) * bh, bh * .55, 0, 7); c.fill(); c.fillStyle = "#8a6a42"; c.beginPath(); c.arc(ex, Y + h * .25 + (i + .5) * bh, bh * .35, 0, 7); c.fill(); c.strokeStyle = "rgba(60,36,16,.6)"; c.lineWidth = .8; c.beginPath(); c.arc(ex, Y + h * .25 + (i + .5) * bh, bh * .18, 0, 7); c.stroke(); }); } // toras deitadas com a ponta aparecendo
+  muroPedras(X - 3, Y + h - T * .18, w + 6, T * .18, "#5a564c", T * .13);
+  const sb = c.createLinearGradient(0, Y + h * .25, 0, Y + h * .25 + T * .5); sb.addColorStop(0, "rgba(6,3,1,.6)"); sb.addColorStop(1, "rgba(6,3,1,0)"); c.fillStyle = sb; c.fillRect(X, Y + h * .25, w, T * .5);
+  muroPedras(X + w * .78, Y - h * .2, T * .38, h * .5, "#5a564c", T * .13); // chaminé de pedra
+  telhado2(X - T * .3, Y + h * .3, X + w / 2, Y - h * .2, X + w + T * .3, "#3e2e20", 6);
+  [[.25, .2, .12], [.6, .05, .1], [.4, .25, .08]].forEach(([fx, fy, fr]) => { c.fillStyle = "rgba(50,80,30,.7)"; c.beginPath(); c.ellipse(X + w * fx, Y + h * fy, w * fr, h * .05, -.3, 0, 7); c.fill(); c.fillStyle = "rgba(90,130,50,.5)"; c.beginPath(); c.ellipse(X + w * fx - 2, Y + h * fy - 1, w * fr * .5, h * .025, -.3, 0, 7); c.fill(); }); // musgo no telhado
+  const pt = PX(CABANA.porta.x) - PX(CABANA.x) + X - T * .4; c.fillStyle = "#0e0804"; c.fillRect(pt - 3, Y + h * .48 - 3, T * .8 + 6, h * .52 + 3); tabuasV(pt, Y + h * .48, T * .8, h * .52, "#3a2a18", 3, 950); c.fillStyle = "#8a7a4a"; c.fillRect(pt + T * .62, Y + h * .75, 4, 4);
+  const bg = c.createLinearGradient(X + w * .88, 0, X + w * .88 + T * .3, 0); bg.addColorStop(0, "#8a8a84"); bg.addColorStop(1, "#3a3a36"); c.fillStyle = bg; c.fillRect(X + w * .88, Y + h * .78, T * .3, T * .35); c.fillStyle = "#2a2a28"; c.fillRect(X + w * .88, Y + h * .82, T * .3, 1.5); // balde
+}
 function desenharCasa(tm) {
   const x = PX(CASA.x), y = PY(CASA.y), w = CASA.w * TS, h = CASA.h * TS; if (!naTela(x + w / 2, y + h / 2, w)) return;
   if (arteNova()) { desenharCasaArte(tm, x, y, w, h); return; }
@@ -1985,8 +2001,8 @@ function desenharCasa(tm) {
 }
 function desenharCerca() {
   const cc = decoCor("cerca"), cP = cc || "#6a4a2a", cT = cc ? tomCor(cc, .72) : "#4a3018", cR = cc ? tomCor(cc, 1.08) : "#7a5a32";
-  const post = (tx, ty) => { const x = PX(tx), y = PY(ty); if (!naTela(x, y, 30)) return; c.fillStyle = cP; c.fillRect(x - 3, y - TS * .55, 6, TS * .55); c.fillStyle = cT; c.fillRect(x - 3, y - TS * .58, 6, 4); };
-  const trilho = (x0, y0, x1, y1) => { if (!naTela(PX(x0), PY(y0), 60)) return; c.strokeStyle = cR; c.lineWidth = 3; c.beginPath(); c.moveTo(PX(x0), PY(y0) - TS * .42); c.lineTo(PX(x1), PY(y1) - TS * .42); c.moveTo(PX(x0), PY(y0) - TS * .22); c.lineTo(PX(x1), PY(y1) - TS * .22); c.stroke(); };
+  const post = (tx, ty) => { const x = PX(tx), y = PY(ty); if (!naTela(x, y, 30)) return; if (arteNova()) { const g = c.createLinearGradient(x - 3.5, 0, x + 3.5, 0); g.addColorStop(0, tomCor(cP, 1.3)); g.addColorStop(.5, cP); g.addColorStop(1, tomCor(cP, .6)); c.fillStyle = g; c.fillRect(x - 3.5, y - TS * .56, 7, TS * .56); c.fillStyle = "rgba(20,10,4,.35)"; c.fillRect(x - 1, y - TS * .5, 1, TS * .4); c.fillStyle = tomCor(cT, 1.2); c.beginPath(); c.moveTo(x - 4, y - TS * .56); c.lineTo(x, y - TS * .62); c.lineTo(x + 4, y - TS * .56); c.fill(); return; } c.fillStyle = cP; c.fillRect(x - 3, y - TS * .55, 6, TS * .55); c.fillStyle = cT; c.fillRect(x - 3, y - TS * .58, 6, 4); };
+  const trilho = (x0, y0, x1, y1) => { if (!naTela(PX(x0), PY(y0), 60)) return; if (arteNova()) { for (const k of [.42, .22]) { c.strokeStyle = tomCor(cR, .7); c.lineWidth = 4; c.beginPath(); c.moveTo(PX(x0), PY(y0) - TS * k + 1); c.lineTo(PX(x1), PY(y1) - TS * k + 1); c.stroke(); c.strokeStyle = cR; c.lineWidth = 2.6; c.beginPath(); c.moveTo(PX(x0), PY(y0) - TS * k); c.lineTo(PX(x1), PY(y1) - TS * k); c.stroke(); c.strokeStyle = "rgba(255,230,190,.3)"; c.lineWidth = 1; c.beginPath(); c.moveTo(PX(x0), PY(y0) - TS * k - 1); c.lineTo(PX(x1), PY(y1) - TS * k - 1); c.stroke(); } return; } c.strokeStyle = cR; c.lineWidth = 3; c.beginPath(); c.moveTo(PX(x0), PY(y0) - TS * .42); c.lineTo(PX(x1), PY(y1) - TS * .42); c.moveTo(PX(x0), PY(y0) - TS * .22); c.lineTo(PX(x1), PY(y1) - TS * .22); c.stroke(); };
   return { post, trilho };
 }
 function desenharPlanta(cv2, x, y, tm) {
@@ -3878,6 +3894,7 @@ function arvoreMata(a, tm) {
   c.fillStyle = "#1e140c"; c.beginPath(); c.moveTo(x - r * .2, y); c.lineTo(x - r * .1, y - r * 1.4); c.lineTo(x + r * .1, y - r * 1.4); c.lineTo(x + r * .22, y); c.fill(); c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(x, y - r * 1.3, r * .1, r * 1.3);
   c.strokeStyle = "#1e140c"; c.lineWidth = Math.max(2, r * .07); c.beginPath(); c.moveTo(x - r * .15, y - r * .05); c.quadraticCurveTo(x - r * .4, y, x - r * .5, y + r * .12); c.moveTo(x + r * .18, y - r * .05); c.quadraticCurveTo(x + r * .45, y - r * .02, x + r * .55, y + r * .1); c.stroke(); // raízes
   if (a.m) { c.lineWidth = Math.max(1.5, r * .05); c.beginPath(); c.moveTo(x, y - r * 1.3); c.lineTo(x - r * .6, y - r * 2.1); c.moveTo(x - r * .3, y - r * 1.7); c.lineTo(x - r * .5, y - r * 1.5); c.moveTo(x, y - r * 1.35); c.lineTo(x + r * .5, y - r * 2.3); c.moveTo(x + r * .3, y - r * 1.9); c.lineTo(x + r * .65, y - r * 1.85); c.stroke(); return; } // árvore morta
+  if (arteNova()) { arvoreMataArte(a, tm, x, y, r); if (a.k > .9 && ehNoite() && Math.sin(tm * .7 + a.x * 3) > .92) { c.fillStyle = "rgba(255,240,200,.85)"; c.fillRect(x - r * .12, y - r * 1.5, 2.5, 2.5); c.fillRect(x + r * .02, y - r * 1.5, 2.5, 2.5); } return; }
   const cores = a.k < .33 ? ["#16200e", "#1e2a12", "#263418"] : a.k < .66 ? ["#121a0c", "#1a2410", "#222e14"] : ["#1e1a0e", "#2a2412", "#342c16"], bal = Math.sin(tm * .9 + a.x) * r * .05;
   [[0, -1.6, 1], [-.5, -1.3, .8], [.5, -1.35, .78], [0, -2.1, .75], [-.3, -1.9, .6], [.32, -1.85, .6]].forEach(([ox, oy, s], i) => { c.fillStyle = cores[i % 3]; c.beginPath(); c.arc(x + ox * r + bal, y + oy * r, r * .62 * s, 0, 7); c.fill(); });
   if (a.k > .9 && ehNoite() && Math.sin(tm * .7 + a.x * 3) > .92) { c.fillStyle = "rgba(255,240,200,.85)"; c.fillRect(x - r * .12, y - r * 1.5, 2.5, 2.5); c.fillRect(x + r * .02, y - r * 1.5, 2.5, 2.5); } // olhos entre as folhas
@@ -3896,13 +3913,15 @@ function coisaMata(o, tm) {
 function desenharCabanaFora(tm) {
   const B = CABANA, x0 = PX(B.x), y0 = PY(B.y), w = B.w * TS, h = B.h * TS; if (!naTela(x0 + w / 2, y0 + h / 2, w)) return;
   sombra(x0 + w / 2, y0 + h, w * .55, TS * .3, .5);
+  if (arteNova()) arte("cabana", x0, y0, TS * .45, h * .22 + TS * .12, w + TS * .9, h * 1.22 + TS * .2, (X, Y) => cabanaArte(X, Y, w, h)); else {
   c.fillStyle = "#3a2a1a"; c.fillRect(x0, y0 + h * .25, w, h * .75); c.fillStyle = "rgba(0,0,0,.25)"; for (let i = 0; i < 12; i++) c.fillRect(x0, y0 + h * .25 + i * h * .065, w, 1.5);
   c.fillStyle = "#2a1e14"; c.beginPath(); c.moveTo(x0 - TS * .3, y0 + h * .3); c.lineTo(x0 + w / 2, y0 - h * .2); c.lineTo(x0 + w + TS * .3, y0 + h * .3); c.fill(); // telhado
   c.fillStyle = "#1a1410"; for (let i = 0; i < 8; i++) c.fillRect(x0 + w * (.1 + i * .1), y0 + h * (.02 + Math.abs(i - 4) * .06), w * .08, 3); c.fillStyle = "#2a3a1a"; c.beginPath(); c.ellipse(x0 + w * .25, y0 + h * .2, w * .12, h * .06, -.3, 0, 7); c.fill(); // musgo
   c.fillStyle = "#1a140e"; c.fillRect(x0 + w * .78, y0 - h * .2, TS * .35, h * .35); // chaminé torta
   const pt = PX(B.porta.x) - TS * .4; c.fillStyle = "#140e08"; c.fillRect(pt, y0 + h * .48, TS * .8, h * .52); c.fillStyle = "#5a4a2a"; c.fillRect(pt + TS * .62, y0 + h * .75, 4, 4);
+  }
   const luz = paginasVo().length && !ehNoite() ? 0 : 1; [[.08], [.7]].forEach(([fx]) => { const jx = x0 + w * fx, jy = y0 + h * .45, jw = TS * .9, jh = TS * .65; c.fillStyle = ehNoite() ? `rgba(240,170,70,${.55 + .15 * Math.sin(tm * 7 + fx * 9)})` : "#1a2228"; c.fillRect(jx, jy, jw, jh); c.fillStyle = "#2a1a0e"; c.fillRect(jx + jw / 2 - 1.5, jy, 3, jh); c.fillRect(jx, jy + jh / 2 - 1.5, jw, 3); if (ehNoite() && luz && Math.sin(tm * .5 + fx * 4) > .9) { c.fillStyle = "rgba(0,0,0,.85)"; c.beginPath(); c.ellipse(jx + jw * .5, jy + jh * .65, jw * .2, jh * .45, 0, 0, 7); c.fill(); } }); // alguém passa na janela
-  c.fillStyle = "#5a4a3a"; c.fillRect(x0 + w * .88, y0 + h * .78, TS * .3, TS * .35); // balde
+  if (!arteNova()) { c.fillStyle = "#5a4a3a"; c.fillRect(x0 + w * .88, y0 + h * .78, TS * .3, TS * .35); } // balde
   if (ehNoite()) for (let i = 0; i < 3; i++) { c.fillStyle = `rgba(160,160,150,${.08 + .04 * i})`; c.beginPath(); c.arc(x0 + w * .82 + Math.sin(tm + i) * 6, y0 - h * .3 - i * TS * .35 - (tm * 8 % 12), TS * (.18 + i * .07), 0, 7); c.fill(); } // fumaça: tem fogo aceso lá dentro
 }
 function desenharMata(tm) {
