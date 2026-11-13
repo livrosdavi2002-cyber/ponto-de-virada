@@ -236,7 +236,8 @@ function fazerPedaco(ch, cx, cy, P, lim) {
    e ganha de uma vez só contorno escuro, luz na borda de cima/esquerda e sombra na borda de baixo/direita.
    Assim o estilo da casa vale pra todas as áreas (árvores, bichos, gente, cercas...) sem refazer cada desenho. */
 const CAM = { on: false, tela: null, cv: null, g: null, s: null, gs: null, r: null, gr: null };
-const camadaLig = () => arteNova() && ls("roca_contorno") !== "0";
+const MOVEL = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent || "") || !!window.Android;
+const camadaLig = () => { const v = ls("roca_contorno"); return arteNova() && (v === "1" || (v !== "0" && !MOVEL)); }; // no celular vem desligado (pesa muito); no PC vem ligado
 function camadaTam(t, w, h) { if (t.width !== w || t.height !== h) { t.width = w; t.height = h; } }
 function camadaIni() {
   if (CAM.on || !camadaLig() || !cv || c !== cv.getContext("2d")) return;
@@ -701,7 +702,7 @@ function montarUI() {
 }
 let VINHETA = null;
 function medir() {
-  if (!cv) return; const fa = window.fpsAlvo ? fpsAlvo() : 30, suave = fa === 60; DPRr = Math.min(devicePixelRatio || 1, suave ? 2 : fa <= 24 ? 1 : 1.25, window.rocaDprMax || 9); W = innerWidth; H = innerHeight;
+  if (!cv) return; const fa = window.fpsAlvo ? fpsAlvo() : 30, suave = fa === 60; DPRr = Math.min(devicePixelRatio || 1, suave ? 2 : fa <= 24 ? 1.25 : 1.75, window.rocaDprMax || 9); W = innerWidth; H = innerHeight;
   cv.width = Math.round(W * DPRr); cv.height = Math.round(H * DPRr); luzCv.width = Math.round(W * (suave ? .8 : fa <= 24 ? .4 : .5)); luzCv.height = Math.round(H * (suave ? .8 : fa <= 24 ? .4 : .5)); VINHETA = null;
   TS = Math.max(30, Math.min(W, H) / 9.2);
   el.rcGire.hidden = !(H > W * 1.1);
@@ -1704,9 +1705,11 @@ function desenharCasaArte(tm, x, y, w, h) {
 /* ---------- objetos do sítio desenhados no mesmo capricho da casa (guardados prontos; o que mexe é desenhado por cima) ---------- */
 const ARTE = new Map();
 // (x, y) = ponto de apoio na tela; o desenho vai de x-L até x-L+Wd e de y-Tp até y-Tp+Hd; fn(X, Y) desenha com o apoio em (X, Y)
+let ARTE_NOVOS = 0, ARTE_QUADRO = 0;
 function arte(k, x, y, L, Tp, Wd, Hd, fn, op = {}) {
   const kk = k + "|" + Math.round(TS * 10) + "|" + DPRr; let p = ARTE.get(kk);
-  if (!p) { const d = DPRr, pad = 4, dest = document.createElement("canvas"); dest.width = Math.ceil((Wd + pad * 2) * d); dest.height = Math.ceil((Hd + pad * 2) * d); p = pintura(0, 0, Wd, Hd, () => fn(L, Tp), Object.assign({ luz: 1, chao: .12, contorno: 1.2 }, op), dest); ARTE.set(kk, p); if (ARTE.size > 320) ARTE.delete(ARTE.keys().next().value); }
+  if (!p && op.rapido) { const q = Math.floor(performance.now() / 16); if (q !== ARTE_QUADRO) { ARTE_QUADRO = q; ARTE_NOVOS = 0; } if (ARTE_NOVOS >= 2) return op.rapido(); ARTE_NOVOS++; }
+  if (!p) { const d = DPRr, pad = 4, dest = document.createElement("canvas"); dest.width = Math.ceil((Wd + pad * 2) * d); dest.height = Math.ceil((Hd + pad * 2) * d); p = pintura(0, 0, Wd, Hd, () => fn(L, Tp), Object.assign({ luz: 1, chao: .12, contorno: 1.2 }, op), dest); ARTE.set(kk, p); if (ARTE.size > (MOVEL ? 140 : 320)) ARTE.delete(ARTE.keys().next().value); }
   c.drawImage(p.cv, 0, 0, p.cw, p.ch, x - L + p.x, y - Tp + p.y, p.w, p.h);
 }
 let SD_ARTE = 1; const ra = () => { SD_ARTE = (SD_ARTE * 16807) % 2147483647; return SD_ARTE / 2147483647; };
@@ -1889,17 +1892,18 @@ function arvoreArte(X, Y, r, cores, sd) { SD_ARTE = 131 + sd * 977;
   // copa folha por folha: fundo escuro, depois as folhas de cima pra baixo, mais claras do lado da luz (cima/esquerda)
   const cx = X, cy = Y - r * 1.6, P4 = [tomCor(cores[0], .85), cores[1], cores[2], tomCor(cores[2], 1.3)];
   c.fillStyle = tomCor(cores[0], .65); c.beginPath(); c.ellipse(cx, cy, r * .97, r * .84, 0, 0, 7); c.fill();
-  const n = Math.round(260 + r * 2.2), lw = r * .1, lh = r * .05, fo = []; for (let i = 0; i < n; i++) { const a = ra() * 6.28, d = Math.sqrt(ra()); fo.push([cx + Math.cos(a) * d * r * 1.0, cy + Math.sin(a) * d * r * .86, ra() * 6.28, ra()]); }
+  const n = Math.round(MOVEL ? 150 + r * 1.3 : 260 + r * 2.2), lw = r * (MOVEL ? .12 : .1), lh = r * (MOVEL ? .06 : .05), fo = []; for (let i = 0; i < n; i++) { const a = ra() * 6.28, d = Math.sqrt(ra()); fo.push([cx + Math.cos(a) * d * r * 1.0, cy + Math.sin(a) * d * r * .86, ra() * 6.28, ra()]); }
   fo.sort((p, q) => p[1] - q[1]);
   fo.forEach(([fx, fy, rot, v]) => { const k = ((cx - fx) + (cy - fy)) / (r * 1.15), cor = k > .35 ? P4[3] : k > .05 ? P4[2] : k > -.3 ? P4[1] : P4[0];
     c.save(); c.translate(fx, fy); c.rotate(rot); c.fillStyle = tomCor(cor, .9 + v * .2); c.beginPath(); c.ellipse(0, 0, lw, lh, 0, 0, 7); c.fill(); c.strokeStyle = "rgba(20,12,4,.35)"; c.lineWidth = .6; c.beginPath(); c.moveTo(-lw * .85, 0); c.lineTo(lw * .85, 0); c.stroke(); c.restore(); });
 }
 const ARV_CORES = [["#a8401e", "#c8662a", "#e09a3a"], ["#5a6a2a", "#6a7a36", "#8a9a46"], ["#b8862a", "#d8a83a", "#e8c85a"], ["#7a2a1e", "#9a3a24", "#b85a2a"], ["#3a4a24", "#4a5a2a", "#5a6a32"]];
+function arvoreRapida(r, cores) { c.fillStyle = "#3e2a1a"; c.fillRect(-r * .1, -r * 1.15, r * .2, r * 1.15); [[0, -1.6, .95, 0], [-.35, -1.75, .5, 1], [.25, -1.4, .55, 2]].forEach(([ox, oy, rr, k]) => { c.fillStyle = cores[k]; c.beginPath(); c.ellipse(ox * r, oy * r, rr * r, rr * r * .86, 0, 0, 7); c.fill(); }); }
 function desenharArvoreArte(a, tm, fruta, x, y, r) {
   sombra(x + r * .2, y + r * .05, r * .9, r * .35, .35);
-  const rq = Math.round(a.r * 20) / 20, v = ((Math.floor(a.x * 7 + a.y * 3) % 2) + 2) % 2, cores = fruta ? ["#2e5a24", "#3a6a2a", "#4a7a32"] : ARV_CORES[a.c] || ARV_CORES[1], R2 = rq * TS;
+  const rq = Math.round(a.r * (MOVEL ? 10 : 20)) / (MOVEL ? 10 : 20), v = ((Math.floor(a.x * 7 + a.y * 3) % 2) + 2) % 2, cores = fruta ? ["#2e5a24", "#3a6a2a", "#4a7a32"] : ARV_CORES[a.c] || ARV_CORES[1], R2 = rq * TS;
   const bal = Math.sin(tm * 1.1 + a.x) * r * .04; c.save(); c.translate(x, y); c.transform(1, 0, -bal / (r * 2), 1, 0, 0);
-  arte("arv2|" + (fruta ? "f" : a.c) + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v), { contorno: 1, chao: .05 });
+  arte("arv2|" + (fruta ? "f" : a.c) + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v), { contorno: 1, chao: .05, rapido: () => arvoreRapida(R2, cores) });
   c.restore();
   if (fruta) for (let i = 0; i < 6; i++) { const on = i < fruta.n * 2, fx = x + Math.cos(i * 2.4) * r * .45 + bal, fy = y - r * 1.5 + Math.sin(i * 2.4) * r * .35; const g = c.createRadialGradient(fx - r * .03, fy - r * .03, 1, fx, fy, r * .1); g.addColorStop(0, on ? "#ffe0a0" : "#b8d870"); g.addColorStop(1, on ? (fruta.cor || "#f29a2a") : "#5a7a2a"); c.fillStyle = g; c.beginPath(); c.arc(fx, fy, r * .1, 0, 7); c.fill(); c.strokeStyle = "rgba(20,12,4,.5)"; c.lineWidth = .8; c.stroke(); }
 }
@@ -1968,10 +1972,10 @@ function igrejaArte(X, Y, w, h) { const T = TS, tx = X + w / 2, cP = "#c8c0b0"; 
   c.fillStyle = "#8a8474"; c.fillRect(tx - T * 1, Y + h * .5, T * 2, T * .3); c.fillStyle = "rgba(255,255,255,.2)"; c.fillRect(tx - T * 1, Y + h * .5, T * 2, 1.5); c.fillStyle = "#2a2420"; c.font = `700 ${Math.round(TS * .19)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("SANTA LUZIA", tx, Y + h * .5 + T * .15); c.textAlign = "start"; c.textBaseline = "alphabetic";
 }
 function arvoreMataArte(a, tm, x, y, r) {
-  const rq = Math.round(a.r * 20) / 20, v = ((Math.floor(a.x * 7 + a.y * 3) % 3) + 3) % 3, kb = a.k < .33 ? 0 : a.k < .66 ? 1 : 2, R2 = rq * TS;
+  const rq = Math.round(a.r * (MOVEL ? 10 : 20)) / (MOVEL ? 10 : 20), v = ((Math.floor(a.x * 7 + a.y * 3) % 2) + 2) % 2, kb = a.k < .33 ? 0 : a.k < .66 ? 1 : 2, R2 = rq * TS;
   const cores = [["#1e2c14", "#2a3a1a", "#364a22"], ["#18240e", "#223214", "#2c401a"], ["#2a2412", "#383018", "#463c1e"]][kb], bal = Math.sin(tm * .9 + a.x) * r * .05;
   c.save(); c.translate(x, y); c.transform(1, 0, -bal / (r * 2), 1, 0, 0);
-  arte("arvM2|" + kb + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v + 5), { contorno: 1, chao: .05, luz: .8 }); c.restore();
+  arte("arvM2|" + kb + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v + 5), { contorno: 1, chao: .05, luz: .8, rapido: () => arvoreRapida(R2, cores) }); c.restore();
 }
 function cabanaArte(X, Y, w, h) { const T = TS; SD_ARTE = 171;
   const nb = 11, bh = h * .75 / nb; for (let i = 0; i < nb; i++) { tabua(X, Y + h * .25 + i * bh, w, bh, "#4a3622", 400 + i); c.fillStyle = "rgba(0,0,0,.4)"; c.fillRect(X, Y + h * .25 + (i + 1) * bh - 1.5, w, 1.5); [X - bh * .2, X + w + bh * .2].forEach(ex => { c.fillStyle = "#3a2816"; c.beginPath(); c.arc(ex, Y + h * .25 + (i + .5) * bh, bh * .55, 0, 7); c.fill(); c.fillStyle = "#8a6a42"; c.beginPath(); c.arc(ex, Y + h * .25 + (i + .5) * bh, bh * .35, 0, 7); c.fill(); c.strokeStyle = "rgba(60,36,16,.6)"; c.lineWidth = .8; c.beginPath(); c.arc(ex, Y + h * .25 + (i + .5) * bh, bh * .18, 0, 7); c.stroke(); }); } // toras deitadas com a ponta aparecendo
@@ -3200,7 +3204,7 @@ function loop(ts) {
   if (!rodando || !R) return;
   requestAnimationFrame(loop); // agenda antes: um erro de desenho não congela o jogo
   lerControle(); const parado = painelAberto && !R.online && !R.msg, fps = parado ? 8 : window.fpsAlvo ? fpsAlvo() : 30; if (ultimo && ts - ultimo < 1000 / fps - 4) return;
-  { const A = window.rocaAdapt || (window.rocaAdapt = { n: 0, soma: 0, ruim: 0 }); if (ultimo && !parado && !document.hidden) { A.n++; A.soma += ts - ultimo; if (A.n >= 90) { const media = A.soma / A.n; A.ruim = media > 1000 / fps * 1.45 ? A.ruim + 1 : 0; A.n = 0; A.soma = 0; if (A.ruim >= 2 && DPRr > 1.01) { window.rocaDprMax = 1; medir(); A.ruim = 0; } } } } // se não está dando conta, baixa a resolução sozinho (é o que mais esquenta) // 30 quadros por segundo bastam: o celular esquenta bem menos
+  { const A = window.rocaAdapt || (window.rocaAdapt = { n: 0, soma: 0, ruim: 0 }); if (ultimo && !parado && !document.hidden) { A.n++; A.soma += ts - ultimo; if (A.n >= 90) { const media = A.soma / A.n; A.ruim = media > 1000 / fps * 1.45 ? A.ruim + 1 : 0; A.n = 0; A.soma = 0; if (A.ruim >= 2 && DPRr > 1.01) { window.rocaDprMax = DPRr > 1.4 ? 1.35 : 1; medir(); A.ruim = 0; } } } } // se não está dando conta, baixa a resolução sozinho (é o que mais esquenta) // 30 quadros por segundo bastam: o celular esquenta bem menos
   const t0 = performance.now(); window.rocaPerfN = (window.rocaPerfN || 0) + 1;
   let dt = Math.min(.07, (ts - ultimo) / 1000 || 0); ultimo = ts; DTQ = dt || 1 / 30;
   if (HITSTOP > 0) { HITSTOP -= dt; dt *= .06; }
@@ -8494,7 +8498,7 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
     <button type="button" class="rc-op" id="opVoz">${icB("voz")}Narração da história: ${lig(window.vozLigada !== false)}</button>
     <button type="button" class="rc-op" id="opFps">${icB("grafico")}Gráfico: ${fps === 60 ? "suave<small>60 quadros · mais bonito, esquenta mais</small>" : fps <= 24 ? "bateria<small>24 quadros e resolução menor · esquenta bem menos</small>" : "normal<small>30 quadros · o meio-termo</small>"}</button>
     ${window.PC ? `<button type="button" class="rc-op" id="opTela">${icB("telacheia")}Tela cheia (F11)</button>` : ""}
-    <button type="button" class="rc-op" id="opContorno">${icB("grafico")}Contorno e luz nos objetos: ${camadaLig() ? "sim" : "não"}<small>Desligue se o celular ficar lento</small></button>
+    <button type="button" class="rc-op" id="opContorno">${icB("grafico")}Contorno e luz nos objetos: ${camadaLig() ? "sim" : "não"}<small>No celular vem desligado, porque pesa. Ligue se o seu aguentar.</small></button>
     <button type="button" class="rc-op" id="opTreme">${icB("grafico")}Tremer a tela: ${tremeOn() ? "sim" : "não"}<small>Desligue se a tremida incomodar</small></button>
     <button type="button" class="rc-op" id="opHist">${icB("historia")}Apagar a história já vista<small>A abertura aparece de novo</small></button></div>
     <p style="font-size:12px;color:#b8b2a4">Roça Assombrada · versão ${window.ROCA_VERSAO || "1"}</p>
