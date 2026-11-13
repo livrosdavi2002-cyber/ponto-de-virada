@@ -1873,22 +1873,20 @@ function arvoreArte(X, Y, r, cores, sd) { SD_ARTE = 131 + sd * 977;
   c.beginPath(); c.moveTo(X - r * .26, Y); c.quadraticCurveTo(X - r * .12, Y - r * .15, X - r * .11, Y - r * 1.15); c.lineTo(X + r * .11, Y - r * 1.15); c.quadraticCurveTo(X + r * .12, Y - r * .15, X + r * .28, Y); c.closePath(); c.fill();
   c.strokeStyle = "rgba(14,8,4,.55)"; c.lineWidth = 1; for (let i = 0; i < 5; i++) { const bx = X - r * .08 + i * r * .04; c.beginPath(); c.moveTo(bx, Y - r * .05); c.lineTo(bx + (ra() - .5) * 3, Y - r * (.5 + ra() * .5)); c.stroke(); }
   c.strokeStyle = "#3e2a1a"; c.lineWidth = r * .07; c.lineCap = "round"; c.beginPath(); c.moveTo(X - r * .05, Y - r * .9); c.lineTo(X - r * .32, Y - r * 1.3); c.moveTo(X + r * .05, Y - r * 1); c.lineTo(X + r * .3, Y - r * 1.35); c.stroke(); c.lineCap = "butt"; // galhos
-  // copa: sombra interna escura, depois tufos do fundo pra frente
-  const cx = X, cy = Y - r * 1.6;
-  c.fillStyle = tomCor(cores[0], .7); c.beginPath(); c.ellipse(cx, cy, r * .95, r * .82, 0, 0, 7); c.fill();
-  const tufos = []; for (let i = 0; i < 26; i++) { const a = ra() * 6.28, d = Math.sqrt(ra()) * .78; tufos.push([cx + Math.cos(a) * d * r * .95, cy + Math.sin(a) * d * r * .8, r * (.22 + ra() * .14)]); }
-  tufos.sort((p, q) => (p[0] + p[1] * 1.4) - (q[0] + q[1] * 1.4)).reverse(); // os de baixo/direita primeiro (ficam atrás), os de cima/esquerda por cima
-  tufos.forEach(([tx, ty, tr]) => { const k = ((cx - tx) / r + (cy - ty) / r) * .5, cor = k > .2 ? cores[2] : k > -.25 ? cores[1] : cores[0];
-    c.fillStyle = "rgba(10,14,6,.28)"; c.beginPath(); c.arc(tx + tr * .15, ty + tr * .2, tr, 0, 7); c.fill();
-    const g = c.createRadialGradient(tx - tr * .35, ty - tr * .4, tr * .1, tx, ty, tr); g.addColorStop(0, tomCor(cor, 1.22)); g.addColorStop(1, tomCor(cor, .82)); c.fillStyle = g; c.beginPath(); c.arc(tx, ty, tr, 0, 7); c.fill();
-    for (let j = 0; j < 4; j++) { c.fillStyle = ra() < .5 ? `rgba(255,240,190,.18)` : "rgba(10,14,6,.2)"; c.beginPath(); c.ellipse(tx + (ra() - .5) * tr * 1.2, ty + (ra() - .5) * tr * 1.2, tr * .18, tr * .1, ra() * 3, 0, 7); c.fill(); } }); // folhinhas
+  // copa folha por folha: fundo escuro, depois as folhas de cima pra baixo, mais claras do lado da luz (cima/esquerda)
+  const cx = X, cy = Y - r * 1.6, P4 = [tomCor(cores[0], .85), cores[1], cores[2], tomCor(cores[2], 1.3)];
+  c.fillStyle = tomCor(cores[0], .65); c.beginPath(); c.ellipse(cx, cy, r * .97, r * .84, 0, 0, 7); c.fill();
+  const n = Math.round(260 + r * 2.2), lw = r * .1, lh = r * .05, fo = []; for (let i = 0; i < n; i++) { const a = ra() * 6.28, d = Math.sqrt(ra()); fo.push([cx + Math.cos(a) * d * r * 1.0, cy + Math.sin(a) * d * r * .86, ra() * 6.28, ra()]); }
+  fo.sort((p, q) => p[1] - q[1]);
+  fo.forEach(([fx, fy, rot, v]) => { const k = ((cx - fx) + (cy - fy)) / (r * 1.15), cor = k > .35 ? P4[3] : k > .05 ? P4[2] : k > -.3 ? P4[1] : P4[0];
+    c.save(); c.translate(fx, fy); c.rotate(rot); c.fillStyle = tomCor(cor, .9 + v * .2); c.beginPath(); c.ellipse(0, 0, lw, lh, 0, 0, 7); c.fill(); c.strokeStyle = "rgba(20,12,4,.35)"; c.lineWidth = .6; c.beginPath(); c.moveTo(-lw * .85, 0); c.lineTo(lw * .85, 0); c.stroke(); c.restore(); });
 }
 const ARV_CORES = [["#a8401e", "#c8662a", "#e09a3a"], ["#5a6a2a", "#6a7a36", "#8a9a46"], ["#b8862a", "#d8a83a", "#e8c85a"], ["#7a2a1e", "#9a3a24", "#b85a2a"], ["#3a4a24", "#4a5a2a", "#5a6a32"]];
 function desenharArvoreArte(a, tm, fruta, x, y, r) {
   sombra(x + r * .2, y + r * .05, r * .9, r * .35, .35);
-  const rq = Math.round(a.r * 20) / 20, v = ((Math.floor(a.x * 7 + a.y * 3) % 3) + 3) % 3, cores = fruta ? ["#2e5a24", "#3a6a2a", "#4a7a32"] : ARV_CORES[a.c] || ARV_CORES[1], R2 = rq * TS;
+  const rq = Math.round(a.r * 20) / 20, v = ((Math.floor(a.x * 7 + a.y * 3) % 2) + 2) % 2, cores = fruta ? ["#2e5a24", "#3a6a2a", "#4a7a32"] : ARV_CORES[a.c] || ARV_CORES[1], R2 = rq * TS;
   const bal = Math.sin(tm * 1.1 + a.x) * r * .04; c.save(); c.translate(x, y); c.transform(1, 0, -bal / (r * 2), 1, 0, 0);
-  arte("arv|" + (fruta ? "f" : a.c) + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v), { contorno: 1, chao: .05 });
+  arte("arv2|" + (fruta ? "f" : a.c) + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v), { contorno: 1, chao: .05 });
   c.restore();
   if (fruta) for (let i = 0; i < 6; i++) { const on = i < fruta.n * 2, fx = x + Math.cos(i * 2.4) * r * .45 + bal, fy = y - r * 1.5 + Math.sin(i * 2.4) * r * .35; const g = c.createRadialGradient(fx - r * .03, fy - r * .03, 1, fx, fy, r * .1); g.addColorStop(0, on ? "#ffe0a0" : "#b8d870"); g.addColorStop(1, on ? (fruta.cor || "#f29a2a") : "#5a7a2a"); c.fillStyle = g; c.beginPath(); c.arc(fx, fy, r * .1, 0, 7); c.fill(); c.strokeStyle = "rgba(20,12,4,.5)"; c.lineWidth = .8; c.stroke(); }
 }
@@ -1960,7 +1958,7 @@ function arvoreMataArte(a, tm, x, y, r) {
   const rq = Math.round(a.r * 20) / 20, v = ((Math.floor(a.x * 7 + a.y * 3) % 3) + 3) % 3, kb = a.k < .33 ? 0 : a.k < .66 ? 1 : 2, R2 = rq * TS;
   const cores = [["#1e2c14", "#2a3a1a", "#364a22"], ["#18240e", "#223214", "#2c401a"], ["#2a2412", "#383018", "#463c1e"]][kb], bal = Math.sin(tm * .9 + a.x) * r * .05;
   c.save(); c.translate(x, y); c.transform(1, 0, -bal / (r * 2), 1, 0, 0);
-  arte("arvM|" + kb + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v + 5), { contorno: 1, chao: .05, luz: .8 }); c.restore();
+  arte("arvM2|" + kb + "|" + rq + "|" + v, 0, 0, R2 * 1.25, R2 * 2.55, R2 * 2.5, R2 * 2.6, (X, Y) => arvoreArte(X, Y, R2, cores, v + 5), { contorno: 1, chao: .05, luz: .8 }); c.restore();
 }
 function cabanaArte(X, Y, w, h) { const T = TS; SD_ARTE = 171;
   const nb = 11, bh = h * .75 / nb; for (let i = 0; i < nb; i++) { tabua(X, Y + h * .25 + i * bh, w, bh, "#4a3622", 400 + i); c.fillStyle = "rgba(0,0,0,.4)"; c.fillRect(X, Y + h * .25 + (i + 1) * bh - 1.5, w, 1.5); [X - bh * .2, X + w + bh * .2].forEach(ex => { c.fillStyle = "#3a2816"; c.beginPath(); c.arc(ex, Y + h * .25 + (i + .5) * bh, bh * .55, 0, 7); c.fill(); c.fillStyle = "#8a6a42"; c.beginPath(); c.arc(ex, Y + h * .25 + (i + .5) * bh, bh * .35, 0, 7); c.fill(); c.strokeStyle = "rgba(60,36,16,.6)"; c.lineWidth = .8; c.beginPath(); c.arc(ex, Y + h * .25 + (i + .5) * bh, bh * .18, 0, 7); c.stroke(); }); } // toras deitadas com a ponta aparecendo
