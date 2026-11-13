@@ -69,7 +69,7 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 let DTQ = 1 / 30; const kq = k => 1 - Math.pow(1 - k, DTQ * 30); // suavização que dá o mesmo resultado em 24, 30 ou 60 quadros
 // "juice": tremida por trauma (o quadrado deixa a pancada pequena quase parada e a grande forte), pausinha no impacto e faíscas
 const SHK = { x: 0, y: 0 }, PARTS = []; let HITSTOP = 0;
-const tremeOn = () => ls("roca_tremer") !== "0";
+const tremeOn = () => ls("roca_tremer") !== "0", arteNova = () => ls("roca_arte") !== "0";
 function calcTremida(tm) { SHK.x = SHK.y = 0; if (!R || !(R.tremor > 0) || !tremeOn()) return; const t = Math.min(1, R.tremor), k = t * t * .28; SHK.x = k * Math.sin(tm * 47) + k * .5 * Math.sin(tm * 83); SHK.y = k * .8 * Math.sin(tm * 53 + 1); }
 function pausinha(seg) { HITSTOP = Math.max(HITSTOP, seg); }
 function faiscas(x, y, cor, n = 10, forca = 1, lugar) { if (x == null || PARTS.length > 160) return; for (let i = 0; i < n; i++) { const a = Math.random() * PI * 2, v = rnd(1.2, 3.2) * forca; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .6 - rnd(1, 2.6) * forca, z: 0, t: 0, vida: rnd(.45, .8), cor: Array.isArray(cor) ? cor[i % cor.length] : cor, r: rnd(2, 4.5), lugar: lugar || (R && R.lugar) || "sitio" }); } }
@@ -1454,8 +1454,121 @@ function desenharArvore(a, tm, fruta) {
   c.fillStyle = "rgba(255,240,200,.12)"; c.beginPath(); c.arc(x - r * .2 + bal, y - r * 1.9, r * .28, 0, 7); c.fill();
   if (fruta) for (let i = 0; i < 6; i++) { const on = i < fruta.n * 2; c.fillStyle = on ? (fruta.cor || "#f29a2a") : "#7a9a3a"; c.beginPath(); c.arc(x + Math.cos(i * 2.4) * r * .45 + bal, y - r * 1.5 + Math.sin(i * 2.4) * r * .35, r * .1, 0, 7); c.fill(); }
 }
+/* ---------- pintura: luz de um lado, sombra do outro e contorno escuro (deixa o desenho com volume, em vez de formas chapadas) ----------
+   pintura(x0, y0, w, h, fn, op): desenha fn() numa tela separada, aplica a luz e o contorno e devolve a tela pronta.
+   Para coisas paradas (casa), guarde o resultado; para quem se mexe (Yasmin), use pintar(), que reaproveita as telas. */
+const PINT_BUF = {};
+function pintTela(nome, w, h) { let t = PINT_BUF[nome]; if (!t) t = PINT_BUF[nome] = document.createElement("canvas"); if (t.width < w || t.height < h) { t.width = Math.max(t.width, w); t.height = Math.max(t.height, h); } return t; }
+function pintura(x0, y0, w, h, fn, op = {}, destino) {
+  const d = op.res || DPRr, pad = op.pad ?? 4, cw = Math.ceil((w + pad * 2) * d), ch = Math.ceil((h + pad * 2) * d);
+  const A = pintTela("a", cw, ch), g = A.getContext("2d");
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = "source-over"; g.globalAlpha = 1; g.clearRect(0, 0, cw, ch); g.setTransform(d, 0, 0, d, (pad - x0) * d, (pad - y0) * d);
+  const c0 = c; c = g; try { fn(); } finally { c = c0; }
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = "source-atop";
+  const luz = op.luz ?? 1, gr = g.createLinearGradient(0, 0, cw * .75, ch); // a luz vem de cima, da esquerda
+  gr.addColorStop(0, `rgba(255,236,196,${.24 * luz})`); gr.addColorStop(.42, "rgba(255,236,196,0)"); gr.addColorStop(.58, "rgba(16,10,24,0)"); gr.addColorStop(1, `rgba(16,10,24,${.4 * luz})`);
+  g.fillStyle = gr; g.fillRect(0, 0, cw, ch);
+  const ao = g.createLinearGradient(0, ch * (1 - (op.chao ?? .18)), 0, ch); ao.addColorStop(0, "rgba(0,0,0,0)"); ao.addColorStop(1, `rgba(10,6,4,${.32 * luz})`); g.fillStyle = ao; g.fillRect(0, 0, cw, ch); // sombra de contato perto do chão
+  g.globalCompositeOperation = "source-over";
+  const F = destino || pintTela("f", cw, ch), gf = F.getContext("2d"); gf.setTransform(1, 0, 0, 1, 0, 0); gf.globalCompositeOperation = "source-over"; gf.globalAlpha = 1; gf.clearRect(0, 0, cw, ch);
+  const esp = (op.contorno ?? 1.3) * d;
+  if (esp > 0) { // contorno: a silhueta escura, deslocada pros oito lados, por baixo do desenho
+    const B = pintTela("b", cw, ch), gb = B.getContext("2d"); gb.setTransform(1, 0, 0, 1, 0, 0); gb.globalCompositeOperation = "source-over"; gb.clearRect(0, 0, cw, ch); gb.drawImage(A, 0, 0, cw, ch, 0, 0, cw, ch); gb.globalCompositeOperation = "source-in"; gb.fillStyle = op.corContorno || "rgba(22,14,10,.9)"; gb.fillRect(0, 0, cw, ch); gb.globalCompositeOperation = "source-over";
+    for (let i = 0; i < 8; i++) { const a = i * PI / 4; gf.drawImage(B, 0, 0, cw, ch, Math.cos(a) * esp, Math.sin(a) * esp, cw, ch); }
+  }
+  gf.drawImage(A, 0, 0, cw, ch, 0, 0, cw, ch);
+  return { cv: F, x: x0 - pad, y: y0 - pad, w: cw / d, h: ch / d, cw, ch };
+}
+function pintar(x0, y0, w, h, fn, op) { const p = pintura(x0, y0, w, h, fn, op); c.drawImage(p.cv, 0, 0, p.cw, p.ch, p.x, p.y, p.w, p.h); }
+// madeira: tábua com veio, nó e borda clara em cima
+function tabua(x, y, w, h, cor, sd) {
+  let s = sd * 9301 + 49297; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  const t = tomCor(cor, .9 + r() * .22); c.fillStyle = t; c.fillRect(x, y, w, h);
+  c.strokeStyle = "rgba(30,16,8,.22)"; c.lineWidth = Math.max(.6, h * .06);
+  for (let i = 0; i < 3; i++) { const yy = y + h * (.25 + i * .25 + (r() - .5) * .1); c.beginPath(); c.moveTo(x, yy); for (let xx = x; xx <= x + w; xx += w / 6) c.lineTo(xx, yy + Math.sin(xx * .07 + i + sd) * h * .06); c.stroke(); }
+  if (r() < .5) { const nx = x + w * (.15 + r() * .7), ny = y + h * .5; c.fillStyle = "rgba(40,20,10,.35)"; c.beginPath(); c.ellipse(nx, ny, h * .22, h * .14, 0, 0, 7); c.fill(); c.strokeStyle = "rgba(40,20,10,.25)"; c.beginPath(); c.ellipse(nx, ny, h * .34, h * .22, 0, 0, 7); c.stroke(); }
+  c.fillStyle = "rgba(255,230,190,.12)"; c.fillRect(x, y, w, Math.max(1, h * .12)); c.fillStyle = "rgba(20,10,4,.35)"; c.fillRect(x, y + h - Math.max(1, h * .1), w, Math.max(1, h * .1));
+}
+// casa da vó pintada com volume: tábua por tábua, telha por telha, guardada pronta (só refaz quando muda a cor ou o tamanho da tela)
+const CASA_ARTE = { k: "", p: null };
+function casaCorpo(x, y, w, h) {
+  const T = TS, cP = decoCor("casa", "#6a4a2a"), cT = decoCor("telhado", "#4a2a1a"), cD = decoCor("porta", "#3a2214"), cF = decoCor("porta", "#2a1a0e");
+  const yP = y + h * .18; // onde a parede começa
+  // fundação de pedra embaixo da parede
+  c.fillStyle = "#4a4640"; c.fillRect(x - T * .05, y + h - T * .3, w + T * .1, T * .3);
+  for (let i = 0; i < 16; i++) { const px = x + i * w / 15 - T * .05, pw = w / 15 * .9; c.fillStyle = ["#6a645a", "#5a554c", "#77705f"][i % 3]; c.beginPath(); c.roundRect ? c.roundRect(px, y + h - T * .28, pw, T * .24, T * .06) : c.rect(px, y + h - T * .28, pw, T * .24); c.fill(); c.fillStyle = "rgba(255,255,255,.12)"; c.fillRect(px + 2, y + h - T * .27, pw * .6, 2); }
+  // parede de tábuas deitadas, cada uma de um tom
+  const nb = 10, bh = (h * .82 - T * .28) / nb;
+  for (let i = 0; i < nb; i++) tabua(x, yP + i * bh, w, bh, cP, i * 7 + 3);
+  // esteios dos cantos
+  [x - T * .06, x + w - T * .16].forEach((ex, i) => { c.fillStyle = tomCor(cP, .7); c.fillRect(ex, yP, T * .22, h * .82 - T * .28); c.fillStyle = "rgba(255,230,190,.14)"; c.fillRect(ex + 1, yP, T * .05, h * .82 - T * .28); c.fillStyle = "rgba(0,0,0,.25)"; c.fillRect(ex + T * .18, yP, T * .04, h * .82 - T * .28); });
+  // sombra do beiral na parede
+  const sb = c.createLinearGradient(0, yP, 0, yP + T * .6); sb.addColorStop(0, "rgba(10,5,2,.55)"); sb.addColorStop(1, "rgba(10,5,2,0)"); c.fillStyle = sb; c.fillRect(x, yP, w, T * .6);
+  // janelas: moldura funda, vidro com reflexo, cruz, tramela e floreira
+  [[.1, .42], [.7, .42]].forEach(([fx, fy], j) => {
+    const jx = x + w * fx, jy = y + h * fy, jw = w * .2, jh = h * .22;
+    c.fillStyle = cF; c.fillRect(jx - 4, jy - 4, jw + 8, jh + 8); c.fillStyle = tomCor(cF, 1.5); c.fillRect(jx - 4, jy - 4, jw + 8, 2); // moldura
+    // folhas da janela abertas para fora (madeira)
+    [[jx - jw * .32 - 4, -1], [jx + jw + 4, 1]].forEach(([sx]) => { for (let b = 0; b < 3; b++) tabua(sx, jy + b * jh / 3, jw * .32, jh / 3, tomCor(cD, 1.25), j * 5 + b + (sx > jx ? 11 : 0)); c.strokeStyle = "rgba(20,10,4,.5)"; c.lineWidth = 1; c.strokeRect(sx + .5, jy + .5, jw * .32 - 1, jh - 1); });
+    const vg = c.createLinearGradient(jx, jy, jx + jw, jy + jh); vg.addColorStop(0, "#4a5a66"); vg.addColorStop(1, "#1e252c"); c.fillStyle = vg; c.fillRect(jx, jy, jw, jh);
+    c.fillStyle = "rgba(255,255,255,.16)"; c.beginPath(); c.moveTo(jx + jw * .1, jy + jh); c.lineTo(jx + jw * .35, jy); c.lineTo(jx + jw * .5, jy); c.lineTo(jx + jw * .25, jy + jh); c.fill(); // reflexo
+    c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(jx, jy, jw, 3); c.fillRect(jx, jy, 3, jh); // fundura
+    c.fillStyle = cF; c.fillRect(jx + jw / 2 - 1.5, jy, 3, jh); c.fillRect(jx, jy + jh / 2 - 1.5, jw, 3);
+    // floreira
+    const fy2 = jy + jh + 4; c.fillStyle = tomCor(cD, 1.1); c.fillRect(jx - 6, fy2, jw + 12, T * .16); c.fillStyle = "rgba(0,0,0,.3)"; c.fillRect(jx - 6, fy2 + T * .12, jw + 12, T * .04); c.fillStyle = "rgba(255,230,190,.15)"; c.fillRect(jx - 6, fy2, jw + 12, 2);
+    for (let i = 0; i < 9; i++) { const lx = jx - 3 + i * (jw + 6) / 8; c.fillStyle = i % 2 ? "#3e6a2a" : "#4e7e34"; c.beginPath(); c.ellipse(lx, fy2 - 1, T * .07, T * .05, (i % 3 - 1) * .5, 0, 7); c.fill(); }
+    ["#c83a2a", "#e8c84a", "#e8e2d8", "#b8582a", "#d86a9a"].forEach((cor, i) => { const fx3 = jx + i * jw / 4, fy3 = fy2 - T * .07 - (i % 2) * 3; c.fillStyle = cor; for (let p = 0; p < 5; p++) { c.beginPath(); c.arc(fx3 + Math.cos(p * 1.26) * 2.2, fy3 + Math.sin(p * 1.26) * 2.2, 1.8, 0, 7); c.fill(); } c.fillStyle = "#f2d860"; c.beginPath(); c.arc(fx3, fy3, 1.3, 0, 7); c.fill(); });
+  });
+  // porta de tábuas em pé, com batente, travessas e degrau
+  const px = x + w * .42, py = y + h * .5, pw = w * .16, ph = h * .5 - T * .1;
+  c.fillStyle = cF; c.fillRect(px - 5, py - 5, pw + 10, ph + 5); c.fillStyle = tomCor(cF, 1.5); c.fillRect(px - 5, py - 5, pw + 10, 2);
+  for (let i = 0; i < 4; i++) { c.save(); c.translate(px + i * pw / 4 + pw / 8, py + ph / 2); c.rotate(PI / 2); tabua(-ph / 2, -pw / 8, ph, pw / 4, cD, 40 + i); c.restore(); }
+  [.18, .78].forEach(k => { c.fillStyle = tomCor(cD, .8); c.fillRect(px + 2, py + ph * k, pw - 4, T * .1); c.fillStyle = "rgba(255,230,190,.14)"; c.fillRect(px + 2, py + ph * k, pw - 4, 1.5); });
+  c.fillStyle = "rgba(0,0,0,.4)"; c.fillRect(px, py, pw, 4); // sombra do batente
+  c.fillStyle = "#c8a860"; c.beginPath(); c.arc(px + pw * .8, py + ph * .52, T * .045, 0, 7); c.fill(); c.fillStyle = "#f8e0a0"; c.beginPath(); c.arc(px + pw * .8 - 1, py + ph * .52 - 1, T * .018, 0, 7); c.fill();
+  c.fillStyle = "#e8e0c8"; c.fillRect(x + w * .47, y + h * .42, w * .06, h * .05); c.fillStyle = "rgba(0,0,0,.25)"; c.fillRect(x + w * .47, y + h * .42 + h * .05 - 2, w * .06, 2); // plaquinha
+  // varanda de tábuas, com viga da frente
+  const vy = y + h - T * .1, vw = w + T * .4;
+  for (let i = 0; i < 12; i++) { c.save(); c.translate(x - T * .2 + i * vw / 12 + vw / 24, vy + T * .2); c.rotate(PI / 2); tabua(-T * .2, -vw / 24, T * .4, vw / 12, "#6a4a2c", 60 + i); c.restore(); }
+  c.fillStyle = "#3e2a18"; c.fillRect(x - T * .2, vy + T * .36, vw, T * .1); c.fillStyle = "rgba(255,230,190,.12)"; c.fillRect(x - T * .2, vy + T * .36, vw, 1.5);
+  c.fillStyle = tomCor("#6a4a2c", 1.1); c.fillRect(px - T * .1, vy + T * .44, pw + T * .2, T * .14); c.fillStyle = "rgba(0,0,0,.3)"; c.fillRect(px - T * .1, vy + T * .54, pw + T * .2, T * .04); // degrau
+  // banco da varanda e galão
+  c.fillStyle = "#4a3018"; c.fillRect(x + w * .1, y + h * .8, 3, h * .2); c.fillRect(x + w * .24, y + h * .8, 3, h * .2); tabua(x + w * .08, y + h * .8, w * .18, 6, "#7a5a32", 90);
+  const gl = c.createLinearGradient(x + w * .82, 0, x + w * .82 + 12, 0); gl.addColorStop(0, "#5a5a5a"); gl.addColorStop(.4, "#7a7a78"); gl.addColorStop(1, "#2e2e2e"); c.fillStyle = gl; c.fillRect(x + w * .82, y + h * .8, 12, h * .2); c.fillStyle = "#2a2a2a"; c.fillRect(x + w * .82 - 1, y + h * .8, 14, 3); c.fillRect(x + w * .82 + 4, y + h * .8 - 4, 4, 4);
+  // telhado: telhas de barro em fileiras, recortado no triângulo
+  const tx0 = x - T * .35, ty0 = y + h * .24, tx1 = x + w + T * .35, tyT = y - h * .34;
+  c.save(); c.beginPath(); c.moveTo(tx0, ty0); c.lineTo(x + w / 2, tyT); c.lineTo(tx1, ty0); c.closePath(); c.clip();
+  c.fillStyle = tomCor(cT, .6); c.fillRect(tx0, tyT, tx1 - tx0, ty0 - tyT);
+  const fil = 8, fh = (ty0 - tyT) / fil, tl = T * .34;
+  for (let f = 0; f < fil; f++) { const yy = tyT + f * fh; for (let i = -1, xx = tx0 - (f % 2) * tl / 2; xx < tx1; i++, xx += tl) { const sd2 = (f * 31 + i * 17) % 7, cor = tomCor(cT, .95 + sd2 * .05); const tg = c.createLinearGradient(xx, 0, xx + tl, 0); tg.addColorStop(0, tomCor(cor, 1.25)); tg.addColorStop(.5, cor); tg.addColorStop(1, tomCor(cor, .7)); c.fillStyle = tg; c.beginPath(); c.moveTo(xx + 1, yy); c.lineTo(xx + tl - 1, yy); c.quadraticCurveTo(xx + tl, yy + fh * .9, xx + tl / 2, yy + fh + 2); c.quadraticCurveTo(xx, yy + fh * .9, xx + 1, yy); c.fill(); } c.fillStyle = "rgba(10,4,2,.35)"; c.fillRect(tx0, yy + fh - 1, tx1 - tx0, 2.5); }
+  c.restore();
+  // beiral e cumeeira de madeira clara
+  c.strokeStyle = tomCor(cP, 1.1); c.lineWidth = T * .1; c.lineCap = "round"; c.beginPath(); c.moveTo(tx0 - 2, ty0 + 2); c.lineTo(x + w / 2, tyT - 2); c.lineTo(tx1 + 2, ty0 + 2); c.stroke(); c.strokeStyle = "rgba(255,230,190,.25)"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(tx0 - 2, ty0 - 1); c.lineTo(x + w / 2, tyT - 5); c.lineTo(tx1 + 2, ty0 - 1); c.stroke(); c.lineCap = "butt";
+  // chaminé de tijolo
+  const cx2 = x + w * .74, cy2 = y - h * .22, cw2 = T * .42, ch2 = h * .32;
+  c.fillStyle = "#3a2a24"; c.fillRect(cx2, cy2, cw2, ch2);
+  for (let r2 = 0; r2 < 7; r2++) for (let b = 0; b < 3; b++) { const bx = cx2 + (b - (r2 % 2) * .5) * cw2 / 2.5 + 1, by = cy2 + r2 * ch2 / 7 + 1; c.fillStyle = ["#7a4a3a", "#8a5442", "#6a3e30"][(r2 + b) % 3]; c.fillRect(Math.max(cx2 + 1, bx), by, Math.min(cw2 / 2.5 - 2, cx2 + cw2 - 1 - Math.max(cx2 + 1, bx)), ch2 / 7 - 2); }
+  c.fillStyle = "#2a2a2a"; c.fillRect(cx2 - 3, cy2 - 4, cw2 + 6, 6); c.fillStyle = "rgba(255,255,255,.15)"; c.fillRect(cx2 - 3, cy2 - 4, cw2 + 6, 1.5);
+}
+function desenharCasaArte(tm, x, y, w, h) {
+  const T = TS, kk = [decoCor("casa", ""), decoCor("telhado", ""), decoCor("porta", ""), Math.round(T * 10), DPRr].join();
+  const L = T * .45, TOP = h * .34 + T * .1, LW = w + L * 2, LH = h + TOP + T * .6; // caixa da casa inteira (telhado e varanda)
+  if (CASA_ARTE.k !== kk) { const d = DPRr, pad = 4, dest = document.createElement("canvas"); dest.width = Math.ceil((LW + pad * 2) * d); dest.height = Math.ceil((LH + pad * 2) * d); CASA_ARTE.p = pintura(0, 0, LW, LH, () => casaCorpo(L, TOP, w, h), { luz: 1, chao: .1, contorno: 1.4 }, dest); CASA_ARTE.k = kk; }
+  const p = CASA_ARTE.p; sombra(x + w / 2, y + h + 4, w * .62, TS * .34, .38);
+  c.drawImage(p.cv, 0, 0, p.cw, p.ch, x - L + p.x, y - TOP + p.y, p.w, p.h);
+  // o que muda: luz das janelas, lampião, fumaça
+  const lit = R.lamparinas.filter(v => v).length / 3, nt = horaNoite();
+  [[.1, .42], [.7, .42]].forEach(([fx, fy]) => { const jx = x + w * fx, jy = y + h * fy, jw = w * .2, jh = h * .22, a = (.15 + lit * .75) * (.55 + nt * .45); const lg = c.createRadialGradient(jx + jw / 2, jy + jh * .6, 1, jx + jw / 2, jy + jh * .6, jw * .8); lg.addColorStop(0, `rgba(255,${200 + lit * 30},120,${a})`); lg.addColorStop(1, `rgba(255,160,70,${a * .55})`); c.fillStyle = lg; c.fillRect(jx + 1.5, jy + 1.5, jw / 2 - 3, jh / 2 - 3); c.fillRect(jx + jw / 2 + 1.5, jy + 1.5, jw / 2 - 3, jh / 2 - 3); c.fillRect(jx + 1.5, jy + jh / 2 + 1.5, jw / 2 - 3, jh / 2 - 3); c.fillRect(jx + jw / 2 + 1.5, jy + jh / 2 + 1.5, jw / 2 - 3, jh / 2 - 3); });
+  for (let i = 0; i < 5; i++) { const k = (tm * .25 + i / 5) % 1; c.fillStyle = `rgba(190,190,195,${.2 * (1 - k)})`; c.beginPath(); c.arc(x + w * .74 + TS * .21 + Math.sin(tm * .8 + i) * 7 * k, y - h * .27 - k * TS * 1.8, 5 + k * 16, 0, 7); c.fill(); }
+  const lx = x + w * .598, ly = y + h * .46; c.fillStyle = "#1e1e1e"; c.fillRect(lx - 1, ly - 3, 8, 3); c.fillRect(lx, ly, 6, 10); c.fillStyle = `rgba(255,205,110,${.75 + .2 * Math.sin(tm * 7)})`; c.fillRect(lx + 1.5, ly + 2, 3, 6);
+  desenharCasaExtras(x, y, w, h, tm, false);
+  if (horaNoite() > .6 && !R.dentro && Math.sin(tm * .37) > .985) { c.fillStyle = "rgba(0,0,0,.85)"; c.beginPath(); c.arc(x + w * .8, y + h * .5, h * .06, 0, 7); c.fill(); c.fillRect(x + w * .77, y + h * .55, w * .06, h * .1); }
+  desenharCasaExtras(x, y, w, h, tm, true);
+  if (R.deco && R.deco.band) bandeirinhasCasa(x, y, w, h, tm);
+}
 function desenharCasa(tm) {
   const x = PX(CASA.x), y = PY(CASA.y), w = CASA.w * TS, h = CASA.h * TS; if (!naTela(x + w / 2, y + h / 2, w)) return;
+  if (arteNova()) { desenharCasaArte(tm, x, y, w, h); return; }
   sombra(x + w / 2, y + h + 4, w * .6, TS * .32, .35);
   // varanda
   c.fillStyle = "#5a3e24"; c.fillRect(x - TS * .2, y + h - TS * .1, w + TS * .4, TS * .5); c.strokeStyle = "rgba(0,0,0,.3)"; c.lineWidth = 1; for (let i = 0; i < 12; i++) { c.beginPath(); c.moveTo(x - TS * .2 + i * (w + TS * .4) / 12, y + h - TS * .1); c.lineTo(x - TS * .2 + i * (w + TS * .4) / 12, y + h + TS * .4); c.stroke(); }
@@ -1511,7 +1624,12 @@ function desenharVoce(x, y, tm, o = {}) {
     c.fillStyle = "#2a1a12"; c.fillRect(-18, -6, 7, 4); c.strokeStyle = "#1a1210"; c.lineWidth = 1; c.beginPath(); c.moveTo(12, -7); c.lineTo(14, -5); c.moveTo(14, -7); c.lineTo(12, -5); c.stroke();
     c.fillStyle = `rgba(226,72,61,${.5 + .3 * Math.sin(tm * 4)})`; c.font = `800 ${Math.round(11)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText(q.caido.fora ? "SEM VIDAS" : q === R ? "VOCÊ CAIU" : "AJUDE!", 0, -22); c.textAlign = "start"; c.restore(); return;
   }
-  const sent = !!o.sentada; if (sent) andaK = 0; if (!sent) sombra(x, y, 13 * s, 4.5 * s);
+  if (!o.cru && arteNova()) { // desenha a menina numa tela separada e põe luz, sombra e contorno
+    if (!o.sentada) sombra(x, y, 13 * s, 4.5 * s);
+    pintar(x - 24 * s, y - 56 * s, 54 * s, 59 * s, () => desenharVoce(x, y, tm, { ...o, cru: true, semSombra: true, nome: null }), { contorno: 1.1, luz: 1.35, chao: .1 });
+    if (o.nome) { c.fillStyle = "rgba(240,235,220,.85)"; c.font = `700 ${Math.round(Math.max(13, TS * .26))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.6)"; c.lineWidth = 3; c.strokeText(o.nome, x, y - 58 * s); c.fillText(o.nome, x, y - 58 * s); c.textAlign = "start"; }
+    return; }
+  const sent = !!o.sentada; if (sent) andaK = 0; if (!sent && !o.semSombra) sombra(x, y, 13 * s, 4.5 * s);
   c.save(); c.translate(x, y); c.scale(dir * s, s);
   const sw = Math.sin(f) * 7 * andaK, bob = sent ? Math.sin(tm * 1.6) * .6 : Math.abs(Math.cos(f)) * 2 * andaK, tremeK = p > .6 ? Math.sin(tm * 40) * .8 : 0;
   c.translate(tremeK, 0);
@@ -1556,7 +1674,7 @@ function desenharVoce(x, y, tm, o = {}) {
   c.restore();
   if (o.nome) { c.fillStyle = "rgba(240,235,220,.85)"; c.font = `700 ${Math.round(Math.max(13, TS * .26))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.6)"; c.lineWidth = 3; c.strokeText(o.nome, x, y - 58 * s); c.fillText(o.nome, x, y - 58 * s); c.textAlign = "start"; }
 }
-function desenharGato(g, tm, ck) { const s = TS / 48, x = PX(g.x), y = PY(g.y); sombra(x, y, 9 * s, 3 * s); gatoEm(x, y, s, g.dir, g.anda, tm, c, ck); }
+function desenharGato(g, tm, ck) { const s = TS / 48, x = PX(g.x), y = PY(g.y); sombra(x, y, 9 * s, 3 * s); if (arteNova() && naTela(x, y)) pintar(x - 26 * s, y - 30 * s, 52 * s, 33 * s, () => gatoEm(x, y, s, g.dir, g.anda, tm, c, ck), { contorno: 1, luz: 1.2, chao: .1 }); else gatoEm(x, y, s, g.dir, g.anda, tm, c, ck); }
 function desenharGalinha(g, tm) {
   const s = TS / 48, x = PX(g.x), y = PY(g.y); if (!naTela(x, y, 30)) return; sombra(x, y, 6 * s, 2 * s);
   c.save(); c.translate(x, y); c.scale((g.dir || 1) * s, s); const bic = g.anda ? 0 : Math.max(0, Math.sin(tm * 5 + g.x * 3)) * 3;
