@@ -193,7 +193,7 @@ function novoJogo() {
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) { const fora = x < CERCA.x0 || x >= CERCA.x1 || y < CERCA.y0 || y >= CERCA.y1; if (fora && !(x >= 22 && x <= 28 && y >= CERCA.y1) && !(x < CERCA.x0 && y >= 15 && y <= 18) && srnd() < .55 && !(x >= CERCA.x1 && y >= 20 && y <= 23) && !(x >= 33 && x <= 35 && y < CERCA.y0)) arvores.push({ x: x + .5 + (srnd() - .5) * .6, y: y + .5 + (srnd() - .5) * .6, r: .7 + srnd() * .55, c: Math.floor(srnd() * 5) }); }
   [[8, 7], [44.4, 21], [7.6, 31], [21.8, 31.4], [33.2, 21.6], [7.4, 25]].forEach(([x, y]) => { arvores.push({ x, y, r: .9, c: Math.floor(srnd() * 5) }); solido[Math.floor(y)][Math.floor(x)] = true; });
   const pedras = [], flores = [], cogumelos = [];
-  for (let i = 0; i < 70; i++) { const x = rnd(CERCA.x0 + .5, CERCA.x1 - .5), y = rnd(CERCA.y0 + .5, CERCA.y1 - .5); if (solido[Math.floor(y)][Math.floor(x)]) continue; (i % 3 === 0 ? pedras : i % 3 === 1 ? flores : cogumelos).push({ x, y, k: Math.random() }); }
+  for (let i = 0; i < 24; i++) { const x = rnd(CERCA.x0 + .5, CERCA.x1 - .5), y = rnd(CERCA.y0 + .5, CERCA.y1 - .5); if (solido[Math.floor(y)][Math.floor(x)]) continue; (i % 3 === 0 ? pedras : i % 3 === 1 ? flores : cogumelos).push({ x, y, k: Math.random() }); }
   R = {
     t: 18, dia: 1, vidas: 1, lugar: "sitio", predio: null, andar: 0, int: { x: 4.5, y: 5.2, dir: 1 }, roupa: null, garrafada: 0, broa: 0, conv: {}, fade: 0,
     enxada: false, lampiao: false, ferradura: false, sal: false, arruda: false, patua: false, aguaBenta: 0, missoes: {}, mprog: {}, apito: false, guizo: false, isca: false, medalha: false, cor: 0, semente: 0, caido: null, outros: [], online: null, eu: { x: 13, y: 12.8, dir: 1, anda: 0, fase: 0 }, dentro: false, sala: { x: 5, y: 5.6 },
@@ -230,6 +230,96 @@ function fazerPedaco(ch, cx, cy, P, lim) {
   const k = cx + "," + cy, pc = document.createElement("canvas"); pc.width = pc.height = CHUNK * P; pc.ch = ch; const g = pc.getContext("2d"); g.scale(P / 32, P / 32); g.translate(-cx * CHUNK * 32, -cy * CHUNK * 32); g.beginPath(); g.rect(cx * CHUNK * 32, cy * CHUNK * 32, CHUNK * 32, CHUNK * 32); g.clip();
   CLIPV = [cx * CHUNK * 32, cy * CHUNK * 32, (cx + 1) * CHUNK * 32, (cy + 1) * CHUNK * 32]; try { ch.pintar(g); } finally { CLIPV = null; } detalheChao(g, pc, cx, cy, P); ch.cache.set(k, pc); if (ch.cache.size > lim) ch.cache.delete(ch.cache.keys().next().value); return pc;
 }
+/* ---------- camada dos objetos: tudo que é desenhado depois do chão vai numa tela à parte,
+   e ganha de uma vez só contorno escuro, luz na borda de cima/esquerda e sombra na borda de baixo/direita.
+   Assim o estilo da casa vale pra todas as áreas (árvores, bichos, gente, cercas...) sem refazer cada desenho. */
+const CAM = { on: false, tela: null, cv: null, g: null, s: null, gs: null, r: null, gr: null };
+const camadaLig = () => arteNova() && ls("roca_contorno") !== "0";
+function camadaTam(t, w, h) { if (t.width !== w || t.height !== h) { t.width = w; t.height = h; } }
+function camadaIni() {
+  if (CAM.on || !camadaLig() || !cv || c !== cv.getContext("2d")) return;
+  if (!CAM.cv) { CAM.cv = document.createElement("canvas"); CAM.g = CAM.cv.getContext("2d"); CAM.s = document.createElement("canvas"); CAM.gs = CAM.s.getContext("2d"); CAM.r = document.createElement("canvas"); CAM.gr = CAM.r.getContext("2d");
+    const fr = CAM.g.fillRect.bind(CAM.g); CAM.g.fillRect = (x, y, w, h) => { // pintura da tela inteira (escurecer, neblina): fecha a camada e pinta direto, senão vira contorno
+      if (CAM.on && c === CAM.g && x <= 1 && y <= 1 && w >= W - 1 && h >= H - 1) { const g = CAM.g, t = CAM.tela; camadaJuntar(); t.save(); t.setTransform(g.getTransform()); t.fillStyle = g.fillStyle; t.globalAlpha = g.globalAlpha; t.globalCompositeOperation = g.globalCompositeOperation; t.fillRect(x, y, w, h); t.restore(); return; }
+      fr(x, y, w, h); }; }
+  const w = cv.width, h = cv.height; [CAM.cv, CAM.s, CAM.r].forEach(t => camadaTam(t, w, h));
+  CAM.tela = c; CAM.g.setTransform(1, 0, 0, 1, 0, 0); CAM.g.globalAlpha = 1; CAM.g.globalCompositeOperation = "source-over"; CAM.g.clearRect(0, 0, w, h); CAM.g.setTransform(c.getTransform());
+  CAM.g.imageSmoothingEnabled = true; c = CAM.g; CAM.on = true;
+}
+// junta o que já foi desenhado na camada com o chão (e deixa a camada limpa pra continuar)
+function camadaJuntar() {
+  if (!CAM.on) return; const t = CAM.tela, g = CAM.g, w = CAM.cv.width, h = CAM.cv.height, d = DPRr, tf = g.getTransform();
+  const est = { fs: g.fillStyle, ss: g.strokeStyle, ga: g.globalAlpha, op: g.globalCompositeOperation, lw: g.lineWidth };
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+  const gs = CAM.gs, gr = CAM.gr, e = 1.25 * d, rb = 2.2 * d, fraco = (window.fpsAlvo ? fpsAlvo() : 30) <= 24;
+  // silhueta escura
+  gs.setTransform(1, 0, 0, 1, 0, 0); gs.globalCompositeOperation = "source-over"; gs.globalAlpha = 1; gs.clearRect(0, 0, w, h); gs.drawImage(CAM.cv, 0, 0); gs.globalCompositeOperation = "source-in"; gs.fillStyle = "rgba(22,14,10,.85)"; gs.fillRect(0, 0, w, h); gs.globalCompositeOperation = "source-over";
+  if (!fraco) {
+    // luz na borda de cima e da esquerda: a silhueta clara menos ela mesma empurrada pra baixo/direita
+    const borda = (cor, dx, dy, a) => { gr.setTransform(1, 0, 0, 1, 0, 0); gr.globalCompositeOperation = "source-over"; gr.globalAlpha = 1; gr.clearRect(0, 0, w, h); gr.drawImage(CAM.cv, 0, 0); gr.globalCompositeOperation = "source-in"; gr.fillStyle = cor; gr.fillRect(0, 0, w, h); gr.globalCompositeOperation = "destination-out"; gr.drawImage(CAM.cv, dx, dy); gr.globalCompositeOperation = "source-over"; g.globalCompositeOperation = "source-atop"; g.globalAlpha = a; g.drawImage(CAM.r, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = "source-over"; };
+    borda("rgb(255,232,186)", rb, rb, .3); borda("rgb(14,8,22)", -rb * 1.4, -rb * 1.4, .38);
+  }
+  t.save(); t.setTransform(1, 0, 0, 1, 0, 0); t.globalAlpha = 1; t.globalCompositeOperation = "source-over";
+  t.drawImage(CAM.s, e, e); t.drawImage(CAM.s, -e, -e); t.drawImage(CAM.s, e, -e); t.drawImage(CAM.s, -e, e);
+  t.drawImage(CAM.cv, 0, 0); t.restore();
+  g.clearRect(0, 0, w, h); g.setTransform(tf); g.fillStyle = est.fs; g.strokeStyle = est.ss; g.globalAlpha = est.ga; g.globalCompositeOperation = est.op; g.lineWidth = est.lw;
+}
+function camadaFim() { if (!CAM.on) return; const tf = CAM.g.getTransform(); camadaJuntar(); c = CAM.tela; c.setTransform(tf); CAM.on = false; }
+function camadaReset() { if (CAM.on) { c = CAM.tela; CAM.on = false; } }
+// ícones lisos (com luz e contorno) para o painel: substituem os de pixel
+const ICS = {
+  agua: `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="icA" x1="0" y1="0" x2=".7" y2="1"><stop offset="0" stop-color="#d6f1ff"/><stop offset=".45" stop-color="#5ab0e0"/><stop offset="1" stop-color="#1e5a8e"/></linearGradient></defs><path d="M12 2.5C9 7 5.5 10.6 5.5 14.6a6.5 6.5 0 0 0 13 0C18.5 10.6 15 7 12 2.5z" fill="url(#icA)" stroke="#10202e" stroke-width="1.3" stroke-linejoin="round"/><path d="M9 13.5c0 2 1 3.4 2.6 4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".75"/></svg>`,
+  oleo: `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="icO" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#b8420e"/><stop offset=".5" stop-color="#f2a33a"/><stop offset="1" stop-color="#ffe7a0"/></linearGradient></defs><path d="M12 2c1.5 3.6 5.8 6 5.8 11.2A5.8 5.8 0 0 1 6.2 13.2c0-2.6 1.3-4.2 2.6-5.6.2 1.8.9 3 2 3.6C10.6 8 11 5 12 2z" fill="url(#icO)" stroke="#2e1406" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 12.5c1.3 1.4 2 2.5 2 3.6a2 2 0 0 1-4 0c0-1.1.7-2.2 2-3.6z" fill="#fff6d0"/></svg>`,
+  folego: `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke-linecap="round"><path d="M3 9h11a3 3 0 1 0-3-3" stroke="#14240a" stroke-width="4"/><path d="M3 15h14a3 3 0 1 1-3 3" stroke="#14240a" stroke-width="4"/><path d="M3 12h7" stroke="#14240a" stroke-width="4"/><path d="M3 9h11a3 3 0 1 0-3-3" stroke="#9bd86b" stroke-width="2.2"/><path d="M3 15h14a3 3 0 1 1-3 3" stroke="#9bd86b" stroke-width="2.2"/><path d="M3 12h7" stroke="#d8f6b0" stroke-width="2.2"/></g></svg>`,
+  medo: `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><radialGradient id="icM" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#ffd0da"/><stop offset=".5" stop-color="#d83a5a"/><stop offset="1" stop-color="#6e1026"/></radialGradient></defs><path d="M2 12c2.8-4.4 6.2-6.5 10-6.5S19.2 7.6 22 12c-2.8 4.4-6.2 6.5-10 6.5S4.8 16.4 2 12z" fill="#f4ead8" stroke="#2a0810" stroke-width="1.4"/><circle cx="12" cy="12" r="4.4" fill="url(#icM)" stroke="#2a0810" stroke-width="1"/><circle cx="12" cy="12" r="1.8" fill="#1a0408"/><circle cx="10.4" cy="10.4" r="1" fill="#fff"/></svg>`,
+  coracao: `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><radialGradient id="icC" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ff9a8a"/><stop offset=".45" stop-color="#e2483d"/><stop offset="1" stop-color="#7a1414"/></radialGradient></defs><path d="M12 21s-8.5-5.3-8.5-11A4.8 4.8 0 0 1 12 6.6 4.8 4.8 0 0 1 20.5 10c0 5.7-8.5 11-8.5 11z" fill="url(#icC)" stroke="#2a0606" stroke-width="1.4" stroke-linejoin="round"/><path d="M6.8 9.2c.4-1.3 1.5-2 2.6-2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".8"/></svg>`,
+  coracaoV: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-8.5-5.3-8.5-11A4.8 4.8 0 0 1 12 6.6 4.8 4.8 0 0 1 20.5 10c0 5.7-8.5 11-8.5 11z" fill="rgba(0,0,0,.35)" stroke="#8a7a6a" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+};
+const IC_DIARIO = `<svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="icD" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9a5a34"/><stop offset="1" stop-color="#4a2210"/></linearGradient></defs><path d="M7 5h15a3 3 0 0 1 3 3v19H10a3 3 0 0 1-3-3z" fill="url(#icD)" stroke="#1a0c04" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 27a3 3 0 0 1 0-6h15" fill="#f4e8cc" stroke="#1a0c04" stroke-width="1.4"/><path d="M12 9h9M12 12.5h7" stroke="#f2c94a" stroke-width="1.6" stroke-linecap="round"/><path d="M20 5v8l2-1.5 2 1.5V5" fill="#c8302a" stroke="#1a0c04" stroke-width="1"/></svg>`;
+const IC_PAUSA = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="9" y="8" width="5" height="16" rx="1.5" fill="#f4e8cc" stroke="#1a0c04" stroke-width="1.4"/><rect x="18" y="8" width="5" height="16" rx="1.5" fill="#f4e8cc" stroke="#1a0c04" stroke-width="1.4"/></svg>`;
+// painel novo: madeira com luz em cima, sombra embaixo e cantos arredondados; tudo ancorado nos cantos da tela
+const CSS_HUD2 = `
+  #roca{--mad:linear-gradient(180deg,rgba(255,222,164,.13),rgba(0,0,0,.2)),repeating-linear-gradient(90deg,rgba(0,0,0,.07) 0 2px,transparent 2px 11px),linear-gradient(#5e3d23,#3a2313);--madB:2px solid #170d06;--madS:inset 0 1px 0 rgba(255,226,170,.38),inset 0 -2px 0 rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.5)}
+  .rc-hud{top:max(8px,env(safe-area-inset-top));align-items:flex-start;gap:8px}
+  .rc-vidas{order:0}.rc-l{order:1}.rc-barras{order:2}.rc-sala{order:3}.rc-itens{order:4;align-self:center}
+  .rc-vida{background:var(--mad);border:var(--madB);border-radius:14px;box-shadow:var(--madS);padding:6px 9px;height:46px;box-sizing:border-box}
+  .rc-vida svg{width:30px;height:30px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}.rc-vida .rc-prot svg{width:22px;height:22px}
+  .rc-vida.caido{animation:rcPulsa 1s ease-in-out infinite}@keyframes rcPulsa{50%{box-shadow:var(--madS),0 0 0 3px #e2483d,0 0 14px rgba(226,72,61,.8)}}
+  .rc-l{background:var(--mad);border:var(--madB);border-radius:14px;box-shadow:var(--madS);padding:5px 12px 6px;height:46px;box-sizing:border-box;justify-content:center;text-shadow:0 1px 2px #000}
+  .rc-l b{font-size:21px;line-height:1}.rc-l b::before{width:13px;height:13px;background:radial-gradient(circle at 35% 30%,#fff3b8,#f2c94a 45%,#a8761a);box-shadow:0 0 0 1.5px #3a2208,0 1px 2px rgba(0,0,0,.6)}
+  .rc-l span{font-size:9.5px;letter-spacing:.08em;color:#e8d8b4;opacity:1;margin-top:2px}
+  .rc-barras{background:var(--mad);border:var(--madB);border-radius:14px;box-shadow:var(--madS);padding:5px 10px 5px 6px;gap:3px 12px}
+  .rc-sti{width:22px;height:22px;background:radial-gradient(circle at 40% 35%,#3a2616,#120a05);border-radius:50%;box-shadow:inset 0 1px 0 rgba(255,226,170,.25),0 0 0 1.5px #170d06}.rc-sti svg{width:17px;height:17px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+  .rc-b{width:92px;height:13px;border-radius:7px;border:1.5px solid #170d06;box-shadow:inset 0 2px 3px rgba(0,0,0,.6),0 1px 0 rgba(255,226,170,.18)}
+  .rc-b::after{background:repeating-linear-gradient(90deg,transparent 0 calc(100% / var(--n) - 1px),rgba(0,0,0,.28) calc(100% / var(--n) - 1px) calc(100% / var(--n)))}
+  .rc-b s{border-radius:6px;background:linear-gradient(180deg,var(--c1) 0,var(--c2) 45%,var(--c3) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(0,0,0,.25)}
+  .rc-b em{border-radius:5px;font-size:10px}
+  .rc-st.baixo .rc-b{animation:rcPulsaB .9s ease-in-out infinite}.rc-st.baixo .rc-sti{animation:none}@keyframes rcPulsaB{50%{box-shadow:inset 0 2px 3px rgba(0,0,0,.6),0 0 0 2px #e2483d,0 0 8px rgba(226,72,61,.8)}}
+  .rc-menu{background:var(--mad);border:var(--madB);box-shadow:var(--madS);border-radius:50%;width:46px;height:46px;padding:0;display:grid;place-items:center;color:#f4e8cc;font-size:0;flex:none}
+  .rc-menu svg{width:28px;height:28px;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}.rc-menu:active{transform:translateY(1px);box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+  .rc-moch{padding:0;margin-left:auto}.rc-moch + .rc-menu,.rc-diariobt + .rc-menu{margin-left:0}
+  .rc-chatbt i{top:3px;right:3px}
+  .rc-obj{top:calc(max(8px,env(safe-area-inset-top)) + 54px);margin-top:0!important;max-width:min(42vw,360px);background:linear-gradient(#efe3c4,#d8c69e);color:#3a2410;text-shadow:none;font:700 11px/1.2 var(--f-mono,monospace);padding:5px 11px;border-radius:9px;border:1.5px solid #5a3a1e;box-shadow:inset 0 1px 0 #fff8e4,0 3px 8px rgba(0,0,0,.45)}
+  .rc-itens span{background:rgba(24,14,6,.72);border:1px solid rgba(255,226,170,.25);border-radius:9px;padding:3px 8px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+  .rc-chatlog{top:calc(max(8px,env(safe-area-inset-top)) + 86px)}
+  .rc-bt{background:radial-gradient(circle at 36% 30%,#7a5434,#4a2e18 55%,#24140a);border:2px solid #170d06;box-shadow:inset 0 2px 0 rgba(255,226,170,.3),inset 0 -3px 0 rgba(0,0,0,.35),0 5px 12px rgba(0,0,0,.5);color:#f4e8cc;text-shadow:0 1px 2px #000}
+  .rc-bt:active{transform:translateY(2px);box-shadow:inset 0 3px 6px rgba(0,0,0,.6)}
+  .rc-bt.acao{background:radial-gradient(circle at 36% 30%,#ffd28a,#e88a2a 45%,#9a4a12 85%);border:2px solid #3a1a06;color:#2a1206;text-shadow:0 1px 0 rgba(255,230,180,.6);font-size:13px;font-weight:800;box-shadow:inset 0 3px 0 rgba(255,240,200,.55),inset 0 -4px 0 rgba(0,0,0,.25),0 6px 16px rgba(0,0,0,.55)}
+  .rc-bt.on{background:radial-gradient(circle at 36% 30%,#fff0b0,#f2c94a 45%,#a8761a);color:#2a1206;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 0 0 2px #f2c94a,0 0 16px rgba(242,201,74,.6)}
+  .rc-joy{background:radial-gradient(circle,rgba(0,0,0,.18),rgba(0,0,0,.32));border:2px solid rgba(255,226,170,.22);box-shadow:inset 0 2px 8px rgba(0,0,0,.4)}
+  .rc-joy i{background:radial-gradient(circle at 36% 30%,#8a6240,#4a2e18 60%,#24140a);border:2px solid #170d06;box-shadow:inset 0 2px 0 rgba(255,226,170,.3),0 4px 10px rgba(0,0,0,.5)}
+  .rc-mao{background:var(--mad);border:var(--madB);border-radius:12px;box-shadow:var(--madS)}.rc-mao .rc-mao-ic{border-radius:8px}
+  .rc-bt{border-radius:50%}.rc-bts .sem{border-radius:16px;background:var(--mad);border:var(--madB);box-shadow:var(--madS)}
+  .rc-menu{order:10}.rc-chatbt{order:9}
+  .rc-joy{border-radius:50%}.rc-joy i{border-radius:50%}.rc-joy::before,.rc-joy::after{display:none}
+  .rc-l b::before{border-radius:50%;transform:none}.rc-obj{border-left:1.5px solid #5a3a1e}
+  .rc-dica{background:rgba(24,14,6,.72);border-radius:10px;border:1px solid rgba(255,226,170,.25)}
+  .rc-fala{border-radius:16px;box-shadow:inset 0 0 0 3px #d4b888,0 12px 32px rgba(0,0,0,.6)}.rc-fala-ret{border-radius:12px;box-shadow:0 3px 8px rgba(0,0,0,.35)}
+  .rc-caixa{border-radius:18px!important;box-shadow:inset 0 1px 0 rgba(255,226,170,.25),0 16px 40px rgba(0,0,0,.6)!important}
+  .rc-op{border-radius:12px!important;box-shadow:inset 0 1px 0 rgba(255,226,170,.2),0 3px 8px rgba(0,0,0,.4)!important}.rc-op:active{transform:translateY(1px)}
+  .rc-moch-l div,.rc-bicho,.rc-rec,.rc-fog-fim{border-radius:12px!important}
+  @media (max-height:420px){.rc-b{width:76px}.rc-l b{font-size:18px}.rc-vida svg{width:26px;height:26px}}
+`;
 function desenharChaoChunks(ch) {
   const P = Math.min(96, Math.max(24, Math.round(TS * DPRr))); if (ch.P !== P) { ch.cache.clear(); ch.P = P; }
   const lim = Math.max(12, Math.floor(70e6 / (CHUNK * P * CHUNK * P * 4)));
@@ -242,6 +332,7 @@ function desenharChaoChunks(ch) {
     else c.drawImage(base, cx * CHUNK * 16, cy * CHUNK * 16, CHUNK * 16, CHUNK * 16, PX(cx * CHUNK), PY(cy * CHUNK), CHUNK * TS + .6, CHUNK * TS + .6); // enquanto o pedaço nítido não fica pronto
   }
   if (!feitos) { const mx = Math.ceil(ch.mw / CHUNK) - 1, my = Math.ceil(ch.mh / CHUNK) - 1; outer: for (let cy = Math.max(0, cy0 - 1); cy <= Math.min(my, cy1 + 1); cy++) for (let cx = Math.max(0, cx0 - 1); cx <= Math.min(mx, cx1 + 1); cx++) if (!ch.cache.has(cx + "," + cy)) { fazerPedaco(ch, cx, cy, P, lim); break outer; } } // adianta o vizinho antes de ele aparecer
+  camadaIni();
 }
 let CHAO_SITIO = null, CHAO_VILA = null;
 // detalhe fino só no pedaço: tufos de capim, trevos, pedrinhas e florzinhas, onde o chão é de grama
@@ -249,7 +340,7 @@ function detalheChao(g, pc, cx, cy, P) {
   let sd = (cx * 7919 + cy * 104729 + 13) % 2147483647 || 7; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
   const ch = pc.ch, m = ch && ch.mask, mw = ch ? ch.mw * 16 : 0, ox = cx * CHUNK * 32, oy = cy * CHUNK * 32;
   const grama = (x, y) => !m || m[Math.floor(y / 2) * mw + Math.floor(x / 2)] === 1;
-  for (let n = 0; n < CHUNK * CHUNK * 9; n++) {
+  for (let n = 0; n < CHUNK * CHUNK * 3; n++) {
     const x = ox + r() * CHUNK * 32, y = oy + r() * CHUNK * 32, t = r(), v = r(); if (!grama(x, y)) continue;
     if (t < .62) { g.strokeStyle = v < .5 ? "rgba(150,170,80,.55)" : "rgba(40,60,22,.5)"; g.lineWidth = .55; g.beginPath(); for (let f = -1; f <= 1; f++) { g.moveTo(x + f * .8, y); g.quadraticCurveTo(x + f * 1.6, y - 2.5, x + f * 2.2 + (v - .5), y - 3.5 - v * 2.5); } g.stroke(); }
     else if (t < .78) { g.fillStyle = "rgba(70,110,40,.6)"; for (let f = 0; f < 3; f++) { g.beginPath(); g.arc(x + Math.cos(f * 2.1) * .9, y + Math.sin(f * 2.1) * .9, .9, 0, 7); g.fill(); } }
@@ -288,9 +379,9 @@ function _pintarChaoSitio(g) {
   semente = 99;
   const dentro = (x, y) => x > CERCA.x0 * P && x < CERCA.x1 * P && y > CERCA.y0 * P && y < CERCA.y1 * P;
   const s0 = semente;
-  for (let i = 0; i < 2200; i++) { semente = semInd(i); const x = srnd() * MW * P, y = srnd() * MH * P; if (!vis(x, y)) continue; g.fillStyle = dentro(x, y) ? (srnd() < .5 ? "rgba(150,160,76,.35)" : "rgba(60,80,30,.3)") : "rgba(16,24,10,.45)"; g.beginPath(); g.ellipse(x, y, 6 + srnd() * 24, 4 + srnd() * 13, srnd() * 3, 0, 7); g.fill(); }
-  for (let i = 0; i < 4200; i++) { semente = semInd(i + 5e4); const x = srnd() * MW * P, y = srnd() * MH * P; if (!vis(x, y)) continue; g.strokeStyle = srnd() < .5 ? "rgba(160,170,86,.5)" : "rgba(46,66,28,.55)"; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (srnd() - .5) * 3, y - 3 - srnd() * 4); g.stroke(); }
-  for (let i = 0; i < 900; i++) { semente = semInd(i + 1e5); const x = srnd() * MW * P, y = srnd() * MH * P; if (!vis(x, y)) continue; g.fillStyle = ["#c8662a", "#d89a2a", "#a8401e", "#e0b040", "#8a3018"][Math.floor(srnd() * 5)]; g.beginPath(); g.ellipse(x, y, 2.4, 1.4, srnd() * 3, 0, 7); g.fill(); } // folhas secas
+  for (let i = 0; i < 900; i++) { semente = semInd(i); const x = srnd() * MW * P, y = srnd() * MH * P; if (!vis(x, y)) continue; g.fillStyle = dentro(x, y) ? (srnd() < .5 ? "rgba(150,160,76,.35)" : "rgba(60,80,30,.3)") : "rgba(16,24,10,.45)"; g.beginPath(); g.ellipse(x, y, 6 + srnd() * 24, 4 + srnd() * 13, srnd() * 3, 0, 7); g.fill(); }
+  for (let i = 0; i < 1500; i++) { semente = semInd(i + 5e4); const x = srnd() * MW * P, y = srnd() * MH * P; if (!vis(x, y)) continue; g.strokeStyle = srnd() < .5 ? "rgba(160,170,86,.5)" : "rgba(46,66,28,.55)"; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (srnd() - .5) * 3, y - 3 - srnd() * 4); g.stroke(); }
+  for (let i = 0; i < 220; i++) { semente = semInd(i + 1e5); const x = srnd() * MW * P, y = srnd() * MH * P; if (!vis(x, y)) continue; g.fillStyle = ["#c8662a", "#d89a2a", "#a8401e", "#e0b040", "#8a3018"][Math.floor(srnd() * 5)]; g.beginPath(); g.ellipse(x, y, 2.4, 1.4, srnd() * 3, 0, 7); g.fill(); } // folhas secas
   semente = s0;
   // caminhos de terra com pedrinhas
   const TRL = [], trilha = (pts, w, escura) => TRL.push([pts, w * 1.12, escura ? "mata" : "sitio"]);
@@ -339,7 +430,7 @@ function montarUI() {
   d.innerHTML = `<canvas id="rocaCv"></canvas>
     <div class="rc-hud"><div class="rc-l"><b id="rcMoedas">0</b><span id="rcDia">Dia 1</span></div>
       <div class="rc-barras">${[["agua", "Água do regador", "rcAgua", "<em id=\"rcAguaN\"></em>"], ["oleo", "Óleo da lanterna", "rcOleo", ""], ["folego", "Fôlego", "rcFolego", ""], ["medo", "Medo", "rcMedo", ""]].map(([k, t, id, ex]) => `<span class="rc-st ${k}" id="rcSt_${k}" title="${t}"><i class="rc-sti">${pixIc(k)}</i><span class="rc-b"><s id="${id}"></s>${ex}</span></span>`).join("")}</div>
-      <div class="rc-vidas" id="rcVidas"></div><div class="rc-sala" id="rcSala" hidden></div><div class="rc-itens" id="rcItens"></div><button class="rc-menu rc-moch rc-chatbt" id="rcChat" type="button" aria-label="Chat" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-7l-6 5v-5h-3a4 4 0 0 1-4-4z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="11" cy="12.5" r="1.6" fill="currentColor"/><circle cx="16" cy="12.5" r="1.6" fill="currentColor"/><circle cx="21" cy="12.5" r="1.6" fill="currentColor"/></svg><i id="rcChatN" hidden></i></button><button class="rc-menu rc-moch" id="rcMoch" type="button" aria-label="Mochila"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="8" width="18" height="20" rx="6" fill="#8a5a32" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="17" width="11" height="8" rx="2.5" fill="#6a4224" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 19.5h11" stroke="currentColor" stroke-width="1"/><circle cx="16" cy="21.5" r="1.1" fill="#f2c94a"/></svg></button><button class="rc-menu" id="rcMenu" type="button">Pausa</button></div>
+      <div class="rc-vidas" id="rcVidas"></div><div class="rc-sala" id="rcSala" hidden></div><div class="rc-itens" id="rcItens"></div><button class="rc-menu rc-moch rc-chatbt" id="rcChat" type="button" aria-label="Chat" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-7l-6 5v-5h-3a4 4 0 0 1-4-4z" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="11" cy="12.5" r="1.6" fill="currentColor"/><circle cx="16" cy="12.5" r="1.6" fill="currentColor"/><circle cx="21" cy="12.5" r="1.6" fill="currentColor"/></svg><i id="rcChatN" hidden></i></button><button class="rc-menu rc-moch" id="rcMoch" type="button" aria-label="Mochila"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="8" width="18" height="20" rx="6" fill="#8a5a32" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="17" width="11" height="8" rx="2.5" fill="#6a4224" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 19.5h11" stroke="currentColor" stroke-width="1"/><circle cx="16" cy="21.5" r="1.1" fill="#f2c94a"/></svg></button><button class="rc-menu rc-diariobt" id="rcDiarioBt" type="button" aria-label="Diário">${IC_DIARIO}</button><button class="rc-menu" id="rcMenu" type="button" aria-label="Pausa">${arteNova() ? IC_PAUSA : "Pausa"}</button></div>
     <div class="rc-obj" id="rcObj"></div><div class="rc-chatlog" id="rcChatLog"></div>
     <div class="rc-chatbar" id="rcChatBar" hidden><div class="rc-rapidas">${["Socorro!", "Vem aqui!", "Corre!", "Tô indo!", "Apaga a lanterna!", "Vou vender", "Cuidado!", "Valeu!"].map(t => `<button type="button" data-r="${t}">${t}</button>`).join("")}</div>
       <form id="rcChatF"><input id="rcChatIn" maxlength="80" autocomplete="off" placeholder="Escreva para o seu amigo..."><button type="submit">Enviar</button><button type="button" id="rcChatX" aria-label="Fechar">✕</button></form></div>
@@ -350,7 +441,7 @@ function montarUI() {
     <div class="rc-painel" id="rcPainel" hidden></div>
     <div class="rc-gire" id="rcGire" hidden><b>Vire o celular</b><span>Este modo é jogado com o celular deitado.</span></div>`;
   document.body.appendChild(d);
-  ["rcMoedas", "rcDia", "rcAguaN", "rcSt_agua", "rcSt_oleo", "rcSt_folego", "rcSt_medo", "rcAgua", "rcOleo", "rcFolego", "rcMedo", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcMao", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcSala", "rcMoch", "rcTitulo", "rcTitMenu", "rcTitRod"].forEach(i => el[i] = document.getElementById(i)); el.rcObj.addEventListener("click", () => { if (R && !R.menu && !painelAberto) abrirDiario("objetivos"); });
+  ["rcMoedas", "rcDia", "rcAguaN", "rcSt_agua", "rcSt_oleo", "rcSt_folego", "rcSt_medo", "rcAgua", "rcOleo", "rcFolego", "rcMedo", "rcItens", "rcMenu", "rcJoy", "rcJoyK", "rcSem", "rcMao", "rcLuz", "rcCorre", "rcAcao", "rcFala", "rcDica", "rcPainel", "rcGire", "rcChat", "rcChatN", "rcChatLog", "rcChatBar", "rcChatIn", "rcChatF", "rcChatX", "rcObj", "rcVidas", "rcSala", "rcMoch", "rcDiarioBt", "rcTitulo", "rcTitMenu", "rcTitRod"].forEach(i => el[i] = document.getElementById(i)); el.rcObj.addEventListener("click", () => { if (R && !R.menu && !painelAberto) abrirDiario("objetivos"); });
   el.rcSala.addEventListener("click", () => { const c = Net.codigo; if (!c) return; try { navigator.clipboard.writeText(c).then(() => R && efeito("Código " + c + " copiado", "#f2c94c"), () => {}); } catch (e) {} });
   cv = document.getElementById("rocaCv"); c = cv.getContext("2d"); luzCv = document.createElement("canvas"); lc = luzCv.getContext("2d");
   const st = document.createElement("style"); st.textContent = `
@@ -544,7 +635,7 @@ function montarUI() {
   .rc-rec-top small,.rc-rec-ing span,.rc-fog-lenha{font-size:13px!important}.rc-fog-dica{font-size:15px!important}
   .rc-tit-rod{font-size:13px!important}.rc-tbt small{font-size:13px!important}
   .rc-fala small{font-size:clamp(13px,1.5vw,16px)!important}.rc-hist-txt small{font-size:13px!important}`;
-  document.head.appendChild(st);
+  document.head.appendChild(st); if (arteNova()) { const st2 = document.createElement("style"); st2.textContent = CSS_HUD2; document.head.appendChild(st2); }
   addEventListener("keydown", e => { if (!el.rcTitulo || el.rcTitulo.hidden || painelAberto) return; const k = e.key; if (k === "ArrowDown" || k === "ArrowUp" || k === "s" || k === "w") { e.preventDefault(); moverFoco(k === "ArrowDown" || k === "s" ? 1 : -1); } if (k === "Escape") { const v = document.getElementById("rcTVolta"); if (v) v.click(); } });
   // joystick
   const jz = el.rcJoy, pos = e => { const r = jz.getBoundingClientRect(); return [e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)]; };
@@ -561,7 +652,7 @@ function montarUI() {
   el.rcChatX.addEventListener("click", () => abrirChat(false));
   el.rcChatBar.querySelectorAll("[data-r]").forEach(b => b.addEventListener("click", () => { mandarChat(b.dataset.r); abrirChat(false); }));
   if (matchMedia("(pointer: fine)").matches && !("ontouchstart" in window)) document.getElementById("roca").classList.add("rc-pc");
-  bt(el.rcMoch, () => { if (R && !R.menu && !painelAberto) abrirMochila(); }); bt(el.rcSem, () => { if (R && R.lugar === "lagoa" && trocarArma()) return; R.semente = (R.semente + 1) % R.sementes.length; tocarTom(900, .05, { vol: .05 }); hud(); });
+  bt(el.rcMoch, () => { if (R && !R.menu && !painelAberto) abrirMochila(); }); bt(el.rcDiarioBt, () => { if (R && !R.menu && !painelAberto) abrirDiario("objetivos"); }); bt(el.rcSem, () => { if (R && R.lugar === "lagoa" && trocarArma()) return; R.semente = (R.semente + 1) % R.sementes.length; tocarTom(900, .05, { vol: .05 }); hud(); });
   el.rcMenu.addEventListener("click", () => pausar());
   el.rcFala.addEventListener("pointerdown", e => { e.preventDefault(); proximaFala(); });
   addEventListener("keydown", e => { if (document.getElementById("roca").hidden) return; teclas[e.key.toLowerCase()] = true; const k = e.key.toLowerCase(); if (["f", "e", " "].includes(k)) { e.preventDefault(); if (FOG.fase === "mexer" && painelAberto) mexerPanela(); else if (R.msg) proximaFala(); else acao(); } if (k === "r") alternarLanterna(); if (k === "shift") correr(); if (k === "q") el.rcSem.dispatchEvent(new Event("pointerdown")); if (k === "z" && R && !painelAberto) trocarItemDeco(); if (k === "escape") { if (!el.rcChatBar.hidden) abrirChat(false); else if (painelAberto && document.getElementById("rcFechar")) fecharPainel(); else pausar(); } if (k === "enter" && R && R.online && outros().length && el.rcChatBar.hidden) { e.preventDefault(); abrirChat(true); } if ((k === "m" || k === "tab") && R && !R.menu && !painelAberto) { e.preventDefault(); abrirMochila(); } });
@@ -1103,7 +1194,7 @@ const PIX = {
   terco: [["...yy...", "...yy...", ".yyyyyy.", ".yyyyyy.", "...yy...", "...yy...", "...yy...", "..o..o.."], { y: "#f2c94a", o: "#a07a3a" }]
 };
 const PIX_C = {};
-function pixIc(k) { if (PIX_C[k]) return PIX_C[k]; const [l, pal] = PIX[k], h = l.length, w = Math.max(...l.map(x => x.length)); let r = ""; l.forEach((ln, y) => [...ln].forEach((ch, x) => { if (pal[ch]) r += `<rect x="${x}" y="${y}" width="1.05" height="1.05" fill="${pal[ch]}"/>`; })); return PIX_C[k] = `<svg viewBox="-.5 -.5 ${w + 1} ${h + 1}" shape-rendering="crispEdges" aria-hidden="true"><g style="filter:drop-shadow(.6px .6px 0 #000)">${r}</g></svg>`; }
+function pixIc(k) { if (ICS[k] && arteNova()) return ICS[k]; if (PIX_C[k]) return PIX_C[k]; const [l, pal] = PIX[k], h = l.length, w = Math.max(...l.map(x => x.length)); let r = ""; l.forEach((ln, y) => [...ln].forEach((ch, x) => { if (pal[ch]) r += `<rect x="${x}" y="${y}" width="1.05" height="1.05" fill="${pal[ch]}"/>`; })); return PIX_C[k] = `<svg viewBox="-.5 -.5 ${w + 1} ${h + 1}" shape-rendering="crispEdges" aria-hidden="true"><g style="filter:drop-shadow(.6px .6px 0 #000)">${r}</g></svg>`; }
 function barras() {
   const am = R.aguaMax || 5, b = el.rcAgua.parentNode; if (b.style.getPropertyValue("--n") !== String(am)) b.style.setProperty("--n", am);
   el.rcAgua.style.width = (R.agua / am * 100) + "%"; el.rcAguaN.textContent = `${R.agua}/${am}`; el.rcOleo.style.width = R.oleo + "%"; el.rcFolego.style.width = R.folego + "%";
@@ -1123,7 +1214,7 @@ function hud() {
   el.rcLuz.classList.toggle("on", R.lanterna); el.rcCorre.classList.toggle("on", R.correndo);
   const comAmigo = !!(R.online && outros().length && !R.menu); el.rcChat.hidden = !comAmigo; if (!comAmigo && !el.rcChatBar.hidden) abrirChat(false);
   { const ob = R.menu ? "" : objetivo(), curto = ob.split(" · ")[0]; el.rcObj.textContent = ob ? "📔 " + (curto.length > 46 ? curto.slice(0, 44) + "…" : curto) : ""; el.rcObj.title = ob; }
-  el.rcObj.style.marginTop = "32px"; // espaço pro painel das barras
+  el.rcObj.style.marginTop = arteNova() ? "0" : "32px"; // espaço pro painel das barras
   const sala = R.online && Net.codigo && !R.menu ? `SALA <b>${Net.codigo}</b> · ${outros().length + 1}/${MAXJ}${R.online === "host" && !outros().length ? " · esperando amigos" : ""}` : "";
   if (el.rcSala.dataset.k !== sala) { el.rcSala.dataset.k = sala; el.rcSala.innerHTML = sala; el.rcSala.hidden = !sala; }
   const cor = q => { const n = q.vidas || 0; let h = ""; for (let i = 0; i < Math.max(1, n); i++) h += pixIc(i < n ? "coracao" : "coracaoV"); return h; };
@@ -1443,7 +1534,7 @@ function atualizarBichos(dt) {
 const PX = x => (x - cam.x - SHK.x) * TS + W / 2, PY = y => (y - cam.y - SHK.y) * TS + H / 2; // a tremida entra só no desenho: a câmera e o mundo continuam no lugar
 let cam = { x: 13, y: 12 };
 const naTela = (x, y, m = 120) => x > -m && x < W + m && y > -m && y < H + m;
-function sombra(x, y, rx, ry, a = .32) { c.fillStyle = `rgba(0,0,0,${a})`; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill(); }
+function sombra(x, y, rx, ry, a = .32) { if (CAM.on && c === CAM.g) { const t = CAM.tela; t.save(); t.setTransform(c.getTransform()); t.fillStyle = `rgba(0,0,0,${a})`; t.beginPath(); t.ellipse(x, y, rx, ry, 0, 0, 7); t.fill(); t.restore(); return; } c.fillStyle = `rgba(0,0,0,${a})`; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill(); }
 function desenharArvore(a, tm, fruta) {
   const x = PX(a.x), y = PY(a.y), r = a.r * TS; if (x < -r * 2 || x > W + r * 2 || y < -r * 3 || y > H + r * 2) return;
   sombra(x + r * .2, y + r * .05, r * .9, r * .35, .35);
@@ -1626,7 +1717,7 @@ function desenharVoce(x, y, tm, o = {}) {
   }
   if (!o.cru && arteNova()) { // desenha a menina numa tela separada e põe luz, sombra e contorno
     if (!o.sentada) sombra(x, y, 13 * s, 4.5 * s);
-    pintar(x - 24 * s, y - 56 * s, 54 * s, 59 * s, () => desenharVoce(x, y, tm, { ...o, cru: true, semSombra: true, nome: null }), { contorno: 1.1, luz: 1.35, chao: .1 });
+    pintar(x - 24 * s, y - 56 * s, 54 * s, 59 * s, () => desenharVoce(x, y, tm, { ...o, cru: true, semSombra: true, nome: null }), { contorno: CAM.on ? 0 : 1.1, luz: 1.35, chao: .1 });
     if (o.nome) { c.fillStyle = "rgba(240,235,220,.85)"; c.font = `700 ${Math.round(Math.max(13, TS * .26))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.6)"; c.lineWidth = 3; c.strokeText(o.nome, x, y - 58 * s); c.fillText(o.nome, x, y - 58 * s); c.textAlign = "start"; }
     return; }
   const sent = !!o.sentada; if (sent) andaK = 0; if (!sent && !o.semSombra) sombra(x, y, 13 * s, 4.5 * s);
@@ -1674,7 +1765,7 @@ function desenharVoce(x, y, tm, o = {}) {
   c.restore();
   if (o.nome) { c.fillStyle = "rgba(240,235,220,.85)"; c.font = `700 ${Math.round(Math.max(13, TS * .26))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.6)"; c.lineWidth = 3; c.strokeText(o.nome, x, y - 58 * s); c.fillText(o.nome, x, y - 58 * s); c.textAlign = "start"; }
 }
-function desenharGato(g, tm, ck) { const s = TS / 48, x = PX(g.x), y = PY(g.y); sombra(x, y, 9 * s, 3 * s); if (arteNova() && naTela(x, y)) pintar(x - 26 * s, y - 30 * s, 52 * s, 33 * s, () => gatoEm(x, y, s, g.dir, g.anda, tm, c, ck), { contorno: 1, luz: 1.2, chao: .1 }); else gatoEm(x, y, s, g.dir, g.anda, tm, c, ck); }
+function desenharGato(g, tm, ck) { const s = TS / 48, x = PX(g.x), y = PY(g.y); sombra(x, y, 9 * s, 3 * s); if (arteNova() && naTela(x, y)) pintar(x - 26 * s, y - 30 * s, 52 * s, 33 * s, () => gatoEm(x, y, s, g.dir, g.anda, tm, c, ck), { contorno: CAM.on ? 0 : 1, luz: 1.2, chao: .1 }); else gatoEm(x, y, s, g.dir, g.anda, tm, c, ck); }
 function desenharGalinha(g, tm) {
   const s = TS / 48, x = PX(g.x), y = PY(g.y); if (!naTela(x, y, 30)) return; sombra(x, y, 6 * s, 2 * s);
   c.save(); c.translate(x, y); c.scale((g.dir || 1) * s, s); const bic = g.anda ? 0 : Math.max(0, Math.sin(tm * 5 + g.x * 3)) * 3;
@@ -2260,7 +2351,7 @@ function desenharMundo(tm) {
   R.poeira.forEach(q => { c.fillStyle = `rgba(150,120,80,${.4 * (1 - q.t / .8)})`; c.beginPath(); c.arc(PX(q.x), PY(q.y) - 4, 3 + q.t * 10, 0, 7); c.fill(); });
   if (R.pesca) { const bx = PX(DOCA.x + 1.8), by = PY(DOCA.y + .3) + Math.sin(tm * 3) * 2 + (R.pesca.fisgou ? 6 : 0); c.strokeStyle = "rgba(230,230,230,.6)"; c.lineWidth = 1; c.beginPath(); c.moveTo(PX(R.eu.x) + TS * .3, PY(R.eu.y) - TS * .7); c.quadraticCurveTo(bx, by - TS, bx, by); c.stroke(); c.fillStyle = "#e2483d"; c.beginPath(); c.arc(bx, by, 4, 0, 7); c.fill(); if (R.pesca.fisgou) { c.fillStyle = "#f2c94a"; c.font = `900 ${Math.round(TS * .6)}px "Big Shoulders Display", sans-serif`; c.fillText("!", bx - 5, by - TS * .6); } }
   const nt = horaNoite();
-  if (nt < .5) for (let i = 0; i < 18; i++) { const k = (tm * .08 + i / 18) % 1, x = ((i * 137 + tm * 18) % (W + 40)) - 20, y = k * H; c.fillStyle = ["#c8662a", "#d89a2a", "#a8401e"][i % 3]; c.save(); c.translate(x + Math.sin(tm * 2 + i) * 10, y); c.rotate(tm * 2 + i); c.fillRect(-3, -1.5, 6, 3); c.restore(); }
+  if (nt < .5) for (let i = 0; i < 7; i++) { const k = (tm * .08 + i / 7) % 1, x = ((i * 137 + tm * 18) % (W + 40)) - 20, y = k * H; c.fillStyle = ["#c8662a", "#d89a2a", "#a8401e"][i % 3]; c.save(); c.translate(x + Math.sin(tm * 2 + i) * 10, y); c.rotate(tm * 2 + i); c.fillRect(-3, -1.5, 6, 3); c.restore(); }
   else for (let i = 0; i < 4; i++) { const k = (tm * .04 + i / 4) % 1; c.fillStyle = "rgba(170,180,200,.05)"; c.beginPath(); c.ellipse(((i * 290 + tm * 12) % (W + 400)) - 200, H * (.3 + i * .18), W * .35, H * .06, 0, 0, 7); c.fill(); } // neblina
 }
 function desenharLuz(tm) {
@@ -2289,7 +2380,7 @@ function desenharLuz(tm) {
   if (R.vela && !velaNaMao()) furo(PX(R.vela.x), PY(R.vela.y) - 16, TS * 1.4, .9);
   if (R.velaEntregue) furo(PX(CRUZ.x), PY(CRUZ.y) - 20, TS * 1.6, .9);
   for (let i = 0; i < 22; i++) { const fx = CERCA.x0 + 1 + (i * 7.3) % (CERCA.x1 - CERCA.x0 - 2) + Math.sin(tm * .4 + i) * 1.2, fy = CERCA.y0 + 1 + (i * 5.1) % (CERCA.y1 - CERCA.y0 - 2) + Math.cos(tm * .5 + i * 2) * .8, a = .5 + .5 * Math.sin(tm * 3 + i * 1.7); if (a > .3) furo(PX(fx), PY(fy), TS * .35, a * .8); }
-  c.drawImage(luzCv, 0, 0, W, H);
+  camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   c.globalCompositeOperation = "lighter";
   const brilho = (x, y, r, rgb, a) => { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
   if (R.lanterna) brilho(ex, ey, TS * 3, "255,200,120", .14 * nt);
@@ -2622,7 +2713,7 @@ function loop(ts) {
   for (const q of PARTS) { q.t += DTQ; q.x += q.vx * DTQ; q.y += q.vy * DTQ; q.vy += 9 * DTQ; } for (let i = PARTS.length - 1; i >= 0; i--) if (PARTS[i].t > PARTS[i].vida) PARTS.splice(i, 1);
   if (R.online === "host" && outros().length) { Net.envT -= dt; if (Net.envT <= 0) { Net.envT = .1; enviarTodos(estadoPara()); } }
   const tm = ts / 1000;
-  c.setTransform(DPRr, 0, 0, DPRr, 0, 0); calcTremida(tm);
+  camadaReset(); c.setTransform(DPRr, 0, 0, DPRr, 0, 0); calcTremida(tm);
   if (R.viagem) desenharViagem(tm);
   else if (R.lugar === "esgoto") desenharEsgoto(tm);
   else if (R.lugar === "mata") { if (R.predio === "porao") desenharPorao(tm); else if (R.predio) { if (R.espiar) desenharEspiar(tm); else desenharCabanaDentro(tm); } else desenharMata(tm); }
@@ -2635,7 +2726,7 @@ function loop(ts) {
   else if (R.lugar === "serra") desenharSerra(tm);
   else if (R.lugar === "floresta") desenharFloresta(tm);
   else if (R.dentro) { if (R.espiar) desenharEspiar(tm); else desenharDentro(tm); } else { if (R.venceu && R.venceu.t > 1) { CAMINHONETE.x += .0; } desenharMundo(tm); desenharLuz(tm); }
-  desenharFerrAnim(tm); desenharClima(tm); desenharMedo(tm); desenharBrilhoCoisasVo(tm);
+  camadaFim(); desenharFerrAnim(tm); desenharClima(tm); desenharMedo(tm); desenharBrilhoCoisasVo(tm);
   if (R.fimVo) { c.fillStyle = `rgba(0,0,0,${cl((R.fimVo.t - 1.5) / 3.5, 0, 1)})`; c.fillRect(0, 0, W, H); }
   if (R.fade > 0) { c.fillStyle = `rgba(0,0,0,${Math.min(1, R.fade)})`; c.fillRect(0, 0, W, H); R.fade -= .05; }
   if (R.venceu && R.venceu.t > 1 && !R.dentro && (R.lugar || "sitio") === "sitio") { const x = PX(CAMINHONETE.x), y = PY(CAMINHONETE.y + .9 + Math.max(0, R.venceu.t - 1.5) * 2.2); c.globalCompositeOperation = "lighter"; c.fillStyle = "rgba(255,240,200,.18)"; c.beginPath(); c.moveTo(x - TS * .8, y); c.lineTo(x - TS * 2, y + TS * 6); c.lineTo(x + TS * 2, y + TS * 6); c.lineTo(x + TS * .8, y); c.fill(); c.globalCompositeOperation = "source-over"; }
@@ -3087,7 +3178,7 @@ function desenharEsgoto(tm) {
   const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
   const ex = PX(R.eu.x), ey = PY(R.eu.y) - TS * .4; furo(ex, ey, TS * (R.escondido ? 1.3 : R.lanterna ? (R.lanternaBoa ? 5.4 : 4.6) : 3) * (1 + Math.sin(tm * 9) * .01), R.lanterna ? 1 : .85);
   furo(PX(ESG.escada.x), PY(ESG.escada.y) - TS, TS * 2.2, .55); for (const ou of outros()) if (ou.lugar === "esgoto") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * 2.4, .8);
-  c.drawImage(luzCv, 0, 0, W, H);
+  camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   if (R.tin && R.tin.fase !== "longe") { const x = PX(R.tin.x), y = PY(R.tin.y) - TS * 2.2, a = .55 + .35 * Math.sin(tm * 8); c.fillStyle = `rgba(255,40,10,${a})`; c.beginPath(); c.arc(x - TS * .09, y, 2.5, 0, 7); c.arc(x + TS * .09, y, 2.5, 0, 7); c.fill(); } // os olhos brilham no escuro
   if (R.escondido) escondidoEsgoto();
   if (temMapaEsgoto()) desenharMapaEsgoto(tm);
@@ -3425,7 +3516,7 @@ function desenharPorao(tm) {
   const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
   furo(X(R.int.x), Y(R.int.y - .5), s * (R.lanterna ? 3.6 : 2.3) * (1 + Math.sin(tm * 9) * .01), R.lanterna ? 1 : .85); furo(X(1.25), Y(.8), s * 1.8, .7); furo(X(4.87), Y(3.1), s * 1.5 * (.95 + .05 * Math.sin(tm * 11)), .8);
   for (const ou of outros()) if (ou.lugar === "mata" && ou.predio === "porao") furo(X(ou.int.x), Y(ou.int.y - .5), s * 2.2, .8);
-  c.drawImage(luzCv, 0, 0, W, H);
+  camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   c.fillStyle = "rgba(240,230,210,.6)"; c.font = `600 ${Math.round(Math.max(11, s * .16))}px "JetBrains Mono", monospace`; c.textAlign = "center"; const falta = PORAO_COISAS.length - 1 - PORAO_COISAS.filter(o => o.k !== "escada" && vistos.includes(o.k === "mesa" ? "mapa" : o.k)).length; c.fillText(falta ? `Ainda tem ${falta} coisa(s) pra vasculhar aqui embaixo.` : "Você viu tudo. Sobe. Agora.", W / 2, Y(PORAO.h + .75)); c.textAlign = "start";
 }
 function abrirAlcapao() {
@@ -3549,7 +3640,7 @@ function desenharMata(tm) {
   for (const ou of outros()) if (ou.lugar === "mata" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   if (nt > .3) furo(PX(CABANA.x + CABANA.w / 2), PY(CABANA.y + CABANA.h * .7), TS * 3, .6);
   if (R.curu && R.curu.fase === "vem") furo(PX(R.curu.x), PY(R.curu.y) - TS, TS * 1.3, .8); // o cabelo de fogo ilumina
-  c.drawImage(luzCv, 0, 0, W, H);
+  camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   c.fillStyle = "rgba(40,20,10,.08)"; c.fillRect(0, 0, W, H);
 }
 function desenharCabanaDentro(tm) {
@@ -4034,7 +4125,7 @@ function desenharEstacao(tm) {
   furo(PX(44.8), gy - TS * 1.4, TS * 1.4, .6); furo(PX(ESTACAO.x + 2.3), PY(ESTACAO.y + ESTACAO.h) - TS * 1.2, TS * 1.5, .6); furo(PX(ESTACAO.x + 6), PY(ESTACAO.y + ESTACAO.h) - TS * 1.25, TS * 1.2, .7);
   furo(PX(SINAL.x - .12), PY(SINAL.y) - TS * 2.7, TS * .9, .7); if (!temNeblina()) furo(PX(FOGUEIRA_D.x), PY(FOGUEIRA_D.y) - TS * .3, TS * 2.6, .85); furo(PX(4 - .35), gy - TS * 1.5, TS * .9, .7);
   if (dist(R.eu, { x: 51.3, y: 10.5 }) < 3 && Math.sin(tm * .9) > -.6) { furo(PX(50.4), gy - TS * 1.5, TS * 3.2, .9); furo(PX(53.5), gy - TS * 1.1, TS * 2.6, .7); } // o farol acende quando você chega perto
-  c.drawImage(luzCv, 0, 0, W, H);
+  camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   c.globalCompositeOperation = "lighter";
   const brilho = (x, y, r, rgb, a) => { if (x < -r || x > W + r) return; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
   LAMPIOES_E.forEach(([x, y], i) => { if (!(i === 2 && Math.sin(tm * 1.7) > .55)) brilho(PX(x), PY(y) - TS * 1.9, TS * 1.1, "255,190,100", .3 * nt); });
@@ -4708,7 +4799,7 @@ function desenharBaixada(tm) {
   if (ls("roca_antena")) furo(PX(TORRE.x), PY(TORRE.y) - TS * 6.5, TS * .7, Math.sin(tm * 3) > 0 ? .9 : .2);
   BX.vaga.forEach((v, i) => { if (i % 4) return; const x = v.x + Math.sin(tm * .5 * v.v + v.f) * 1.2, y = v.y + Math.cos(tm * .4 * v.v + v.f * 2) * .8; furo(PX(x), PY(y) - TS * .6, TS * .5, .5 * Math.max(0, Math.sin(tm * 2.2 * v.v + v.f))); });
   if (R.iara && R.iara.fase === "canta") furo(PX(R.iara.x), PY(R.iara.y) - TS * .4, TS * 1.6, .6);
-  c.drawImage(luzCv, 0, 0, W, H);
+  camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   c.globalCompositeOperation = "lighter";
   const brilho = (x, y, r, rgb, a) => { if (x < -r || x > W + r || y < -r || y > H + r) return; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
   if (R.boi && R.boi.fase !== "longe") brilho(PX(R.boi.x), PY(R.boi.y) - TS * .4, TS * 3, "60,140,255", .35 * nt);
@@ -4911,7 +5002,7 @@ function desenharMina(tm) {
   const furo = (x, y, r, f = 1) => { const g = lc.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); };
   const luz = R.lanterna && R.oleo > 0, tre = R.oleo < 15 && luz ? (Math.sin(tm * 23) > .3 ? 1 : .55) : 1; furo(PX(R.eu.x), PY(R.eu.y) - TS * .4, TS * (luz ? raioLuz(R) : 1.4) * tre * (1 + Math.sin(tm * 9) * .01), luz ? 1 : .7);
   furo(PX(MINA.saida.x), PY(MINA.saida.y) - TS, TS * 2.4, .6); for (const ou of outros()) if (ou.lugar === "mina") furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), .8);
-  c.drawImage(luzCv, 0, 0, W, H);
+  camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   if (M && M.fase !== "longe" && !ilum) desenharMapinguari(M, tm, false); // o olho brilhando no escuro
   if (luz) { c.globalCompositeOperation = "lighter"; const x = PX(R.eu.x), y = PY(R.eu.y) - TS * .4, g = c.createRadialGradient(x, y, 0, x, y, TS * 3); g.addColorStop(0, "rgba(255,180,90,.16)"); g.addColorStop(1, "rgba(255,180,90,0)"); c.fillStyle = g; c.fillRect(x - TS * 3, y - TS * 3, TS * 6, TS * 6); c.globalCompositeOperation = "source-over"; }
   // o óleo da lanterna, grandão no canto (aqui embaixo é a sua vida)
@@ -5188,7 +5279,7 @@ function abrirArrumarCasa() {
 }
 const naFrenteDaCasa = p => !R.dentro && (R.lugar || "sitio") === "sitio" && p.x > CASA.x - .4 && p.x < CASA.x + CASA.w + .4 && p.y > CASA.y + CASA.h + .2 && p.y < CASA.y + CASA.h + 1.4 && Math.abs(p.x - CASA.porta.x) > .55;
 /* ---------- folhas secas no chão (o rastelo limpa) ---------- */
-function folhasChao() { R.deco = R.deco || {}; if (!R.deco.fol) { R.deco.fol = []; for (let i = 0; i < 80 && R.deco.fol.length < 42; i++) novaFolha(); } return R.deco.fol; }
+function folhasChao() { R.deco = R.deco || {}; if (!R.deco.fol) { R.deco.fol = []; for (let i = 0; i < 40 && R.deco.fol.length < 16; i++) novaFolha(); } return R.deco.fol; }
 function lugarDeFolha(x, y) { if (x < CERCA.x0 + .7 || x > CERCA.x1 - .7 || y < CERCA.y0 + .9 || y > CERCA.y1 - .5) return false; if (R.solido[Math.floor(y)][Math.floor(x)]) return false; if (R.caixas.some(([x0, y0, x1, y1]) => x > x0 - .5 && x < x1 + .5 && y > y0 - .3 && y < y1 + .5)) return false; if (R.canteiros.some(k => x > k.x - .6 && x < k.x + k.w + .6 && y > k.y - .6 && y < k.y + k.h + .6)) return false; if (Math.hypot(x - CASA.porta.x, y - CASA.porta.y) < 2) return false; if (POMAR.some(([px, py]) => Math.hypot(px - x, py - y) < 1.6) || (x > LAGO.x0 - 1 && x < LAGO.x1 + 1 && y > LAGO.y0 - 1 && y < LAGO.y1 + 1)) return false; if ((R.deco.objs || []).some(o => Math.hypot(o.x - x, o.y - y) < .9) || (R.deco.flores || []).some(o => Math.hypot(o.x - x, o.y - y) < .6)) return false; return !(R.deco.fol || []).some(f => Math.hypot(f[0] - x, f[1] - y) < 1.1); }
 function novaFolha() { for (let i = 0; i < 20; i++) { const x = Math.round(rnd(CERCA.x0 + 1, CERCA.x1 - 1) * 20) / 20, y = Math.round(rnd(CERCA.y0 + 1, CERCA.y1 - .6) * 20) / 20; if (lugarDeFolha(x, y)) { R.deco.fol.push([x, y, Math.floor(Math.random() * 999)]); return true; } } return false; }
 const folhaPerto = (p, r = .7) => folhasChao().findIndex(f => Math.hypot(f[0] - p.x, f[1] - p.y) < r);
@@ -5218,7 +5309,7 @@ function enterrados() { if (!R.enterr) { R.enterr = []; novosEnterrados(3, 1, 1)
 function lugarLivre(l, x, y) { try { if (l === "sitio") return lugarDeFolha(x, y) || (x > CERCA.x0 + .7 && x < CERCA.x1 - .7 && y > CERCA.y0 + .9 && y < CERCA.y1 - .5 && !R.solido[Math.floor(y)][Math.floor(x)] && !R.caixas.some(([x0, y0, x1, y1]) => x > x0 - .5 && x < x1 + .5 && y > y0 - .3 && y < y1 + .5)); if (l === "baixada") { if (!BX) montarBaixada(); return livreBaixada(x, y) && y > 15 && !naPoca({ x, y }); } if (l === "mata") { if (!MATA) montarMata(); return livreMata(x, y); } } catch (e) {} return false; }
 function novosEnterrados(nS, nB, nM) { const L = R.enterr; for (const [l, n, x0, x1, y0, y1] of [["sitio", nS, CERCA.x0 + 1, CERCA.x1 - 1, CERCA.y0 + 1, CERCA.y1 - 1], ["baixada", nB, 3, 60, 16, 43], ["mata", nM, 3, MTW - 3, 4, 30]]) for (let i = 0, f = 0; i < 40 && f < n; i++) { const x = Math.round(rnd(x0, x1) * 10) / 10, y = Math.round(rnd(y0, y1) * 10) / 10; if (lugarLivre(l, x, y) && !L.some(e => e.l === l && Math.hypot(e.x - x, e.y - y) < 3)) { L.push({ x, y, l }); f++; } } }
 function novoDiaExtras() { // a cada amanhecer: caem folhas novas e aparece terra mexida em lugar novo
-  folhasChao(); for (let i = 0; i < 3 && R.deco.fol.length < 46; i++) novaFolha(); salvarDeco();
+  folhasChao(); for (let i = 0; i < 2 && R.deco.fol.length < 18; i++) novaFolha(); salvarDeco();
   R.enterr = enterrados().filter(e => e.k); novosEnterrados(2, 1, 1); }
 function ESPECIAIS() { const l = []; if (!ls("roca_seg_tumulo")) l.push({ x: 44.2, y: 30.6, l: "sitio", k: "tumulo" }); if (ls("roca_dica_chave") && !R.chaveBau && !ls("roca_seg_bau")) l.push({ x: POMAR[5][0] + .7, y: POMAR[5][1] + .55, l: "sitio", k: "chave" }); return l; }
 const enterradoPerto = p => [...enterrados(), ...ESPECIAIS()].find(e => e.l === (R.lugar || "sitio") && Math.hypot(e.x - p.x, e.y - p.y) < .75);
@@ -5981,7 +6072,7 @@ function desenharLagoa(tm) {
   if (R.farolDia === R.dia) { furo(PX(FAROL.x), PY(FAROL.y) - TS * 4.5, TS * 3, .9); const a = tm * .9; for (const s of [0, PI]) for (let j = 1; j < 7; j++) furo(PX(FAROL.x) + Math.cos(a + s) * TS * j * 2, PY(FAROL.y) - TS * 4.5 + Math.sin(a + s) * TS * j * .7, TS * (.8 + j * .3), .5); }
   furo(PX(PALAFITA.x + .5), PY(PALAFITA.y + 1), TS * 1.6, .6); furo(PX(CAPELA_LG.x), PY(CAPELA_LG.y) - TS * .4, TS * 1.2, .5);
   if (Bo && Bo.fase !== "longe") furo(PX(Bo.x) - Math.cos(Bo.a || 0) * TS * 2, PY(Bo.y) - Math.sin(Bo.a || 0) * TS * 2, TS * 4, .6);
-  c.drawImage(luzCv, 0, 0, W, H);
+  camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
   if (Bo && Bo.fase !== "longe") { c.save(); c.globalCompositeOperation = "lighter"; const a = Bo.a || 0; for (const s of [-1, 1]) { const ex = PX(Bo.x) + Math.cos(a) * TS * .2 + s * TS * .2, ey = PY(Bo.y) - TS * .12; const g = c.createRadialGradient(ex, ey, 0, ex, ey, TS * .38); g.addColorStop(0, "rgba(255,240,160,.75)"); g.addColorStop(1, "rgba(255,200,80,0)"); c.fillStyle = g; c.fillRect(ex - TS * .4, ey - TS * .4, TS * .8, TS * .8); c.fillStyle = "#fff6c0"; c.beginPath(); c.ellipse(ex, ey, TS * .07, TS * .05, 0, 0, 7); c.fill(); c.fillStyle = "#1a1000"; c.fillRect(ex - 1, ey - TS * .04, 2, TS * .08); } c.restore(); }
   if (meuPosto() && R.proa) { c.save(); c.globalCompositeOperation = "lighter"; const B = R.barco, x = PX(B.x) + Math.cos(B.ang) * TS * .85, y = PY(B.y) + Math.sin(B.ang) * TS * .5, g = c.createRadialGradient(x, y, 0, x, y, TS * 3); g.addColorStop(0, `rgba(255,210,120,${.3 * nt})`); g.addColorStop(1, "rgba(255,210,120,0)"); c.fillStyle = g; c.fillRect(x - TS * 3, y - TS * 3, TS * 6, TS * 6); c.restore(); }
   desenharBarraVidaChefe(R.chefe);
@@ -6207,7 +6298,7 @@ function desenharSerra(tm) {
 function luzSimples(nt, furos, escuro = .86) {
   const lw = luzCv.width, lh = luzCv.height, kk = lw / W; lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = "source-over"; lc.clearRect(0, 0, lw, lh); lc.fillStyle = `rgba(6,10,20,${(R.luaCheia ? escuro - .14 : escuro) * nt})`; lc.fillRect(0, 0, lw, lh); lc.globalCompositeOperation = "destination-out";
   for (const [x, y, r, f] of furos) { if (x < -r || x > W + r || y < -r || y > H + r) continue; const g = lc.createRadialGradient(x * kk, y * kk, 0, x * kk, y * kk, r * kk); g.addColorStop(0, `rgba(0,0,0,${f})`); g.addColorStop(1, "rgba(0,0,0,0)"); lc.fillStyle = g; lc.fillRect((x - r) * kk, (y - r) * kk, r * 2 * kk, r * 2 * kk); }
-  lc.globalCompositeOperation = "source-over"; c.drawImage(luzCv, 0, 0, W, H);
+  lc.globalCompositeOperation = "source-over"; camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
 }
 function desenharPorteiraFl(tm, nt) {
   const X = PX(PORTEIRA_FL.x), Y = PY(PORTEIRA_FL.y), T = TS; if (!naTela(X, Y, T * 4)) return; const aberta = florestaLiberada();
@@ -7326,7 +7417,7 @@ function desenharLuzVila(tm) {
   for (const ou of outros()) if (ou.lugar === "vila" && !ou.predio) furo(PX(ou.eu.x), PY(ou.eu.y) - TS * .4, TS * raioLuz(ou), ou.lanterna ? 1 : .7);
   { const m = npcOnde(npc("maria")); if (!m.ausente) furo(PX(m.x), PY(m.y) - TS * .6, TS * 1.6, .8); if (ehNoite()) furo(PX(CAPELINHA.x), PY(CAPELINHA.y) - 6, TS * 1.5, .7); }
   if (luzesVila()) { VPOSTES.forEach(([px, py], i) => { if (!apagaUm(i * .4)) furo(PX(px + .35), PY(py) - TS * 1.5, TS * 2.2, .85); }); VPREDIOS.forEach((p, i) => { if (!apagaUm(i)) furo(PX(p.x + p.w / 2), PY(p.y + p.h * .55), TS * 2.6, .7); }); }
-  c.drawImage(luzCv, 0, 0, W, H);
+  camadaFim(); c.drawImage(luzCv, 0, 0, W, H);
 }
 // pequenos detalhes que deixam qualquer cômodo vivo (e estranho)
 function teias(X, Y, s, w) { c.strokeStyle = "rgba(220,220,220,.22)"; c.lineWidth = 1; [[0, 1], [w, -1]].forEach(([x0, d]) => { for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(X(x0 + d * .45 * i / 3), Y(0)); c.quadraticCurveTo(X(x0 + d * .15 * i / 3), Y(.15 * i / 3), X(x0), Y(.45 * i / 3)); c.stroke(); } for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(X(x0), Y(0)); c.lineTo(X(x0 + d * .45 * Math.cos(i * .5)), Y(.45 * Math.sin(i * .5 + .1))); c.stroke(); } }); }
@@ -7876,6 +7967,7 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
     <button type="button" class="rc-op" id="opVoz">${icB("voz")}Narração da história: ${lig(window.vozLigada !== false)}</button>
     <button type="button" class="rc-op" id="opFps">${icB("grafico")}Gráfico: ${fps === 60 ? "suave<small>60 quadros · mais bonito, esquenta mais</small>" : fps <= 24 ? "bateria<small>24 quadros e resolução menor · esquenta bem menos</small>" : "normal<small>30 quadros · o meio-termo</small>"}</button>
     ${window.PC ? `<button type="button" class="rc-op" id="opTela">${icB("telacheia")}Tela cheia (F11)</button>` : ""}
+    <button type="button" class="rc-op" id="opContorno">${icB("grafico")}Contorno e luz nos objetos: ${camadaLig() ? "sim" : "não"}<small>Desligue se o celular ficar lento</small></button>
     <button type="button" class="rc-op" id="opTreme">${icB("grafico")}Tremer a tela: ${tremeOn() ? "sim" : "não"}<small>Desligue se a tremida incomodar</small></button>
     <button type="button" class="rc-op" id="opHist">${icB("historia")}Apagar a história já vista<small>A abertura aparece de novo</small></button></div>
     <p style="font-size:12px;color:#b8b2a4">Roça Assombrada · versão ${window.ROCA_VERSAO || "1"}</p>
@@ -7885,6 +7977,7 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
   document.getElementById("opVoz").addEventListener("click", () => { if (window.alternarVozSolo) alternarVozSolo(); re(); });
   document.getElementById("opFps").addEventListener("click", () => { try { localStorage.setItem("pv_fps", fps === 30 ? "24" : fps <= 24 ? "60" : "30"); } catch (e) {} window.rocaDprMax = 0; medir(); re(); });
   const bt2 = document.getElementById("opTela"); if (bt2) bt2.addEventListener("click", () => PC.telaCheia());
+  document.getElementById("opContorno").addEventListener("click", () => { ls("roca_contorno", camadaLig() ? "0" : "1"); re(); });
   document.getElementById("opTreme").addEventListener("click", () => { ls("roca_tremer", tremeOn() ? "0" : "1"); re(); });
   document.getElementById("opHist").addEventListener("click", () => { ls("roca_hist", ""); try { localStorage.removeItem("roca_hist"); } catch (e) {} efeito("A história vai aparecer de novo", "#e8e2d4"); re(); });
   document.getElementById("rcFechar").addEventListener("click", () => { fecharPainel(); menuInicial(); });
@@ -7980,7 +8073,7 @@ function entrarSala() {
   const ir = () => { st("Procurando a sala..."); netEntrar(inp.value, () => st("Conectado! Entrando no lobby..."), st); };
   document.getElementById("rcIr").addEventListener("click", ir); inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") ir(); });
 }
-const MANTER_NOVO = new Set(["roca_hist", "roca_floresta_paga", "roca_nome", "roca_gato_v2", "roca_gato_cor", "roca_tremer"]);
+const MANTER_NOVO = new Set(["roca_hist", "roca_floresta_paga", "roca_nome", "roca_gato_v2", "roca_gato_cor", "roca_tremer", "roca_contorno", "roca_arte"]);
 function apagarTudo() {
   try { const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("roca_") && !MANTER_NOVO.has(k)) ks.push(k); } ks.forEach(k => localStorage.removeItem(k)); } catch (e) {}
   FL = null; SR = null; convAr = 0; convTib = 0; bocaSuave = .1; if (typeof LG !== "undefined") LG = null;
@@ -8012,7 +8105,7 @@ window.sairRoca = function () {
 };
 window.rocaVoltar = () => { if (!window.rocaAtiva) return false; if (el.rcChatBar && !el.rcChatBar.hidden) { abrirChat(false); return true; } if (document.querySelector(".rc-hist")) return true; if (R && R.menu) { if (painelAberto && document.getElementById("rcCancelar")) { netFechar(); menuInicial(); } else { fecharPainel(); sairRoca(); } return true; } if (painelAberto) { if (R && (R.morto || R.venceu)) return true; fecharPainel(); } else pausar(); return true; };
 window.rocaNet = Net; window.rocaHistoria = () => historia(() => {});
-window.rocaMedir = () => medir(); window.rocaEstado = () => R; window.rocaTeste = { zoom: k => { TS = Math.round(TS * k); }, irEsgoto: () => irEsgoto(), folhaMonstros: (g, Wd, Hd, tm = 1.3) => { const cS = c, WS = W, HS = H, TSs = TS, cx = cam.x, cy = cam.y; c = g; W = Wd; H = Hd; TS = 64; cam.x = 0; cam.y = 0; const P = (i, j) => ({ x: (i - 3.5) * 3.2, y: (j - .5) * 4.2 + 1.2 });
+window.rocaMedir = () => medir(); window.rocaEstado = () => R; window.rocaTeste = { zoom: k => { TS = Math.round(TS * k); }, irEsgoto: () => irEsgoto(), ir: k => ({ vila: irVila, mata: irMata, estacao: irEstacao, baixada: irBaixada, lagoa: irLagoa, serra: irSerra, floresta: irFloresta, mina: irMina })[k](), folhaMonstros: (g, Wd, Hd, tm = 1.3) => { const cS = c, WS = W, HS = H, TSs = TS, cx = cam.x, cy = cam.y; c = g; W = Wd; H = Hd; TS = 64; cam.x = 0; cam.y = 0; const P = (i, j) => ({ x: (i - 3.5) * 3.2, y: (j - .5) * 4.2 + 1.2 });
     try { g.fillStyle = "#3a4a2a"; g.fillRect(0, 0, Wd, Hd); const L = [[0, 0, () => desenharSeco({ fase: "caca", ...P(0, 0), dir: 1, fase2: 1 }, tm)], [1, 0, () => desenharCachorro({ fase: "anda", anda: 1, ...P(1, 0), dir: 1 }, tm)], [2, 0, () => desenharCachorro({ fase: "lobo", anda: 1, ...P(2, 0), dir: 1 }, tm)], [3, 0, () => desenharEspantalho({ fase: "vivo", ...P(3, 0) }, tm)], [4, 0, () => desenharVulto({ t: 3, ...P(4, 0) }, tm)], [5, 0, () => desenharSaci({ fase: "perto", giro: 2, ...P(5, 0) }, tm)], [6, 0, () => desenharCurupira({ fase: "vem", dir: 1, fase2: 1, ...P(6, 0) }, tm)], [0, 1, () => desenharTinhoso({ fase: "caca", dir: 1, fase2: 1, ...P(0, 1) }, tm)], [2, 1, () => desenharMula({ fase: "corre", ...P(2, 1), dir: 1, t: 1 }, tm)], [4, 1, () => desenharAranha({ fase: "anda", ...P(4, 1), dir: 1, passo: 1 }, tm)], [1, 1, () => desenharCuca({ fase: "ataca", ...P(1, 1), dir: 1, passo: 1 }, tm)], [3, 1, () => desenharEspantalho({ fase: "poste", ...P(3, 1) }, tm)], [6, 1, () => desenharPisadeira({ t: 3, x: 0, y: 0, dir: 1 }, x => PX(P(6, 1).x) + x * 0, y => PY(P(6, 1).y) + y * 0, 64 * 2, tm)]];
       L.forEach(([i, j, f]) => { try { f(); } catch (e) { console.log("erro", i, j, e.message); } }); } finally { c = cS; W = WS; H = HS; TS = TSs; cam.x = cx; cam.y = cy; } }, icone: (g, S, modo) => desenharIcone(g, S, modo), esg: () => ESG, bench: (qual) => { const ch = qual === "vila" ? (montarVila(), CHAO_VILA) : qual === "mata" ? (montarMata(), CHAO_MATA) : CHAO_SITIO, P = 72, out = {}; let t = performance.now(); const pc = document.createElement("canvas"); pc.width = pc.height = CHUNK * P; const g = pc.getContext("2d"); g.scale(P / 32, P / 32); g.translate(-2 * CHUNK * 32, -1 * CHUNK * 32); g.beginPath(); g.rect(2 * CHUNK * 32, 1 * CHUNK * 32, CHUNK * 32, CHUNK * 32); g.clip(); CLIPV = [2 * CHUNK * 32, 1 * CHUNK * 32, 3 * CHUNK * 32, 2 * CHUNK * 32]; ch.pintar(g); CLIPV = null; out.pintar = performance.now() - t; t = performance.now(); pc.ch = ch; detalheChao(g, pc, 2, 1, P); out.det = performance.now() - t; t = performance.now(); ch.base = null; baseChao(ch); out.base = performance.now() - t; return out; }, npcs: () => NPCS, npcEm: (g, n, x, y, s) => comCtx(g, () => desenharNpc(n, x, y, s, 1, { wx: -1e9 })), chao: g => CHAO_SITIO.pintar(g), vila: () => { montarVila(); return VILA; }, chaoVila: g => CHAO_VILA.pintar(g), bancada: () => abrirBancada(), loja: n => abrirLoja(NPCS.find(x => x.id === n)) }; // usado nos testes
 window.morrerTeste = () => morrer("seco", "teste", "teste");
