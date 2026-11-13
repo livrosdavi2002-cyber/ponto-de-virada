@@ -14,21 +14,21 @@ const MILHARAL = { x0: 50, y0: 5.6, x1: 57, y1: 11.6 };
 const CAPELA = { x: 51.2, y: 16.6, w: 4.2, h: 3.6, porta: { x: 53.3, y: 20.6 } };
 const CHIQUEIRO = { x0: 50.2, y0: 25, x1: 55.4, y1: 29.4 };
 const COLMEIAS = [[51.4, 31.6], [53, 31.8], [54.6, 31.6]];
-const BALANCO = { x: 9.6, y: 28 }, CARRIOLA = { x: 21.8, y: 14.4 }, LENHA = { x: 17.6, y: 9.4 };
+const BALANCO = { x: 9.6, y: 28 }, CARRIOLA = { x: 8.4, y: 24.4 }, LENHA = { x: 17.6, y: 9.4 };
 const FENOS = [[45, 8.4], [45.6, 10.4], [44, 9.6]];
-const ESPANTALHO = { x: 20.2, y: 18.6 };
+const ESPANTALHO = { x: 23.7, y: 19.1 }; // de guarda na ponta do corredor da horta
 const CASA = { x: 10, y: 7, w: 6, h: 4.4, porta: { x: 13, y: 11.6 } };
 const POCO = { x: 19.5, y: 9.6 }, CAIXOTE = { x: 16.8, y: 12 }, CAMINHONETE = { x: 28.8, y: 31.2 };
 const CEMITERIO = { x0: 39, y0: 24, x1: 45, y1: 31 }, CRUZ = { x: 42, y: 27.2 };
 const GALINHEIRO = { x: 27, y: 6.6, w: 4, h: 3, porta: { x: 29, y: 9.8 } }, CERCADO = { x0: 25.5, y0: 6.2, x1: 33, y1: 12 };
 const CELEIRO = { x: 36, y: 6.5, w: 7, h: 5 }, TRATOR = { x: 45.2, y: 16.6 };
-const CASINHA = { x: 7.6, y: 9.6 }, CATAVENTO = { x: 23, y: 17.4 }, VARAL = { x0: 17.4, x1: 21.6, y: 6.8 };
+const CASINHA = { x: 7.6, y: 9.6 }, CATAVENTO = { x: 23.1, y: 15.2 }, VARAL = { x0: 17.4, x1: 21.6, y: 6.8 };
 const DOCA = { x: 31.4, y: 27.4 };
 const LAGO = { x0: 32, y0: 24, x1: 38.4, y1: 31 };
 const POMAR = [[35.6, 16.5], [38.3, 16.5], [42.8, 16.5], [35.6, 19.8], [38.3, 19.8], [42.8, 19.8]];
 const CANTEIROS = [
-  { x: 9, y: 15, w: 4, h: 3, preco: 0 }, { x: 14.5, y: 15, w: 4, h: 3, preco: 30 }, { x: 26.4, y: 15, w: 4, h: 3, preco: 60 },
-  { x: 9, y: 20, w: 4, h: 3, preco: 100 }, { x: 14.5, y: 20, w: 4, h: 3, preco: 150 }, { x: 26.4, y: 20, w: 4, h: 3, preco: 220 }];
+  { x: 8.8, y: 15, w: 4, h: 3, preco: 0 }, { x: 13.7, y: 15, w: 4, h: 3, preco: 30 }, { x: 18.6, y: 15, w: 4, h: 3, preco: 60 },
+  { x: 8.8, y: 20, w: 4, h: 3, preco: 100 }, { x: 13.7, y: 20, w: 4, h: 3, preco: 150 }, { x: 18.6, y: 20, w: 4, h: 3, preco: 220 }]; // a horta: tudo junto, do lado da casa
 const PLANTAS = {
   milho: { nome: "Milho", tempo: 18, preco: 4, cor: "#e8c84a" },
   mandioca: { nome: "Mandioca", tempo: 25, preco: 8, cor: "#c89a6a" },
@@ -38,6 +38,8 @@ const EXTRAS = { pepita: ["Pepita de ouro", 18], cana: ["Feixe de cana", 2], rap
 const PEIXES = [["Lambari", 6, .55], ["Tilápia", 12, .33], ["Traíra", 22, .12]];
 const DIA = 160, NOITE = 85, CICLO = DIA + NOITE;
 const PLACAS = [
+  { x: 24.2, y: 14.5, txt: "HORTA DA VÓ · seis canteiros. O primeiro já está aberto; os outros a bancada abre por moeda. Semente na bancada, água no poço, venda no caixote da porta." },
+  { x: 25.9, y: 16.2, txt: "CURRAL · a Mimosa dá leite toda manhã (com milho no cocho). As galinhas botam no galinheiro, aqui em cima." },
   { x: 8.1, y: 16.7, txt: "A MATA. Não entre depois que escurecer. Se ouvir assobio, não responda. E nunca, nunca siga as pegadas." },
   { x: 8.2, y: 13.4, txt: "Quando a mata estalar, entre em casa. Ele corre de quatro. Não olhe para trás." },
   { x: 33.6, y: 13.6, txt: "Não chegue perto do cachorro preto." },
@@ -45,7 +47,7 @@ const PLACAS = [
   { x: 16.6, y: 25.4, txt: "Lamparina apagada, não durma. Ela sobe pelo pé da cama." },
   { x: 30.8, y: 10.6, txt: "As galinhas botam toda manhã. Laranja madura no pomar dá dinheiro." },
   { x: 46.2, y: 14.4, txt: "Ouviu juntas estalando lá no alto? É a Pernuda. Apague a lanterna e NÃO SE MEXA. Ela só vê o que brilha e o que anda. No milharal ela não te enxerga." },
-  { x: 22, y: 19.2, txt: "O espantalho só anda no escuro. Ilumine ele com a lanterna e ele congela." },
+  { x: 24.4, y: 21.4, txt: "O espantalho só anda no escuro. Ilumine ele com a lanterna e ele congela." },
   { x: 46.2, y: 22.8, txt: "Viu o chão brilhar em linha reta? Saia da linha. A mula-sem-cabeça não faz curva. Os porcos gritam antes dela passar." },
   { x: 24, y: 13, txt: "Redemoinho assobiando de dia é o Saci: seca a plantação e rouba moedas. Com uma peneira da bancada dá para pegar ele." },
   { x: 50.6, y: 21.6, txt: "O sino da capela espanta o Corpo-Seco e manda o espantalho de volta. Só funciona uma vez por noite." },
@@ -162,7 +164,7 @@ function novoJogo() {
   for (let y = 0; y < CERCA.y0; y++) solido[y][34] = false; // porteira do norte: a Baixada do Rio
   bloq(19, 9, 1, 1); { const cx = (LAGO.x0 + LAGO.x1) / 2, cy = (LAGO.y0 + LAGO.y1) / 2, rx = (LAGO.x1 - LAGO.x0) / 2, ry = (LAGO.y1 - LAGO.y0) / 2; for (let y = Math.floor(LAGO.y0); y < LAGO.y1; y++) for (let x = Math.floor(LAGO.x0); x < LAGO.x1; x++) if (((x + .5 - cx) / rx) ** 2 + ((y + .5 - cy) / ry) ** 2 < 1.05) solido[y][x] = true; } /* o lago é redondo: só a água bloqueia */ bloq(27.5, 30.4, 3, 1.4); for (let y = CERCA.y1; y < MH; y++) for (let x = 24; x <= 26; x++) solido[y][x] = false; // a estrada para a vila
   bloq(GALINHEIRO.x, GALINHEIRO.y, GALINHEIRO.w, GALINHEIRO.h - .2); 
-  bloq(7, 9, 1, 1); bloq(23, 17, 1, 1); bloq(41.6, 26.8, 1, 1);
+  bloq(7, 9, 1, 1); bloq(Math.floor(CATAVENTO.x), Math.floor(CATAVENTO.y), 1, 1); bloq(41.6, 26.8, 1, 1);
   // riacho (só passa pelas pontes)
   for (let y = CERCA.y0; y < CERCA.y1; y++) for (let x = Math.floor(RIACHO.x0); x < RIACHO.x1; x++) if (!PONTES.some(p => y >= Math.floor(p - .7) && y <= Math.floor(p + .7))) solido[y][x] = true;
   // cercadinho das galinhas (com portãozinho embaixo)
@@ -282,6 +284,7 @@ function _pintarChaoSitio(g) {
 
   trilha([[8.6, 13.75], [6.9, 15.1], [6.6, 16.9], [-1, 17]], .85, true); // trilha escura que entra na mata
   trilha([[13, 11.8], [13, 13.6], [25.2, 13.6], [25.2, 30.2]], 1.15); trilha([[13, 13.6], [8.6, 13.75]], .85);
+  trilha([[8.4, 19.05], [23.6, 19.05], [25.2, 19.05]], .7); trilha([[25.2, 18.4], [26, 18.4]], .5); // o corredor da horta e a entrada do curral
   trilha([[17.2, 13.6], [18.7, 12.3], [19.5, 10.9]], .75); trilha([[9.8, 13.7], [8.5, 12.5], [7.8, 10.9]], .6);
   trilha([[25.2, 13.6], [28.6, 13.4], [28.6, 12.2]], .7); trilha([[28.6, 13.4], [39, 13.4], [39, 12]], .8); trilha([[39, 13.4], [40.55, 14.6], [40.55, 21.2]], .7);
   trilha([[25.2, 27.4], [31.2, 27.4]], .7); trilha([[25.2, 23.75], [31, 23.5], [38.8, 23.05], [42, 23.3], [42, 24.9]], .7);
@@ -783,7 +786,7 @@ function abrirDiario(aba = "objetivos") {
     <li><b>Lanterna:</b> serve para ver de noite e congelar o espantalho, mas a Pernuda enxerga a luz. Saiba a hora de apagar.</li>
     <li><b>Fôlego:</b> correr cansa. Ande um pouco que ele volta.</li>
     <li><b>Gravetos e folhas:</b> a Sombrinha traz quando passeia. Com 3 gravetos e 2 folhas a bancada faz a vara de pesca. A doca fica no lago.</li>
-    <li><b>Canteiros:</b> tem mais canteiros pelo sítio. Pague para abrir e plante mais de uma vez.</li>
+    <li><b>Horta:</b> os seis canteiros ficam todos juntos, do lado da casa. O primeiro já vem aberto; os outros você paga pra abrir. A vaca e as galinhas ficam no meio do sítio, no curral e no galinheiro.</li><li><b>Novo jogo:</b> começar um jogo novo apaga tudo do anterior (enfeites, achados, peças, moedas). Só a compra da Floresta e as opções ficam.</li>
     <li><b>Bancada:</b> regador grande, botas, lanterna reforçada, peneira, sementes novas e as peças da caminhonete.</li>
     <li><b>Capela:</b> o sino espanta o Corpo-Seco e manda o espantalho de volta. Só uma vez por noite.</li>
     <li><b>Milharal:</b> esconderijo contra a Pernuda.</li>
@@ -1048,7 +1051,7 @@ function infoSave() { try { const x = JSON.parse(localStorage.getItem("roca_save
 function carregarJogo() {
   let x; try { x = JSON.parse(localStorage.getItem("roca_save") || "null"); } catch (e) {} if (!x || !x.d) return iniciarJogo("solo");
   fecharPainel(); mostrarTitulo(false); novoJogo(); const base = { seco: R.seco, aranha: R.aranha, mula: R.mula, saci: R.saci, esp: R.esp };
-  Object.assign(R, x.d, base); R.online = null; R.menu = false; R.slot = 0; R.nome = meuNome() || "Jogador 1"; R.tutorial = 1;
+  Object.assign(R, x.d, base); (R.canteiros || []).forEach((k, i) => { if (CANTEIROS[i]) { k.x = CANTEIROS[i].x; k.y = CANTEIROS[i].y; } }); R.online = null; R.menu = false; R.slot = 0; R.nome = meuNome() || "Jogador 1"; R.tutorial = 1;
   R.lugar = "sitio"; R.predio = null; R.dentro = true; R.sala = { x: 2.2, y: 3.1, dir: 1 }; R.eu.x = CASA.porta.x; R.eu.y = CASA.porta.y + .55; R.fade = 1.2;
   if (typeof mudarDia === "function" && x.d.clima) R.clima = x.d.clima; hud(); efeito(`Bem-vinda de volta · Dia ${R.dia}`, "#f2c94a");
 }
@@ -2652,7 +2655,7 @@ function abrirCoresGato() {
   document.getElementById("rcFechar").addEventListener("click", fecharPainel); focarPrimeiro();
 }
 /* ---------- mais coisas pra fazer no sítio: a vaca Mimosa e a lenha ---------- */
-const VACA = { x: 15.6, y: 30.2 }, COCHO = { x: 18, y: 30.7 };
+const VACA = { x: 27.6, y: 18.4 }, COCHO = { x: 30.2, y: 18.9 }; // os bichos juntos: galinheiro em cima, vaca embaixo
 function acaoFazenda(p) {
   if (dist(p, { x: 28.6, y: 12.3 }) < .9 && !R.galinhasComeram && (R.colheita.milho || 0) > 0) return { t: "Jogar milho pras galinhas", fn: () => { R.colheita.milho--; R.galinhasComeram = true; R.milhoChao = { t: 0 }; tocarRuido(.3, { filtro: "highpass", f: 3000, vol: .05 }); efeito("Có-có! Amanhã elas botam o dobro", "#f2c94a"); hud(); } };
   if (R.adubo > 0) for (const k of R.canteiros) { if (!k.aberto || k.adubo >= R.dia) continue; if (dist(p, { x: k.x + k.w / 2, y: k.y + k.h + .55 }) < .75) return { t: "Adubar a horta", fn: () => { R.adubo--; k.adubo = R.dia + 1; S.plantar(); efeito("Horta adubada: cresce bem mais rápido até depois de amanhã", "#9bd86b"); hud(); } }; }
@@ -2671,7 +2674,7 @@ function acaoFazenda(p) {
 function desenharVaca(tm) {
   const x = PX(VACA.x), y = PY(VACA.y), s = TS / 48; if (!naTela(x, y, 120)) return;
   // cerquinha e cocho
-  c.fillStyle = "#7a5a32"; for (const [ax, ay, bx2] of [[13.4, 28.7, 18.8]]) { c.fillRect(PX(ax), PY(ay), (bx2 - ax) * TS, 3); for (let fx = ax; fx <= bx2 + .01; fx += 1.35) c.fillRect(PX(fx) - 2, PY(ay) - TS * .4, 4, TS * .45); }
+  c.fillStyle = "#7a5a32"; for (const [ax, ay, bx2] of [[VACA.x - 1.6, VACA.y - 1.5, VACA.x + 3.8], [VACA.x - 1.6, VACA.y + 1.4, VACA.x + 3.8]]) { c.fillRect(PX(ax), PY(ay), (bx2 - ax) * TS, 3); for (let fx = ax; fx <= bx2 + .01; fx += 1.35) c.fillRect(PX(fx) - 2, PY(ay) - TS * .4, 4, TS * .45); } { const x0 = VACA.x - 1.6, x1 = VACA.x + 3.8, y0 = VACA.y - 1.5, y1 = VACA.y + 1.4; for (const [sx, a0, a1] of [[x1, y0, y1], [x0, y0, VACA.y - .45], [x0, VACA.y + .55, y1]]) { c.fillRect(PX(sx) - 1.5, PY(a0) - TS * .2, 3, (a1 - a0) * TS); c.fillRect(PX(sx) - 1.5, PY(a0) - TS * .05, 3, (a1 - a0) * TS); for (let fy = a0; fy <= a1 + .01; fy += .7) c.fillRect(PX(sx) - 2, PY(fy) - TS * .4, 4, TS * .45); } }
   const cx = PX(COCHO.x), cy = PY(COCHO.y); sombra(cx, cy, TS * .6, TS * .1); c.fillStyle = "#6a4a2a"; c.fillRect(cx - TS * .55, cy - TS * .35, TS * 1.1, TS * .35); c.fillStyle = "#4a2e18"; c.fillRect(cx - TS * .48, cy - TS * .32, TS * .96, TS * .14); if (R.vacaComeu) { c.fillStyle = "#e8c84a"; for (let i = 0; i < 6; i++) c.fillRect(cx - TS * .4 + i * TS * .14, cy - TS * .3, 3, 3); }
   const mast = Math.sin(tm * 4) * 1.2 * s, rabo = Math.sin(tm * 2.2) * 6 * s, nt = ehNoite();
   sombra(x, y, 30 * s, 7 * s); c.save(); c.translate(x, y); c.scale(s, s);
@@ -7508,8 +7511,13 @@ function entrarSala() {
   const ir = () => { st("Procurando a sala..."); netEntrar(inp.value, () => st("Conectado! Entrando no lobby..."), st); };
   document.getElementById("rcIr").addEventListener("click", ir); inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") ir(); });
 }
+const MANTER_NOVO = new Set(["roca_hist", "roca_floresta_paga", "roca_nome", "roca_gato_v2", "roca_gato_cor"]);
+function apagarTudo() {
+  try { const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("roca_") && !MANTER_NOVO.has(k)) ks.push(k); } ks.forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  FL = null; SR = null; convAr = 0; convTib = 0; bocaSuave = .1; if (typeof LG !== "undefined") LG = null;
+}
 function iniciarJogo(modo, semTutorial) {
-  fecharPainel(); mostrarTitulo(false); novoJogo(); R.online = modo === "solo" ? null : modo; if (modo === "solo") R.vidas = 1;
+  fecharPainel(); mostrarTitulo(false); apagarTudo(); novoJogo(); R.online = modo === "solo" ? null : modo; if (modo === "solo") R.vidas = 1;
   R.slot = modo === "guest" ? (Net.meuSlot || 1) : 0; R.cor = R.slot; R.nome = meuNome() || "Jogador " + (R.slot + 1);
   if (modo === "guest") { R.eu.x = 14.2 + (R.slot - 1) * .7; R.eu.y = 12.9 + (R.slot === 2 ? .5 : 0); }
   if (modo === "host") { Net.jog.forEach(j => j.pronto = true); R.outros = [...Net.jog.values()].map(novoOutro); R.outros.forEach(o => enviarPara(o.nid, { t: "inicio", volta: !!semTutorial, slot: o.slot })); avisarLobby(); }
