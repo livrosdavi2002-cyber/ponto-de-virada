@@ -1927,6 +1927,35 @@ function casaRuralBase(X, Y, w, h, o) { const T = TS; SD_ARTE = 151 + Math.round
   if (o.sape) { for (let x = tx0; x < tx1; x += 2.5) { c.strokeStyle = tomCor(o.tel, .7 + ra() * .4); c.lineWidth = 1.3; c.beginPath(); c.moveTo(x, Y + 3); c.lineTo(x + (ra() - .5) * 2, Y + 6 + ra() * 5); c.stroke(); } } // beirada desfiada do sapê
   else { c.strokeStyle = tomCor(o.tel, 1.35); c.lineWidth = T * .06; c.lineJoin = "round"; c.beginPath(); c.moveTo(tx0, Y + 5); c.lineTo(X + T * .4, ty); c.lineTo(X + w - T * .4, ty); c.lineTo(tx1, Y + 5); c.stroke(); c.lineJoin = "miter"; }
 }
+function igrejaArte(X, Y, w, h) { const T = TS, tx = X + w / 2, cP = "#c8c0b0"; SD_ARTE = 161;
+  // fachada: pedra rebocada com o reboco caindo
+  const pg = c.createLinearGradient(0, Y, 0, Y + h); pg.addColorStop(0, "#c4bcac"); pg.addColorStop(1, "#a8a090"); c.fillStyle = pg; c.fillRect(X, Y, w, h);
+  for (let i = 0; i < 90; i++) { c.fillStyle = ra() < .5 ? "rgba(0,0,0,.07)" : "rgba(255,255,255,.1)"; c.fillRect(X + ra() * w, Y + ra() * h, 1.5, 1.5); }
+  [[.04, .15, .16, .14], [.8, .55, .14, .16], [.62, .08, .12, .1]].forEach(([fx, fy, fw, fh]) => { c.save(); c.beginPath(); c.ellipse(X + w * (fx + fw / 2), Y + h * (fy + fh / 2), w * fw / 2, h * fh / 2, .2, 0, 7); c.clip(); muroPedras(X + w * fx - 4, Y + h * fy - 4, w * fw + 8, h * fh + 8, "#8a8474", T * .16); c.restore(); });
+  [X, X + w - T * .2].forEach(ex => { c.fillStyle = "#d8d0c0"; c.fillRect(ex, Y, T * .2, h); c.fillStyle = "rgba(0,0,0,.18)"; c.fillRect(ex + T * .16, Y, T * .04, h); }); // pilastras
+  muroPedras(X - 2, Y + h - T * .24, w + 4, T * .24, "#6a645a", T * .15);
+  // telhado
+  telhado2(X - T * .3, Y + 4, tx, Y - T * 2, X + w + T * .3, "#6a3020", 8);
+  // torre
+  const tg = c.createLinearGradient(tx - T * .7, 0, tx + T * .7, 0); tg.addColorStop(0, "#d8d0c0"); tg.addColorStop(1, "#a8a090"); c.fillStyle = tg; c.fillRect(tx - T * .7, Y - T * 4.2, T * 1.4, T * 2.6);
+  for (let i = 0; i < 30; i++) { c.fillStyle = "rgba(0,0,0,.07)"; c.fillRect(tx - T * .7 + ra() * T * 1.4, Y - T * 4.2 + ra() * T * 2.6, 1.5, 1.5); }
+  c.fillStyle = "#14100c"; c.beginPath(); c.moveTo(tx - T * .4, Y - T * 2.2); c.lineTo(tx - T * .4, Y - T * 3.3); c.arc(tx, Y - T * 3.3, T * .4, PI, 0); c.lineTo(tx + T * .4, Y - T * 2.2); c.fill();
+  c.strokeStyle = "#8a8474"; c.lineWidth = 3; c.beginPath(); c.moveTo(tx - T * .45, Y - T * 2.15); c.lineTo(tx - T * .45, Y - T * 3.3); c.arc(tx, Y - T * 3.3, T * .45, PI, 0); c.lineTo(tx + T * .45, Y - T * 2.15); c.stroke();
+  c.fillStyle = "#8a8474"; c.fillRect(tx - T * .78, Y - T * 4.25, T * 1.56, T * .1); c.fillRect(tx - T * .75, Y - T * 2.2, T * 1.5, T * .08); // cornijas
+  telhado2(tx - T * .85, Y - T * 4.2, tx, Y - T * 5, tx + T * .85, "#6a3020", 4);
+  c.fillStyle = "#2a1a10"; c.fillRect(tx - 2.5, Y - T * 5.9, 5, T * .95); c.fillRect(tx - T * .25, Y - T * 5.6, T * .5, 5); c.fillStyle = "rgba(255,230,190,.25)"; c.fillRect(tx - 2.5, Y - T * 5.9, 1.5, T * .95);
+  // moldura de pedra da rosácea e das janelas
+  c.fillStyle = "#8a8474"; c.beginPath(); c.arc(tx, Y + h * .28, T * .6, 0, 7); c.fill(); for (let a = 0; a < 6.28; a += .5) pedraA(tx + Math.cos(a) * T * .55, Y + h * .28 + Math.sin(a) * T * .55, T * .08, T * .06, "#9a9484", a);
+  [.12, .78].forEach(fx => { c.fillStyle = "#8a8474"; c.beginPath(); c.moveTo(X + w * fx - 4, Y + h * .87); c.lineTo(X + w * fx - 4, Y + h * .45); c.arc(X + w * (fx + .05), Y + h * .45, w * .05 + 4, PI, 0); c.lineTo(X + w * (fx + .1) + 4, Y + h * .87); c.fill(); });
+  // portal: arco de pedra e porta dupla de tábua com ferragem
+  const py = Y + h; c.fillStyle = "#7a7464"; c.beginPath(); c.moveTo(tx - T * .85, py); c.lineTo(tx - T * .85, py - T * 1.3); c.arc(tx, py - T * 1.3, T * .85, PI, 0); c.lineTo(tx + T * .85, py); c.fill();
+  for (let a = PI; a <= 2 * PI + .01; a += PI / 8) pedraA(tx + Math.cos(a) * T * .78, py - T * 1.3 + Math.sin(a) * T * .78, T * .1, T * .07, "#8a8474", a + PI / 2);
+  c.fillStyle = "#1a0e08"; c.beginPath(); c.moveTo(tx - T * .7, py); c.lineTo(tx - T * .7, py - T * 1.3); c.arc(tx, py - T * 1.3, T * .7, PI, 0); c.lineTo(tx + T * .7, py); c.fill();
+  c.save(); c.beginPath(); c.moveTo(tx - T * .66, py); c.lineTo(tx - T * .66, py - T * 1.3); c.arc(tx, py - T * 1.3, T * .66, PI, 0); c.lineTo(tx + T * .66, py); c.clip(); tabuasV(tx - T * .66, py - T * 2, T * 1.32, T * 2, "#5a3020", 6, 900); c.restore();
+  c.fillStyle = "#1a1a1a"; c.fillRect(tx - 1.5, py - T * 1.9, 3, T * 1.9); [.35, .9].forEach(k => { c.fillRect(tx - T * .62, py - T * 1.3 * k, T * 1.24, 3); }); c.fillStyle = "#b8a060"; c.beginPath(); c.arc(tx - 6, py - T * .7, 2.5, 0, 7); c.arc(tx + 6, py - T * .7, 2.5, 0, 7); c.fill();
+  // plaquinha de pedra com o nome
+  c.fillStyle = "#8a8474"; c.fillRect(tx - T * 1, Y + h * .5, T * 2, T * .3); c.fillStyle = "rgba(255,255,255,.2)"; c.fillRect(tx - T * 1, Y + h * .5, T * 2, 1.5); c.fillStyle = "#2a2420"; c.font = `700 ${Math.round(TS * .19)}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("SANTA LUZIA", tx, Y + h * .5 + T * .15); c.textAlign = "start"; c.textBaseline = "alphabetic";
+}
 function desenharCasa(tm) {
   const x = PX(CASA.x), y = PY(CASA.y), w = CASA.w * TS, h = CASA.h * TS; if (!naTela(x + w / 2, y + h / 2, w)) return;
   if (arteNova()) { desenharCasaArte(tm, x, y, w, h); return; }
@@ -7652,6 +7681,11 @@ function desenharPredioFora(p, tm) {
   if (lit) { c.save(); c.globalCompositeOperation = "lighter"; const g = c.createRadialGradient(px, py, 2, px, py, TS * 1.6); g.addColorStop(0, "rgba(255,180,90,.18)"); g.addColorStop(1, "rgba(255,180,90,0)"); c.fillStyle = g; c.fillRect(px - TS * 2, py - TS * 2, TS * 4, TS * 3); c.restore(); }
 }
 function desenharIgrejaFora(p, x, y, w, h, tm, lit) {
+  if (arteNova()) { const T = TS, tx = x + w / 2; arte("igreja", x, y, T * .45, T * 6, w + T * .9, h + T * 6.05, (X, Y) => igrejaArte(X, Y, w, h));
+    const bal = Math.sin(tm * .7) * .05; c.save(); c.translate(tx, y - T * 3.4); c.rotate(bal); const sg = c.createLinearGradient(-T * .22, 0, T * .22, 0); sg.addColorStop(0, "#c8a040"); sg.addColorStop(.5, "#8a6a2a"); sg.addColorStop(1, "#4a3410"); c.fillStyle = sg; c.beginPath(); c.moveTo(-T * .22, T * .5); c.quadraticCurveTo(-T * .22, 0, 0, 0); c.quadraticCurveTo(T * .22, 0, T * .22, T * .5); c.fill(); c.restore();
+    c.fillStyle = lit ? "rgba(255,190,110,.85)" : "#1a1e2a"; c.beginPath(); c.arc(tx, y + h * .28, T * .5, 0, 7); c.fill(); c.strokeStyle = "#5a4a3a"; c.lineWidth = 2; for (let i = 0; i < 8; i++) { c.beginPath(); c.moveTo(tx, y + h * .28); c.lineTo(tx + Math.cos(i * PI / 4) * T * .5, y + h * .28 + Math.sin(i * PI / 4) * T * .5); c.stroke(); } c.beginPath(); c.arc(tx, y + h * .28, T * .22, 0, 7); c.stroke();
+    [.12, .78].forEach(fx => { c.fillStyle = lit ? "rgba(255,190,110,.75)" : "#141820"; c.beginPath(); c.moveTo(x + w * fx, y + h * .85); c.lineTo(x + w * fx, y + h * .45); c.arc(x + w * (fx + .05), y + h * .45, w * .05, PI, 0); c.lineTo(x + w * (fx + .1), y + h * .85); c.fill(); c.fillStyle = "rgba(255,255,255,.12)"; c.fillRect(x + w * (fx + .015), y + h * .45, 2, h * .38); });
+    return; }
   c.fillStyle = "#b8b0a0"; c.fillRect(x, y, w, h); c.fillStyle = "rgba(60,50,40,.3)"; for (let i = 0; i < 9; i++) { c.beginPath(); c.ellipse(x + w * ((i * .41) % 1), y + h * (.3 + (i % 3) * .22), w * .07, h * .05, 0, 0, 7); c.fill(); }
   c.fillStyle = "#4a2a1e"; c.beginPath(); c.moveTo(x - TS * .3, y + 4); c.lineTo(x + w / 2, y - TS * 2); c.lineTo(x + w + TS * .3, y + 4); c.fill();
   const tx = x + w / 2; c.fillStyle = "#c8c0b0"; c.fillRect(tx - TS * .7, y - TS * 4.2, TS * 1.4, TS * 2.6); c.fillStyle = "#141010"; c.beginPath(); c.moveTo(tx - TS * .4, y - TS * 2.2); c.lineTo(tx - TS * .4, y - TS * 3.3); c.arc(tx, y - TS * 3.3, TS * .4, PI, 0); c.lineTo(tx + TS * .4, y - TS * 2.2); c.fill();
