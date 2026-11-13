@@ -69,7 +69,7 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 let DTQ = 1 / 30; const kq = k => 1 - Math.pow(1 - k, DTQ * 30); // suavização que dá o mesmo resultado em 24, 30 ou 60 quadros
 // "juice": tremida por trauma (o quadrado deixa a pancada pequena quase parada e a grande forte), pausinha no impacto e faíscas
 const SHK = { x: 0, y: 0 }, PARTS = []; let HITSTOP = 0;
-const tremeOn = () => ls("roca_tremer") !== "0", pixelOn = () => ls("roca_pixel") !== "0";
+const tremeOn = () => ls("roca_tremer") !== "0";
 function calcTremida(tm) { SHK.x = SHK.y = 0; if (!R || !(R.tremor > 0) || !tremeOn()) return; const t = Math.min(1, R.tremor), k = t * t * .28; SHK.x = k * Math.sin(tm * 47) + k * .5 * Math.sin(tm * 83); SHK.y = k * .8 * Math.sin(tm * 53 + 1); }
 function pausinha(seg) { HITSTOP = Math.max(HITSTOP, seg); }
 function faiscas(x, y, cor, n = 10, forca = 1, lugar) { if (x == null || PARTS.length > 160) return; for (let i = 0; i < n; i++) { const a = Math.random() * PI * 2, v = rnd(1.2, 3.2) * forca; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .6 - rnd(1, 2.6) * forca, z: 0, t: 0, vida: rnd(.45, .8), cor: Array.isArray(cor) ? cor[i % cor.length] : cor, r: rnd(2, 4.5), lugar: lugar || (R && R.lugar) || "sitio" }); } }
@@ -228,10 +228,10 @@ const Chao = (pintar, mw, mh) => ({ pintar, mw, mh, cache: new Map(), P: 0, base
 function baseChao(ch) { if (!ch.base) { const cv = document.createElement("canvas"); cv.width = ch.mw * 16; cv.height = ch.mh * 16; const g = cv.getContext("2d", { willReadFrequently: true }); g.scale(.5, .5); CLIPV = null; ch.pintar(g); ch.base = cv; try { const im = g.getImageData(0, 0, cv.width, cv.height).data, m = new Uint8Array(cv.width * cv.height); for (let i = 0; i < m.length; i++) { const R2 = im[i * 4], G = im[i * 4 + 1], B = im[i * 4 + 2]; m[i] = G > R2 + 4 && G > B + 10 ? 1 : 0; } ch.mask = m; } catch (e) { ch.mask = null; } } return ch.base; }
 function fazerPedaco(ch, cx, cy, P, lim) {
   const k = cx + "," + cy, pc = document.createElement("canvas"); pc.width = pc.height = CHUNK * P; pc.ch = ch; const g = pc.getContext("2d"); g.scale(P / 32, P / 32); g.translate(-cx * CHUNK * 32, -cy * CHUNK * 32); g.beginPath(); g.rect(cx * CHUNK * 32, cy * CHUNK * 32, CHUNK * 32, CHUNK * 32); g.clip();
-  CLIPV = [cx * CHUNK * 32, cy * CHUNK * 32, (cx + 1) * CHUNK * 32, (cy + 1) * CHUNK * 32]; try { ch.pintar(g); } finally { CLIPV = null; } if (PIXK) texturaPixel(pc, cx, cy); else detalheChao(g, pc, cx, cy, P); ch.cache.set(k, pc); if (ch.cache.size > lim) ch.cache.delete(ch.cache.keys().next().value); return pc;
+  CLIPV = [cx * CHUNK * 32, cy * CHUNK * 32, (cx + 1) * CHUNK * 32, (cy + 1) * CHUNK * 32]; try { ch.pintar(g); } finally { CLIPV = null; } detalheChao(g, pc, cx, cy, P); ch.cache.set(k, pc); if (ch.cache.size > lim) ch.cache.delete(ch.cache.keys().next().value); return pc;
 }
 function desenharChaoChunks(ch) {
-  const P = PIXK ? PIXN : Math.min(96, Math.max(24, Math.round(TS * DPRr))); if (ch.P !== P) { ch.cache.clear(); ch.P = P; }
+  const P = Math.min(96, Math.max(24, Math.round(TS * DPRr))); if (ch.P !== P) { ch.cache.clear(); ch.P = P; }
   const lim = Math.max(12, Math.floor(70e6 / (CHUNK * P * CHUNK * P * 4)));
   const tx0 = cam.x - W / 2 / TS, ty0 = cam.y - H / 2 / TS, cx0 = Math.max(0, Math.floor(tx0 / CHUNK)), cy0 = Math.max(0, Math.floor(ty0 / CHUNK)), cx1 = Math.min(Math.ceil(ch.mw / CHUNK) - 1, Math.floor((tx0 + W / TS) / CHUNK)), cy1 = Math.min(Math.ceil(ch.mh / CHUNK) - 1, Math.floor((ty0 + H / TS) / CHUNK));
   let feitos = 0; const base = baseChao(ch);
@@ -1440,8 +1440,7 @@ function atualizarBichos(dt) {
 }
 
 /* ---------- desenho ---------- */
-const PIXN = 20; let PIXK = 0, PIXCX = 0, PIXCY = 0, PIXCV = null; // modo pixel art: tamanho do pixel da arte na tela e a câmera presa na grade
-const PX = x => PIXK ? Math.round(((x - PIXCX) * TS + W / 2) / PIXK) * PIXK : (x - cam.x - SHK.x) * TS + W / 2, PY = y => PIXK ? Math.round(((y - PIXCY) * TS + H / 2) / PIXK) * PIXK : (y - cam.y - SHK.y) * TS + H / 2; // a tremida entra só no desenho: a câmera e o mundo continuam no lugar
+const PX = x => (x - cam.x - SHK.x) * TS + W / 2, PY = y => (y - cam.y - SHK.y) * TS + H / 2; // a tremida entra só no desenho: a câmera e o mundo continuam no lugar
 let cam = { x: 13, y: 12 };
 const naTela = (x, y, m = 120) => x > -m && x < W + m && y > -m && y < H + m;
 function sombra(x, y, rx, ry, a = .32) { c.fillStyle = `rgba(0,0,0,${a})`; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill(); }
@@ -1455,132 +1454,8 @@ function desenharArvore(a, tm, fruta) {
   c.fillStyle = "rgba(255,240,200,.12)"; c.beginPath(); c.arc(x - r * .2 + bal, y - r * 1.9, r * .28, 0, 7); c.fill();
   if (fruta) for (let i = 0; i < 6; i++) { const on = i < fruta.n * 2; c.fillStyle = on ? (fruta.cor || "#f29a2a") : "#7a9a3a"; c.beginPath(); c.arc(x + Math.cos(i * 2.4) * r * .45 + bal, y - r * 1.5 + Math.sin(i * 2.4) * r * .35, r * .1, 0, 7); c.fill(); }
 }
-/* ---------- modo pixel art (teste no sítio): o mundo é desenhado numa tela pequena, 20 pixels de arte por quadrado, e ampliado sem borrar ---------- */
-function comPixel(fn) {
-  if (!pixelOn()) { PIXK = 0; fn(); return; }
-  const k = PIXK = TS / PIXN, lw = Math.ceil(W / k) + 2, lh = Math.ceil(H / k) + 2;
-  if (!PIXCV) PIXCV = document.createElement("canvas");
-  if (PIXCV.width !== lw || PIXCV.height !== lh) { PIXCV.width = lw; PIXCV.height = lh; }
-  const g = PIXCV.getContext("2d"); g.setTransform(1 / k, 0, 0, 1 / k, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = "source-over"; g.clearRect(0, 0, W + k * 4, H + k * 4); g.imageSmoothingEnabled = false;
-  const c0 = c; c = g; PIXCX = cam.x + SHK.x; PIXCY = cam.y + SHK.y;
-  try { fn(); } finally { c = c0; }
-  const ox = (PIXCX - cam.x - SHK.x) * TS, oy = (PIXCY - cam.y - SHK.y) * TS;
-  c.imageSmoothingEnabled = false; c.drawImage(PIXCV, 0, 0, lw, lh, ox, oy, lw * k, lh * k); c.imageSmoothingEnabled = true; PIXK = 0;
-}
-// textura de pixel no chão: capim com folhinhas, terra com pedrinhas, e cores em degraus (sem degradê liso)
-function texturaPixel(pc, cx, cy) {
-  const g = pc.getContext("2d"), w = pc.width, h = pc.height; let id; try { id = g.getImageData(0, 0, w, h); } catch (e) { return; }
-  const d = id.data, ox = cx * CHUNK * PIXN, oy = cy * CHUNK * PIXN, hs = (x, y) => { let v = (x * 374761393 + y * 668265263) | 0; v = (v ^ (v >>> 13)) * 1274126177; return ((v ^ (v >>> 16)) >>> 0) % 1000; };
-  const q = v => Math.max(0, Math.min(255, Math.round(v / 10) * 10));
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const i = (y * w + x) * 4; let r = d[i], gg = d[i + 1], b = d[i + 2]; const gx = ox + x, gy = oy + y, n = hs(gx, gy), grama = gg > r + 4 && gg > b + 10;
-    let k = 0;
-    if (grama) {
-      if (n < 55) k = 26; // ponta de folha clara
-      else if (hs(gx, gy - 1) < 55) k = -8; // o pezinho da folha
-      else if (n < 120) k = -20; // sombra entre as folhas
-      else if (((gx >> 2) + (gy >> 2)) % 2 === 0 && n < 300) k = -6; // manchinha do capim
-    } else { if (n < 70) k = -18; else if (n < 120) k = 12; }
-    d[i] = q(r + k * .8); d[i + 1] = q(gg + k); d[i + 2] = q(b + k * .6);
-  }
-  g.putImageData(id, 0, 0);
-}
-// Yasmin em pixel: 16 x 23 pixels, olhando pra direita (pra esquerda é o espelho)
-const YAS_CORPO = [
-  "......oooo......",
-  ".....oHHHHo.....",
-  "....oHHHHHHo....",
-  "....oFFFFFFo....",
-  "..ooHHHHHHHHoo..",
-  ".ohhhhhhhhhhhho.",
-  "..oooCCCCCCooo..",
-  "...oCCCCCPPPo...",
-  "..oCCCCPPPPPPo..",
-  ".oCcCCPPEPPEPo..",
-  ".oCcCoPPEPPEPo..",
-  ".oCcoPRPPPPRPo..",
-  ".oCcooPPPmPPo...",
-  "..oFooMoPPPPo...",
-  "..oMMoBBJJBBBo..",
-  "..oMmoBJYJJYBo..",
-  "..oMMoPJJjJJPo..",
-  "...ooojJJJJJjo..",
-  "....ojjjjjjjjo.."];
-const YAS_PERNAS = [
-  [".....oPPooPPo...", ".....oWWooWWo...", "....oKKKooKKKo..", ".....ooo..ooo..."],
-  ["....oPPo.oPPo...", "....oWWo..oWWo..", "...oKKKo..oKKKo.", "....ooo....ooo.."],
-  ["......oPPoPPo...", "......oWWWWo....", ".....oKKKKKKo...", "......oooooo...."]];
-const YAS_CACHE = new Map();
-function yasSprite(rp, chap, quadro, susto) {
-  const kk = [rp.pele, rp.cabelo, rp.blusa, rp.jard, rp.jard2, rp.fita, chap, quadro, susto].join();
-  let cv2 = YAS_CACHE.get(kk); if (cv2) return cv2;
-  const linhas = YAS_CORPO.concat(YAS_PERNAS[quadro]).map((l, y) => susto && y === 12 ? ".oCcooPPPoPPo..." : susto && (y === 9 || y === 10) ? l.replace(/E/g, y === 9 ? "W" : "E") : l);
-  const cor = { o: "#1a1210", H: chap, h: tomCor(chap, .72), F: rp.fita, C: rp.cabelo, c: tomCor(rp.cabelo, 1.45), P: rp.pele, m: tomCor(rp.pele, .62), E: "#1a1210", R: "#e28a80", B: rp.blusa, J: rp.jard, j: rp.jard2, Y: "#f2c94a", M: "#7a4a28", W: "#e8e4d8", K: "#5a2a1a" };
-  cv2 = document.createElement("canvas"); cv2.width = 16; cv2.height = linhas.length; const g = cv2.getContext("2d");
-  linhas.forEach((l, y) => [...l].forEach((ch, x) => { if (cor[ch]) { g.fillStyle = cor[ch]; g.fillRect(x, y, 1, 1); } }));
-  if (YAS_CACHE.size > 60) YAS_CACHE.clear(); YAS_CACHE.set(kk, cv2); return cv2;
-}
-function yasPixel(x, y, tm, q, rp, chap, dir, andaK, f, p, s, o) {
-  const a = PIXK;
-  const anda = andaK > .15, quadro = anda ? (Math.sin(f) > 0 ? 1 : 2) : 0, bob = anda && Math.abs(Math.cos(f)) > .7 ? 1 : 0, treme = p > .6 && Math.sin(tm * 40) > 0 ? 1 : 0;
-  const im = yasSprite(rp, chap, quadro, p > .45), w = im.width * a, h = im.height * a, X = Math.round(x / a) * a + treme * a, Y = Math.round(y / a) * a - h + a - bob * a;
-  sombra(x, y, 13 * s, 4.5 * s);
-  c.save(); c.imageSmoothingEnabled = false; if (dir < 0) { c.translate(X * 2, 0); c.scale(-1, 1); }
-  c.drawImage(im, X - w / 2, Y, w, h);
-  const P = (px, py, pw, ph, cor) => { c.fillStyle = cor; c.fillRect(X - w / 2 + px * a, Y + py * a, pw * a, ph * a); };
-  if (q.regando > 0) { P(14, 13, 3, 2, "#8a9aa8"); P(17, 12, 2, 1, "#8a9aa8"); P(14, 13, 3, 1, "#b8c8d0"); for (let i = 0; i < 3; i++) P(18 + i, 13 + ((tm * 14 + i * 2) % 5 | 0), 1, 1, "rgba(120,190,230,.9)"); }
-  else if (q.lanterna && !q.dentro) { P(13, 15, 1, 1, "#2a2a2a"); P(12, 16, 3, 3, "#3a3a3a"); P(13, 17, 1, 1, "#ffdc8c"); }
-  c.restore();
-  if (o.nome) { c.fillStyle = "rgba(240,235,220,.85)"; c.font = `700 ${Math.round(Math.max(13, TS * .26))}px "JetBrains Mono", monospace`; c.textAlign = "center"; c.strokeStyle = "rgba(0,0,0,.6)"; c.lineWidth = 3; c.strokeText(o.nome, x, y - 58 * s); c.fillText(o.nome, x, y - 58 * s); c.textAlign = "start"; }
-}
-// casa da vó em pixel art: pintada pixel por pixel numa tela pequena (6 x 4,4 quadrados = 120 x 88 pixels) e guardada
-const CASA_PIX = new Map();
-function casaPixelImg(lit) {
-  const cP = decoCor("casa", "#6a4a2a"), cT = decoCor("telhado", "#4a2a1a"), cD = decoCor("porta", "#3a2214"), cF = decoCor("porta", "#2a1a0e"), kk = [cP, cT, cD, cF, lit].join();
-  let cv2 = CASA_PIX.get(kk); if (cv2) return cv2;
-  const OX = 8, OY = 32; cv2 = document.createElement("canvas"); cv2.width = 136; cv2.height = 132; const g = cv2.getContext("2d");
-  const r = (x, y, w, h, cor) => { g.fillStyle = cor; g.fillRect(OX + x, OY + y, w, h); };
-  let sd = 77; const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
-  const esc = "#1a1210";
-  // varanda de tábuas
-  r(-5, 85, 130, 12, esc); r(-4, 86, 128, 10, "#5a3e24"); r(-4, 86, 128, 1, "#7a5a36"); for (let x = 2; x < 124; x += 7) r(x, 87, 1, 9, "#3e2a18"); r(-4, 95, 128, 1, "#3e2a18");
-  // parede de tábuas deitadas
-  r(-1, 15, 122, 72, esc); r(0, 16, 120, 70, cP);
-  for (let y = 16; y < 86; y += 6) { r(0, y + 5, 120, 1, tomCor(cP, .7)); r(0, y, 120, 1, tomCor(cP, 1.15)); for (let i = 0; i < 3; i++) { const nx = Math.floor(rn() * 114); r(nx, y + 2, 2, 1, tomCor(cP, .82)); } }
-  r(0, 16, 6, 70, "rgba(255,255,255,.07)"); r(114, 16, 6, 70, "rgba(0,0,0,.12)"); r(0, 16, 120, 4, "rgba(0,0,0,.28)"); // sombra do beiral
-  // telhado de telhas, com beiral
-  for (let y = -30; y <= 21; y++) { const hw = Math.round((y + 30) / 51 * 67), x0 = 60 - hw, x1 = 60 + hw; r(x0 - 1, y, x1 - x0 + 2, 1, esc); if (x1 - x0 > 2) { const faixa = ((y + 30) % 5) === 4; r(x0 + 1, y, x1 - x0 - 2, 1, faixa ? tomCor(cT, .7) : tomCor(cT, 1 + ((y + 30) % 5) * .04)); if (!faixa) for (let x = x0 + 2 + (Math.floor((y + 30) / 5) % 2) * 4; x < x1 - 1; x += 8) r(x, y, 1, 1, tomCor(cT, .78)); r(x0 + 1, y, 1, 1, tomCor(cT, 1.35)); } }
-  r(-8, 21, 136, 2, esc); r(-7, 21, 134, 1, tomCor(cT, .6));
-  // chaminé de tijolo
-  r(88, -21, 10, 32, esc); r(89, -20, 8, 30, "#4a4440"); for (let y = -20; y < 10; y += 3) { r(89, y + 2, 8, 1, "#2e2a28"); r(89 + ((y / 3) & 1) * 4, y, 1, 2, "#2e2a28"); } r(87, -23, 12, 3, esc); r(88, -22, 10, 1, "#5a5450");
-  // janelas com cruz e floreira
-  const vid = `rgb(${Math.round(60 + lit * 195)},${Math.round(70 + lit * 150)},${Math.round(70 + lit * 40)})`, vid2 = `rgb(${Math.round(40 + lit * 180)},${Math.round(50 + lit * 120)},${Math.round(60 + lit * 20)})`;
-  [12, 84].forEach(jx => { r(jx - 1, 36, 26, 21, esc); r(jx, 37, 24, 19, cF); r(jx + 2, 39, 20, 15, vid); r(jx + 2, 47, 20, 7, vid2); r(jx + 3, 40, 3, 1, "rgba(255,255,255,.55)"); r(jx + 3, 41, 1, 2, "rgba(255,255,255,.4)"); r(jx + 11, 39, 2, 15, cF); r(jx + 2, 46, 20, 1, cF);
-    r(jx - 3, 56, 30, 4, esc); r(jx - 2, 57, 28, 2, tomCor(cD, 1.2)); ["#c83a2a", "#e8c84a", "#e8e2d8", "#b8582a", "#c83a2a", "#e8c84a", "#e8e2d8"].forEach((cor, i) => { r(jx - 1 + i * 4, 54, 2, 2, cor); r(jx + i * 4, 56, 1, 1, "#3a6a2a"); }); });
-  // porta de tábua com maçaneta e plaquinha
-  r(49, 43, 22, 43, esc); r(50, 44, 20, 42, cD); for (let x = 54; x < 70; x += 5) r(x, 44, 1, 42, tomCor(cD, .7)); r(50, 44, 20, 1, tomCor(cD, 1.3)); r(51, 52, 18, 2, tomCor(cD, .8)); r(51, 74, 18, 2, tomCor(cD, .8)); r(65, 66, 2, 2, "#c8a860"); r(65, 66, 1, 1, "#f0d890");
-  r(55, 36, 10, 5, esc); r(56, 37, 8, 3, "#e8e0c8");
-  // lampião, banco e galão
-  r(74, 40, 4, 6, "#2a2a2a"); r(75, 42, 2, 3, "#ffd27a");
-  r(9, 69, 24, 3, esc); r(10, 70, 22, 1, "#8a6a3e"); r(11, 72, 2, 14, "#4a3018"); r(29, 72, 2, 14, "#4a3018");
-  r(97, 71, 8, 15, esc); r(98, 72, 6, 14, "#3a3a3a"); r(98, 72, 6, 1, "#6a6a6a"); r(99, 74, 1, 10, "#4e4e4e");
-  if (CASA_PIX.size > 12) CASA_PIX.clear(); CASA_PIX.set(kk, cv2); return cv2;
-}
-function desenharCasaPixel(tm, x, y, w, h) {
-  const a = PIXK, lit = Math.round(R.lamparinas.filter(v => v).length / 3 * 3) / 3, im = casaPixelImg(lit), k = w / 120;
-  sombra(x + w / 2, y + h + 4, w * .6, TS * .32, .35);
-  c.save(); c.imageSmoothingEnabled = false; c.drawImage(im, x - 8 * k, y - 32 * k, im.width * k, im.height * k); c.restore();
-  // fumacinha em quadradinhos
-  for (let i = 0; i < 4; i++) { const t = (tm * .3 + i / 4) % 1, s2 = Math.round(2 + t * 4); c.fillStyle = `rgba(200,200,200,${.3 * (1 - t)})`; c.fillRect(Math.round((x + 93 * k + Math.sin(tm + i) * 4 * k) / a) * a - s2 * a / 2, Math.round((y - 26 * k - t * TS * 1.6) / a) * a, s2 * a, s2 * a); }
-  c.fillStyle = `rgba(255,200,110,${.25 + .2 * Math.sin(tm * 7)})`; c.fillRect(x + 75 * k, y + 42 * k, 2 * k, 3 * k);
-  desenharCasaExtras(x, y, w, h, tm, false);
-  if (horaNoite() > .6 && !R.dentro && Math.sin(tm * .37) > .985) { c.fillStyle = "rgba(0,0,0,.85)"; c.fillRect(x + 92 * k, y + 40 * k, 6 * k, 6 * k); c.fillRect(x + 91 * k, y + 46 * k, 8 * k, 8 * k); }
-  desenharCasaExtras(x, y, w, h, tm, true);
-  if (R.deco && R.deco.band) bandeirinhasCasa(x, y, w, h, tm);
-}
 function desenharCasa(tm) {
   const x = PX(CASA.x), y = PY(CASA.y), w = CASA.w * TS, h = CASA.h * TS; if (!naTela(x + w / 2, y + h / 2, w)) return;
-  if (PIXK) { desenharCasaPixel(tm, x, y, w, h); return; }
   sombra(x + w / 2, y + h + 4, w * .6, TS * .32, .35);
   // varanda
   c.fillStyle = "#5a3e24"; c.fillRect(x - TS * .2, y + h - TS * .1, w + TS * .4, TS * .5); c.strokeStyle = "rgba(0,0,0,.3)"; c.lineWidth = 1; for (let i = 0; i < 12; i++) { c.beginPath(); c.moveTo(x - TS * .2 + i * (w + TS * .4) / 12, y + h - TS * .1); c.lineTo(x - TS * .2 + i * (w + TS * .4) / 12, y + h + TS * .4); c.stroke(); }
@@ -1636,7 +1511,6 @@ function desenharVoce(x, y, tm, o = {}) {
     c.fillStyle = "#2a1a12"; c.fillRect(-18, -6, 7, 4); c.strokeStyle = "#1a1210"; c.lineWidth = 1; c.beginPath(); c.moveTo(12, -7); c.lineTo(14, -5); c.moveTo(14, -7); c.lineTo(12, -5); c.stroke();
     c.fillStyle = `rgba(226,72,61,${.5 + .3 * Math.sin(tm * 4)})`; c.font = `800 ${Math.round(11)}px "Big Shoulders Display", sans-serif`; c.textAlign = "center"; c.fillText(q.caido.fora ? "SEM VIDAS" : q === R ? "VOCÊ CAIU" : "AJUDE!", 0, -22); c.textAlign = "start"; c.restore(); return;
   }
-  if (PIXK && !o.sentada && !o.colete) { yasPixel(x, y, tm, q, rp, ch, dir, andaK, f, p, s, o); return; }
   const sent = !!o.sentada; if (sent) andaK = 0; if (!sent) sombra(x, y, 13 * s, 4.5 * s);
   c.save(); c.translate(x, y); c.scale(dir * s, s);
   const sw = Math.sin(f) * 7 * andaK, bob = sent ? Math.sin(tm * 1.6) * .6 : Math.abs(Math.cos(f)) * 2 * andaK, tremeK = p > .6 ? Math.sin(tm * 40) * .8 : 0;
@@ -2200,7 +2074,6 @@ function desenharSaci(s, tm) {
 function desenharQueimado() { R.queimado.forEach(q => { const x = PX(q.x), y = PY(q.y); if (!naTela(x, y, 20)) return; const a = 1 - q.t / 3.5; c.fillStyle = `rgba(40,20,10,${.5 * a})`; c.beginPath(); c.ellipse(x, y, TS * .3, TS * .12, 0, 0, 7); c.fill(); c.fillStyle = `rgba(255,${130 + Math.random() * 80},40,${a})`; c.beginPath(); c.ellipse(x + Math.random() * 4 - 2, y - 4 - Math.random() * 8 * a, 2.4, 4 + 5 * a, 0, 0, 7); c.fill(); }); }
 function desenharMundo(tm) {
   const offC = R.venceu ? Math.max(0, R.venceu.t - 1.5) * 2.2 : 0, alvo = R.venceu ? { x: CAMINHONETE.x, y: CAMINHONETE.y + offC } : R.espiar ? { x: CASA.porta.x + .6, y: CASA.porta.y + 2 } : R.eu; cam.x = mix(cam.x, alvo.x, kq(.12)); cam.y = mix(cam.y, alvo.y - .6, kq(.12));
-  if (PIXK) { PIXCX = Math.round((cam.x + SHK.x) * TS / PIXK) * PIXK / TS; PIXCY = Math.round((cam.y + SHK.y) * TS / PIXK) * PIXK / TS; }
   
   c.fillStyle = "#1a2210"; c.fillRect(0, 0, W, H);
   desenharChaoChunks(CHAO_SITIO);
@@ -2643,7 +2516,7 @@ function loop(ts) {
   else if (R.lugar === "lagoa") desenharLagoa(tm);
   else if (R.lugar === "serra") desenharSerra(tm);
   else if (R.lugar === "floresta") desenharFloresta(tm);
-  else if (R.dentro) { if (R.espiar) desenharEspiar(tm); else desenharDentro(tm); } else { if (R.venceu && R.venceu.t > 1) { CAMINHONETE.x += .0; } comPixel(() => desenharMundo(tm)); desenharLuz(tm); }
+  else if (R.dentro) { if (R.espiar) desenharEspiar(tm); else desenharDentro(tm); } else { if (R.venceu && R.venceu.t > 1) { CAMINHONETE.x += .0; } desenharMundo(tm); desenharLuz(tm); }
   desenharFerrAnim(tm); desenharClima(tm); desenharMedo(tm); desenharBrilhoCoisasVo(tm);
   if (R.fimVo) { c.fillStyle = `rgba(0,0,0,${cl((R.fimVo.t - 1.5) / 3.5, 0, 1)})`; c.fillRect(0, 0, W, H); }
   if (R.fade > 0) { c.fillStyle = `rgba(0,0,0,${Math.min(1, R.fade)})`; c.fillRect(0, 0, W, H); R.fade -= .05; }
@@ -7885,7 +7758,6 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
     <button type="button" class="rc-op" id="opVoz">${icB("voz")}Narração da história: ${lig(window.vozLigada !== false)}</button>
     <button type="button" class="rc-op" id="opFps">${icB("grafico")}Gráfico: ${fps === 60 ? "suave<small>60 quadros · mais bonito, esquenta mais</small>" : fps <= 24 ? "bateria<small>24 quadros e resolução menor · esquenta bem menos</small>" : "normal<small>30 quadros · o meio-termo</small>"}</button>
     ${window.PC ? `<button type="button" class="rc-op" id="opTela">${icB("telacheia")}Tela cheia (F11)</button>` : ""}
-    <button type="button" class="rc-op" id="opPixel">${icB("grafico")}Visual do sítio: ${pixelOn() ? "pixel art<small>Teste: chão, casa e Yasmin em pixel</small>" : "desenho liso<small>O visual de antes</small>"}</button>
     <button type="button" class="rc-op" id="opTreme">${icB("grafico")}Tremer a tela: ${tremeOn() ? "sim" : "não"}<small>Desligue se a tremida incomodar</small></button>
     <button type="button" class="rc-op" id="opHist">${icB("historia")}Apagar a história já vista<small>A abertura aparece de novo</small></button></div>
     <p style="font-size:12px;color:#b8b2a4">Roça Assombrada · versão ${window.ROCA_VERSAO || "1"}</p>
@@ -7895,7 +7767,6 @@ function opcoes() { // só na versão separada da Roça (no jogo antigo isso fic
   document.getElementById("opVoz").addEventListener("click", () => { if (window.alternarVozSolo) alternarVozSolo(); re(); });
   document.getElementById("opFps").addEventListener("click", () => { try { localStorage.setItem("pv_fps", fps === 30 ? "24" : fps <= 24 ? "60" : "30"); } catch (e) {} window.rocaDprMax = 0; medir(); re(); });
   const bt2 = document.getElementById("opTela"); if (bt2) bt2.addEventListener("click", () => PC.telaCheia());
-  document.getElementById("opPixel").addEventListener("click", () => { ls("roca_pixel", pixelOn() ? "0" : "1"); re(); });
   document.getElementById("opTreme").addEventListener("click", () => { ls("roca_tremer", tremeOn() ? "0" : "1"); re(); });
   document.getElementById("opHist").addEventListener("click", () => { ls("roca_hist", ""); try { localStorage.removeItem("roca_hist"); } catch (e) {} efeito("A história vai aparecer de novo", "#e8e2d4"); re(); });
   document.getElementById("rcFechar").addEventListener("click", () => { fecharPainel(); menuInicial(); });
@@ -7991,7 +7862,7 @@ function entrarSala() {
   const ir = () => { st("Procurando a sala..."); netEntrar(inp.value, () => st("Conectado! Entrando no lobby..."), st); };
   document.getElementById("rcIr").addEventListener("click", ir); inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") ir(); });
 }
-const MANTER_NOVO = new Set(["roca_hist", "roca_floresta_paga", "roca_nome", "roca_gato_v2", "roca_gato_cor", "roca_tremer", "roca_pixel"]);
+const MANTER_NOVO = new Set(["roca_hist", "roca_floresta_paga", "roca_nome", "roca_gato_v2", "roca_gato_cor", "roca_tremer"]);
 function apagarTudo() {
   try { const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("roca_") && !MANTER_NOVO.has(k)) ks.push(k); } ks.forEach(k => localStorage.removeItem(k)); } catch (e) {}
   FL = null; SR = null; convAr = 0; convTib = 0; bocaSuave = .1; if (typeof LG !== "undefined") LG = null;
