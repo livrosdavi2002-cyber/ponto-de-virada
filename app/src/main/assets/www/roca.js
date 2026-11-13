@@ -352,11 +352,20 @@ function gerarChao() { CHAO_SITIO = Chao(pintarChaoSitio, MW, MH); }
 // caminhos de terra batida: beirada irregular, grama amassada, sulcos de roda e poucas pedras.
 // Todos os caminhos de um mapa são pintados juntos, camada por camada, para as emendas ficarem limpas.
 const CORES_TERRA = { sitio: ["rgba(46,58,18,.22)", "#7e5c3a", "#94704a", "rgba(58,38,20,.42)"], mata: ["rgba(10,14,6,.45)", "#4e3a22", "#5e4830", "rgba(24,16,8,.45)"], vila: ["rgba(40,50,20,.24)", "#7a5a38", "#8e6c46", "rgba(54,36,18,.45)"] };
+// trilha reta: cada pedaço vai só na horizontal ou só na vertical; se precisar ir pro lado, faz a curva em L
+function retificar(pts, lim = 1) {
+  if (!pts || pts.length < 2) return pts; const out = [[pts[0][0], pts[0][1]]];
+  for (let i = 1; i < pts.length; i++) { const [cx, cy] = out[out.length - 1], [px, py] = pts[i], dx = px - cx, dy = py - cy;
+    if (Math.abs(dx) < .01 && Math.abs(dy) < .01) continue;
+    if (Math.abs(dx) < lim) out.push([cx, py]); else if (Math.abs(dy) < lim) out.push([px, cy]); else { out.push([px, cy]); out.push([px, py]); } }
+  return out.filter((p, i, a) => i === 0 || i === a.length - 1 || !((a[i - 1][0] === p[0] && p[0] === a[i + 1][0]) || (a[i - 1][1] === p[1] && p[1] === a[i + 1][1]))); // tira os pontos do meio de uma reta
+}
 function caminhosTerra(g, P, lista) {
+  lista = lista.map(([pts, w, tipo]) => [retificar(pts), w, tipo]);
   const tr = lista.map(([pts, w, tipo = "sitio"]) => { const base = Math.round(pts[0][0] * 131 + pts[0][1] * 977 + w * 50) + 7; const T = { sd: base }; const r = () => { T.sd = (T.sd * 16807) % 2147483647; return (T.sd - 1) / 2147483646; }; const am = [];
     for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i], L = Math.hypot(bx - ax, by - ay) || 1, nx = -(by - ay) / L, ny = (bx - ax) / L; for (let d = 0; d < L; d += .14) { const t = d / L; am.push({ x: ax + (bx - ax) * t, y: ay + (by - ay) * t, nx, ny, d: am.length * .14 }); } }
     const [lx, ly] = pts[pts.length - 1], ul = am[am.length - 1] || { nx: 0, ny: 1 }; am.push({ x: lx, y: ly, nx: ul.nx, ny: ul.ny, d: am.length * .14 }); return Object.assign(T, { am: am.filter(p => vis(p.x * P, p.y * P, 80)), w, cor: CORES_TERRA[tipo], tipo, r, base }); });
-  const ond = (p, k) => 1 + .1 * Math.sin(p.d * 2.3 + k) + .06 * Math.sin(p.d * 6.1 + k * 2);
+  const ond = (p, k) => 1 + .02 * Math.sin(p.d * 2.3 + k) + .012 * Math.sin(p.d * 6.1 + k * 2); // beirada quase reta
   const bola = (x, y, rr, cor) => { g.fillStyle = cor; g.beginPath(); g.arc(x * P, y * P, rr * P, 0, 7); g.fill(); };
   tr.forEach(t => t.am.forEach(p => bola(p.x, p.y, t.w * .62 * ond(p, 1), t.cor[0]))); // grama amassada em volta
   tr.forEach(t => t.am.forEach(p => bola(p.x, p.y, t.w * .5 * ond(p, 3), t.cor[1]))); // terra
@@ -2834,7 +2843,7 @@ VPREDIOS.push(
 VPOSTES.forEach(q => { q[1] += OY; }); VPOSTES.push([47, 28], [54, 28], [46.6, 36.2], [53.4, 36.2], [20.8, 39.4], [44.2, 46]);
 VBANCOS.forEach(q => { q[1] += OY; }); VBANCOS.push([7.2, 47.8], [55, 38.9]);
 VFONTE.y += OY; VCEM.y0 += OY; VCEM.y1 += OY;
-const ESTRADA = [[23, -1], [23, 3], [20.6, 6.4], [20.6, 9.6], [24.6, 12.6], [24.6, 16], [23, 18.6], [23, 22.4]];
+const ESTRADA = retificar([[23, -1], [23, 3], [20.6, 6.4], [20.6, 9.6], [24.6, 12.6], [24.6, 16], [23, 18.6], [23, 22.4]]);
 const RIO_V = { y0: 7.3, y1: 8.6 }, PONTE_V = { x0: 19.3, x1: 21.9 };
 const CAPELINHA = { x: 26.9, y: 4.6 }, TAPERA = { x: 29.4, y: 11 }, FUSCA = { x: 16.3, y: 14.4 }, CRUZES = [[18.6, 10.8, "Antônio · 1936"], [26.6, 15, "sem nome, com uma fita vermelha igual à sua"]];
 const ORELHAO = { x: 17.4, y: 31 }, CARTAZES = [2, 9], CARROCA = { x: 58.3, y: 33.8 }, BARRIS = [[9.9, 27.1], [10.5, 27.2]], VARAL_V = { x0: 6.2, x1: 13.8, y: 47.6 }, TOBIAS = { x: 32.4, y: VCEM.y0 - .2 };
@@ -3362,7 +3371,7 @@ function andaLivre(p, dx, dy, vel, dt, livre) { const nx = p.x + dx * vel * dt, 
 
 /* ---------- a mata: trilha até o lago e a casinha do vô Sebastião ---------- */
 const MTW = 46, MTH = 34;
-const TRILHA_M = [[46.5, 25], [41, 24.6], [37, 26.5], [32, 27.4], [27.5, 25.5], [25, 21.5], [26.5, 17], [31, 14], [30, 9.5], [25.5, 7.2], [20.5, 8.6], [17.5, 12], [15.6, 13.4]];
+const TRILHA_M = retificar([[46.5, 25], [41, 24.6], [37, 26.5], [32, 27.4], [27.5, 25.5], [25, 21.5], [26.5, 17], [31, 14], [30, 9.5], [25.5, 7.2], [20.5, 8.6], [17.5, 12], [15.6, 13.4]]);
 const CLAREIRA_M = { x: 12.4, y: 17.2, rx: 11.2, ry: 9.6 };
 const LAGO_M = { x: 8.4, y: 21, rx: 7, ry: 4.6 }, ILHA_M = { x: 6.6, y: 21.6 };
 const CABANA = { x: 13.2, y: 9, w: 5, h: 3.4, porta: { x: 15.7, y: 12.7 } };
