@@ -406,8 +406,17 @@ function _pintarChaoSitio(g) {
   trilha([[53.3, 22.2], [57, 22.2], [60.5, 22], [65, 21.8]], .8); // caminho que sai pela porteira do leste até a estação velha
   trilha([[34.5, 13.4], [34.5, 8], [34.5, -1]], .75); // caminho que sai pela porteira do norte até a Baixada do Rio
   caminhosTerra(g, P, TRL);
-  { const tx = 13 * P, ty = 12.85 * P; g.fillStyle = CORES_TERRA.sitio[1]; g.beginPath(); for (let a = 0; a <= 6.3; a += .2) { const k = 1 + .06 * Math.sin(a * 5) + .04 * Math.sin(a * 9); g.lineTo(tx + Math.cos(a) * 2.2 * P * k, ty + Math.sin(a) * 1.05 * P * k); } g.fill(); g.fillStyle = CORES_TERRA.sitio[2]; g.beginPath(); g.ellipse(tx, ty + 2, 1.5 * P, .62 * P, 0, 0, 7); g.fill();
-    let sd2 = 91; const r3 = () => { sd2 = (sd2 * 16807) % 2147483647; return (sd2 - 1) / 2147483646; }; for (let i = 0; i < 40; i++) { const a = r3() * 6.3, d = r3(); g.fillStyle = r3() < .5 ? "rgba(40,24,10,.22)" : "rgba(150,120,84,.2)"; g.beginPath(); g.ellipse(tx + Math.cos(a) * d * 2 * P, ty + Math.sin(a) * d * .9 * P, 2 + r3() * 3, 1.2 + r3() * 1.5, 0, 0, 7); g.fill(); } } // terreiro de terra batida na frente da casa
+  { // calçada de pé-de-moleque na frente da casa: retângulo reto, pedra por pedra, com meio-fio
+    const x0 = 10.4 * P, x1 = 15.6 * P, y0 = 11.7 * P, y1 = 13.95 * P, t = .42 * P; let sd2 = 91; const r3 = () => { sd2 = (sd2 * 16807) % 2147483647; return (sd2 - 1) / 2147483646; };
+    g.fillStyle = "rgba(30,24,14,.35)"; g.fillRect(x0 - 4, y0 - 2, x1 - x0 + 8, y1 - y0 + 7); // sombrinha em volta
+    g.fillStyle = "#3e3428"; g.fillRect(x0, y0, x1 - x0, y1 - y0); // o rejunte de terra
+    for (let yy = y0 + t * .5, lin = 0; yy < y1 - t * .2; yy += t * .82, lin++) for (let xx = x0 + t * .5 + (lin % 2) * t * .5; xx < x1 - t * .2; xx += t * .98) {
+      const px = xx + (r3() - .5) * 2, py = yy + (r3() - .5) * 2, rw = t * (.44 + r3() * .06), rh = t * (.36 + r3() * .05), cor = ["#8a8272", "#76705f", "#9a907c", "#6e6a5e", "#857a66"][Math.floor(r3() * 5)];
+      g.fillStyle = "rgba(20,14,8,.55)"; g.beginPath(); g.ellipse(px + 1, py + 1.6, rw, rh, 0, 0, 7); g.fill();
+      const gr = g.createLinearGradient(px - rw, py - rh, px + rw, py + rh); gr.addColorStop(0, tomCor(cor, 1.32)); gr.addColorStop(.5, cor); gr.addColorStop(1, tomCor(cor, .72)); g.fillStyle = gr; g.beginPath(); g.ellipse(px, py, rw, rh, (r3() - .5) * .4, 0, 7); g.fill();
+      if (r3() < .12) { g.fillStyle = "rgba(90,120,40,.7)"; g.fillRect(px + rw * .6, py - 1, 2, 3); } } // um capinzinho entre as pedras
+    g.fillStyle = "#5e584c"; g.fillRect(x0 - 3, y1, x1 - x0 + 6, 4); g.fillRect(x0 - 3, y0, 3, y1 - y0); g.fillRect(x1, y0, 3, y1 - y0); g.fillStyle = "rgba(255,255,255,.18)"; g.fillRect(x0 - 3, y1, x1 - x0 + 6, 1); // meio-fio
+  }
   // milharal: terra arada em fileiras
   g.fillStyle = "#6a5232"; g.fillRect(MILHARAL.x0 * P, MILHARAL.y0 * P, (MILHARAL.x1 - MILHARAL.x0) * P, (MILHARAL.y1 - MILHARAL.y0) * P);
   for (let y = MILHARAL.y0; y < MILHARAL.y1; y += .5) { g.fillStyle = "rgba(40,28,14,.45)"; g.fillRect(MILHARAL.x0 * P, y * P, (MILHARAL.x1 - MILHARAL.x0) * P, 5); }
